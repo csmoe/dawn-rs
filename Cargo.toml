@@ -1,0 +1,10 @@
+[package]
+name = "dawn-rs"
+version = "0.1.0"
+edition = "2024"
+description = "Rust bindings for google/dawn"
+categories = [ "rendering", "gui" ]
+repository = "https://github.com/csmoe/dawn-rs"
+license = "BSD-3-Clause"
+
+[dependencies]
