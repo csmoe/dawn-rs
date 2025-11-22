@@ -8,4 +8,5 @@ pub mod generator;
 
 mod parser;
 
+pub use generator::Codegen;
 pub use parser::*;
