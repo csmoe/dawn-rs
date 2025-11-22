@@ -1,6 +1,6 @@
 //! Tests for ExtensibleType and LengthValue functionality
 
-use dawn_codegen::parser::{DawnJsonParser, Definition, ExtensibleType, LengthValue};
+use dawn_codegen::{DawnJsonParser, Definition, ExtensibleType, LengthValue};
 
 #[test]
 fn test_extensible_types() {

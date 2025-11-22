@@ -31,10 +31,11 @@
 //! The parsed structures are designed for code generation and provide a solid foundation
 //! for creating Rust bindings for the Dawn WebGPU implementation.
 
+use heck::{ToKebabCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
+use std::{default, fs};
 
 /// The root structure of dawn.json
 #[derive(Debug, Deserialize, Serialize)]
@@ -388,8 +389,8 @@ pub struct FunctionDef {
     #[serde(default)]
     pub tags: Vec<String>,
 
-    returns: Option<ReturnType>,
-    args: Vec<RecordMember>,
+    pub returns: Option<ReturnType>,
+    pub args: Vec<RecordMember>,
 
     #[serde(rename = "_comment")]
     pub comment: Option<String>,
@@ -486,8 +487,7 @@ pub struct RecordMember {
     #[serde(rename = "type")]
     pub member_type: String,
 
-    #[serde(default = "default_value_annotation")]
-    pub annotation: String,
+    pub annotation: Annotation,
 
     pub length: Option<LengthValue>,
 
@@ -507,6 +507,49 @@ pub struct RecordMember {
 
     #[serde(rename = "array_element_optional")]
     pub array_element_optional: Option<bool>,
+}
+
+#[derive(Debug, Default)]
+pub enum Annotation {
+    /// *
+    MutPtr,
+    /// const*
+    ConstPtr,
+    /// const*const*
+    ConstConstPtr,
+    /// value*
+    #[default]
+    Value,
+}
+
+impl Annotation {
+    pub fn is_mut_ptr(&self) -> bool {
+        matches!(self, Annotation::MutPtr)
+    }
+
+    pub fn is_const_ptr(&self) -> bool {
+        matches!(self, Annotation::ConstPtr | Annotation::ConstConstPtr)
+    }
+
+    pub fn is_value(&self) -> bool {
+        matches!(self, Annotation::Value)
+    }
+}
+
+impl<'de> Deserialize<'de> for Annotation {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let annotation = String::deserialize(deserializer)?;
+
+        match annotation.as_str() {
+            "*" => Ok(Annotation::MutPtr),
+            "const*" => Ok(Annotation::ConstPtr),
+            "const*const*" => Ok(Annotation::ConstConstPtr),
+            _ => Ok(Annotation::Value),
+        }
+    }
 }
 
 /// Main parser struct
@@ -654,49 +697,29 @@ impl DawnJsonParser {
 /// Name utilities for converting between different cases
 pub struct Name {
     pub canonical_name: String,
-    pub parts: Vec<String>,
 }
 
 impl Name {
     pub fn new(canonical_name: &str) -> Self {
-        let parts = canonical_name
-            .split_whitespace()
-            .map(|s| s.to_string())
-            .collect();
-
         Self {
             canonical_name: canonical_name.to_string(),
-            parts,
         }
     }
 
-    /// Convert to CamelCase
     pub fn camel_case(&self) -> String {
-        self.parts
-            .iter()
-            .map(|part| {
-                let mut chars: Vec<char> = part.chars().collect();
-                if !chars.is_empty() {
-                    chars[0] = chars[0].to_uppercase().next().unwrap_or(chars[0]);
-                }
-                chars.into_iter().collect::<String>()
-            })
-            .collect()
+        self.canonical_name.to_upper_camel_case()
     }
 
-    /// Convert to snake_case
     pub fn snake_case(&self) -> String {
-        self.parts.join("_").to_lowercase()
+        self.canonical_name.to_snake_case()
     }
 
-    /// Convert to SCREAMING_SNAKE_CASE
-    pub fn screaming_snake_case(&self) -> String {
-        self.parts.join("_").to_uppercase()
+    pub fn shouty_snake_case(&self) -> String {
+        self.canonical_name.to_shouty_snake_case()
     }
 
-    /// Convert to kebab-case
     pub fn kebab_case(&self) -> String {
-        self.parts.join("-").to_lowercase()
+        self.canonical_name.to_kebab_case()
     }
 }
 

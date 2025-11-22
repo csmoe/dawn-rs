@@ -1,8 +1,7 @@
 //! Basic parsing tests for Dawn JSON Parser
 
 use dawn_codegen::{
-    ReturnType,
-    parser::{DawnJsonParser, Definition, LengthValue},
+    ReturnType, {DawnJsonParser, Definition, LengthValue},
 };
 
 #[test]

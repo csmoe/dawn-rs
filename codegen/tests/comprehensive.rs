@@ -1,8 +1,7 @@
 //! Comprehensive integration tests for the Dawn JSON Parser
 
 use dawn_codegen::{
-    ReturnType,
-    parser::{DawnJsonParser, Definition, ExtensibleType, LengthValue},
+    ReturnType, {DawnJsonParser, Definition, ExtensibleType, LengthValue},
 };
 
 #[test]

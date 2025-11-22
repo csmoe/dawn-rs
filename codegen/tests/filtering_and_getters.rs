@@ -1,6 +1,6 @@
 //! Tests for tag filtering and getter methods
 
-use dawn_codegen::parser::DawnJsonParser;
+use dawn_codegen::DawnJsonParser;
 
 #[test]
 fn test_filter_by_tags() {
