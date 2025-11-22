@@ -1,5 +1,5 @@
 [package]
-name = "codegen"
+name = "dawn-codegen"
 version.workspace = true
 edition.workspace = true
 categories.workspace = true
@@ -9,5 +9,3 @@ license.workspace = true
 [dependencies]
 serde_json = { version = "1" }
 serde = { version = "1", features = ["derive"] }
-strum = "0.27"
-strum_macros = "0.27"
