@@ -1,8 +1,6 @@
 //! Basic parsing tests for Dawn JSON Parser
 
-use dawn_codegen::{
-    ReturnType, {DawnJsonParser, Definition, LengthValue},
-};
+use dawn_codegen::{Annotation, DawnJsonParser, Definition, LengthValue, ReturnType};
 
 #[test]
 fn test_parse_simple_json() {
@@ -61,7 +59,7 @@ fn test_parse_structure() {
         assert_eq!(struct_def.members.len(), 3);
         assert_eq!(struct_def.members[0].name, "count");
         assert_eq!(struct_def.members[0].member_type, "uint32_t");
-        assert_eq!(struct_def.members[1].annotation, "*");
+        assert_eq!(struct_def.members[1].annotation, Annotation::MutPtr);
         assert_eq!(
             struct_def.members[1].length,
             Some(LengthValue::String("count".to_string()))
@@ -174,7 +172,7 @@ fn test_parse_function_pointer() {
         );
         assert_eq!(func_ptr.args().len(), 2);
         assert_eq!(func_ptr.args()[0].name, "status");
-        assert_eq!(func_ptr.args()[1].annotation, "*");
+        assert_eq!(func_ptr.args()[1].annotation, Annotation::MutPtr);
     } else {
         panic!("Expected function pointer definition");
     }
@@ -278,7 +276,7 @@ fn test_callback_function_parsing() {
     }
 
     // Test getter function
-    let callback_functions = DawnJsonParser::get_callback_functions(&api);
+    let callback_functions = api.callback_functions();
     assert_eq!(callback_functions.len(), 1);
     assert_eq!(callback_functions[0].0, "request adapter callback");
 

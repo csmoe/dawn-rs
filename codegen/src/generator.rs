@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use heck::{ToPascalCase, ToSnakeCase};
 
 use crate::{Annotation, FunctionDef, Method, ObjectDef, RecordMember, ReturnType};

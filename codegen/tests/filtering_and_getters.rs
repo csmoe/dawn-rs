@@ -30,13 +30,13 @@ fn test_filter_by_tags() {
     let api = DawnJsonParser::parse_string(json).unwrap();
     assert_eq!(api.definitions.len(), 3);
 
-    let dawn_filtered = DawnJsonParser::filter_by_tags(&api, &["dawn".to_string()]);
+    let dawn_filtered = api.filter_by_tags(&["dawn".to_string()]);
     assert_eq!(dawn_filtered.definitions.len(), 2); // "dawn only" + "no tags"
     assert!(dawn_filtered.definitions.contains_key("dawn only"));
     assert!(dawn_filtered.definitions.contains_key("no tags"));
     assert!(!dawn_filtered.definitions.contains_key("emscripten only"));
 
-    let emscripten_filtered = DawnJsonParser::filter_by_tags(&api, &["emscripten".to_string()]);
+    let emscripten_filtered = api.filter_by_tags(&["emscripten".to_string()]);
     assert_eq!(emscripten_filtered.definitions.len(), 2); // "emscripten only" + "no tags"
     assert!(
         emscripten_filtered
@@ -77,19 +77,19 @@ fn test_get_specific_definitions() {
 
     let api = DawnJsonParser::parse_string(json).unwrap();
 
-    let enums = DawnJsonParser::get_enums(&api);
+    let enums = api.enums();
     assert_eq!(enums.len(), 1);
     assert_eq!(enums[0].0, "test enum");
 
-    let structures = DawnJsonParser::get_structures(&api);
+    let structures = api.structures();
     assert_eq!(structures.len(), 1);
     assert_eq!(structures[0].0, "test structure");
 
-    let objects = DawnJsonParser::get_objects(&api);
+    let objects = api.objects();
     assert_eq!(objects.len(), 1);
     assert_eq!(objects[0].0, "test object");
 
-    let functions = DawnJsonParser::get_functions(&api);
+    let functions = api.functions();
     assert_eq!(functions.len(), 1);
     assert_eq!(functions[0].0, "test function");
 }
@@ -118,7 +118,7 @@ fn test_empty_filter() {
     assert_eq!(api.definitions.len(), 2);
 
     // Empty filter should return only untagged items
-    let empty_filtered = DawnJsonParser::filter_by_tags(&api, &[]);
+    let empty_filtered = api.filter_by_tags(&[]);
     assert_eq!(empty_filtered.definitions.len(), 1);
     assert!(empty_filtered.definitions.contains_key("untagged item"));
     assert!(!empty_filtered.definitions.contains_key("tagged item"));
@@ -158,8 +158,7 @@ fn test_multiple_tags_filter() {
     assert_eq!(api.definitions.len(), 4);
 
     // Filter for both dawn and emscripten
-    let multi_filtered =
-        DawnJsonParser::filter_by_tags(&api, &["dawn".to_string(), "emscripten".to_string()]);
+    let multi_filtered = api.filter_by_tags(&["dawn".to_string(), "emscripten".to_string()]);
     assert_eq!(multi_filtered.definitions.len(), 4); // All items should be included
     assert!(multi_filtered.definitions.contains_key("dawn only"));
     assert!(multi_filtered.definitions.contains_key("emscripten only"));
@@ -195,15 +194,15 @@ fn test_get_all_callback_types() {
 
     let api = DawnJsonParser::parse_string(json).unwrap();
 
-    let callbacks = DawnJsonParser::get_callbacks(&api);
+    let callbacks = api.callbacks();
     assert_eq!(callbacks.len(), 1);
     assert_eq!(callbacks[0].0, "regular callback");
 
-    let callback_functions = DawnJsonParser::get_callback_functions(&api);
+    let callback_functions = api.callback_functions();
     assert_eq!(callback_functions.len(), 1);
     assert_eq!(callback_functions[0].0, "callback function");
 
-    let callback_infos = DawnJsonParser::get_callback_infos(&api);
+    let callback_infos = api.callback_infos();
     assert_eq!(callback_infos.len(), 1);
     assert_eq!(callback_infos[0].0, "callback info");
 }

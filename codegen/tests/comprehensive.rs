@@ -1,7 +1,7 @@
 //! Comprehensive integration tests for the Dawn JSON Parser
 
 use dawn_codegen::{
-    ReturnType, {DawnJsonParser, Definition, ExtensibleType, LengthValue},
+    Annotation, DawnJsonParser, Definition, ExtensibleType, LengthValue, ReturnType,
 };
 
 #[test]
@@ -166,22 +166,22 @@ fn test_parse_dawn_json_sample() {
     }
 
     // Test helper functions
-    let enums = DawnJsonParser::get_enums(&api);
+    let enums = api.enums();
     assert_eq!(enums.len(), 1);
 
-    let bitmasks = DawnJsonParser::get_bitmasks(&api);
+    let bitmasks = api.bitmasks();
     assert_eq!(bitmasks.len(), 1);
 
-    let structures = DawnJsonParser::get_structures(&api);
+    let structures = api.structures();
     assert_eq!(structures.len(), 2);
 
-    let objects = DawnJsonParser::get_objects(&api);
+    let objects = api.objects();
     assert_eq!(objects.len(), 1);
 
-    let functions = DawnJsonParser::get_functions(&api);
+    let functions = api.functions();
     assert_eq!(functions.len(), 1);
 
-    let callback_functions = DawnJsonParser::get_callback_functions(&api);
+    let callback_functions = api.callback_functions();
     assert_eq!(callback_functions.len(), 0); // No callback functions in this test
 
     println!(
@@ -214,8 +214,8 @@ fn test_record_member_defaults() {
 
     if let Some(Definition::Structure(struct_def)) = api.definitions.get("test structure") {
         // Test default annotation
-        assert_eq!(struct_def.members[0].annotation, "value");
-        assert_eq!(struct_def.members[1].annotation, "*");
+        assert_eq!(struct_def.members[0].annotation, Annotation::Value);
+        assert_eq!(struct_def.members[1].annotation, Annotation::MutPtr);
 
         // Test optional field
         assert!(!struct_def.members[0].optional);
@@ -273,10 +273,10 @@ fn test_parse_real_dawn_json() {
                 }
 
                 // Test specific getters
-                let enums = DawnJsonParser::get_enums(&api);
-                let structures = DawnJsonParser::get_structures(&api);
-                let objects = DawnJsonParser::get_objects(&api);
-                let callback_functions = DawnJsonParser::get_callback_functions(&api);
+                let enums = api.enums();
+                let structures = api.structures();
+                let objects = api.objects();
+                let callback_functions = api.callback_functions();
 
                 println!("  Getter results:");
                 println!("    Enums: {}", enums.len());

@@ -32,13 +32,13 @@
 //! for creating Rust bindings for the Dawn WebGPU implementation.
 
 use heck::{ToKebabCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
+use std::fs;
 use std::path::Path;
-use std::{default, fs};
 
 /// The root structure of dawn.json
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct DawnApi {
     #[serde(rename = "_comment")]
     pub comment: Option<Vec<String>>,
@@ -54,8 +54,135 @@ pub struct DawnApi {
     pub definitions: HashMap<String, Definition>,
 }
 
+impl DawnApi {
+    /// Filter definitions by tags
+    pub fn filter_by_tags(&self, enabled_tags: &[String]) -> DawnApi {
+        let mut filtered_definitions = HashMap::new();
+
+        for (name, def) in &self.definitions {
+            if Self::should_include_definition(def, enabled_tags) {
+                filtered_definitions.insert(name.clone(), (*def).clone());
+            }
+        }
+
+        DawnApi {
+            comment: self.comment.clone(),
+            doc: self.doc.clone(),
+            metadata: self.metadata.clone(),
+            definitions: filtered_definitions,
+        }
+    }
+
+    /// Check if a definition should be included based on tags
+    fn should_include_definition(def: &Definition, enabled_tags: &[String]) -> bool {
+        let def_tags = match def {
+            Definition::Native(d) => &d.tags,
+            Definition::Typedef(d) => &d.tags,
+            Definition::Enum(d) => &d.tags,
+            Definition::Bitmask(d) => &d.tags,
+            Definition::FunctionPointer(d) => &d.tags,
+            Definition::Structure(d) => &d.tags,
+            Definition::Object(d) => &d.tags,
+            Definition::Constant(d) => &d.tags,
+            Definition::Function(d) => &d.tags,
+            Definition::Callback(d) => &d.tags,
+            Definition::CallbackFunction(d) => &d.tags,
+            Definition::CallbackInfo(d) => &d.tags,
+        };
+
+        // If no tags specified, include by default
+        if def_tags.is_empty() {
+            return true;
+        }
+
+        // If any tag matches enabled tags, include
+        def_tags.iter().any(|tag| enabled_tags.contains(tag))
+    }
+
+    /// Get all definitions of a specific category
+    pub fn enums(&self) -> Vec<(&String, &EnumDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Enum(enum_def) => Some((name, enum_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn bitmasks(&self) -> Vec<(&String, &BitmaskDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Bitmask(bitmask_def) => Some((name, bitmask_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn structures(&self) -> Vec<(&String, &StructureDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Structure(struct_def) => Some((name, struct_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn objects(&self) -> Vec<(&String, &ObjectDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Object(object_def) => Some((name, object_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn functions(&self) -> Vec<(&String, &FunctionDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Function(func_def) => Some((name, func_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn callbacks(&self) -> Vec<(&String, &CallbackDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::Callback(callback_def) => Some((name, callback_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn callback_functions(&self) -> Vec<(&String, &CallbackFunctionDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::CallbackFunction(callback_func_def) => Some((name, callback_func_def)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn callback_infos(&self) -> Vec<(&String, &CallbackInfoDef)> {
+        self.definitions
+            .iter()
+            .filter_map(|(name, def)| match def {
+                Definition::CallbackInfo(callback_info_def) => Some((name, callback_info_def)),
+                _ => None,
+            })
+            .collect()
+    }
+}
+
 /// Metadata about the API
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ApiMetadata {
     pub api: String,
     pub namespace: String,
@@ -66,7 +193,7 @@ pub struct ApiMetadata {
 }
 
 /// A definition can be one of many types
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "category")]
 pub enum Definition {
     #[serde(rename = "native")]
@@ -107,7 +234,7 @@ pub enum Definition {
 }
 
 /// Native type definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct NativeType {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -123,7 +250,7 @@ pub struct NativeType {
 }
 
 /// Typedef definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct TypedefDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -133,7 +260,7 @@ pub struct TypedefDef {
 }
 
 /// Enum definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct EnumDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -148,7 +275,7 @@ pub struct EnumDef {
 }
 
 /// Bitmask definition - similar to enum but for bitflags
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct BitmaskDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -160,7 +287,7 @@ pub struct BitmaskDef {
 }
 
 /// An enum or bitmask value
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct EnumValue {
     pub name: String,
     pub value: serde_json::Value, // Can be number or string
@@ -178,7 +305,7 @@ pub struct EnumValue {
 }
 
 /// Function pointer definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct FunctionPointerDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -188,7 +315,7 @@ pub struct FunctionPointerDef {
 }
 
 /// Structure definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct StructureDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -211,7 +338,7 @@ pub struct StructureDef {
 
 /// Extensible type for structures - can be boolean or directional string
 /// Represents the extensible field which can be either a boolean or a direction string
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub enum ExtensibleType {
     Direction(String), // "in" or "out"
     Bool(bool),
@@ -240,7 +367,7 @@ impl<'de> Deserialize<'de> for ExtensibleType {
 }
 
 /// Represents the length field which can be either a string (field reference) or a number (literal size)
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(untagged)]
 pub enum LengthValue {
     String(String),
@@ -248,7 +375,7 @@ pub enum LengthValue {
 }
 
 /// Represents the returns field which can be either a simple string or an object with type and optional fields
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(untagged)]
 pub enum ReturnType {
     Simple(String),
@@ -295,7 +422,6 @@ impl LengthValue {
 }
 
 impl ExtensibleType {
-    /// Check if the structure is extensible in any way
     pub fn is_extensible(&self) -> bool {
         match self {
             ExtensibleType::Direction(_) => true,
@@ -303,7 +429,6 @@ impl ExtensibleType {
         }
     }
 
-    /// Get the direction if this is a directional extensible type
     pub fn direction(&self) -> Option<&str> {
         match self {
             ExtensibleType::Direction(dir) => Some(dir),
@@ -311,24 +436,20 @@ impl ExtensibleType {
         }
     }
 
-    /// Check if this is an input extensible (direction = "in")
     pub fn is_input(&self) -> bool {
         matches!(self, ExtensibleType::Direction(dir) if dir == "in")
     }
 
-    /// Check if this is an output extensible (direction = "out")
     pub fn is_output(&self) -> bool {
         matches!(self, ExtensibleType::Direction(dir) if dir == "out")
     }
 
-    /// Check if this is a boolean extensible type
     pub fn is_boolean(&self) -> bool {
         matches!(self, ExtensibleType::Bool(_))
     }
 }
 
 impl ReturnType {
-    /// Get the return type string regardless of variant
     pub fn get_type(&self) -> &str {
         match self {
             ReturnType::Simple(s) => s,
@@ -336,7 +457,6 @@ impl ReturnType {
         }
     }
 
-    /// Check if the return type is optional
     pub fn is_optional(&self) -> bool {
         match self {
             ReturnType::Simple(_) => false,
@@ -358,7 +478,7 @@ impl FunctionPointerDef {
 }
 
 /// Object definition (like WebGPU handles)
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ObjectDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -370,7 +490,7 @@ pub struct ObjectDef {
 }
 
 /// Constant definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ConstantDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -384,7 +504,7 @@ pub struct ConstantDef {
 }
 
 /// Function definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct FunctionDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -409,7 +529,7 @@ impl FunctionDef {
 }
 
 /// Callback definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CallbackDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -431,7 +551,7 @@ impl CallbackDef {
 }
 
 /// Callback function definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CallbackFunctionDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -440,7 +560,7 @@ pub struct CallbackFunctionDef {
 }
 
 /// Callback info definition
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CallbackInfoDef {
     #[serde(default)]
     pub tags: Vec<String>,
@@ -449,7 +569,7 @@ pub struct CallbackInfoDef {
 }
 
 /// A method on an object
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Method {
     pub name: String,
 
@@ -480,13 +600,14 @@ impl Method {
 }
 
 /// A record member (used in function arguments, struct members, etc.)
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct RecordMember {
     pub name: String,
 
     #[serde(rename = "type")]
     pub member_type: String,
 
+    #[serde(default)]
     pub annotation: Annotation,
 
     pub length: Option<LengthValue>,
@@ -509,7 +630,7 @@ pub struct RecordMember {
     pub array_element_optional: Option<bool>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Annotation {
     /// *
     MutPtr,
@@ -552,149 +673,20 @@ impl<'de> Deserialize<'de> for Annotation {
     }
 }
 
-/// Main parser struct
 pub struct DawnJsonParser;
 
 impl DawnJsonParser {
-    /// Parse a dawn.json file from a file path
     pub fn parse_file<P: AsRef<Path>>(path: P) -> Result<DawnApi, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
         Self::parse_string(&content)
     }
 
-    /// Parse dawn.json content from a string
     pub fn parse_string(content: &str) -> Result<DawnApi, Box<dyn std::error::Error>> {
         let api: DawnApi = serde_json::from_str(content)?;
         Ok(api)
     }
-
-    /// Filter definitions by tags
-    pub fn filter_by_tags(api: &DawnApi, enabled_tags: &[String]) -> DawnApi {
-        let mut filtered_definitions = HashMap::new();
-
-        for (name, def) in &api.definitions {
-            if Self::should_include_definition(def, enabled_tags) {
-                filtered_definitions.insert(name.clone(), (*def).clone());
-            }
-        }
-
-        DawnApi {
-            comment: api.comment.clone(),
-            doc: api.doc.clone(),
-            metadata: api.metadata.clone(),
-            definitions: filtered_definitions,
-        }
-    }
-
-    /// Check if a definition should be included based on tags
-    fn should_include_definition(def: &Definition, enabled_tags: &[String]) -> bool {
-        let def_tags = match def {
-            Definition::Native(d) => &d.tags,
-            Definition::Typedef(d) => &d.tags,
-            Definition::Enum(d) => &d.tags,
-            Definition::Bitmask(d) => &d.tags,
-            Definition::FunctionPointer(d) => &d.tags,
-            Definition::Structure(d) => &d.tags,
-            Definition::Object(d) => &d.tags,
-            Definition::Constant(d) => &d.tags,
-            Definition::Function(d) => &d.tags,
-            Definition::Callback(d) => &d.tags,
-            Definition::CallbackFunction(d) => &d.tags,
-            Definition::CallbackInfo(d) => &d.tags,
-        };
-
-        // If no tags specified, include by default
-        if def_tags.is_empty() {
-            return true;
-        }
-
-        // If any tag matches enabled tags, include
-        def_tags.iter().any(|tag| enabled_tags.contains(tag))
-    }
-
-    /// Get all definitions of a specific category
-    pub fn get_enums(api: &DawnApi) -> Vec<(&String, &EnumDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Enum(enum_def) => Some((name, enum_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_bitmasks(api: &DawnApi) -> Vec<(&String, &BitmaskDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Bitmask(bitmask_def) => Some((name, bitmask_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_structures(api: &DawnApi) -> Vec<(&String, &StructureDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Structure(struct_def) => Some((name, struct_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_objects(api: &DawnApi) -> Vec<(&String, &ObjectDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Object(object_def) => Some((name, object_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_functions(api: &DawnApi) -> Vec<(&String, &FunctionDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Function(func_def) => Some((name, func_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_callbacks(api: &DawnApi) -> Vec<(&String, &CallbackDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::Callback(callback_def) => Some((name, callback_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_callback_functions(api: &DawnApi) -> Vec<(&String, &CallbackFunctionDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::CallbackFunction(callback_func_def) => Some((name, callback_func_def)),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn get_callback_infos(api: &DawnApi) -> Vec<(&String, &CallbackInfoDef)> {
-        api.definitions
-            .iter()
-            .filter_map(|(name, def)| match def {
-                Definition::CallbackInfo(callback_info_def) => Some((name, callback_info_def)),
-                _ => None,
-            })
-            .collect()
-    }
 }
 
-/// Name utilities for converting between different cases
 pub struct Name {
     pub canonical_name: String,
 }
@@ -723,107 +715,6 @@ impl Name {
     }
 }
 
-// Helper functions for serde defaults
 fn default_true() -> bool {
     true
-}
-
-fn default_value_annotation() -> String {
-    "value".to_string()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_method_parsing() {
-        let json = r#"{
-            "name": "create buffer",
-            "returns": "buffer",
-            "args": [
-                {"name": "descriptor", "type": "buffer descriptor", "annotation": "*"}
-            ]
-        }"#;
-
-        let method: Method = serde_json::from_str(json).unwrap();
-        println!("Parsed method: {:?}", method);
-        assert_eq!(method.name, "create buffer");
-        assert_eq!(
-            method.returns,
-            Some(ReturnType::Simple("buffer".to_string()))
-        );
-        assert_eq!(method.args.len(), 1);
-        assert_eq!(method.args[0].name, "descriptor");
-    }
-
-    #[test]
-    fn test_object_parsing_debug() {
-        let json = r#"{
-            "_metadata": {
-                "api": "WebGPU",
-                "namespace": "wgpu",
-                "proc_table_prefix": "Dawn",
-                "native_namespace": "dawn native"
-            },
-            "test object": {
-                "category": "object",
-                "methods": [
-                    {
-                        "name": "create buffer",
-                        "returns": "buffer",
-                        "args": [
-                            {"name": "descriptor", "type": "buffer descriptor", "annotation": "*"}
-                        ]
-                    }
-                ]
-            }
-        }"#;
-
-        let api = DawnJsonParser::parse_string(json).unwrap();
-
-        if let Some(Definition::Object(object_def)) = api.definitions.get("test object") {
-            println!("Object methods: {:?}", object_def.methods);
-            println!("First method: {:?}", object_def.methods[0]);
-            println!("First method returns: {:?}", object_def.methods[0].returns);
-            assert_eq!(
-                object_def.methods[0].returns,
-                Some(ReturnType::Simple("buffer".to_string()))
-            );
-        } else {
-            panic!("Expected object definition");
-        }
-    }
-
-    #[test]
-    fn test_extensible_type_parsing() {
-        // Test string "in" value
-        let json_in = r#""in""#;
-        let result: ExtensibleType = serde_json::from_str(json_in).unwrap();
-        assert!(result.is_input());
-        assert!(!result.is_output());
-        assert!(!result.is_boolean());
-
-        // Test boolean true value
-        let json_true = r#"true"#;
-        let result: ExtensibleType = serde_json::from_str(json_true).unwrap();
-        assert!(result.is_extensible());
-        assert!(result.is_boolean());
-        assert!(!result.is_input());
-    }
-
-    #[test]
-    fn test_length_value_parsing() {
-        // Test string length
-        let json_string = r#""count""#;
-        let result: LengthValue = serde_json::from_str(json_string).unwrap();
-        assert!(result.is_string());
-        assert_eq!(result.as_string(), Some("count"));
-
-        // Test numeric length
-        let json_number = r#"16"#;
-        let result: LengthValue = serde_json::from_str(json_number).unwrap();
-        assert!(result.is_number());
-        assert_eq!(result.as_number(), Some(16));
-    }
 }
