@@ -1,7 +1,8 @@
 use heck::{ToPascalCase, ToSnakeCase};
 
 use crate::{
-    Annotation, DawnApi, FunctionDef, Method, ObjectDef, RecordMember, ReturnType, StructureDef,
+    Annotation, BitmaskDef, DawnApi, FunctionDef, MethodDef, ObjectDef, RecordMember, ReturnType,
+    StructureDef,
 };
 
 pub trait Codegen {
@@ -28,12 +29,7 @@ impl DawnApi {
             .map(|(name, def)| Structure { name, def }.codegen())
             .collect::<Vec<_>>()
             .join("\n");
-        let DawnApi {
-            comment,
-            doc,
-            metadata,
-            definitions,
-        } = self;
+        let DawnApi { comment, doc, .. } = self;
         let comment = comment
             .unwrap_or_default()
             .iter()
@@ -46,7 +42,7 @@ impl DawnApi {
             .unwrap_or_default();
         let version = env!("CARGO_PKG_VERSION");
 
-        format!(
+        let source = syn::parse_file(&format!(
             r#"
 {comment}
 {doc}
@@ -59,7 +55,9 @@ impl DawnApi {
 
 {functions}
 "#
-        )
+        ))
+        .unwrap();
+        prettyplease::unparse(&source)
     }
 }
 
@@ -159,26 +157,57 @@ impl Codegen for Annotation {
     }
 }
 
-impl Codegen for Method {
+struct Method<'a> {
+    self_: &'a Object<'a>,
+    def: &'a MethodDef,
+}
+
+impl Codegen for Method<'_> {
     fn codegen(&self) -> String {
-        let Method {
+        let MethodDef {
             name,
             tags,
             returns,
             args,
             no_autolock,
             extensible,
-        } = &self;
+        } = &self.def;
         let name = name.to_snake_case();
         let ret = returns.codegen();
-        let args = args
+        let args_types = args
             .iter()
             .map(|arg| arg.codegen())
             .collect::<Vec<String>>()
             .join("");
+        let safety = if no_autolock.unwrap_or_default() {
+            r#"/// <div class="warning">
+/// This method is not thread-safe
+/// </div>"#
+        } else {
+            ""
+        };
+
+        let object_name = self.self_.name.to_pascal_case();
+        let c_name = name.to_pascal_case();
+        let args_names = args
+            .iter()
+            .map(|arg| {
+                let name = arg.name.to_snake_case();
+                if name == "type" {
+                    "r#type".into()
+                } else {
+                    name
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
         format!(
-            r#"
-    pub fn {name}(&self, {args}) -> {ret} {{}}"#
+            r#"{safety}
+pub fn {name}(&self, {args_types}) -> {ret} {{
+    unsafe {{
+        wgpu{object_name}{c_name}(std::ptr::from_ref(self), {args_names})
+    }}
+}}"#
         )
     }
 }
@@ -198,10 +227,16 @@ impl Codegen for Object<'_> {
         let name = self.name.to_pascal_case();
         let methods = methods
             .iter()
-            .map(|method| method.codegen())
+            .map(|method| {
+                Method {
+                    self_: self,
+                    def: method,
+                }
+                .codegen()
+            })
             .collect::<Vec<String>>()
             .join("\n");
-        let sync = if no_autolock.unwrap_or_default() {
+        let thread_safety = if no_autolock.unwrap_or_default() {
             format!("unsafe impl !Send for {name} {{}}\nunsafe impl !Sync for {name} {{}}")
         } else {
             format!("unsafe impl Send for {name} {{}}\nunsafe impl Sync for {name} {{}}")
@@ -210,12 +245,27 @@ impl Codegen for Object<'_> {
             r#"
 pub struct {name};
 
-{sync}
+impl Clone for {name} {{
+    fn clone(&self) -> Self {{
+        unsafe {{
+            wgpu{name}AddRef(std::ptr::from_ref(self))
+        }}
+    }}
+}}
+
+impl Drop for {name} {{
+    fn drop(&mut self) {{
+        unsafe {{
+            wgpu{name}Release(std::ptr::from_ref(self))
+        }}
+    }}
+}}
+
+{thread_safety}
 
 impl {name} {{
     {methods}
-}}
-"#
+}}"#
         )
     }
 }
@@ -252,3 +302,34 @@ pub struct {name} {{
         )
     }
 }
+
+/*
+struct Bitmask<'a> {
+    name: &'a str,
+    def: &'a BitmaskDef,
+}
+
+impl Codegen for Bitmask<'_> {
+    fn codegen(&self) -> String {
+        let BitmaskDef { tags, values, .. } = &self.def;
+        let name = self.name.to_pascal_case();
+        let fields = members
+            .iter()
+            .map(|field| field.codegen())
+            .collect::<Vec<String>>()
+            .join("\n");
+        let comment = comment
+            .as_ref()
+            .map(|comment| format!("/// {}", comment))
+            .unwrap_or_default();
+        format!(
+            r#"
+{comment}
+pub struct {name} {{
+    {fields}
+}}"#
+        )
+    }
+}
+
+*/

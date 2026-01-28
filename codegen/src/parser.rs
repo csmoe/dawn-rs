@@ -483,7 +483,7 @@ pub struct ObjectDef {
     #[serde(default)]
     pub tags: Vec<String>,
 
-    pub methods: Vec<Method>,
+    pub methods: Vec<MethodDef>,
 
     #[serde(rename = "no autolock")]
     pub no_autolock: Option<bool>,
@@ -570,7 +570,7 @@ pub struct CallbackInfoDef {
 
 /// A method on an object
 #[derive(Debug, Clone, Deserialize)]
-pub struct Method {
+pub struct MethodDef {
     pub name: String,
 
     #[serde(default)]
@@ -587,7 +587,7 @@ pub struct Method {
     pub extensible: Option<ExtensibleType>,
 }
 
-impl Method {
+impl MethodDef {
     /// Get the return type
     pub fn returns(&self) -> Option<&ReturnType> {
         self.returns.as_ref()
