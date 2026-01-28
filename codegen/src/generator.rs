@@ -42,7 +42,7 @@ impl DawnApi {
             .unwrap_or_default();
         let version = env!("CARGO_PKG_VERSION");
 
-        let source = syn::parse_file(&format!(
+        let content = format!(
             r#"
 {comment}
 {doc}
@@ -55,8 +55,9 @@ impl DawnApi {
 
 {functions}
 "#
-        ))
-        .unwrap();
+        );
+        //content
+        let source = syn::parse_file(&content).unwrap();
         prettyplease::unparse(&source)
     }
 }
@@ -82,9 +83,12 @@ impl Codegen for Function<'_> {
             .unwrap_or_default();
         let args = args
             .iter()
-            .map(|arg| arg.codegen())
+            .map(|arg| {
+                let (_, tys, _) = arg.codegen();
+                tys
+            })
             .collect::<Vec<_>>()
-            .join("");
+            .join(",");
 
         format!(
             r#"
@@ -119,8 +123,8 @@ impl Codegen for Option<ReturnType> {
     }
 }
 
-impl Codegen for RecordMember {
-    fn codegen(&self) -> String {
+impl RecordMember {
+    fn codegen(&self) -> (String, String, String) {
         let RecordMember {
             name,
             member_type,
@@ -133,15 +137,61 @@ impl Codegen for RecordMember {
             no_default,
             array_element_optional,
         } = &self;
-        let name = if name.to_lowercase() == "type" {
+        let arg_name = if name.to_lowercase() == "type" {
             "r#type".to_string()
         } else {
             name.to_snake_case()
         };
-        let ty = member_type.to_pascal_case();
-        let annotation = annotation.codegen();
 
-        format!("{name}: {annotation} {ty},")
+        let mut arg_ty = match member_type.as_str() {
+            "long" => "i64".to_string(),
+            "uint16_t" => "u16".to_string(),
+            "int16_t" => "i16".to_string(),
+            "uint32_t" | "uint" => "u32".to_string(),
+            "int32_t" | "int" => "i32".to_string(),
+            "uint64_t" => "u64".to_string(),
+            "int64_t" => "i64".to_string(),
+            "bool" => "bool".to_string(),
+            "float" => "f32".to_string(),
+            "double" => "f64".to_string(),
+            "size_t" => "usize".to_string(),
+            _ => member_type.to_pascal_case(),
+        };
+
+        if *optional {
+            arg_ty = format!("Option<{arg_ty}>");
+        }
+        let mut default_code = "".to_string();
+        let mut arg_stmt = "".to_string();
+        if !annotation.is_value() {
+            if no_default.unwrap_or_default() {
+                arg_ty = if annotation.is_const_ptr() {
+                    format!("&{arg_ty}")
+                } else {
+                    format!("&mut {arg_ty}")
+                }
+                .to_string();
+            } else {
+                default_code = {
+                    let default = match default {
+                        Some(v) => v.to_string(),
+                        None => {
+                            if annotation.is_const_ptr() {
+                                format!("std::ptr::null()")
+                            } else {
+                                format!("std::ptr::null_mut()")
+                            }
+                        }
+                    };
+                    format!(".unwrap_or_else(|| {default})")
+                }
+            };
+            arg_stmt = format!("let {arg_name} = {arg_name}{default_code};");
+        }
+        //let annotation = annotation.codegen();
+
+        let arg = format!("{arg_name}: {arg_ty},");
+        (arg_name + ",", arg, arg_stmt)
     }
 }
 
@@ -174,11 +224,7 @@ impl Codegen for Method<'_> {
         } = &self.def;
         let name = name.to_snake_case();
         let ret = returns.codegen();
-        let args_types = args
-            .iter()
-            .map(|arg| arg.codegen())
-            .collect::<Vec<String>>()
-            .join("");
+
         let safety = if no_autolock.unwrap_or_default() {
             r#"/// <div class="warning">
 /// This method is not thread-safe
@@ -192,20 +238,33 @@ impl Codegen for Method<'_> {
         let args_names = args
             .iter()
             .map(|arg| {
-                let name = arg.name.to_snake_case();
-                if name == "type" {
-                    "r#type".into()
-                } else {
-                    name
-                }
+                let (name, ..) = arg.codegen();
+                name
             })
             .collect::<Vec<_>>()
-            .join(", ");
+            .join("");
+        let args_types = args
+            .iter()
+            .map(|arg| {
+                let (_, tys, _) = arg.codegen();
+                tys
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        let args_stms = args
+            .iter()
+            .map(|arg| {
+                let (_, _, stmt) = arg.codegen();
+                stmt
+            })
+            .collect::<Vec<String>>()
+            .join("");
         format!(
             r#"{safety}
 pub fn {name}(&self, {args_types}) -> {ret} {{
+{args_stms}
     unsafe {{
-        wgpu{object_name}{c_name}(std::ptr::from_ref(self), {args_names})
+        wgpu{object_name}{c_name}(self, {args_names})
     }}
 }}"#
         )
@@ -248,7 +307,7 @@ pub struct {name};
 impl Clone for {name} {{
     fn clone(&self) -> Self {{
         unsafe {{
-            wgpu{name}AddRef(std::ptr::from_ref(self))
+            wgpu{name}AddRef(self)
         }}
     }}
 }}
@@ -256,7 +315,7 @@ impl Clone for {name} {{
 impl Drop for {name} {{
     fn drop(&mut self) {{
         unsafe {{
-            wgpu{name}Release(std::ptr::from_ref(self))
+            wgpu{name}Release(self)
         }}
     }}
 }}
@@ -286,9 +345,12 @@ impl Codegen for Structure<'_> {
         let name = self.name.to_pascal_case();
         let fields = members
             .iter()
-            .map(|field| field.codegen())
+            .map(|field| {
+                let (_, tys, _) = field.codegen();
+                tys
+            })
             .collect::<Vec<String>>()
-            .join("\n");
+            .join("");
         let comment = comment
             .as_ref()
             .map(|comment| format!("/// {}", comment))
