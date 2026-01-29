@@ -33,7 +33,7 @@
 
 use heck::{ToKebabCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -128,6 +128,19 @@ impl DawnApi {
                 _ => None,
             })
             .collect()
+    }
+
+    pub fn extensions(&self) -> HashMap<&String, HashSet<&String>> {
+        let mut extensions = HashMap::new();
+        for (name, def) in self.structures() {
+            for chain_root in &def.chain_roots {
+                extensions
+                    .entry(chain_root)
+                    .or_insert(HashSet::new())
+                    .insert(name);
+            }
+        }
+        extensions
     }
 
     pub fn objects(&self) -> Vec<(&String, &ObjectDef)> {
@@ -338,10 +351,16 @@ pub struct StructureDef {
 
 /// Extensible type for structures - can be boolean or directional string
 /// Represents the extensible field which can be either a boolean or a direction string
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExtensibleType {
     Direction(String), // "in" or "out"
     Bool(bool),
+}
+
+impl Default for ExtensibleType {
+    fn default() -> Self {
+        ExtensibleType::Bool(false)
+    }
 }
 
 impl<'de> Deserialize<'de> for ExtensibleType {
@@ -385,12 +404,6 @@ pub enum ReturnType {
         #[serde(default)]
         optional: bool,
     },
-}
-
-impl Default for ExtensibleType {
-    fn default() -> Self {
-        ExtensibleType::Bool(false)
-    }
 }
 
 impl LengthValue {

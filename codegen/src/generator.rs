@@ -1,8 +1,10 @@
+use std::collections::{HashMap, HashSet};
+
 use heck::{ToPascalCase, ToSnakeCase};
 
 use crate::{
-    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, FunctionDef, MethodDef, ObjectDef,
-    RecordMember, ReturnType, StructureDef,
+    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, ExtensibleType, FunctionDef, MethodDef,
+    ObjectDef, RecordMember, ReturnType, StructureDef,
 };
 
 pub trait Codegen {
@@ -55,6 +57,7 @@ impl DawnApi {
             .map(|(name, def)| Enum { name, def }.codegen())
             .collect::<Vec<_>>()
             .join("\n");
+        let extensions = codegen_extensions(&self.extensions());
         let DawnApi { comment, doc, .. } = self;
         let comment = comment
             .unwrap_or_default()
@@ -79,6 +82,8 @@ impl DawnApi {
 {enums}
 
 {structs}
+
+{extensions}
 
 {objects}
 
@@ -434,6 +439,7 @@ impl Codegen for Structure<'_> {
             tags,
             members,
             comment,
+            extensible,
             ..
         } = &self.def;
         let name = self.name.to_pascal_case();
@@ -449,12 +455,33 @@ impl Codegen for Structure<'_> {
             .as_ref()
             .map(|comment| format!("/// {}", comment))
             .unwrap_or_default();
+        let (ext_field, extensible) = if *extensible == ExtensibleType::default() {
+            ("".into(), "".into())
+        } else {
+            (
+                format!("extension: Option<{name}Extension>,"),
+                format!(
+                    r#"
+
+impl {name} {{
+    fn extend(&mut self, extension: {name}Extension) {{
+        self.extension = Some(extension);
+    }}
+}}
+"#
+                ),
+            )
+        };
         format!(
             r#"
 {comment}
 pub struct {name} {{
+    {ext_field}
     {fields}
-}}"#
+}}
+
+{extensible}
+"#
         )
     }
 }
@@ -509,7 +536,11 @@ impl Codegen for Enum<'_> {
 
                     chars.into_iter().collect()
                 }
-                format!("{},", swap_first_two(&name).to_pascal_case())
+                format!(
+                    "{} = {},",
+                    swap_first_two(&name).to_pascal_case(),
+                    value.to_string()
+                )
             })
             .collect::<Vec<String>>()
             .join("\n");
@@ -557,4 +588,43 @@ pub struct {name} {{
 }}"#
         )
     }
+}
+
+fn codegen_extensions(extensions: &HashMap<&String, HashSet<&String>>) -> String {
+    let mut ret = String::new();
+    for (name, members) in extensions {
+        let name = name.to_pascal_case();
+        let variants = members
+            .iter()
+            .map(|member| {
+                let member = member.to_pascal_case();
+                format!("{member}({member}),")
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        let s_types = members
+            .iter()
+            .map(|member| {
+                let member = member.to_pascal_case();
+                format!("{member}(_) => SType::{member},")
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        ret.push_str(&format!(
+            r#"
+pub enum {name}Extension {{
+    {variants}
+}}
+
+impl {name}Extension {{
+    pub fn s_type(&self) -> SType {{
+        use {name}Extension::*;
+        match self {{
+          {s_types}
+        }}
+    }}
+}}"#
+        ));
+    }
+    ret
 }
