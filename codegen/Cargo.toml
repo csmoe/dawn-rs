@@ -12,3 +12,4 @@ serde = { version = "1", features = ["derive"] }
 heck = "0.5"
 prettyplease = "0.2"
 syn = { version = "2", default-features = false, features = ["full", "parsing"] }
+bindgen = "0.72"

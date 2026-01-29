@@ -4,9 +4,8 @@
 //!
 //! TODO: download dawn api specs and binaries from https://github.com/google/dawn's releases.
 
-pub mod generator;
-
-mod parser;
+mod generator;
 
 pub use generator::Codegen;
-pub use parser::*;
+pub use generator::codegen;
+pub use generator::parser::*;

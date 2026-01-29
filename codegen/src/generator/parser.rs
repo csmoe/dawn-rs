@@ -357,6 +357,15 @@ pub enum ExtensibleType {
     Bool(bool),
 }
 
+impl ExtensibleType {
+    pub fn extensible(&self) -> bool {
+        match self {
+            ExtensibleType::Direction(_) => true,
+            ExtensibleType::Bool(v) => *v,
+        }
+    }
+}
+
 impl Default for ExtensibleType {
     fn default() -> Self {
         ExtensibleType::Bool(false)
