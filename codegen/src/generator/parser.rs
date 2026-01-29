@@ -746,7 +746,12 @@ impl Name {
     }
 
     pub fn snake_case(&self) -> String {
-        self.canonical_name.to_snake_case()
+        let name = self.canonical_name.to_snake_case();
+        if name == "type" {
+            "r#type".into()
+        } else {
+            name
+        }
     }
 
     pub fn shouty_snake_case(&self) -> String {

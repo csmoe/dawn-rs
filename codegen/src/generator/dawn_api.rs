@@ -1,10 +1,13 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::format,
+};
 
 use heck::{ToPascalCase, ToSnakeCase};
 
 use crate::{
     Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, ExtensibleType, Extension, FunctionDef,
-    MethodDef, ObjectDef, RecordMember, ReturnType, StructureDef,
+    MethodDef, Name, ObjectDef, RecordMember, ReturnType, StructureDef,
 };
 
 pub trait Codegen {
@@ -421,6 +424,21 @@ pub struct {name}(
     {unsafe_marker}
 );
 
+impl std::ops::Deref for {name} {{
+    type Target = sys::WGPU{name};
+
+    fn deref(&self) -> &Self::Target {{
+        &self.0
+    }}
+}}
+impl std::ops::DerefMut for {name} {{
+    type Target = sys::WGPU{name};
+
+    fn deref_mut(&mut self) -> &mut Self::Target {{
+        &mut self.0
+    }}
+}}
+
 {safe}
 
 {features}
@@ -475,11 +493,57 @@ impl Codegen for Structure<'_> {
             })
             .collect::<Vec<String>>()
             .join("");
+        let members_as_new_fn_args_must = members
+            .iter()
+            .take_while(|member| {
+                let no_default = member.no_default.unwrap_or_default();
+                let optional = member.optional;
+                no_default || !optional
+            })
+            .map(|field| {
+                let (_, tys, _) = field.codegen();
+                tys
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        let members_as_new_fields_must = members
+            .iter()
+            .take_while(|member| {
+                let no_default = member.no_default.unwrap_or_default();
+                let optional = member.optional;
+                no_default || !optional
+            })
+            .map(|field| {
+                let (field, _, _) = field.codegen();
+                field
+            })
+            .collect::<Vec<String>>()
+            .join("");
+        let members_as_new_fields_optional = members
+            .iter()
+            .skip_while(|member| {
+                let no_default = member.no_default.unwrap_or_default();
+                let optional = member.optional;
+                no_default || !optional
+            })
+            .map(|field| {
+                format!(
+                    "{}: {},",
+                    Name::new(&field.name).snake_case(),
+                    match &field.default {
+                        Some(v) => v.to_string(),
+                        None => "std::ptr::null_mut()".into(),
+                    }
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("");
         let comment = comment
             .as_ref()
             .map(|comment| format!("/// {}", comment))
             .unwrap_or_default();
         let features = codegen_features(tags);
+
         let (ext_field, extensible) = if !(extensible.extensible()
             && self
                 .extensions
@@ -504,6 +568,23 @@ impl {name} {{
                 ),
             )
         };
+
+        let ext_ = if !ext_field.is_empty() {
+            format!("extension: None,")
+        } else {
+            "".into()
+        };
+        let new_fn = format!(
+            r#"
+pub fn new({members_as_new_fn_args_must}) -> Self {{
+    Self {{
+        {members_as_new_fields_must}
+        {members_as_new_fields_optional}
+        {ext_}
+    }}
+}}
+"#,
+        );
         format!(
             r#"
 {comment}
@@ -511,6 +592,11 @@ impl {name} {{
 pub struct {name} {{
     {ext_field}
     {fields}
+}}
+
+{features}
+impl {name} {{
+    {new_fn}
 }}
 
 {extensible}
