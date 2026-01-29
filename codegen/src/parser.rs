@@ -265,7 +265,7 @@ pub struct EnumDef {
     #[serde(default)]
     pub tags: Vec<String>,
 
-    pub values: Vec<EnumValue>,
+    pub values: Vec<EnumValueDef>,
 
     #[serde(rename = "emscripten_no_enum_table")]
     pub emscripten_no_enum_table: Option<bool>,
@@ -280,7 +280,7 @@ pub struct BitmaskDef {
     #[serde(default)]
     pub tags: Vec<String>,
 
-    pub values: Vec<EnumValue>,
+    pub values: Vec<EnumValueDef>,
 
     #[serde(rename = "emscripten_no_enum_table")]
     pub emscripten_no_enum_table: Option<bool>,
@@ -288,7 +288,7 @@ pub struct BitmaskDef {
 
 /// An enum or bitmask value
 #[derive(Debug, Clone, Deserialize)]
-pub struct EnumValue {
+pub struct EnumValueDef {
     pub name: String,
     pub value: serde_json::Value, // Can be number or string
 
