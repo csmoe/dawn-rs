@@ -22,11 +22,12 @@ license.workspace = true
 categories.workspace = true
 
 [features]
-default = ["native"]
+default = []
 dawn = []
 emscripten = []
 native = []
 compat = []
+art = []
 
 [dependencies]
 

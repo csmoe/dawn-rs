@@ -3,8 +3,8 @@ use std::collections::{HashMap, HashSet};
 use heck::{ToPascalCase, ToSnakeCase};
 
 use crate::{
-    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, ExtensibleType, FunctionDef, MethodDef,
-    ObjectDef, RecordMember, ReturnType, StructureDef,
+    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, ExtensibleType, Extension, FunctionDef,
+    MethodDef, ObjectDef, RecordMember, ReturnType, StructureDef,
 };
 
 pub trait Codegen {
@@ -90,11 +90,11 @@ impl DawnApi {
 
 {structs}
 
-{extensions}
-
 {objects}
 
 {functions}
+
+{extensions}
 "#
         );
         //content
@@ -361,10 +361,10 @@ impl Codegen for Method<'_> {
         format!(
             r#"{safety}
 {features}
-pub fn {name}(&self, {args_types}) -> {ret} {{
+pub fn {name}(&mut self, {args_types}) -> {ret} {{
 {args_stms}
     let inner = unsafe {{
-        sys::wgpu{object_name}{c_name}(self, {args_names})
+        sys::wgpu{object_name}{c_name}(std::ptr::from_mut(self).cast(), {args_names})
     }};
     {wrap}
 }}"#
@@ -430,7 +430,7 @@ pub struct {name}(
 impl Clone for {name} {{
     fn clone(&self) -> Self {{
         unsafe {{
-            sys::wgpu{name}AddRef(self);
+            sys::wgpu{name}AddRef(std::ptr::from_ref(self).cast_mut().cast());
             Self(self.0, {marker_init})
         }}
     }}
@@ -440,7 +440,7 @@ impl Clone for {name} {{
 impl Drop for {name} {{
     fn drop(&mut self) {{
         unsafe {{
-            sys::wgpu{name}Release(self)
+            sys::wgpu{name}Release(std::ptr::from_mut(self).cast())
         }}
     }}
 }}
@@ -457,7 +457,7 @@ impl {name} {{
 struct Structure<'a> {
     name: &'a str,
     def: &'a StructureDef,
-    extensions: &'a HashMap<&'a String, HashSet<&'a String>>,
+    extensions: &'a HashMap<&'a String, HashSet<Extension<'a>>>,
 }
 
 impl Codegen for Structure<'_> {
@@ -502,6 +502,7 @@ impl {name} {{
         self.extension = Some(extension);
     }}
 }}
+
 "#
                 ),
             )
@@ -540,7 +541,11 @@ impl Codegen for Bitmask<'_> {
                 format!(
                     "{features} {} = {},",
                     name.to_pascal_case(),
-                    value.to_string()
+                    if let Some(n) = value.as_number() {
+                        format_enum_value(n.as_u64().unwrap() as _, tags)
+                    } else {
+                        value.to_string()
+                    }
                 )
             })
             .collect::<Vec<String>>()
@@ -586,7 +591,11 @@ impl Codegen for Enum<'_> {
                 format!(
                     "{features} {} = {},",
                     swap_first_two(&name).to_pascal_case(),
-                    value.to_string()
+                    if let Some(n) = value.as_number() {
+                        format_enum_value(n.as_u64().unwrap() as _, tags)
+                    } else {
+                        value.to_string()
+                    }
                 )
             })
             .collect::<Vec<String>>()
@@ -603,32 +612,35 @@ pub enum {name} {{
     }
 }
 
-fn codegen_extensions(extensions: &HashMap<&String, HashSet<&String>>) -> String {
+fn codegen_extensions(extensions: &HashMap<&String, HashSet<Extension<'_>>>) -> String {
     let mut ret = String::new();
     for (name, members) in extensions {
         let name = name.to_pascal_case();
         let variants = members
             .iter()
-            .map(|member| {
-                let member = member.to_pascal_case();
-                format!("{member}({member}),")
+            .map(|ext| {
+                let features = codegen_features(ext.tags);
+                let member = ext.ty.to_pascal_case();
+                format!("{features} {member}({member}),")
             })
             .collect::<Vec<String>>()
             .join("");
         let s_types = members
             .iter()
-            .map(|member| {
-                let member = member.to_pascal_case();
-                format!("{member}(_) => SType::{member},")
+            .map(|ext| {
+                let features = codegen_features(ext.tags);
+                let member = ext.ty.to_pascal_case();
+                format!("{features} Self::{member}(_) => SType::{member},")
             })
             .collect::<Vec<String>>()
             .join("");
         let from = members
             .iter()
-            .map(|member| {
-                let member = member.to_pascal_case();
+            .map(|ext| {
+                let member = ext.ty.to_pascal_case();
+                let features = codegen_features(ext.tags);
                 format!(
-                    r#"
+                    r#"{features}
 impl std::convert::From<{member}> for {name}Extension {{
     fn from(value: {member}) -> Self {{
         Self::{member}(value)
@@ -640,15 +652,17 @@ impl std::convert::From<{member}> for {name}Extension {{
             .join("");
         ret.push_str(&format!(
             r#"
+#[non_exhaustive]
 pub enum {name}Extension {{
     {variants}
 }}
 
 impl {name}Extension {{
+    #[allow(unreachable_patterns)]
     pub fn s_type(&self) -> SType {{
-        use {name}Extension::*;
         match self {{
           {s_types}
+          _ => unreachable!()
         }}
     }}
 }}
@@ -673,4 +687,34 @@ fn codegen_features(tags: &Vec<String>) -> String {
         return format!("#[cfg({features})]");
     }
     format!(r#"#[cfg(all({features}))]"#)
+}
+
+fn apply_tags(tags: &Vec<String>) -> u32 {
+    let has_dawn = tags.iter().any(|t| t.as_str() == "dawn");
+    let has_emscripten = tags.iter().any(|t| t.as_str() == "emscripten");
+    let has_compat = tags.iter().any(|t| t.as_str() == "compat");
+    let has_native = tags.iter().any(|t| t.as_str() == "native");
+
+    let has_value_impacting = has_dawn || has_emscripten || has_compat;
+
+    if has_dawn {
+        0x0005_0000
+    } else if has_emscripten {
+        0x0004_0000
+    } else if has_compat {
+        0x0002_0000
+    } else if has_native && !has_value_impacting {
+        0x0001_0000
+    } else {
+        0
+    }
+}
+
+fn compute_enum_value(base_value: u32, tags: &Vec<String>) -> u32 {
+    let prefix = apply_tags(tags);
+    prefix + base_value
+}
+
+fn format_enum_value(base_value: u32, tags: &Vec<String>) -> String {
+    format!("0x{:08X}", compute_enum_value(base_value, tags))
 }

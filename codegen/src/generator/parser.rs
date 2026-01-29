@@ -35,6 +35,7 @@ use heck::{ToKebabCase, ToShoutySnakeCase, ToSnakeCase, ToUpperCamelCase};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::Path;
 
 /// The root structure of dawn.json
@@ -130,14 +131,17 @@ impl DawnApi {
             .collect()
     }
 
-    pub fn extensions(&self) -> HashMap<&String, HashSet<&String>> {
+    pub fn extensions(&self) -> HashMap<&String, HashSet<Extension<'_>>> {
         let mut extensions = HashMap::new();
         for (name, def) in self.structures() {
             for chain_root in &def.chain_roots {
                 extensions
                     .entry(chain_root)
                     .or_insert(HashSet::new())
-                    .insert(name);
+                    .insert(Extension {
+                        ty: name,
+                        tags: &def.tags,
+                    });
             }
         }
         extensions
@@ -271,6 +275,23 @@ pub struct TypedefDef {
     #[serde(rename = "type")]
     pub target_type: String,
 }
+
+pub struct Extension<'a> {
+    pub ty: &'a String,
+    pub tags: &'a Vec<String>,
+}
+
+impl PartialEq for Extension<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.ty == other.ty
+    }
+}
+impl Hash for Extension<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ty.hash(state);
+    }
+}
+impl Eq for Extension<'_> {}
 
 /// Enum definition
 #[derive(Debug, Clone, Deserialize)]
