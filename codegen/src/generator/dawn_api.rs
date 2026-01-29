@@ -97,10 +97,11 @@ impl DawnApi {
 {extensions}
 "#
         );
-        //content
 
-        let source = syn::parse_file(&content).unwrap();
-        prettyplease::unparse(&source)
+        match syn::parse_file(&content) {
+            Ok(source) => prettyplease::unparse(&source),
+            Err(_) => content,
+        }
     }
 }
 
@@ -139,7 +140,7 @@ impl Codegen for Function<'_> {
                 tys
             })
             .collect::<Vec<_>>()
-            .join(",");
+            .join("");
         let args_names = args
             .iter()
             .map(|arg| {
@@ -147,19 +148,9 @@ impl Codegen for Function<'_> {
                 name
             })
             .collect::<Vec<_>>()
-            .join(", ");
+            .join("");
 
-        let wrap = if ret_is_unsafe {
-            format!("{ret}(inner, std::marker::PhantomData)")
-        } else if let Some(returns) = returns {
-            if returns.is_optional() {
-                format!("Some({}(inner))", returns.get_type().to_pascal_case())
-            } else {
-                format!("{}(inner)", returns.get_type().to_pascal_case())
-            }
-        } else {
-            "".into()
-        };
+        let wrap = wrap_return(returns, &ret, ret_is_unsafe);
         let features = codegen_features(tags);
         format!(
             r#"
@@ -196,6 +187,22 @@ impl Codegen for Option<ReturnType> {
             }
             None => "()".to_string(),
         }
+    }
+}
+
+fn wrap_return(returns: &Option<ReturnType>, ret: &str, ret_is_unsafe: bool) -> String {
+    if ret_is_unsafe {
+        format!("{ret}(inner, std::marker::PhantomData)")
+    } else if let Some(returns) = returns {
+        let optional = returns.is_optional();
+        let ty = returns.get_type().to_pascal_case();
+        if optional {
+            format!("Some({ty}(inner))")
+        } else {
+            format!("{ty}(inner)")
+        }
+    } else {
+        String::new()
     }
 }
 
@@ -346,17 +353,7 @@ impl Codegen for Method<'_> {
             .collect::<Vec<String>>()
             .join("");
 
-        let wrap = if ret_is_unsafe {
-            format!("{ret}(inner, std::marker::PhantomData)")
-        } else if let Some(returns) = returns {
-            if returns.is_optional() {
-                format!("Some({}(inner))", returns.get_type().to_pascal_case())
-            } else {
-                format!("{}(inner)", returns.get_type().to_pascal_case())
-            }
-        } else {
-            "".into()
-        };
+        let wrap = wrap_return(returns, &ret, ret_is_unsafe);
         let features = codegen_features(tags);
         format!(
             r#"{safety}
