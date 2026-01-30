@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use dawn_codegen::{
-    Annotation, DawnJsonParser, Definition, ExtensibleType, LengthValue, ReturnType, codegen,
+    Annotation, DawnJsonParser, Definition, ExtensibleType, LengthValue, ReturnType, Target,
+    codegen,
 };
 
 fn main() {
@@ -13,8 +14,18 @@ fn main() {
         .unwrap()
         .codegen();
     std::fs::write(format!("{}/dawn.rs", outdir), ret).unwrap();
-    let output = format!("{}/dawn-capi.rs", outdir);
-    codegen(&target_dir.join("dawn"), &PathBuf::from(output), &target_os);
+    codegen(
+        &target_dir.join("dawn"),
+        &PathBuf::from(format!("{}/dawn-capi.rs", outdir)),
+        &target_os,
+        Target::Dawn,
+    );
+    codegen(
+        &target_dir.join("dawn"),
+        &PathBuf::from(format!("{}/dawn-wire-capi.rs", outdir)),
+        &target_os,
+        Target::DawnWire,
+    );
 
     build_rs::output::rustc_link_search(target_dir.join("dawn").join("lib"));
     build_rs::output::rustc_link_lib_kind("static", "webgpu_dawn");

@@ -1,14 +1,9 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::format,
-};
-
-use heck::{ToPascalCase, ToSnakeCase};
-
 use crate::{
-    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, ExtensibleType, Extension, FunctionDef,
-    MethodDef, Name, ObjectDef, RecordMember, ReturnType, StructureDef,
+    Annotation, BitmaskDef, DawnApi, EnumDef, EnumValueDef, Extension, FunctionDef, MethodDef,
+    Name, ObjectDef, RecordMember, ReturnType, StructureDef,
 };
+use heck::{ToPascalCase, ToSnakeCase};
+use std::collections::{HashMap, HashSet};
 
 pub trait Codegen {
     fn codegen(&self) -> String;
@@ -223,11 +218,7 @@ impl RecordMember {
             no_default,
             array_element_optional,
         } = &self;
-        let arg_name = if name.to_lowercase() == "type" {
-            "r#type".to_string()
-        } else {
-            name.to_snake_case()
-        };
+        let arg_name = Name::new(name).snake_case();
 
         let mut arg_ty = match member_type.as_str() {
             "long" => "i64".to_string(),
@@ -310,7 +301,7 @@ impl Codegen for Method<'_> {
             no_autolock,
             extensible,
         } = &self.def;
-        let name = name.to_snake_case();
+        let name = Name::new(name).snake_case();
 
         let ret_is_unsafe = self.api.objects().iter().any(|(name, obj)| {
             returns

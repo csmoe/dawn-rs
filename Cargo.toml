@@ -4,12 +4,11 @@ edition = "2024"
 categories = [ "rendering", "gui" ]
 repository = "https://github.com/csmoe/dawn-rs"
 license = "BSD-3-Clause"
-build = "build.rs"
 
 [workspace]
 members = [
     "codegen"
-]
+, "examples/dawn-capi"]
 
 [workspace.dependencies]
 
@@ -20,6 +19,7 @@ edition.workspace = true
 description = "Rust bindings for google/dawn"
 license.workspace = true
 categories.workspace = true
+build = "build.rs"
 
 [features]
 default = []
@@ -28,9 +28,13 @@ emscripten = []
 native = []
 compat = []
 art = []
+dawn_wire = []
 
 [dependencies]
 
 [build-dependencies]
 dawn-codegen = { path = "codegen" }
 build-rs = "0.3"
+
+[dev-dependencies]
+winit = "0.30.12"

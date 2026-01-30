@@ -7,5 +7,5 @@
 mod generator;
 
 pub use generator::Codegen;
-pub use generator::codegen;
 pub use generator::parser::*;
+pub use generator::{Target, codegen};
