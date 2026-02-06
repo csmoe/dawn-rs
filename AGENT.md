@@ -4,6 +4,25 @@
 
 This document defines a multi-agent system for designing and implementing a Rust-based code generator for the Dawn graphics API. The generator produces idiomatic Rust wrappers that mirror wgpu's API style while calling through `src/ffi.rs` bindings.
 
+## Project-Specific Instructions (From User)
+
+- Always iterate with `cargo check` when changing generator logic or outputs.
+- Use the `heck` crate for all name conversions, including enum variants and field names. Do not emit `allow(non_camel_case_types)`.
+- The generator must not accept an `ffi_path` parameter or read `ffi.rs`. FFI is only for type conversions and function calls.
+- Follow `codegen.md` default handling: `null`/`nullptr` defaults map to `Option::None`, enum/bitmask defaults map by name.
+- Callback info fields: determine `nextInChain` and callback `userdata` based on `dawn.json` extensible/chain metadata.
+- Free-members: follow `api_cpp.h` and only generate free calls for out-structures that contain pointers/arrays/string views needing freeing.
+- Codegen should accept external output path and Dawn path (Dawn bin + api header) for FFI generation; use as `build-dependency`.
+- The generator should produce strings and run `prettyplease`. If `syn`/`prettyplease` fails, return the raw string for debugging.
+- Generated code should not be committed to the repo; write under `OUT_DIR` (for example `OUT_DIR/generated`).
+- The example directory is `examples/` and must use generated APIs only (no direct `ffi` usage).
+- `map_async` and other future-returning methods must return `Future::from_ffi(...)` (no `Future::new()` placeholder).
+- Do not generate getters/setters; struct fields are `pub` (except `extensions`).
+- FFI generation is handled by `build.rs`; `ffi.rs` is generated under the output directory.
+- Dawn artifacts live under `~/Downloads/dawn-debug` (include + bin). Reduce environment variable usage; on macOS, find SDK via `xcrun`.
+- Dawn tags live in `dawn.json` and must map to Rust features with `cfg` gating.
+- Use `c_prefix` from `dawn.json` to drive the emitter.
+
 ---
 
 ## Agent Definitions
@@ -19,11 +38,12 @@ This document defines a multi-agent system for designing and implementing a Rust
 - Define the data flow: `dawn.json` â†’ Parser â†’ API Model â†’ Visitor â†’ Rust Source
 
 **Inputs:**
-- /Users/mac/repo/dawn - google's dawn repo
-- `dawn.json` - API specification
+- https://github.com/google/dawn - google's dawn repo
+  - important files
+    - `codegen.md` - Codegen design document
+    - `dawn.json` - API specification
+    - `api_cpp.h` - C++ wrapper reference
 - `src/parser.rs` - Existing parser implementation
-- `api_cpp.h` - C++ wrapper reference
-- `codegen.md` - Codegen design document
 
 **Outputs:**
 - Architecture diagram/description

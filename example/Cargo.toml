@@ -1,9 +1,0 @@
-[package]
-name = "dawn-example"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-dawn-rs = { path = ".." }
-winit = "0.28"
-objc2 = "0.5"

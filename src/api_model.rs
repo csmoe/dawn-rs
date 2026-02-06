@@ -5,6 +5,7 @@ use crate::parser::{
 
 #[derive(Debug, Clone)]
 pub struct ApiModel {
+    pub c_prefix: String,
     pub enums: Vec<EnumModel>,
     pub bitmasks: Vec<BitmaskModel>,
     pub structures: Vec<StructureModel>,
@@ -181,7 +182,14 @@ impl ApiModel {
         typedefs.sort_by(|a, b| a.name.cmp(&b.name));
         function_pointers.sort_by(|a, b| a.name.cmp(&b.name));
 
+        let c_prefix = api
+            .metadata
+            .c_prefix
+            .clone()
+            .unwrap_or_else(|| api.metadata.namespace.to_uppercase());
+
         Self {
+            c_prefix,
             enums,
             bitmasks,
             structures,

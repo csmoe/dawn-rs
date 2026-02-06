@@ -9,29 +9,58 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+pub struct GeneratedFiles {
+    pub enums: String,
+    pub structs: String,
+    pub extensions: String,
+    pub objects: String,
+    pub callbacks: String,
+    pub functions: String,
+    pub constants: String,
+    pub mod_rs: String,
+}
+
+impl GeneratedFiles {
+    pub fn write_to_dir(&self, out_dir: &Path) -> std::io::Result<()> {
+        fs::create_dir_all(out_dir)?;
+        fs::write(out_dir.join("enums.rs"), &self.enums)?;
+        fs::write(out_dir.join("structs.rs"), &self.structs)?;
+        fs::write(out_dir.join("extensions.rs"), &self.extensions)?;
+        fs::write(out_dir.join("objects.rs"), &self.objects)?;
+        fs::write(out_dir.join("callbacks.rs"), &self.callbacks)?;
+        fs::write(out_dir.join("functions.rs"), &self.functions)?;
+        fs::write(out_dir.join("constants.rs"), &self.constants)?;
+        fs::write(out_dir.join("mod.rs"), &self.mod_rs)?;
+        Ok(())
+    }
+}
+
+pub fn generate_strings(model: &ApiModel) -> GeneratedFiles {
+    let c_prefix = model.c_prefix.clone();
+    let enums = format_rust_source(&emit_enums(model, &c_prefix));
+    let structs = format_rust_source(&emit_structs(model, &c_prefix));
+    let extensions = format_rust_source(&emit_extensions(model, &c_prefix));
+    let objects = format_rust_source(&emit_objects(model, &c_prefix));
+    let callbacks = format_rust_source(&emit_callbacks(model, &c_prefix));
+    let functions = format_rust_source(&emit_functions(model, &c_prefix));
+    let constants = format_rust_source(&emit_constants(model));
+    let mod_rs = format_rust_source(&emit_mod_rs());
+
+    GeneratedFiles {
+        enums,
+        structs,
+        extensions,
+        objects,
+        callbacks,
+        functions,
+        constants,
+        mod_rs,
+    }
+}
+
 pub fn generate_to_dir(model: &ApiModel, out_dir: &Path) -> std::io::Result<()> {
-    fs::create_dir_all(out_dir)?;
-
-    let enums = emit_enums(model);
-    let structs = emit_structs(model);
-    let extensions = emit_extensions(model);
-    let objects = emit_objects(model);
-    let callbacks = emit_callbacks(model);
-    let functions = emit_functions(model);
-    let constants = emit_constants(model);
-
-    fs::write(out_dir.join("enums.rs"), enums)?;
-    fs::write(out_dir.join("structs.rs"), structs)?;
-    fs::write(out_dir.join("extensions.rs"), extensions)?;
-    fs::write(out_dir.join("objects.rs"), objects)?;
-    fs::write(out_dir.join("callbacks.rs"), callbacks)?;
-    fs::write(out_dir.join("functions.rs"), functions)?;
-    fs::write(out_dir.join("constants.rs"), constants)?;
-
-    let mod_rs = emit_mod_rs();
-    fs::write(out_dir.join("mod.rs"), mod_rs)?;
-
-    Ok(())
+    let files = generate_strings(model);
+    files.write_to_dir(out_dir)
 }
 
 fn emit_mod_rs() -> String {
@@ -54,10 +83,19 @@ pub use functions::*;
 pub use constants::*;
 "#;
 
-    content.to_string()
+    content
+        .replacen("#![allow(dead_code, unused_imports)]", "#[allow(dead_code, unused_imports)]", 1)
+        .to_string()
 }
 
-fn emit_enums(model: &ApiModel) -> String {
+fn format_rust_source(source: &str) -> String {
+    match syn::parse_file(source) {
+        Ok(file) => prettyplease::unparse(&file),
+        Err(_) => source.to_string(),
+    }
+}
+
+fn emit_enums(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
     out.push_str(
         r#"#![allow(dead_code, unused_imports)]
@@ -69,75 +107,77 @@ use bitflags::bitflags;
     );
 
     for e in &model.enums {
-        out.push_str(&emit_enum(e));
+        out.push_str(&emit_enum(e, c_prefix));
     }
     for b in &model.bitmasks {
-        out.push_str(&emit_bitmask(b));
+        out.push_str(&emit_bitmask(b, c_prefix));
     }
 
     out
 }
 
-fn emit_structs(model: &ApiModel) -> String {
+fn emit_structs(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
-    out.push_str(
+    out.push_str(&format!(
         r#"#![allow(dead_code, unused_imports)]
 
 use crate::ffi;
 use super::*;
 use std::ffi::CStr;
 
-fn string_view_to_string(view: ffi::WGPUStringView) -> String {
-    if view.data.is_null() || view.length == 0 {
+fn string_view_to_string(view: ffi::{prefix}StringView) -> String {{
+    if view.data.is_null() || view.length == 0 {{
         return String::new();
-    }
+    }}
     let data = view.data.cast::<u8>();
-    let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
+    let slice = unsafe {{ std::slice::from_raw_parts(data, view.length) }};
     String::from_utf8_lossy(slice).into_owned()
-}
+}}
 
 "#,
-    );
+        prefix = c_prefix
+    ));
 
     let index = TypeIndex::new(model);
     for s in &model.structures {
-        out.push_str(&emit_struct(s, &index));
+        out.push_str(&emit_struct(s, &index, c_prefix));
     }
 
     out
 }
 
-fn emit_extensions(model: &ApiModel) -> String {
+fn emit_extensions(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
-    out.push_str(
+    out.push_str(&format!(
         r#"#![allow(dead_code, unused_imports)]
 
 use crate::ffi;
 use super::*;
 
-pub struct ChainedStructStorage {
-    entries: Vec<Box<ffi::WGPUChainedStruct>>,
-}
+pub struct ChainedStructStorage {{
+    entries: Vec<Box<ffi::{prefix}ChainedStruct>>,
+}}
 
-impl ChainedStructStorage {
-    pub fn new() -> Self {
-        Self { entries: Vec::new() }
-    }
+impl ChainedStructStorage {{
+    pub fn new() -> Self {{
+        Self {{ entries: Vec::new() }}
+    }}
 
     pub fn push(
         &mut self,
-        s_type: ffi::WGPUSType,
-        next: *mut ffi::WGPUChainedStruct,
-    ) -> *mut ffi::WGPUChainedStruct {
-        let mut node = Box::new(ffi::WGPUChainedStruct { next, sType: s_type });
+        s_type: ffi::{prefix}SType,
+        next: *mut ffi::{prefix}ChainedStruct,
+    ) -> *mut ffi::{prefix}ChainedStruct {{
+        let mut node = Box::new(ffi::{prefix}ChainedStruct {{ next, sType: s_type }});
         let ptr = std::ptr::from_mut(node.as_mut());
         self.entries.push(node);
         ptr
-    }
-}
+    }}
+}}
 
 "#,
-    );
+        prefix = c_prefix
+    ));
 
     let mut roots: HashMap<String, Vec<&StructureModel>> = HashMap::new();
     let mut extensible_roots: Vec<String> = Vec::new();
@@ -154,7 +194,7 @@ impl ChainedStructStorage {
     root_names.sort();
     root_names.dedup();
 
-    let stype_map = build_stype_map(model);
+    let stype_map = build_stype_map(model, c_prefix);
 
     for root in root_names {
         let variants = roots.get(&root).cloned().unwrap_or_default();
@@ -174,8 +214,8 @@ impl ChainedStructStorage {
     pub fn push_chain(
         &self,
         storage: &mut ChainedStructStorage,
-        next: *mut ffi::WGPUChainedStruct,
-    ) -> *mut ffi::WGPUChainedStruct {{
+        next: *mut ffi::{prefix}ChainedStruct,
+    ) -> *mut ffi::{prefix}ChainedStruct {{
         match self {{
 {push_arms}
         }}
@@ -184,6 +224,7 @@ impl ChainedStructStorage {
 
 "#,
                 enum_name = enum_name,
+                prefix = c_prefix,
                 push_arms = {
                     let mut arms = Vec::new();
                     for s in variants.iter() {
@@ -199,10 +240,11 @@ impl ChainedStructStorage {
                                 )
                             });
                         arms.push(format!(
-                            r#"            {enum_name}::{ty}(_) => storage.push({stype_const} as ffi::WGPUSType, next),"#,
+                            r#"            {enum_name}::{ty}(_) => storage.push({stype_const} as ffi::{prefix}SType, next),"#,
                             enum_name = enum_name,
                             ty = ty,
-                            stype_const = stype_const
+                            stype_const = stype_const,
+                            prefix = c_prefix
                         ));
                     }
                     arms.join("\n")
@@ -214,8 +256,8 @@ impl ChainedStructStorage {
     pub fn push_chain(
         &self,
         storage: &mut ChainedStructStorage,
-        next: *mut ffi::WGPUChainedStruct,
-    ) -> *mut ffi::WGPUChainedStruct {{
+        next: *mut ffi::{prefix}ChainedStruct,
+    ) -> *mut ffi::{prefix}ChainedStruct {{
         let _ = self;
         let _ = storage;
         next
@@ -223,7 +265,8 @@ impl ChainedStructStorage {
 }}
 
 "#,
-                enum_name = enum_name
+                enum_name = enum_name,
+                prefix = c_prefix
             )
         };
 
@@ -244,7 +287,7 @@ pub enum {enum_name} {{
     out
 }
 
-fn emit_objects(model: &ApiModel) -> String {
+fn emit_objects(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
     out.push_str(
         r#"#![allow(dead_code, unused_imports)]
@@ -258,31 +301,38 @@ use super::*;
     let constructors = build_constructor_map(model);
     let index = TypeIndex::new(model);
     for o in &model.objects {
-        out.push_str(&emit_object(o, constructors.get(&o.name), model, &index));
+        out.push_str(&emit_object(
+            o,
+            constructors.get(&o.name),
+            model,
+            &index,
+            c_prefix,
+        ));
     }
 
     out
 }
 
-fn emit_callbacks(model: &ApiModel) -> String {
+fn emit_callbacks(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
-    out.push_str(
+    out.push_str(&format!(
         r#"#![allow(dead_code, unused_imports)]
 
 use crate::ffi;
 use super::*;
 
-fn string_view_to_string(view: ffi::WGPUStringView) -> String {
-    if view.data.is_null() || view.length == 0 {
+fn string_view_to_string(view: ffi::{prefix}StringView) -> String {{
+    if view.data.is_null() || view.length == 0 {{
         return String::new();
-    }
+    }}
     let data = view.data.cast::<u8>();
-    let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
+    let slice = unsafe {{ std::slice::from_raw_parts(data, view.length) }};
     String::from_utf8_lossy(slice).into_owned()
-}
+}}
 
 "#,
-    );
+        prefix = c_prefix
+    ));
 
     let index = TypeIndex::new(model);
 
@@ -291,7 +341,7 @@ fn string_view_to_string(view: ffi::WGPUStringView) -> String {
     }
 
     for c in &model.callback_functions {
-        out.push_str(&emit_callback_function(c, &index));
+        out.push_str(&emit_callback_function(c, &index, c_prefix));
     }
 
     for c in &model.callbacks {
@@ -305,7 +355,7 @@ fn string_view_to_string(view: ffi::WGPUStringView) -> String {
     out
 }
 
-fn emit_functions(model: &ApiModel) -> String {
+fn emit_functions(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
     out.push_str(
         r#"#![allow(dead_code, unused_imports)]
@@ -318,7 +368,7 @@ use super::*;
 
     let index = TypeIndex::new(model);
     for f in &model.functions {
-        out.push_str(&emit_function(f, model, &index));
+        out.push_str(&emit_function(f, model, &index, c_prefix));
     }
 
     out
@@ -343,11 +393,11 @@ use super::*;
     out
 }
 
-fn emit_enum(e: &EnumModel) -> String {
+fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
     let name = type_name(&e.name);
     let mut variants = Vec::new();
     let mut from_arms = Vec::new();
-    let ffi_type = ffi_type_name(&e.name);
+    let ffi_type = ffi_type_name(&e.name, c_prefix);
 
     for v in &e.def.values {
         let variant = enum_variant_name_camel(&v.name);
@@ -403,10 +453,10 @@ impl From<{name}> for ffi::{ffi_type} {{
     )
 }
 
-fn emit_bitmask(b: &BitmaskModel) -> String {
+fn emit_bitmask(b: &BitmaskModel, c_prefix: &str) -> String {
     let name = type_name(&b.name);
     let mut variants = Vec::new();
-    let ffi_type = ffi_type_name(&b.name);
+    let ffi_type = ffi_type_name(&b.name, c_prefix);
 
     for v in &b.def.values {
         let variant = bitmask_variant_name(&v.name);
@@ -491,13 +541,12 @@ fn parse_numeric_string_u64(value: &str) -> Option<u64> {
     }
 }
 
-fn emit_struct(s: &StructureModel, index: &TypeIndex) -> String {
+fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String {
     let name = type_name(&s.name);
-    let ffi_name = ffi_type_name(&s.name);
+    let ffi_name = ffi_type_name(&s.name, c_prefix);
 
     let mut fields = Vec::new();
     let mut default_fields = Vec::new();
-    let mut builder_methods = Vec::new();
     let mut extra_methods = Vec::new();
 
     if s.def.extensible.is_extensible() {
@@ -507,24 +556,19 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex) -> String {
             ext_enum = ext_enum
         ));
         default_fields.push("        extensions: Vec::new(),".to_string());
-        extra_methods.push(format!(
-            r#"    pub fn with_extension(mut self, extension: {ext_enum}) -> Self {{
-        self.extensions.push(extension);
-        self
-    }}"#,
-            ext_enum = ext_enum
-        ));
         extra_methods.push(
             r#"    pub fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
-        let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
+        let mut next: *mut ffi::{prefix}ChainedStruct = std::ptr::null_mut();
         for ext in self.extensions.iter().rev() {
             next = ext.push_chain(&mut storage, next);
         }
         let mut raw: ffi::{ffi_name} = unsafe { std::mem::zeroed() };
         raw.nextInChain = next;
         (raw, storage)
-    }"#.replace("{ffi_name}", &ffi_name),
+    }"#
+            .replace("{ffi_name}", &ffi_name)
+            .replace("{prefix}", c_prefix),
         );
     } else {
         extra_methods.push(
@@ -544,7 +588,7 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex) -> String {
             field_name = field_name,
             field_ty = field_ty
         ));
-        let default_value = member_default_expr(member, index)
+        let default_value = member_default_expr(member, index, c_prefix)
             .map(|expr| format!("Some({expr})", expr = expr))
             .unwrap_or_else(|| "None".to_string());
         default_fields.push(format!(
@@ -553,20 +597,11 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex) -> String {
             default_value = default_value
         ));
 
-        builder_methods.push(format!(
-            r#"    pub fn {field_name}(mut self, value: {param_ty}) -> Self {{
-        self.{field_name} = Some(value);
-        self
-    }}"#,
-            field_name = field_name,
-            param_ty = param_ty
-        ));
+        let _ = param_ty;
     }
 
     let fields_block = fields.join("\n");
     let default_fields_block = default_fields.join("\n");
-    let builder_methods_block = builder_methods.join("\n\n");
-
     let mut from_ffi_body = emit_struct_from_ffi_body(s, index);
     if from_ffi_body.is_empty() {
         from_ffi_body = "let _ = value;\n        Self::default()".to_string();
@@ -617,7 +652,6 @@ impl {name} {{
     pub fn new() -> Self {{
         Self::default()
     }}
-{builder_methods}
 {extra_methods}
 }}
 
@@ -625,7 +659,6 @@ impl {name} {{
         name = name,
         fields = fields_block,
         defaults = default_fields_block,
-        builder_methods = builder_methods_block,
         extra_methods = extra_methods_block
     )
 }
@@ -635,6 +668,7 @@ fn emit_object(
     constructor: Option<&FunctionModel>,
     model: &ApiModel,
     index: &TypeIndex,
+    c_prefix: &str,
 ) -> String {
     let name = type_name(&o.name);
     let mut methods = Vec::new();
@@ -642,8 +676,8 @@ fn emit_object(
     if let Some(func) = constructor {
         let signature = fn_signature_params(&func.def.args, model, None);
         let (arg_prelude, ffi_args, has_callback) =
-            emit_ffi_arg_prelude(&func.def.args, model, index);
-        let func_name = ffi_fn_name(&func.name);
+            emit_ffi_arg_prelude(&func.def.args, model, index, c_prefix);
+        let func_name = ffi_fn_name(&func.name, c_prefix);
         let args = ffi_args.join(", ");
         let ffi_call = format!(
             "        let result = unsafe {{ ffi::{func}({args}) }};",
@@ -681,7 +715,7 @@ fn emit_object(
 
         let signature = fn_signature_params(&method.args, model, Some("self"));
         let (arg_prelude, ffi_args, has_callback) =
-            emit_ffi_arg_prelude(&method.args, model, index);
+            emit_ffi_arg_prelude(&method.args, model, index, c_prefix);
         let postlude = emit_out_struct_postlude(&method.args, index);
 
         methods.push(format!(
@@ -706,7 +740,7 @@ fn emit_object(
                     .map(|ret| ret.get_type() == "void")
                     .unwrap_or(true)
                 {
-                    let func_name = ffi_fn_name(&format!("{} {}", o.name, method.name));
+                    let func_name = ffi_fn_name(&format!("{} {}", o.name, method.name), c_prefix);
                     let postlude = if postlude.is_empty() {
                         String::new()
                     } else {
@@ -719,7 +753,7 @@ fn emit_object(
                         postlude = postlude
                     )
                 } else {
-                    let func_name = ffi_fn_name(&format!("{} {}", o.name, method.name));
+                    let func_name = ffi_fn_name(&format!("{} {}", o.name, method.name), c_prefix);
                     let ffi_call = format!(
                         "        let result = unsafe {{ ffi::{func}(self.raw{args}) }};",
                         func = func_name,
@@ -741,15 +775,15 @@ fn emit_object(
     format!(
         r#"#[derive(Debug)]
 pub struct {name} {{
-    raw: ffi::WGPU{name},
+    raw: ffi::{prefix}{name},
 }}
 
 impl {name} {{
-    pub(crate) unsafe fn from_raw(raw: ffi::WGPU{name}) -> Self {{
+    pub(crate) unsafe fn from_raw(raw: ffi::{prefix}{name}) -> Self {{
         Self {{ raw }}
     }}
 
-    pub fn as_raw(&self) -> ffi::WGPU{name} {{
+    pub fn as_raw(&self) -> ffi::{prefix}{name} {{
         self.raw
     }}
 
@@ -771,16 +805,21 @@ impl Clone for {name} {{
 
 "#,
         name = name,
-        methods = methods_block
+        methods = methods_block,
+        prefix = c_prefix
     )
 }
 
-fn emit_callback_function(c: &CallbackFunctionModel, index: &TypeIndex) -> String {
+fn emit_callback_function(
+    c: &CallbackFunctionModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> String {
     let name = callback_type_name(&c.name);
     let args = callback_arg_list(&c.def.args);
     let signature = format!(r#"{args}"#, args = args);
     let trampoline = callback_trampoline_name(&c.name);
-    let ffi_args = callback_ffi_arg_list(&c.def.args, index);
+    let ffi_args = callback_ffi_arg_list(&c.def.args, index, c_prefix);
 
     let mut conversions = Vec::new();
     let mut call_args = Vec::new();
@@ -939,7 +978,6 @@ fn emit_callback_info(c: &CallbackInfoModel, index: &TypeIndex) -> String {
     let name = type_name(&c.name);
 
     let mut fields = Vec::new();
-    let mut builder_methods = Vec::new();
 
     for member in &c.def.members {
         let field_name = safe_ident(&snake_case_name(&member.name));
@@ -951,19 +989,10 @@ fn emit_callback_info(c: &CallbackInfoModel, index: &TypeIndex) -> String {
             field_ty = field_ty
         ));
 
-        builder_methods.push(format!(
-            r#"    pub fn {field_name}(mut self, value: {param_ty}) -> Self {{
-        self.{field_name} = Some(value);
-        self
-    }}"#,
-            field_name = field_name,
-            param_ty = param_ty
-        ));
+        let _ = param_ty;
     }
 
     let fields_block = fields.join("\n");
-    let builder_methods_block = builder_methods.join("\n\n");
-
     format!(
         r#"#[derive(Default)]
 pub struct {name} {{
@@ -974,13 +1003,11 @@ impl {name} {{
     pub fn new() -> Self {{
         Self::default()
     }}
-{builder_methods}
 }}
 
 "#,
         name = name,
         fields = fields_block,
-        builder_methods = builder_methods_block
     )
 }
 
@@ -1003,7 +1030,12 @@ fn emit_function_pointer(fp: &crate::api_model::FunctionPointerModel) -> String 
     )
 }
 
-fn emit_function(f: &FunctionModel, model: &ApiModel, index: &TypeIndex) -> String {
+fn emit_function(
+    f: &FunctionModel,
+    model: &ApiModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> String {
     let name = safe_ident(&snake_case_name(&f.name));
     let return_ty = f
         .def
@@ -1012,7 +1044,8 @@ fn emit_function(f: &FunctionModel, model: &ApiModel, index: &TypeIndex) -> Stri
         .unwrap_or_else(|| "()".to_string());
 
     let signature = fn_signature_params(&f.def.args, model, None);
-    let (arg_prelude, ffi_args, has_callback) = emit_ffi_arg_prelude(&f.def.args, model, index);
+    let (arg_prelude, ffi_args, has_callback) =
+        emit_ffi_arg_prelude(&f.def.args, model, index, c_prefix);
     let postlude = emit_out_struct_postlude(&f.def.args, index);
 
     format!(
@@ -1030,7 +1063,7 @@ fn emit_function(f: &FunctionModel, model: &ApiModel, index: &TypeIndex) -> Stri
             "    unimplemented!()".to_string()
         } else {
             if f.def.returns().map(|ret| ret.get_type() == "void").unwrap_or(true) {
-                let func_name = ffi_fn_name(&f.name);
+                let func_name = ffi_fn_name(&f.name, c_prefix);
                 let postlude = if postlude.is_empty() {
                     String::new()
                 } else {
@@ -1043,7 +1076,7 @@ fn emit_function(f: &FunctionModel, model: &ApiModel, index: &TypeIndex) -> Stri
                     postlude = postlude
                 )
             } else {
-                let func_name = ffi_fn_name(&f.name);
+                let func_name = ffi_fn_name(&f.name, c_prefix);
                 let ffi_call = format!(
                     "    let result = unsafe {{ ffi::{func}({args}) }};",
                     func = func_name,
@@ -1116,27 +1149,27 @@ fn callback_trampoline_name(name: &str) -> String {
     format!(r#"{}_trampoline"#, safe_ident(&snake_case_name(name)))
 }
 
-fn callback_ffi_arg_list(args: &[RecordMember], index: &TypeIndex) -> String {
+fn callback_ffi_arg_list(args: &[RecordMember], index: &TypeIndex, c_prefix: &str) -> String {
     let mut parts = Vec::new();
     for arg in args {
         let arg_name = safe_ident(&snake_case_name(&arg.name));
-        let arg_ty = callback_ffi_arg_type(arg, index);
+        let arg_ty = callback_ffi_arg_type(arg, index, c_prefix);
         parts.push(format!(r#"{arg_name}: {arg_ty}"#, arg_name = arg_name, arg_ty = arg_ty));
     }
     parts.join(", ")
 }
 
-fn callback_ffi_arg_type(arg: &RecordMember, index: &TypeIndex) -> String {
+fn callback_ffi_arg_type(arg: &RecordMember, index: &TypeIndex, c_prefix: &str) -> String {
     if arg.member_type == "string view" {
-        return "ffi::WGPUStringView".to_string();
+        return format!("ffi::{}StringView", c_prefix);
     }
 
     if arg.member_type == "bool" {
-        return "ffi::WGPUBool".to_string();
+        return format!("ffi::{}Bool", c_prefix);
     }
 
     if index.is_object(&arg.member_type) {
-        let base = format!("ffi::WGPU{}", type_name(&arg.member_type));
+        let base = format!("ffi::{}{}", c_prefix, type_name(&arg.member_type));
         if arg.annotation.is_mut_ptr() {
             return format!("*mut {base}", base = base);
         }
@@ -1147,12 +1180,12 @@ fn callback_ffi_arg_type(arg: &RecordMember, index: &TypeIndex) -> String {
     }
 
     if index.is_enum(&arg.member_type) || index.is_bitmask(&arg.member_type) {
-        let ffi_ty = ffi_type_name(&arg.member_type);
+        let ffi_ty = ffi_type_name(&arg.member_type, c_prefix);
         return format!("ffi::{ffi_ty}", ffi_ty = ffi_ty);
     }
 
     if index.struct_extensible(&arg.member_type).is_some() {
-        let ffi_ty = ffi_type_name(&arg.member_type);
+        let ffi_ty = ffi_type_name(&arg.member_type, c_prefix);
         let base = format!("ffi::{ffi_ty}", ffi_ty = ffi_ty);
         if arg.annotation.is_const_ptr() {
             return format!("*const {base}", base = base);
@@ -1299,6 +1332,7 @@ fn emit_ffi_arg_prelude(
     args: &[RecordMember],
     model: &ApiModel,
     index: &TypeIndex,
+    c_prefix: &str,
 ) -> (String, Vec<String>, bool) {
     let mut prelude = Vec::new();
     let mut ffi_args = Vec::new();
@@ -1318,9 +1352,12 @@ fn emit_ffi_arg_prelude(
                     .copied()
                     .unwrap_or(false);
                 let mode_line = if has_mode {
-                    "            mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,\n"
+                    format!(
+                        "            mode: ffi::{prefix}CallbackMode_{prefix}CallbackMode_AllowSpontaneous,\n",
+                        prefix = c_prefix
+                    )
                 } else {
-                    ""
+                    String::new()
                 };
 
                 prelude.push(format!(
@@ -1335,7 +1372,7 @@ fn emit_ffi_arg_prelude(
                         .to_string(),
                 );
                 prelude.push(format!(
-                    r#"        let {name}_ffi = ffi::WGPU{info_name} {{
+                    r#"        let {name}_ffi = ffi::{c_prefix}{info_name} {{
             nextInChain: std::ptr::null_mut(),
 {mode_line}            callback: Some({trampoline}),
             userdata1: callback_userdata,
@@ -1344,7 +1381,8 @@ fn emit_ffi_arg_prelude(
                     name = name,
                     info_name = info_name,
                     trampoline = trampoline,
-                    mode_line = mode_line
+                    mode_line = mode_line,
+                    c_prefix = c_prefix
                 ));
                 ffi_args.push(format!("{name}_ffi", name = name));
             } else {
@@ -1360,9 +1398,10 @@ fn emit_ffi_arg_prelude(
             if index.is_object(&arg.member_type) && !arg.optional {
                 let obj = type_name(&arg.member_type);
                 prelude.push(format!(
-                    r#"        let {name}_raw: Vec<ffi::WGPU{obj}> = {name}.iter().map(|v| v.raw).collect();"#,
+                    r#"        let {name}_raw: Vec<ffi::{prefix}{obj}> = {name}.iter().map(|v| v.raw).collect();"#,
                     name = name,
-                    obj = obj
+                    obj = obj,
+                    prefix = c_prefix
                 ));
                 if arg.annotation.is_mut_ptr() {
                     ffi_args.push(format!("{name}_raw.as_mut_ptr()", name = name));
@@ -1401,7 +1440,7 @@ fn emit_ffi_arg_prelude(
         }
 
         if index.is_enum(&arg.member_type) || index.is_bitmask(&arg.member_type) {
-            let ffi_ty = ffi_type_name(&arg.member_type);
+            let ffi_ty = ffi_type_name(&arg.member_type, c_prefix);
             prelude.push(format!(
                 r#"        let {name}_ffi: ffi::{ffi_ty} = {name}.into();"#,
                 name = name,
@@ -1415,19 +1454,21 @@ fn emit_ffi_arg_prelude(
             if arg.optional {
                 prelude.push(format!(
                     r#"        let {name}_ffi = if let Some(value) = &{name} {{
-            ffi::WGPUStringView {{ data: value.as_ptr().cast(), length: value.len() }}
+            ffi::{prefix}StringView {{ data: value.as_ptr().cast(), length: value.len() }}
         }} else {{
-            ffi::WGPUStringView {{ data: std::ptr::null(), length: 0 }}
+            ffi::{prefix}StringView {{ data: std::ptr::null(), length: 0 }}
         }};"#,
-                    name = name
+                    name = name,
+                    prefix = c_prefix
                 ));
             } else {
                 prelude.push(format!(
-                    r#"        let {name}_ffi = ffi::WGPUStringView {{
+                    r#"        let {name}_ffi = ffi::{prefix}StringView {{
             data: {name}.as_ptr().cast(),
             length: {name}.len(),
         }};"#,
-                    name = name
+                    name = name,
+                    prefix = c_prefix
                 ));
             }
             ffi_args.push(format!("{name}_ffi", name = name));
@@ -1436,8 +1477,9 @@ fn emit_ffi_arg_prelude(
 
         if arg.member_type == "bool" {
             prelude.push(format!(
-                r#"        let {name}_ffi: ffi::WGPUBool = if {name} {{ 1 }} else {{ 0 }};"#,
-                name = name
+                r#"        let {name}_ffi: ffi::{prefix}Bool = if {name} {{ 1 }} else {{ 0 }};"#,
+                name = name,
+                prefix = c_prefix
             ));
             ffi_args.push(format!("{name}_ffi", name = name));
             continue;
@@ -1560,7 +1602,7 @@ fn emit_return_conversion(ret: Option<&ReturnType>, index: &TypeIndex, name: &st
     }
 
     if index.struct_extensible(ty).is_some() {
-        return format!(r#"        {ty}::new()"#, ty = type_name(ty));
+        return format!(r#"        {ty}::from_ffi({name})"#, ty = type_name(ty), name = name);
     }
 
     if ret.get_type() == "void" {
@@ -1653,7 +1695,11 @@ fn builder_param_type(member: &RecordMember, index: &TypeIndex) -> String {
     }
 }
 
-fn member_default_expr(member: &RecordMember, index: &TypeIndex) -> Option<String> {
+fn member_default_expr(
+    member: &RecordMember,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> Option<String> {
     if member.no_default == Some(true) {
         return None;
     }
@@ -1668,7 +1714,7 @@ fn member_default_expr(member: &RecordMember, index: &TypeIndex) -> Option<Strin
                 "true".to_string()
             }
         } else if index.is_enum(ty) {
-            let ffi_ty = ffi_type_name(ty);
+            let ffi_ty = ffi_type_name(ty, c_prefix);
             format!("{enum_ty}::from({value} as ffi::{ffi_ty})", enum_ty = type_name(ty))
         } else if index.is_bitmask(ty) {
             format!(
@@ -1845,12 +1891,16 @@ fn uppercase_after_digits(value: &str) -> String {
     out
 }
 
-fn ffi_type_name(canonical: &str) -> String {
-    format!("WGPU{}", camel_case_with_acronyms(canonical))
+fn ffi_type_name(canonical: &str, c_prefix: &str) -> String {
+    format!("{}{}", c_prefix, camel_case_with_acronyms(canonical))
 }
 
-fn ffi_fn_name(canonical: &str) -> String {
-    format!("wgpu{}", camel_case_with_acronyms(canonical))
+fn ffi_fn_name(canonical: &str, c_prefix: &str) -> String {
+    format!(
+        "{}{}",
+        c_prefix.to_lowercase(),
+        camel_case_with_acronyms(canonical)
+    )
 }
 
 fn camel_case_name(name: &str) -> String {
@@ -1889,6 +1939,7 @@ fn acronym_fixes() -> &'static [(&'static str, &'static str)] {
         ("Wgpu", "WGPU"),
         ("Wgsl", "WGSL"),
         ("Hlsl", "HLSL"),
+        ("Html", "HTML"),
         ("Spirv", "SPIRV"),
         ("Dxgi", "DXGI"),
         ("Mtl", "MTL"),
@@ -1941,7 +1992,7 @@ fn build_callback_info_mode_map(model: &ApiModel) -> HashMap<String, bool> {
     map
 }
 
-fn build_stype_map(model: &ApiModel) -> HashMap<String, String> {
+fn build_stype_map(model: &ApiModel, c_prefix: &str) -> HashMap<String, String> {
     let mut map = HashMap::new();
     let stype_enum_name = "s type";
     let enum_name = type_name(stype_enum_name);
@@ -1951,6 +2002,7 @@ fn build_stype_map(model: &ApiModel) -> HashMap<String, String> {
             map.insert(value.name.clone(), format!(r#"{enum_name}::{variant}"#));
         }
     }
+    let _ = c_prefix;
     map
 }
 
