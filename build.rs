@@ -1,10 +1,3 @@
-#[path = "src/api_model.rs"]
-mod api_model;
-#[path = "src/emitter.rs"]
-mod emitter;
-#[path = "src/parser.rs"]
-mod parser;
-
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -28,24 +21,22 @@ fn main() {
         .unwrap_or_else(|_| out_dir.join("generated"));
     println!("cargo:rerun-if-env-changed=DAWN_OUT_DIR");
 
-    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let dawn_json = env::var("DAWN_JSON")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(&manifest_dir).join("dawn.json"));
+    let dawn_json = env::var("DAWN_JSON").map(PathBuf::from).unwrap();
+
     println!("cargo:rerun-if-changed={}", dawn_json.display());
     println!("cargo:rerun-if-env-changed=DAWN_JSON");
 
     let tags = tags_from_features();
 
     let api =
-        parser::DawnJsonParser::parse_file(&dawn_json).expect("failed to parse dawn.json");
+        dawn_codegen::DawnJsonParser::parse_file(&dawn_json).expect("failed to parse dawn.json");
     let filtered = if tags.is_empty() {
         api
     } else {
         api.filter_by_tags(&tags)
     };
-    let model = api_model::ApiModel::from_api(&filtered);
-    let files = emitter::generate_strings(&model);
+    let model = dawn_codegen::ApiModel::from_api(&filtered);
+    let files = dawn_codegen::generate_strings(&model);
     files
         .write_to_dir(&gen_out)
         .expect("failed to write generated files");
@@ -55,14 +46,18 @@ fn main() {
     println!("cargo:rerun-if-changed={}", api_header.display());
     let _ = dawn_bin;
     let clang_args = build_clang_args(&dawn_root, &api_header);
-    let ffi_rs = generate_ffi_string(&api_header, &clang_args)
+    let ffi_rs = dawn_codegen::generate_ffi_string(&api_header, &clang_args)
         .expect("failed to generate ffi.rs");
     std::fs::write(&ffi_out, ffi_rs).expect("failed to write ffi.rs");
 }
 
 fn resolve_dawn_paths() -> (PathBuf, PathBuf, PathBuf) {
-    let home = env::var("HOME").expect("HOME not set");
-    let dawn_root = PathBuf::from(home).join("Downloads/dawn-debug");
+    let dawn_root = match std::env::var("DAWN_ROOT") {
+        Ok(path) => PathBuf::from(path),
+        Err(_) => {
+            panic!("DAWN_ROOT not set");
+        }
+    };
     let dawn_bin = dawn_root.join("bin");
     if !dawn_bin.exists() {
         panic!("Missing Dawn bin dir at {}", dawn_bin.display());
@@ -120,20 +115,6 @@ fn macos_sdk_path() -> Option<String> {
     } else {
         Some(path)
     }
-}
-
-fn generate_ffi_string(
-    api_header: &Path,
-    clang_args: &[String],
-) -> Result<String, Box<dyn std::error::Error>> {
-    let mut builder = bindgen::Builder::default().header(api_header.to_string_lossy());
-    for arg in clang_args {
-        builder = builder.clang_arg(arg);
-    }
-    let bindings = builder
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .generate()?;
-    Ok(bindings.to_string())
 }
 
 fn tags_from_features() -> Vec<String> {

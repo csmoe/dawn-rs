@@ -246,17 +246,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "dawn-rs"
+name = "dawn-codegen"
 version = "0.1.0"
 dependencies = [
  "bindgen",
- "bitflags 2.10.0",
  "heck",
- "objc2 0.5.2",
  "prettyplease",
  "serde",
  "serde_json",
  "syn 2.0.114",
+]
+
+[[package]]
+name = "dawn-rs"
+version = "0.1.0"
+dependencies = [
+ "bitflags 2.10.0",
+ "dawn-codegen",
+ "objc2 0.5.2",
  "winit",
 ]
 

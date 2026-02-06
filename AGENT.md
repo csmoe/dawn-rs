@@ -22,6 +22,7 @@ This document defines a multi-agent system for designing and implementing a Rust
 - Dawn artifacts live under `~/Downloads/dawn-debug` (include + bin). Reduce environment variable usage; on macOS, find SDK via `xcrun`.
 - Dawn tags live in `dawn.json` and must map to Rust features with `cfg` gating.
 - Use `c_prefix` from `dawn.json` to drive the emitter.
+- Public exports should not re-export module names like `enums`; only re-export the items within each module.
 
 ---
 
@@ -40,10 +41,10 @@ This document defines a multi-agent system for designing and implementing a Rust
 **Inputs:**
 - https://github.com/google/dawn - google's dawn repo
   - important files
-    - `codegen.md` - Codegen design document
-    - `dawn.json` - API specification
-    - `api_cpp.h` - C++ wrapper reference
-- `src/parser.rs` - Existing parser implementation
+    - `https://github.com/google/dawn/docs/dawn/codegen.md` - Codegen design document
+    - `https://github.com/google/dawn/src/dawn/dawn.json` - API specification
+    - `https://github.com/google/dawn/generator/dawn/api_cpp.h` - C++ wrapper reference
+- `codegen/src/parser.rs` - Existing parser implementation
 
 **Outputs:**
 - Architecture diagram/description
