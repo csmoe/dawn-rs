@@ -27,6 +27,7 @@ This project is under active development and **not approved for production use**
 - Dawn JSON schema is expected under `DAWN_JSON`:
   - `dawn.json`
 - On macOS, `xcrun` is used to locate the SDK for clang.
+- On Windows, `RUSTFLAGS="-Clink-arg=onecore_apiset.lib -Clink-arg=dxguid.lib"` is needed to run the example.
 
 ## Example
 

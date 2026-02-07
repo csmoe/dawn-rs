@@ -205,11 +205,20 @@ impl ChainedStructStorage {{
         let enum_name = format!("{}Extension", type_name(&root));
 
         let mut variant_lines = Vec::new();
+        let mut from_lines = Vec::new();
         for s in variants.iter() {
             let ty = type_name(&s.name);
-            variant_lines.push(format!(r#"    {ty}({ty}),"#, ty = ty));
+            variant_lines.push(format!(r#"{ty}({ty}),"#));
+            from_lines.push(format!(
+                r#"impl std::convert::From<{ty}> for {enum_name} {{
+                    fn from(ext: {ty}) -> Self {{
+                        {enum_name}::{ty}(ext)
+                    }}
+                }}"#
+            ));
         }
         let variant_block = variant_lines.join("\n");
+        let from_block = from_lines.join("\n");
 
         let has_variants = !variants.is_empty();
         let impl_block = if has_variants {
@@ -254,7 +263,7 @@ impl ChainedStructStorage {{
         } else {
             format!(
                 r#"impl {enum_name} {{
-    pub fn push_chain(
+    pub(crate) fn push_chain(
         &self,
         storage: &mut ChainedStructStorage,
         next: *mut ffi::{prefix}ChainedStruct,
@@ -276,6 +285,8 @@ impl ChainedStructStorage {{
 pub enum {enum_name} {{
 {variants}
 }}
+
+{from_block}
 
 {impl_block}
 "#,
@@ -554,12 +565,12 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
     if s.def.extensible.is_extensible() {
         let ext_enum = format!("{}Extension", type_name(&s.name));
         fields.push(format!(
-            r#"    pub(crate) extensions: Vec<{ext_enum}>,"#,
+            r#"pub(crate) extensions: Vec<{ext_enum}>,"#,
             ext_enum = ext_enum
         ));
-        default_fields.push("        extensions: Vec::new(),".to_string());
+        default_fields.push("extensions: Vec::new(),".to_string());
         extra_methods.push(
-            r#"    pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {
+            r#"pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::{prefix}ChainedStruct = std::ptr::null_mut();
         for ext in self.extensions.iter().rev() {
@@ -572,6 +583,12 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
             .replace("{ffi_name}", &ffi_name)
             .replace("{prefix}", c_prefix),
         );
+        extra_methods.push(format!(
+            r#"pub fn with_extension(mut self, extension: {ext_enum}) -> Self {{
+            self.extensions.push(extension);
+            self
+        }}"#
+        ));
     } else {
         extra_methods.push(
             r#"    pub(crate) fn to_ffi(&self) -> ffi::{ffi_name} {
@@ -590,7 +607,7 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
         let field_ty = struct_field_type(member, index);
         let param_ty = builder_param_type(member, index);
         fields.push(format!(
-            r#"    pub {field_name}: {field_ty},"#,
+            r#"pub {field_name}: {field_ty},"#,
             field_name = field_name,
             field_ty = field_ty
         ));

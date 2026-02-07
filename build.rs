@@ -1,19 +1,21 @@
 use std::env;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 fn main() {
     let (dawn_root, dawn_bin, api_header) = resolve_dawn_paths();
     let lib_dir = resolve_dawn_lib_dir(&dawn_root);
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static=webgpu_dawn");
-    println!("cargo:rustc-link-lib=c++");
-    println!("cargo:rustc-link-lib=c++abi");
-    println!("cargo:rustc-link-lib=framework=Metal");
-    println!("cargo:rustc-link-lib=framework=QuartzCore");
-    println!("cargo:rustc-link-lib=framework=IOSurface");
-    println!("cargo:rustc-link-lib=framework=IOKit");
-    println!("cargo:rustc-link-lib=framework=CoreVideo");
+    #[cfg(target_os = "macos")]
+    {
+        println!("cargo:rustc-link-lib=c++");
+        println!("cargo:rustc-link-lib=c++abi");
+        println!("cargo:rustc-link-lib=framework=Metal");
+        println!("cargo:rustc-link-lib=framework=QuartzCore");
+        println!("cargo:rustc-link-lib=framework=IOSurface");
+        println!("cargo:rustc-link-lib=framework=IOKit");
+        println!("cargo:rustc-link-lib=framework=CoreVideo");
+    }
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let gen_out = env::var("DAWN_OUT_DIR")
@@ -96,13 +98,17 @@ fn build_clang_args(dawn_root: &Path, api_header: &Path) -> Vec<String> {
     let dawn_include = dawn_root.join("include");
     args.push(format!("-I{}", dawn_include.display()));
 
-    let sdk_path = macos_sdk_path().expect("xcrun failed to locate macOS SDK");
-    args.push(format!("-isysroot{}", sdk_path));
+    #[cfg(target_os = "macos")]
+    {
+        let sdk_path = macos_sdk_path().expect("xcrun failed to locate macOS SDK");
+        args.push(format!("-isysroot{}", sdk_path));
+    }
     args
 }
 
+#[cfg(target_os = "macos")]
 fn macos_sdk_path() -> Option<String> {
-    let output = Command::new("xcrun")
+    let output = std::process::Command::new("xcrun")
         .args(["--sdk", "macosx", "--show-sdk-path"])
         .output()
         .ok()?;

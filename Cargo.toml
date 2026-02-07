@@ -13,8 +13,13 @@ bitflags = "2"
 dawn-codegen = { path = "codegen" }
 
 [dev-dependencies]
-winit = "0.28"
+winit = "0.30"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
 objc2 = "0.5"
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+windows = { version = "0.62", features = ["Win32_Graphics_Dxgi","Win32_Graphics_Direct3D", "Win32_Foundation", "Win32","Win32_Graphics_Dxgi_Common"]}
 
 [features]
 default = ["dawn", "native"]
