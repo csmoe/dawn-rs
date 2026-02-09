@@ -1,0 +1,17 @@
+[package]
+name = "dawn-wgpu"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dawn-rs = { path = ".." }
+wgpu = { version = "28.0", features = ["custom"] }
+wgt = { package = "wgpu-types", version = "28.0" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-quartz-core = { version = "0.2", features = ["CALayer", "CAMetalLayer"] }
+raw-window-metal = "1"
+
+[features]
+default = []

@@ -4,50 +4,115 @@ use bitflags::bitflags;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum WGSLLanguageFeatureName {
-    ReadonlyAndReadwriteStorageTextures = 1,
-    Packed4X8IntegerDotProduct = 2,
-    UnrestrictedPointerParameters = 3,
-    PointerCompositeAccess = 4,
-    UniformBufferStandardLayout = 5,
-    SubgroupId = 6,
-    TextureAndSamplerLet = 7,
-    SizedBindingArray = 327688,
-    TexelBuffers = 327689,
-    ChromiumPrint = 327690,
-    FragmentDepth = 327691,
-    ImmediateAddressSpace = 327692,
-    SubgroupUniformity = 327693,
-    BufferView = 327694,
-    FilteringParameters = 327695,
-    ChromiumTestingUnimplemented = 327680,
-    ChromiumTestingUnsafeExperimental = 327681,
-    ChromiumTestingExperimental = 327682,
-    ChromiumTestingShippedWithKillswitch = 327683,
-    ChromiumTestingShipped = 327684,
+    ReadonlyAndReadwriteStorageTextures = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ReadonlyAndReadwriteStorageTextures
+        as u32,
+    Packed4X8IntegerDotProduct = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_Packed4x8IntegerDotProduct
+        as u32,
+    UnrestrictedPointerParameters = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_UnrestrictedPointerParameters
+        as u32,
+    PointerCompositeAccess = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_PointerCompositeAccess
+        as u32,
+    UniformBufferStandardLayout = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_UniformBufferStandardLayout
+        as u32,
+    SubgroupId = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupId
+        as u32,
+    TextureAndSamplerLet = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet
+        as u32,
+    SizedBindingArray = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray
+        as u32,
+    TexelBuffers = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers
+        as u32,
+    ChromiumPrint = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint
+        as u32,
+    FragmentDepth = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth
+        as u32,
+    ImmediateAddressSpace = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace
+        as u32,
+    SubgroupUniformity = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity
+        as u32,
+    BufferView = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView
+        as u32,
+    FilteringParameters = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters
+        as u32,
+    SwizzleAssignment = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment
+        as u32,
+    ChromiumTestingUnimplemented = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
+        as u32,
+    ChromiumTestingUnsafeExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental
+        as u32,
+    ChromiumTestingExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental
+        as u32,
+    ChromiumTestingShippedWithKillswitch = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch
+        as u32,
+    ChromiumTestingShipped = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped
+        as u32,
 }
 impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
     fn from(value: ffi::WGPUWGSLLanguageFeatureName) -> Self {
         match value as u32 {
-            1 => WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures,
-            2 => WGSLLanguageFeatureName::Packed4X8IntegerDotProduct,
-            3 => WGSLLanguageFeatureName::UnrestrictedPointerParameters,
-            4 => WGSLLanguageFeatureName::PointerCompositeAccess,
-            5 => WGSLLanguageFeatureName::UniformBufferStandardLayout,
-            6 => WGSLLanguageFeatureName::SubgroupId,
-            7 => WGSLLanguageFeatureName::TextureAndSamplerLet,
-            327688 => WGSLLanguageFeatureName::SizedBindingArray,
-            327689 => WGSLLanguageFeatureName::TexelBuffers,
-            327690 => WGSLLanguageFeatureName::ChromiumPrint,
-            327691 => WGSLLanguageFeatureName::FragmentDepth,
-            327692 => WGSLLanguageFeatureName::ImmediateAddressSpace,
-            327693 => WGSLLanguageFeatureName::SubgroupUniformity,
-            327694 => WGSLLanguageFeatureName::BufferView,
-            327695 => WGSLLanguageFeatureName::FilteringParameters,
-            327680 => WGSLLanguageFeatureName::ChromiumTestingUnimplemented,
-            327681 => WGSLLanguageFeatureName::ChromiumTestingUnsafeExperimental,
-            327682 => WGSLLanguageFeatureName::ChromiumTestingExperimental,
-            327683 => WGSLLanguageFeatureName::ChromiumTestingShippedWithKillswitch,
-            327684 => WGSLLanguageFeatureName::ChromiumTestingShipped,
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ReadonlyAndReadwriteStorageTextures => {
+                WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_Packed4x8IntegerDotProduct => {
+                WGSLLanguageFeatureName::Packed4X8IntegerDotProduct
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_UnrestrictedPointerParameters => {
+                WGSLLanguageFeatureName::UnrestrictedPointerParameters
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_PointerCompositeAccess => {
+                WGSLLanguageFeatureName::PointerCompositeAccess
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_UniformBufferStandardLayout => {
+                WGSLLanguageFeatureName::UniformBufferStandardLayout
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupId => {
+                WGSLLanguageFeatureName::SubgroupId
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet => {
+                WGSLLanguageFeatureName::TextureAndSamplerLet
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray => {
+                WGSLLanguageFeatureName::SizedBindingArray
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers => {
+                WGSLLanguageFeatureName::TexelBuffers
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint => {
+                WGSLLanguageFeatureName::ChromiumPrint
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth => {
+                WGSLLanguageFeatureName::FragmentDepth
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace => {
+                WGSLLanguageFeatureName::ImmediateAddressSpace
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity => {
+                WGSLLanguageFeatureName::SubgroupUniformity
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView => {
+                WGSLLanguageFeatureName::BufferView
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters => {
+                WGSLLanguageFeatureName::FilteringParameters
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment => {
+                WGSLLanguageFeatureName::SwizzleAssignment
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
+                WGSLLanguageFeatureName::ChromiumTestingUnimplemented
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental => {
+                WGSLLanguageFeatureName::ChromiumTestingUnsafeExperimental
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental => {
+                WGSLLanguageFeatureName::ChromiumTestingExperimental
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch => {
+                WGSLLanguageFeatureName::ChromiumTestingShippedWithKillswitch
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped => {
+                WGSLLanguageFeatureName::ChromiumTestingShipped
+            }
             _ => WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures,
         }
     }
@@ -60,18 +125,20 @@ impl From<WGSLLanguageFeatureName> for ffi::WGPUWGSLLanguageFeatureName {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum AdapterType {
-    DiscreteGpu = 1,
-    IntegratedGpu = 2,
-    Cpu = 3,
-    Unknown = 4,
+    DiscreteGpu = ffi::WGPUAdapterType_WGPUAdapterType_DiscreteGPU as u32,
+    IntegratedGpu = ffi::WGPUAdapterType_WGPUAdapterType_IntegratedGPU as u32,
+    Cpu = ffi::WGPUAdapterType_WGPUAdapterType_CPU as u32,
+    Unknown = ffi::WGPUAdapterType_WGPUAdapterType_Unknown as u32,
 }
 impl From<ffi::WGPUAdapterType> for AdapterType {
     fn from(value: ffi::WGPUAdapterType) -> Self {
         match value as u32 {
-            1 => AdapterType::DiscreteGpu,
-            2 => AdapterType::IntegratedGpu,
-            3 => AdapterType::Cpu,
-            4 => AdapterType::Unknown,
+            ffi::WGPUAdapterType_WGPUAdapterType_DiscreteGPU => AdapterType::DiscreteGpu,
+            ffi::WGPUAdapterType_WGPUAdapterType_IntegratedGPU => {
+                AdapterType::IntegratedGpu
+            }
+            ffi::WGPUAdapterType_WGPUAdapterType_CPU => AdapterType::Cpu,
+            ffi::WGPUAdapterType_WGPUAdapterType_Unknown => AdapterType::Unknown,
             _ => AdapterType::DiscreteGpu,
         }
     }
@@ -84,18 +151,20 @@ impl From<AdapterType> for ffi::WGPUAdapterType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum AddressMode {
-    Undefined = 0,
-    ClampToEdge = 1,
-    Repeat = 2,
-    MirrorRepeat = 3,
+    Undefined = ffi::WGPUAddressMode_WGPUAddressMode_Undefined as u32,
+    ClampToEdge = ffi::WGPUAddressMode_WGPUAddressMode_ClampToEdge as u32,
+    Repeat = ffi::WGPUAddressMode_WGPUAddressMode_Repeat as u32,
+    MirrorRepeat = ffi::WGPUAddressMode_WGPUAddressMode_MirrorRepeat as u32,
 }
 impl From<ffi::WGPUAddressMode> for AddressMode {
     fn from(value: ffi::WGPUAddressMode) -> Self {
         match value as u32 {
-            0 => AddressMode::Undefined,
-            1 => AddressMode::ClampToEdge,
-            2 => AddressMode::Repeat,
-            3 => AddressMode::MirrorRepeat,
+            ffi::WGPUAddressMode_WGPUAddressMode_Undefined => AddressMode::Undefined,
+            ffi::WGPUAddressMode_WGPUAddressMode_ClampToEdge => AddressMode::ClampToEdge,
+            ffi::WGPUAddressMode_WGPUAddressMode_Repeat => AddressMode::Repeat,
+            ffi::WGPUAddressMode_WGPUAddressMode_MirrorRepeat => {
+                AddressMode::MirrorRepeat
+            }
             _ => AddressMode::Undefined,
         }
     }
@@ -108,16 +177,18 @@ impl From<AddressMode> for ffi::WGPUAddressMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum AlphaMode {
-    Opaque = 1,
-    Premultiplied = 2,
-    Unpremultiplied = 3,
+    Opaque = ffi::WGPUAlphaMode_WGPUAlphaMode_Opaque as u32,
+    Premultiplied = ffi::WGPUAlphaMode_WGPUAlphaMode_Premultiplied as u32,
+    Unpremultiplied = ffi::WGPUAlphaMode_WGPUAlphaMode_Unpremultiplied as u32,
 }
 impl From<ffi::WGPUAlphaMode> for AlphaMode {
     fn from(value: ffi::WGPUAlphaMode) -> Self {
         match value as u32 {
-            1 => AlphaMode::Opaque,
-            2 => AlphaMode::Premultiplied,
-            3 => AlphaMode::Unpremultiplied,
+            ffi::WGPUAlphaMode_WGPUAlphaMode_Opaque => AlphaMode::Opaque,
+            ffi::WGPUAlphaMode_WGPUAlphaMode_Premultiplied => AlphaMode::Premultiplied,
+            ffi::WGPUAlphaMode_WGPUAlphaMode_Unpremultiplied => {
+                AlphaMode::Unpremultiplied
+            }
             _ => AlphaMode::Opaque,
         }
     }
@@ -130,28 +201,28 @@ impl From<AlphaMode> for ffi::WGPUAlphaMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BackendType {
-    Undefined = 0,
-    Null = 1,
-    WebGPU = 2,
-    D3D11 = 3,
-    D3D12 = 4,
-    Metal = 5,
-    Vulkan = 6,
-    OpenGL = 7,
-    OpenGLes = 8,
+    Undefined = ffi::WGPUBackendType_WGPUBackendType_Undefined as u32,
+    Null = ffi::WGPUBackendType_WGPUBackendType_Null as u32,
+    WebGPU = ffi::WGPUBackendType_WGPUBackendType_WebGPU as u32,
+    D3D11 = ffi::WGPUBackendType_WGPUBackendType_D3D11 as u32,
+    D3D12 = ffi::WGPUBackendType_WGPUBackendType_D3D12 as u32,
+    Metal = ffi::WGPUBackendType_WGPUBackendType_Metal as u32,
+    Vulkan = ffi::WGPUBackendType_WGPUBackendType_Vulkan as u32,
+    OpenGL = ffi::WGPUBackendType_WGPUBackendType_OpenGL as u32,
+    OpenGLes = ffi::WGPUBackendType_WGPUBackendType_OpenGLES as u32,
 }
 impl From<ffi::WGPUBackendType> for BackendType {
     fn from(value: ffi::WGPUBackendType) -> Self {
         match value as u32 {
-            0 => BackendType::Undefined,
-            1 => BackendType::Null,
-            2 => BackendType::WebGPU,
-            3 => BackendType::D3D11,
-            4 => BackendType::D3D12,
-            5 => BackendType::Metal,
-            6 => BackendType::Vulkan,
-            7 => BackendType::OpenGL,
-            8 => BackendType::OpenGLes,
+            ffi::WGPUBackendType_WGPUBackendType_Undefined => BackendType::Undefined,
+            ffi::WGPUBackendType_WGPUBackendType_Null => BackendType::Null,
+            ffi::WGPUBackendType_WGPUBackendType_WebGPU => BackendType::WebGPU,
+            ffi::WGPUBackendType_WGPUBackendType_D3D11 => BackendType::D3D11,
+            ffi::WGPUBackendType_WGPUBackendType_D3D12 => BackendType::D3D12,
+            ffi::WGPUBackendType_WGPUBackendType_Metal => BackendType::Metal,
+            ffi::WGPUBackendType_WGPUBackendType_Vulkan => BackendType::Vulkan,
+            ffi::WGPUBackendType_WGPUBackendType_OpenGL => BackendType::OpenGL,
+            ffi::WGPUBackendType_WGPUBackendType_OpenGLES => BackendType::OpenGLes,
             _ => BackendType::Undefined,
         }
     }
@@ -164,46 +235,58 @@ impl From<BackendType> for ffi::WGPUBackendType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BlendFactor {
-    Undefined = 0,
-    Zero = 1,
-    One = 2,
-    Src = 3,
-    OneMinusSrc = 4,
-    SrcAlpha = 5,
-    OneMinusSrcAlpha = 6,
-    Dst = 7,
-    OneMinusDst = 8,
-    DstAlpha = 9,
-    OneMinusDstAlpha = 10,
-    SrcAlphaSaturated = 11,
-    Constant = 12,
-    OneMinusConstant = 13,
-    Src1 = 14,
-    OneMinusSrc1 = 15,
-    Src1Alpha = 16,
-    OneMinusSrc1Alpha = 17,
+    Undefined = ffi::WGPUBlendFactor_WGPUBlendFactor_Undefined as u32,
+    Zero = ffi::WGPUBlendFactor_WGPUBlendFactor_Zero as u32,
+    One = ffi::WGPUBlendFactor_WGPUBlendFactor_One as u32,
+    Src = ffi::WGPUBlendFactor_WGPUBlendFactor_Src as u32,
+    OneMinusSrc = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc as u32,
+    SrcAlpha = ffi::WGPUBlendFactor_WGPUBlendFactor_SrcAlpha as u32,
+    OneMinusSrcAlpha = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrcAlpha as u32,
+    Dst = ffi::WGPUBlendFactor_WGPUBlendFactor_Dst as u32,
+    OneMinusDst = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusDst as u32,
+    DstAlpha = ffi::WGPUBlendFactor_WGPUBlendFactor_DstAlpha as u32,
+    OneMinusDstAlpha = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusDstAlpha as u32,
+    SrcAlphaSaturated = ffi::WGPUBlendFactor_WGPUBlendFactor_SrcAlphaSaturated as u32,
+    Constant = ffi::WGPUBlendFactor_WGPUBlendFactor_Constant as u32,
+    OneMinusConstant = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusConstant as u32,
+    Src1 = ffi::WGPUBlendFactor_WGPUBlendFactor_Src1 as u32,
+    OneMinusSrc1 = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1 as u32,
+    Src1Alpha = ffi::WGPUBlendFactor_WGPUBlendFactor_Src1Alpha as u32,
+    OneMinusSrc1Alpha = ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1Alpha as u32,
 }
 impl From<ffi::WGPUBlendFactor> for BlendFactor {
     fn from(value: ffi::WGPUBlendFactor) -> Self {
         match value as u32 {
-            0 => BlendFactor::Undefined,
-            1 => BlendFactor::Zero,
-            2 => BlendFactor::One,
-            3 => BlendFactor::Src,
-            4 => BlendFactor::OneMinusSrc,
-            5 => BlendFactor::SrcAlpha,
-            6 => BlendFactor::OneMinusSrcAlpha,
-            7 => BlendFactor::Dst,
-            8 => BlendFactor::OneMinusDst,
-            9 => BlendFactor::DstAlpha,
-            10 => BlendFactor::OneMinusDstAlpha,
-            11 => BlendFactor::SrcAlphaSaturated,
-            12 => BlendFactor::Constant,
-            13 => BlendFactor::OneMinusConstant,
-            14 => BlendFactor::Src1,
-            15 => BlendFactor::OneMinusSrc1,
-            16 => BlendFactor::Src1Alpha,
-            17 => BlendFactor::OneMinusSrc1Alpha,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Undefined => BlendFactor::Undefined,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Zero => BlendFactor::Zero,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_One => BlendFactor::One,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Src => BlendFactor::Src,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc => BlendFactor::OneMinusSrc,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_SrcAlpha => BlendFactor::SrcAlpha,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrcAlpha => {
+                BlendFactor::OneMinusSrcAlpha
+            }
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Dst => BlendFactor::Dst,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusDst => BlendFactor::OneMinusDst,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_DstAlpha => BlendFactor::DstAlpha,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusDstAlpha => {
+                BlendFactor::OneMinusDstAlpha
+            }
+            ffi::WGPUBlendFactor_WGPUBlendFactor_SrcAlphaSaturated => {
+                BlendFactor::SrcAlphaSaturated
+            }
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Constant => BlendFactor::Constant,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusConstant => {
+                BlendFactor::OneMinusConstant
+            }
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Src1 => BlendFactor::Src1,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1 => {
+                BlendFactor::OneMinusSrc1
+            }
+            ffi::WGPUBlendFactor_WGPUBlendFactor_Src1Alpha => BlendFactor::Src1Alpha,
+            ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1Alpha => {
+                BlendFactor::OneMinusSrc1Alpha
+            }
             _ => BlendFactor::Undefined,
         }
     }
@@ -216,22 +299,28 @@ impl From<BlendFactor> for ffi::WGPUBlendFactor {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BlendOperation {
-    Undefined = 0,
-    Add = 1,
-    Subtract = 2,
-    ReverseSubtract = 3,
-    Min = 4,
-    Max = 5,
+    Undefined = ffi::WGPUBlendOperation_WGPUBlendOperation_Undefined as u32,
+    Add = ffi::WGPUBlendOperation_WGPUBlendOperation_Add as u32,
+    Subtract = ffi::WGPUBlendOperation_WGPUBlendOperation_Subtract as u32,
+    ReverseSubtract = ffi::WGPUBlendOperation_WGPUBlendOperation_ReverseSubtract as u32,
+    Min = ffi::WGPUBlendOperation_WGPUBlendOperation_Min as u32,
+    Max = ffi::WGPUBlendOperation_WGPUBlendOperation_Max as u32,
 }
 impl From<ffi::WGPUBlendOperation> for BlendOperation {
     fn from(value: ffi::WGPUBlendOperation) -> Self {
         match value as u32 {
-            0 => BlendOperation::Undefined,
-            1 => BlendOperation::Add,
-            2 => BlendOperation::Subtract,
-            3 => BlendOperation::ReverseSubtract,
-            4 => BlendOperation::Min,
-            5 => BlendOperation::Max,
+            ffi::WGPUBlendOperation_WGPUBlendOperation_Undefined => {
+                BlendOperation::Undefined
+            }
+            ffi::WGPUBlendOperation_WGPUBlendOperation_Add => BlendOperation::Add,
+            ffi::WGPUBlendOperation_WGPUBlendOperation_Subtract => {
+                BlendOperation::Subtract
+            }
+            ffi::WGPUBlendOperation_WGPUBlendOperation_ReverseSubtract => {
+                BlendOperation::ReverseSubtract
+            }
+            ffi::WGPUBlendOperation_WGPUBlendOperation_Min => BlendOperation::Min,
+            ffi::WGPUBlendOperation_WGPUBlendOperation_Max => BlendOperation::Max,
             _ => BlendOperation::Undefined,
         }
     }
@@ -244,20 +333,32 @@ impl From<BlendOperation> for ffi::WGPUBlendOperation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BufferBindingType {
-    BindingNotUsed = 0,
-    Undefined = 1,
-    Uniform = 2,
-    Storage = 3,
-    ReadOnlyStorage = 4,
+    BindingNotUsed = ffi::WGPUBufferBindingType_WGPUBufferBindingType_BindingNotUsed
+        as u32,
+    Undefined = ffi::WGPUBufferBindingType_WGPUBufferBindingType_Undefined as u32,
+    Uniform = ffi::WGPUBufferBindingType_WGPUBufferBindingType_Uniform as u32,
+    Storage = ffi::WGPUBufferBindingType_WGPUBufferBindingType_Storage as u32,
+    ReadOnlyStorage = ffi::WGPUBufferBindingType_WGPUBufferBindingType_ReadOnlyStorage
+        as u32,
 }
 impl From<ffi::WGPUBufferBindingType> for BufferBindingType {
     fn from(value: ffi::WGPUBufferBindingType) -> Self {
         match value as u32 {
-            0 => BufferBindingType::BindingNotUsed,
-            1 => BufferBindingType::Undefined,
-            2 => BufferBindingType::Uniform,
-            3 => BufferBindingType::Storage,
-            4 => BufferBindingType::ReadOnlyStorage,
+            ffi::WGPUBufferBindingType_WGPUBufferBindingType_BindingNotUsed => {
+                BufferBindingType::BindingNotUsed
+            }
+            ffi::WGPUBufferBindingType_WGPUBufferBindingType_Undefined => {
+                BufferBindingType::Undefined
+            }
+            ffi::WGPUBufferBindingType_WGPUBufferBindingType_Uniform => {
+                BufferBindingType::Uniform
+            }
+            ffi::WGPUBufferBindingType_WGPUBufferBindingType_Storage => {
+                BufferBindingType::Storage
+            }
+            ffi::WGPUBufferBindingType_WGPUBufferBindingType_ReadOnlyStorage => {
+                BufferBindingType::ReadOnlyStorage
+            }
             _ => BufferBindingType::BindingNotUsed,
         }
     }
@@ -270,16 +371,18 @@ impl From<BufferBindingType> for ffi::WGPUBufferBindingType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BufferMapState {
-    Unmapped = 1,
-    Pending = 2,
-    Mapped = 3,
+    Unmapped = ffi::WGPUBufferMapState_WGPUBufferMapState_Unmapped as u32,
+    Pending = ffi::WGPUBufferMapState_WGPUBufferMapState_Pending as u32,
+    Mapped = ffi::WGPUBufferMapState_WGPUBufferMapState_Mapped as u32,
 }
 impl From<ffi::WGPUBufferMapState> for BufferMapState {
     fn from(value: ffi::WGPUBufferMapState) -> Self {
         match value as u32 {
-            1 => BufferMapState::Unmapped,
-            2 => BufferMapState::Pending,
-            3 => BufferMapState::Mapped,
+            ffi::WGPUBufferMapState_WGPUBufferMapState_Unmapped => {
+                BufferMapState::Unmapped
+            }
+            ffi::WGPUBufferMapState_WGPUBufferMapState_Pending => BufferMapState::Pending,
+            ffi::WGPUBufferMapState_WGPUBufferMapState_Mapped => BufferMapState::Mapped,
             _ => BufferMapState::Unmapped,
         }
     }
@@ -292,16 +395,23 @@ impl From<BufferMapState> for ffi::WGPUBufferMapState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CallbackMode {
-    WaitAnyOnly = 1,
-    AllowProcessEvents = 2,
-    AllowSpontaneous = 3,
+    WaitAnyOnly = ffi::WGPUCallbackMode_WGPUCallbackMode_WaitAnyOnly as u32,
+    AllowProcessEvents = ffi::WGPUCallbackMode_WGPUCallbackMode_AllowProcessEvents
+        as u32,
+    AllowSpontaneous = ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous as u32,
 }
 impl From<ffi::WGPUCallbackMode> for CallbackMode {
     fn from(value: ffi::WGPUCallbackMode) -> Self {
         match value as u32 {
-            1 => CallbackMode::WaitAnyOnly,
-            2 => CallbackMode::AllowProcessEvents,
-            3 => CallbackMode::AllowSpontaneous,
+            ffi::WGPUCallbackMode_WGPUCallbackMode_WaitAnyOnly => {
+                CallbackMode::WaitAnyOnly
+            }
+            ffi::WGPUCallbackMode_WGPUCallbackMode_AllowProcessEvents => {
+                CallbackMode::AllowProcessEvents
+            }
+            ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous => {
+                CallbackMode::AllowSpontaneous
+            }
             _ => CallbackMode::WaitAnyOnly,
         }
     }
@@ -314,28 +424,40 @@ impl From<CallbackMode> for ffi::WGPUCallbackMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CompareFunction {
-    Undefined = 0,
-    Never = 1,
-    Less = 2,
-    Equal = 3,
-    LessEqual = 4,
-    Greater = 5,
-    NotEqual = 6,
-    GreaterEqual = 7,
-    Always = 8,
+    Undefined = ffi::WGPUCompareFunction_WGPUCompareFunction_Undefined as u32,
+    Never = ffi::WGPUCompareFunction_WGPUCompareFunction_Never as u32,
+    Less = ffi::WGPUCompareFunction_WGPUCompareFunction_Less as u32,
+    Equal = ffi::WGPUCompareFunction_WGPUCompareFunction_Equal as u32,
+    LessEqual = ffi::WGPUCompareFunction_WGPUCompareFunction_LessEqual as u32,
+    Greater = ffi::WGPUCompareFunction_WGPUCompareFunction_Greater as u32,
+    NotEqual = ffi::WGPUCompareFunction_WGPUCompareFunction_NotEqual as u32,
+    GreaterEqual = ffi::WGPUCompareFunction_WGPUCompareFunction_GreaterEqual as u32,
+    Always = ffi::WGPUCompareFunction_WGPUCompareFunction_Always as u32,
 }
 impl From<ffi::WGPUCompareFunction> for CompareFunction {
     fn from(value: ffi::WGPUCompareFunction) -> Self {
         match value as u32 {
-            0 => CompareFunction::Undefined,
-            1 => CompareFunction::Never,
-            2 => CompareFunction::Less,
-            3 => CompareFunction::Equal,
-            4 => CompareFunction::LessEqual,
-            5 => CompareFunction::Greater,
-            6 => CompareFunction::NotEqual,
-            7 => CompareFunction::GreaterEqual,
-            8 => CompareFunction::Always,
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Undefined => {
+                CompareFunction::Undefined
+            }
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Never => CompareFunction::Never,
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Less => CompareFunction::Less,
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Equal => CompareFunction::Equal,
+            ffi::WGPUCompareFunction_WGPUCompareFunction_LessEqual => {
+                CompareFunction::LessEqual
+            }
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Greater => {
+                CompareFunction::Greater
+            }
+            ffi::WGPUCompareFunction_WGPUCompareFunction_NotEqual => {
+                CompareFunction::NotEqual
+            }
+            ffi::WGPUCompareFunction_WGPUCompareFunction_GreaterEqual => {
+                CompareFunction::GreaterEqual
+            }
+            ffi::WGPUCompareFunction_WGPUCompareFunction_Always => {
+                CompareFunction::Always
+            }
             _ => CompareFunction::Undefined,
         }
     }
@@ -348,14 +470,20 @@ impl From<CompareFunction> for ffi::WGPUCompareFunction {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CompilationInfoRequestStatus {
-    Success = 1,
-    CallbackCancelled = 2,
+    Success = ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_Success
+        as u32,
+    CallbackCancelled = ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_CallbackCancelled
+        as u32,
 }
 impl From<ffi::WGPUCompilationInfoRequestStatus> for CompilationInfoRequestStatus {
     fn from(value: ffi::WGPUCompilationInfoRequestStatus) -> Self {
         match value as u32 {
-            1 => CompilationInfoRequestStatus::Success,
-            2 => CompilationInfoRequestStatus::CallbackCancelled,
+            ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_Success => {
+                CompilationInfoRequestStatus::Success
+            }
+            ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_CallbackCancelled => {
+                CompilationInfoRequestStatus::CallbackCancelled
+            }
             _ => CompilationInfoRequestStatus::Success,
         }
     }
@@ -368,16 +496,22 @@ impl From<CompilationInfoRequestStatus> for ffi::WGPUCompilationInfoRequestStatu
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CompilationMessageType {
-    Error = 1,
-    Warning = 2,
-    Info = 3,
+    Error = ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Error as u32,
+    Warning = ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Warning as u32,
+    Info = ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Info as u32,
 }
 impl From<ffi::WGPUCompilationMessageType> for CompilationMessageType {
     fn from(value: ffi::WGPUCompilationMessageType) -> Self {
         match value as u32 {
-            1 => CompilationMessageType::Error,
-            2 => CompilationMessageType::Warning,
-            3 => CompilationMessageType::Info,
+            ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Error => {
+                CompilationMessageType::Error
+            }
+            ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Warning => {
+                CompilationMessageType::Warning
+            }
+            ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Info => {
+                CompilationMessageType::Info
+            }
             _ => CompilationMessageType::Error,
         }
     }
@@ -390,24 +524,26 @@ impl From<CompilationMessageType> for ffi::WGPUCompilationMessageType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum ComponentSwizzle {
-    Undefined = 0,
-    Zero = 1,
-    One = 2,
-    R = 3,
-    G = 4,
-    B = 5,
-    A = 6,
+    Undefined = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_Undefined as u32,
+    Zero = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_Zero as u32,
+    One = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_One as u32,
+    R = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_R as u32,
+    G = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_G as u32,
+    B = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_B as u32,
+    A = ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_A as u32,
 }
 impl From<ffi::WGPUComponentSwizzle> for ComponentSwizzle {
     fn from(value: ffi::WGPUComponentSwizzle) -> Self {
         match value as u32 {
-            0 => ComponentSwizzle::Undefined,
-            1 => ComponentSwizzle::Zero,
-            2 => ComponentSwizzle::One,
-            3 => ComponentSwizzle::R,
-            4 => ComponentSwizzle::G,
-            5 => ComponentSwizzle::B,
-            6 => ComponentSwizzle::A,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_Undefined => {
+                ComponentSwizzle::Undefined
+            }
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_Zero => ComponentSwizzle::Zero,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_One => ComponentSwizzle::One,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_R => ComponentSwizzle::R,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_G => ComponentSwizzle::G,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_B => ComponentSwizzle::B,
+            ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_A => ComponentSwizzle::A,
             _ => ComponentSwizzle::Undefined,
         }
     }
@@ -420,20 +556,32 @@ impl From<ComponentSwizzle> for ffi::WGPUComponentSwizzle {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CompositeAlphaMode {
-    Auto = 0,
-    Opaque = 1,
-    Premultiplied = 2,
-    Unpremultiplied = 3,
-    Inherit = 4,
+    Auto = ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Auto as u32,
+    Opaque = ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Opaque as u32,
+    Premultiplied = ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Premultiplied
+        as u32,
+    Unpremultiplied = ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Unpremultiplied
+        as u32,
+    Inherit = ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Inherit as u32,
 }
 impl From<ffi::WGPUCompositeAlphaMode> for CompositeAlphaMode {
     fn from(value: ffi::WGPUCompositeAlphaMode) -> Self {
         match value as u32 {
-            0 => CompositeAlphaMode::Auto,
-            1 => CompositeAlphaMode::Opaque,
-            2 => CompositeAlphaMode::Premultiplied,
-            3 => CompositeAlphaMode::Unpremultiplied,
-            4 => CompositeAlphaMode::Inherit,
+            ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Auto => {
+                CompositeAlphaMode::Auto
+            }
+            ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Opaque => {
+                CompositeAlphaMode::Opaque
+            }
+            ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Premultiplied => {
+                CompositeAlphaMode::Premultiplied
+            }
+            ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Unpremultiplied => {
+                CompositeAlphaMode::Unpremultiplied
+            }
+            ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Inherit => {
+                CompositeAlphaMode::Inherit
+            }
             _ => CompositeAlphaMode::Auto,
         }
     }
@@ -446,18 +594,30 @@ impl From<CompositeAlphaMode> for ffi::WGPUCompositeAlphaMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CreatePipelineAsyncStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    ValidationError = 3,
-    InternalError = 4,
+    Success = ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_Success
+        as u32,
+    CallbackCancelled = ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_CallbackCancelled
+        as u32,
+    ValidationError = ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_ValidationError
+        as u32,
+    InternalError = ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_InternalError
+        as u32,
 }
 impl From<ffi::WGPUCreatePipelineAsyncStatus> for CreatePipelineAsyncStatus {
     fn from(value: ffi::WGPUCreatePipelineAsyncStatus) -> Self {
         match value as u32 {
-            1 => CreatePipelineAsyncStatus::Success,
-            2 => CreatePipelineAsyncStatus::CallbackCancelled,
-            3 => CreatePipelineAsyncStatus::ValidationError,
-            4 => CreatePipelineAsyncStatus::InternalError,
+            ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_Success => {
+                CreatePipelineAsyncStatus::Success
+            }
+            ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_CallbackCancelled => {
+                CreatePipelineAsyncStatus::CallbackCancelled
+            }
+            ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_ValidationError => {
+                CreatePipelineAsyncStatus::ValidationError
+            }
+            ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_InternalError => {
+                CreatePipelineAsyncStatus::InternalError
+            }
             _ => CreatePipelineAsyncStatus::Success,
         }
     }
@@ -470,18 +630,18 @@ impl From<CreatePipelineAsyncStatus> for ffi::WGPUCreatePipelineAsyncStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum CullMode {
-    Undefined = 0,
-    None = 1,
-    Front = 2,
-    Back = 3,
+    Undefined = ffi::WGPUCullMode_WGPUCullMode_Undefined as u32,
+    None = ffi::WGPUCullMode_WGPUCullMode_None as u32,
+    Front = ffi::WGPUCullMode_WGPUCullMode_Front as u32,
+    Back = ffi::WGPUCullMode_WGPUCullMode_Back as u32,
 }
 impl From<ffi::WGPUCullMode> for CullMode {
     fn from(value: ffi::WGPUCullMode) -> Self {
         match value as u32 {
-            0 => CullMode::Undefined,
-            1 => CullMode::None,
-            2 => CullMode::Front,
-            3 => CullMode::Back,
+            ffi::WGPUCullMode_WGPUCullMode_Undefined => CullMode::Undefined,
+            ffi::WGPUCullMode_WGPUCullMode_None => CullMode::None,
+            ffi::WGPUCullMode_WGPUCullMode_Front => CullMode::Front,
+            ffi::WGPUCullMode_WGPUCullMode_Back => CullMode::Back,
             _ => CullMode::Undefined,
         }
     }
@@ -494,18 +654,28 @@ impl From<CullMode> for ffi::WGPUCullMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum DeviceLostReason {
-    Unknown = 1,
-    Destroyed = 2,
-    CallbackCancelled = 3,
-    FailedCreation = 4,
+    Unknown = ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_Unknown as u32,
+    Destroyed = ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_Destroyed as u32,
+    CallbackCancelled = ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_CallbackCancelled
+        as u32,
+    FailedCreation = ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_FailedCreation
+        as u32,
 }
 impl From<ffi::WGPUDeviceLostReason> for DeviceLostReason {
     fn from(value: ffi::WGPUDeviceLostReason) -> Self {
         match value as u32 {
-            1 => DeviceLostReason::Unknown,
-            2 => DeviceLostReason::Destroyed,
-            3 => DeviceLostReason::CallbackCancelled,
-            4 => DeviceLostReason::FailedCreation,
+            ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_Unknown => {
+                DeviceLostReason::Unknown
+            }
+            ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_Destroyed => {
+                DeviceLostReason::Destroyed
+            }
+            ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_CallbackCancelled => {
+                DeviceLostReason::CallbackCancelled
+            }
+            ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_FailedCreation => {
+                DeviceLostReason::FailedCreation
+            }
             _ => DeviceLostReason::Unknown,
         }
     }
@@ -518,16 +688,16 @@ impl From<DeviceLostReason> for ffi::WGPUDeviceLostReason {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum ErrorFilter {
-    Validation = 1,
-    OutOfMemory = 2,
-    Internal = 3,
+    Validation = ffi::WGPUErrorFilter_WGPUErrorFilter_Validation as u32,
+    OutOfMemory = ffi::WGPUErrorFilter_WGPUErrorFilter_OutOfMemory as u32,
+    Internal = ffi::WGPUErrorFilter_WGPUErrorFilter_Internal as u32,
 }
 impl From<ffi::WGPUErrorFilter> for ErrorFilter {
     fn from(value: ffi::WGPUErrorFilter) -> Self {
         match value as u32 {
-            1 => ErrorFilter::Validation,
-            2 => ErrorFilter::OutOfMemory,
-            3 => ErrorFilter::Internal,
+            ffi::WGPUErrorFilter_WGPUErrorFilter_Validation => ErrorFilter::Validation,
+            ffi::WGPUErrorFilter_WGPUErrorFilter_OutOfMemory => ErrorFilter::OutOfMemory,
+            ffi::WGPUErrorFilter_WGPUErrorFilter_Internal => ErrorFilter::Internal,
             _ => ErrorFilter::Validation,
         }
     }
@@ -540,20 +710,20 @@ impl From<ErrorFilter> for ffi::WGPUErrorFilter {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum ErrorType {
-    NoError = 1,
-    Validation = 2,
-    OutOfMemory = 3,
-    Internal = 4,
-    Unknown = 5,
+    NoError = ffi::WGPUErrorType_WGPUErrorType_NoError as u32,
+    Validation = ffi::WGPUErrorType_WGPUErrorType_Validation as u32,
+    OutOfMemory = ffi::WGPUErrorType_WGPUErrorType_OutOfMemory as u32,
+    Internal = ffi::WGPUErrorType_WGPUErrorType_Internal as u32,
+    Unknown = ffi::WGPUErrorType_WGPUErrorType_Unknown as u32,
 }
 impl From<ffi::WGPUErrorType> for ErrorType {
     fn from(value: ffi::WGPUErrorType) -> Self {
         match value as u32 {
-            1 => ErrorType::NoError,
-            2 => ErrorType::Validation,
-            3 => ErrorType::OutOfMemory,
-            4 => ErrorType::Internal,
-            5 => ErrorType::Unknown,
+            ffi::WGPUErrorType_WGPUErrorType_NoError => ErrorType::NoError,
+            ffi::WGPUErrorType_WGPUErrorType_Validation => ErrorType::Validation,
+            ffi::WGPUErrorType_WGPUErrorType_OutOfMemory => ErrorType::OutOfMemory,
+            ffi::WGPUErrorType_WGPUErrorType_Internal => ErrorType::Internal,
+            ffi::WGPUErrorType_WGPUErrorType_Unknown => ErrorType::Unknown,
             _ => ErrorType::NoError,
         }
     }
@@ -566,18 +736,30 @@ impl From<ErrorType> for ffi::WGPUErrorType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum ExternalTextureRotation {
-    Rotate0Degrees = 1,
-    Rotate90Degrees = 2,
-    Rotate180Degrees = 3,
-    Rotate270Degrees = 4,
+    Rotate0Degrees = ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate0Degrees
+        as u32,
+    Rotate90Degrees = ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate90Degrees
+        as u32,
+    Rotate180Degrees = ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate180Degrees
+        as u32,
+    Rotate270Degrees = ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate270Degrees
+        as u32,
 }
 impl From<ffi::WGPUExternalTextureRotation> for ExternalTextureRotation {
     fn from(value: ffi::WGPUExternalTextureRotation) -> Self {
         match value as u32 {
-            1 => ExternalTextureRotation::Rotate0Degrees,
-            2 => ExternalTextureRotation::Rotate90Degrees,
-            3 => ExternalTextureRotation::Rotate180Degrees,
-            4 => ExternalTextureRotation::Rotate270Degrees,
+            ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate0Degrees => {
+                ExternalTextureRotation::Rotate0Degrees
+            }
+            ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate90Degrees => {
+                ExternalTextureRotation::Rotate90Degrees
+            }
+            ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate180Degrees => {
+                ExternalTextureRotation::Rotate180Degrees
+            }
+            ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate270Degrees => {
+                ExternalTextureRotation::Rotate270Degrees
+            }
             _ => ExternalTextureRotation::Rotate0Degrees,
         }
     }
@@ -590,16 +772,18 @@ impl From<ExternalTextureRotation> for ffi::WGPUExternalTextureRotation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum FeatureLevel {
-    Undefined = 0,
-    Compatibility = 1,
-    Core = 2,
+    Undefined = ffi::WGPUFeatureLevel_WGPUFeatureLevel_Undefined as u32,
+    Compatibility = ffi::WGPUFeatureLevel_WGPUFeatureLevel_Compatibility as u32,
+    Core = ffi::WGPUFeatureLevel_WGPUFeatureLevel_Core as u32,
 }
 impl From<ffi::WGPUFeatureLevel> for FeatureLevel {
     fn from(value: ffi::WGPUFeatureLevel) -> Self {
         match value as u32 {
-            0 => FeatureLevel::Undefined,
-            1 => FeatureLevel::Compatibility,
-            2 => FeatureLevel::Core,
+            ffi::WGPUFeatureLevel_WGPUFeatureLevel_Undefined => FeatureLevel::Undefined,
+            ffi::WGPUFeatureLevel_WGPUFeatureLevel_Compatibility => {
+                FeatureLevel::Compatibility
+            }
+            ffi::WGPUFeatureLevel_WGPUFeatureLevel_Core => FeatureLevel::Core,
             _ => FeatureLevel::Undefined,
         }
     }
@@ -612,172 +796,391 @@ impl From<FeatureLevel> for ffi::WGPUFeatureLevel {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum FeatureName {
-    CoreFeaturesAndLimits = 1,
-    DepthClipControl = 2,
-    Depth32FloatStencil8 = 3,
-    TextureCompressionBc = 4,
-    TextureCompressionBcSliced3D = 5,
-    TextureCompressionEtc2 = 6,
-    TextureCompressionAstc = 7,
-    TextureCompressionAstcSliced3D = 8,
-    TimestampQuery = 9,
-    IndirectFirstInstance = 10,
-    ShaderF16 = 11,
-    Rg11B10UfloatRenderable = 12,
-    Bgra8UnormStorage = 13,
-    Float32Filterable = 14,
-    Float32Blendable = 15,
-    ClipDistances = 16,
-    DualSourceBlending = 17,
-    Subgroups = 18,
-    TextureFormatsTier1 = 19,
-    TextureFormatsTier2 = 20,
-    PrimitiveIndex = 21,
-    TextureComponentSwizzle = 22,
-    DawnInternalUsages = 327680,
-    DawnMultiPlanarFormats = 327681,
-    DawnNative = 327682,
-    ChromiumExperimentalTimestampQueryInsidePasses = 327683,
-    ImplicitDeviceSynchronization = 327684,
-    TransientAttachments = 327686,
-    MsaaRenderToSingleSampled = 327687,
-    D3D11MultithreadProtected = 327688,
-    AngleTextureSharing = 327689,
-    PixelLocalStorageCoherent = 327690,
-    PixelLocalStorageNonCoherent = 327691,
-    Unorm16TextureFormats = 262156,
-    MultiPlanarFormatExtendedUsages = 327693,
-    MultiPlanarFormatP010 = 327694,
-    HostMappedPointer = 327695,
-    MultiPlanarRenderTargets = 327696,
-    MultiPlanarFormatNv12A = 327697,
-    FramebufferFetch = 327698,
-    BufferMapExtendedUsages = 327699,
-    AdapterPropertiesMemoryHeaps = 327700,
-    AdapterPropertiesD3D = 327701,
-    AdapterPropertiesVk = 327702,
-    DawnFormatCapabilities = 327703,
-    DawnDrmFormatCapabilities = 327704,
-    MultiPlanarFormatNv16 = 327705,
-    MultiPlanarFormatNv24 = 327706,
-    MultiPlanarFormatP210 = 327707,
-    MultiPlanarFormatP410 = 327708,
-    SharedTextureMemoryVkDedicatedAllocation = 327709,
-    SharedTextureMemoryAHardwareBuffer = 327710,
-    SharedTextureMemoryDmaBuf = 327711,
-    SharedTextureMemoryOpaqueFD = 327712,
-    SharedTextureMemoryZirconHandle = 327713,
-    SharedTextureMemoryDXGISharedHandle = 327714,
-    SharedTextureMemoryD3D11Texture2D = 327715,
-    SharedTextureMemoryIOSurface = 327716,
-    SharedTextureMemoryEGLImage = 327717,
-    SharedFenceVkSemaphoreOpaqueFD = 327718,
-    SharedFenceSyncFD = 327719,
-    SharedFenceVkSemaphoreZirconHandle = 327720,
-    SharedFenceDXGISharedHandle = 327721,
-    SharedFenceMTLSharedEvent = 327722,
-    SharedBufferMemoryD3D12Resource = 327723,
-    StaticSamplers = 327724,
-    YCbCrVulkanSamplers = 327725,
-    ShaderModuleCompilationOptions = 327726,
-    DawnLoadResolveTexture = 327727,
-    DawnPartialLoadResolveTexture = 327728,
-    MultiDrawIndirect = 262193,
-    DawnTexelCopyBufferRowAlignment = 327730,
-    FlexibleTextureViews = 327731,
-    ChromiumExperimentalSubgroupMatrix = 327732,
-    SharedFenceEGLSync = 327733,
-    DawnDeviceAllocatorControl = 327734,
-    AdapterPropertiesWGPU = 327735,
-    SharedBufferMemoryD3D12SharedMemoryFileMappingHandle = 327736,
-    SharedTextureMemoryD3D12Resource = 327737,
-    ChromiumExperimentalSamplingResourceTable = 327738,
-    ChromiumExperimentalSubgroupSizeControl = 327739,
+    CoreFeaturesAndLimits = ffi::WGPUFeatureName_WGPUFeatureName_CoreFeaturesAndLimits
+        as u32,
+    DepthClipControl = ffi::WGPUFeatureName_WGPUFeatureName_DepthClipControl as u32,
+    Depth32FloatStencil8 = ffi::WGPUFeatureName_WGPUFeatureName_Depth32FloatStencil8
+        as u32,
+    TextureCompressionBc = ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionBC
+        as u32,
+    TextureCompressionBcSliced3D = ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionBCSliced3D
+        as u32,
+    TextureCompressionEtc2 = ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionETC2
+        as u32,
+    TextureCompressionAstc = ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionASTC
+        as u32,
+    TextureCompressionAstcSliced3D = ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionASTCSliced3D
+        as u32,
+    TimestampQuery = ffi::WGPUFeatureName_WGPUFeatureName_TimestampQuery as u32,
+    IndirectFirstInstance = ffi::WGPUFeatureName_WGPUFeatureName_IndirectFirstInstance
+        as u32,
+    ShaderF16 = ffi::WGPUFeatureName_WGPUFeatureName_ShaderF16 as u32,
+    Rg11B10UfloatRenderable = ffi::WGPUFeatureName_WGPUFeatureName_RG11B10UfloatRenderable
+        as u32,
+    Bgra8UnormStorage = ffi::WGPUFeatureName_WGPUFeatureName_BGRA8UnormStorage as u32,
+    Float32Filterable = ffi::WGPUFeatureName_WGPUFeatureName_Float32Filterable as u32,
+    Float32Blendable = ffi::WGPUFeatureName_WGPUFeatureName_Float32Blendable as u32,
+    ClipDistances = ffi::WGPUFeatureName_WGPUFeatureName_ClipDistances as u32,
+    DualSourceBlending = ffi::WGPUFeatureName_WGPUFeatureName_DualSourceBlending as u32,
+    Subgroups = ffi::WGPUFeatureName_WGPUFeatureName_Subgroups as u32,
+    TextureFormatsTier1 = ffi::WGPUFeatureName_WGPUFeatureName_TextureFormatsTier1
+        as u32,
+    TextureFormatsTier2 = ffi::WGPUFeatureName_WGPUFeatureName_TextureFormatsTier2
+        as u32,
+    PrimitiveIndex = ffi::WGPUFeatureName_WGPUFeatureName_PrimitiveIndex as u32,
+    TextureComponentSwizzle = ffi::WGPUFeatureName_WGPUFeatureName_TextureComponentSwizzle
+        as u32,
+    DawnInternalUsages = ffi::WGPUFeatureName_WGPUFeatureName_DawnInternalUsages as u32,
+    DawnMultiPlanarFormats = ffi::WGPUFeatureName_WGPUFeatureName_DawnMultiPlanarFormats
+        as u32,
+    DawnNative = ffi::WGPUFeatureName_WGPUFeatureName_DawnNative as u32,
+    ChromiumExperimentalTimestampQueryInsidePasses = ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalTimestampQueryInsidePasses
+        as u32,
+    ImplicitDeviceSynchronization = ffi::WGPUFeatureName_WGPUFeatureName_ImplicitDeviceSynchronization
+        as u32,
+    TransientAttachments = ffi::WGPUFeatureName_WGPUFeatureName_TransientAttachments
+        as u32,
+    MsaaRenderToSingleSampled = ffi::WGPUFeatureName_WGPUFeatureName_MSAARenderToSingleSampled
+        as u32,
+    D3D11MultithreadProtected = ffi::WGPUFeatureName_WGPUFeatureName_D3D11MultithreadProtected
+        as u32,
+    AngleTextureSharing = ffi::WGPUFeatureName_WGPUFeatureName_ANGLETextureSharing
+        as u32,
+    PixelLocalStorageCoherent = ffi::WGPUFeatureName_WGPUFeatureName_PixelLocalStorageCoherent
+        as u32,
+    PixelLocalStorageNonCoherent = ffi::WGPUFeatureName_WGPUFeatureName_PixelLocalStorageNonCoherent
+        as u32,
+    Unorm16TextureFormats = ffi::WGPUFeatureName_WGPUFeatureName_Unorm16TextureFormats
+        as u32,
+    MultiPlanarFormatExtendedUsages = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatExtendedUsages
+        as u32,
+    MultiPlanarFormatP010 = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP010
+        as u32,
+    HostMappedPointer = ffi::WGPUFeatureName_WGPUFeatureName_HostMappedPointer as u32,
+    MultiPlanarRenderTargets = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarRenderTargets
+        as u32,
+    MultiPlanarFormatNv12A = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv12a
+        as u32,
+    FramebufferFetch = ffi::WGPUFeatureName_WGPUFeatureName_FramebufferFetch as u32,
+    BufferMapExtendedUsages = ffi::WGPUFeatureName_WGPUFeatureName_BufferMapExtendedUsages
+        as u32,
+    AdapterPropertiesMemoryHeaps = ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesMemoryHeaps
+        as u32,
+    AdapterPropertiesD3D = ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesD3D
+        as u32,
+    AdapterPropertiesVk = ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesVk
+        as u32,
+    DawnFormatCapabilities = ffi::WGPUFeatureName_WGPUFeatureName_DawnFormatCapabilities
+        as u32,
+    DawnDrmFormatCapabilities = ffi::WGPUFeatureName_WGPUFeatureName_DawnDrmFormatCapabilities
+        as u32,
+    MultiPlanarFormatNv16 = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv16
+        as u32,
+    MultiPlanarFormatNv24 = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv24
+        as u32,
+    MultiPlanarFormatP210 = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP210
+        as u32,
+    MultiPlanarFormatP410 = ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP410
+        as u32,
+    SharedTextureMemoryVkDedicatedAllocation = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryVkDedicatedAllocation
+        as u32,
+    SharedTextureMemoryAHardwareBuffer = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryAHardwareBuffer
+        as u32,
+    SharedTextureMemoryDmaBuf = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryDmaBuf
+        as u32,
+    SharedTextureMemoryOpaqueFD = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryOpaqueFD
+        as u32,
+    SharedTextureMemoryZirconHandle = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryZirconHandle
+        as u32,
+    SharedTextureMemoryDXGISharedHandle = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryDXGISharedHandle
+        as u32,
+    SharedTextureMemoryD3D11Texture2D = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryD3D11Texture2D
+        as u32,
+    SharedTextureMemoryIOSurface = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryIOSurface
+        as u32,
+    SharedTextureMemoryEGLImage = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryEGLImage
+        as u32,
+    SharedFenceVkSemaphoreOpaqueFD = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceVkSemaphoreOpaqueFD
+        as u32,
+    SharedFenceSyncFD = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceSyncFD as u32,
+    SharedFenceVkSemaphoreZirconHandle = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceVkSemaphoreZirconHandle
+        as u32,
+    SharedFenceDXGISharedHandle = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceDXGISharedHandle
+        as u32,
+    SharedFenceMTLSharedEvent = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceMTLSharedEvent
+        as u32,
+    SharedBufferMemoryD3D12Resource = ffi::WGPUFeatureName_WGPUFeatureName_SharedBufferMemoryD3D12Resource
+        as u32,
+    StaticSamplers = ffi::WGPUFeatureName_WGPUFeatureName_StaticSamplers as u32,
+    YCbCrVulkanSamplers = ffi::WGPUFeatureName_WGPUFeatureName_YCbCrVulkanSamplers
+        as u32,
+    ShaderModuleCompilationOptions = ffi::WGPUFeatureName_WGPUFeatureName_ShaderModuleCompilationOptions
+        as u32,
+    DawnLoadResolveTexture = ffi::WGPUFeatureName_WGPUFeatureName_DawnLoadResolveTexture
+        as u32,
+    DawnPartialLoadResolveTexture = ffi::WGPUFeatureName_WGPUFeatureName_DawnPartialLoadResolveTexture
+        as u32,
+    MultiDrawIndirect = ffi::WGPUFeatureName_WGPUFeatureName_MultiDrawIndirect as u32,
+    DawnTexelCopyBufferRowAlignment = ffi::WGPUFeatureName_WGPUFeatureName_DawnTexelCopyBufferRowAlignment
+        as u32,
+    FlexibleTextureViews = ffi::WGPUFeatureName_WGPUFeatureName_FlexibleTextureViews
+        as u32,
+    ChromiumExperimentalSubgroupMatrix = ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupMatrix
+        as u32,
+    SharedFenceEGLSync = ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceEGLSync as u32,
+    DawnDeviceAllocatorControl = ffi::WGPUFeatureName_WGPUFeatureName_DawnDeviceAllocatorControl
+        as u32,
+    AdapterPropertiesWGPU = ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesWGPU
+        as u32,
+    SharedBufferMemoryD3D12SharedMemoryFileMappingHandle = ffi::WGPUFeatureName_WGPUFeatureName_SharedBufferMemoryD3D12SharedMemoryFileMappingHandle
+        as u32,
+    SharedTextureMemoryD3D12Resource = ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryD3D12Resource
+        as u32,
+    ChromiumExperimentalSamplingResourceTable = ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSamplingResourceTable
+        as u32,
+    ChromiumExperimentalSubgroupSizeControl = ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl
+        as u32,
 }
 impl From<ffi::WGPUFeatureName> for FeatureName {
     fn from(value: ffi::WGPUFeatureName) -> Self {
         match value as u32 {
-            1 => FeatureName::CoreFeaturesAndLimits,
-            2 => FeatureName::DepthClipControl,
-            3 => FeatureName::Depth32FloatStencil8,
-            4 => FeatureName::TextureCompressionBc,
-            5 => FeatureName::TextureCompressionBcSliced3D,
-            6 => FeatureName::TextureCompressionEtc2,
-            7 => FeatureName::TextureCompressionAstc,
-            8 => FeatureName::TextureCompressionAstcSliced3D,
-            9 => FeatureName::TimestampQuery,
-            10 => FeatureName::IndirectFirstInstance,
-            11 => FeatureName::ShaderF16,
-            12 => FeatureName::Rg11B10UfloatRenderable,
-            13 => FeatureName::Bgra8UnormStorage,
-            14 => FeatureName::Float32Filterable,
-            15 => FeatureName::Float32Blendable,
-            16 => FeatureName::ClipDistances,
-            17 => FeatureName::DualSourceBlending,
-            18 => FeatureName::Subgroups,
-            19 => FeatureName::TextureFormatsTier1,
-            20 => FeatureName::TextureFormatsTier2,
-            21 => FeatureName::PrimitiveIndex,
-            22 => FeatureName::TextureComponentSwizzle,
-            327680 => FeatureName::DawnInternalUsages,
-            327681 => FeatureName::DawnMultiPlanarFormats,
-            327682 => FeatureName::DawnNative,
-            327683 => FeatureName::ChromiumExperimentalTimestampQueryInsidePasses,
-            327684 => FeatureName::ImplicitDeviceSynchronization,
-            327686 => FeatureName::TransientAttachments,
-            327687 => FeatureName::MsaaRenderToSingleSampled,
-            327688 => FeatureName::D3D11MultithreadProtected,
-            327689 => FeatureName::AngleTextureSharing,
-            327690 => FeatureName::PixelLocalStorageCoherent,
-            327691 => FeatureName::PixelLocalStorageNonCoherent,
-            262156 => FeatureName::Unorm16TextureFormats,
-            327693 => FeatureName::MultiPlanarFormatExtendedUsages,
-            327694 => FeatureName::MultiPlanarFormatP010,
-            327695 => FeatureName::HostMappedPointer,
-            327696 => FeatureName::MultiPlanarRenderTargets,
-            327697 => FeatureName::MultiPlanarFormatNv12A,
-            327698 => FeatureName::FramebufferFetch,
-            327699 => FeatureName::BufferMapExtendedUsages,
-            327700 => FeatureName::AdapterPropertiesMemoryHeaps,
-            327701 => FeatureName::AdapterPropertiesD3D,
-            327702 => FeatureName::AdapterPropertiesVk,
-            327703 => FeatureName::DawnFormatCapabilities,
-            327704 => FeatureName::DawnDrmFormatCapabilities,
-            327705 => FeatureName::MultiPlanarFormatNv16,
-            327706 => FeatureName::MultiPlanarFormatNv24,
-            327707 => FeatureName::MultiPlanarFormatP210,
-            327708 => FeatureName::MultiPlanarFormatP410,
-            327709 => FeatureName::SharedTextureMemoryVkDedicatedAllocation,
-            327710 => FeatureName::SharedTextureMemoryAHardwareBuffer,
-            327711 => FeatureName::SharedTextureMemoryDmaBuf,
-            327712 => FeatureName::SharedTextureMemoryOpaqueFD,
-            327713 => FeatureName::SharedTextureMemoryZirconHandle,
-            327714 => FeatureName::SharedTextureMemoryDXGISharedHandle,
-            327715 => FeatureName::SharedTextureMemoryD3D11Texture2D,
-            327716 => FeatureName::SharedTextureMemoryIOSurface,
-            327717 => FeatureName::SharedTextureMemoryEGLImage,
-            327718 => FeatureName::SharedFenceVkSemaphoreOpaqueFD,
-            327719 => FeatureName::SharedFenceSyncFD,
-            327720 => FeatureName::SharedFenceVkSemaphoreZirconHandle,
-            327721 => FeatureName::SharedFenceDXGISharedHandle,
-            327722 => FeatureName::SharedFenceMTLSharedEvent,
-            327723 => FeatureName::SharedBufferMemoryD3D12Resource,
-            327724 => FeatureName::StaticSamplers,
-            327725 => FeatureName::YCbCrVulkanSamplers,
-            327726 => FeatureName::ShaderModuleCompilationOptions,
-            327727 => FeatureName::DawnLoadResolveTexture,
-            327728 => FeatureName::DawnPartialLoadResolveTexture,
-            262193 => FeatureName::MultiDrawIndirect,
-            327730 => FeatureName::DawnTexelCopyBufferRowAlignment,
-            327731 => FeatureName::FlexibleTextureViews,
-            327732 => FeatureName::ChromiumExperimentalSubgroupMatrix,
-            327733 => FeatureName::SharedFenceEGLSync,
-            327734 => FeatureName::DawnDeviceAllocatorControl,
-            327735 => FeatureName::AdapterPropertiesWGPU,
-            327736 => FeatureName::SharedBufferMemoryD3D12SharedMemoryFileMappingHandle,
-            327737 => FeatureName::SharedTextureMemoryD3D12Resource,
-            327738 => FeatureName::ChromiumExperimentalSamplingResourceTable,
-            327739 => FeatureName::ChromiumExperimentalSubgroupSizeControl,
+            ffi::WGPUFeatureName_WGPUFeatureName_CoreFeaturesAndLimits => {
+                FeatureName::CoreFeaturesAndLimits
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DepthClipControl => {
+                FeatureName::DepthClipControl
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_Depth32FloatStencil8 => {
+                FeatureName::Depth32FloatStencil8
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionBC => {
+                FeatureName::TextureCompressionBc
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionBCSliced3D => {
+                FeatureName::TextureCompressionBcSliced3D
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionETC2 => {
+                FeatureName::TextureCompressionEtc2
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionASTC => {
+                FeatureName::TextureCompressionAstc
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureCompressionASTCSliced3D => {
+                FeatureName::TextureCompressionAstcSliced3D
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TimestampQuery => {
+                FeatureName::TimestampQuery
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_IndirectFirstInstance => {
+                FeatureName::IndirectFirstInstance
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ShaderF16 => FeatureName::ShaderF16,
+            ffi::WGPUFeatureName_WGPUFeatureName_RG11B10UfloatRenderable => {
+                FeatureName::Rg11B10UfloatRenderable
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_BGRA8UnormStorage => {
+                FeatureName::Bgra8UnormStorage
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_Float32Filterable => {
+                FeatureName::Float32Filterable
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_Float32Blendable => {
+                FeatureName::Float32Blendable
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ClipDistances => {
+                FeatureName::ClipDistances
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DualSourceBlending => {
+                FeatureName::DualSourceBlending
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_Subgroups => FeatureName::Subgroups,
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureFormatsTier1 => {
+                FeatureName::TextureFormatsTier1
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureFormatsTier2 => {
+                FeatureName::TextureFormatsTier2
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_PrimitiveIndex => {
+                FeatureName::PrimitiveIndex
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TextureComponentSwizzle => {
+                FeatureName::TextureComponentSwizzle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnInternalUsages => {
+                FeatureName::DawnInternalUsages
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnMultiPlanarFormats => {
+                FeatureName::DawnMultiPlanarFormats
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnNative => FeatureName::DawnNative,
+            ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalTimestampQueryInsidePasses => {
+                FeatureName::ChromiumExperimentalTimestampQueryInsidePasses
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ImplicitDeviceSynchronization => {
+                FeatureName::ImplicitDeviceSynchronization
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_TransientAttachments => {
+                FeatureName::TransientAttachments
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MSAARenderToSingleSampled => {
+                FeatureName::MsaaRenderToSingleSampled
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_D3D11MultithreadProtected => {
+                FeatureName::D3D11MultithreadProtected
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ANGLETextureSharing => {
+                FeatureName::AngleTextureSharing
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_PixelLocalStorageCoherent => {
+                FeatureName::PixelLocalStorageCoherent
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_PixelLocalStorageNonCoherent => {
+                FeatureName::PixelLocalStorageNonCoherent
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_Unorm16TextureFormats => {
+                FeatureName::Unorm16TextureFormats
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatExtendedUsages => {
+                FeatureName::MultiPlanarFormatExtendedUsages
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP010 => {
+                FeatureName::MultiPlanarFormatP010
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_HostMappedPointer => {
+                FeatureName::HostMappedPointer
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarRenderTargets => {
+                FeatureName::MultiPlanarRenderTargets
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv12a => {
+                FeatureName::MultiPlanarFormatNv12A
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_FramebufferFetch => {
+                FeatureName::FramebufferFetch
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_BufferMapExtendedUsages => {
+                FeatureName::BufferMapExtendedUsages
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesMemoryHeaps => {
+                FeatureName::AdapterPropertiesMemoryHeaps
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesD3D => {
+                FeatureName::AdapterPropertiesD3D
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesVk => {
+                FeatureName::AdapterPropertiesVk
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnFormatCapabilities => {
+                FeatureName::DawnFormatCapabilities
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnDrmFormatCapabilities => {
+                FeatureName::DawnDrmFormatCapabilities
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv16 => {
+                FeatureName::MultiPlanarFormatNv16
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatNv24 => {
+                FeatureName::MultiPlanarFormatNv24
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP210 => {
+                FeatureName::MultiPlanarFormatP210
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiPlanarFormatP410 => {
+                FeatureName::MultiPlanarFormatP410
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryVkDedicatedAllocation => {
+                FeatureName::SharedTextureMemoryVkDedicatedAllocation
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryAHardwareBuffer => {
+                FeatureName::SharedTextureMemoryAHardwareBuffer
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryDmaBuf => {
+                FeatureName::SharedTextureMemoryDmaBuf
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryOpaqueFD => {
+                FeatureName::SharedTextureMemoryOpaqueFD
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryZirconHandle => {
+                FeatureName::SharedTextureMemoryZirconHandle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryDXGISharedHandle => {
+                FeatureName::SharedTextureMemoryDXGISharedHandle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryD3D11Texture2D => {
+                FeatureName::SharedTextureMemoryD3D11Texture2D
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryIOSurface => {
+                FeatureName::SharedTextureMemoryIOSurface
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryEGLImage => {
+                FeatureName::SharedTextureMemoryEGLImage
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceVkSemaphoreOpaqueFD => {
+                FeatureName::SharedFenceVkSemaphoreOpaqueFD
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceSyncFD => {
+                FeatureName::SharedFenceSyncFD
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceVkSemaphoreZirconHandle => {
+                FeatureName::SharedFenceVkSemaphoreZirconHandle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceDXGISharedHandle => {
+                FeatureName::SharedFenceDXGISharedHandle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceMTLSharedEvent => {
+                FeatureName::SharedFenceMTLSharedEvent
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedBufferMemoryD3D12Resource => {
+                FeatureName::SharedBufferMemoryD3D12Resource
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_StaticSamplers => {
+                FeatureName::StaticSamplers
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_YCbCrVulkanSamplers => {
+                FeatureName::YCbCrVulkanSamplers
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ShaderModuleCompilationOptions => {
+                FeatureName::ShaderModuleCompilationOptions
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnLoadResolveTexture => {
+                FeatureName::DawnLoadResolveTexture
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnPartialLoadResolveTexture => {
+                FeatureName::DawnPartialLoadResolveTexture
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_MultiDrawIndirect => {
+                FeatureName::MultiDrawIndirect
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnTexelCopyBufferRowAlignment => {
+                FeatureName::DawnTexelCopyBufferRowAlignment
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_FlexibleTextureViews => {
+                FeatureName::FlexibleTextureViews
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupMatrix => {
+                FeatureName::ChromiumExperimentalSubgroupMatrix
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedFenceEGLSync => {
+                FeatureName::SharedFenceEGLSync
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_DawnDeviceAllocatorControl => {
+                FeatureName::DawnDeviceAllocatorControl
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesWGPU => {
+                FeatureName::AdapterPropertiesWGPU
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedBufferMemoryD3D12SharedMemoryFileMappingHandle => {
+                FeatureName::SharedBufferMemoryD3D12SharedMemoryFileMappingHandle
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_SharedTextureMemoryD3D12Resource => {
+                FeatureName::SharedTextureMemoryD3D12Resource
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSamplingResourceTable => {
+                FeatureName::ChromiumExperimentalSamplingResourceTable
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl => {
+                FeatureName::ChromiumExperimentalSubgroupSizeControl
+            }
             _ => FeatureName::CoreFeaturesAndLimits,
         }
     }
@@ -790,16 +1193,16 @@ impl From<FeatureName> for ffi::WGPUFeatureName {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum FilterMode {
-    Undefined = 0,
-    Nearest = 1,
-    Linear = 2,
+    Undefined = ffi::WGPUFilterMode_WGPUFilterMode_Undefined as u32,
+    Nearest = ffi::WGPUFilterMode_WGPUFilterMode_Nearest as u32,
+    Linear = ffi::WGPUFilterMode_WGPUFilterMode_Linear as u32,
 }
 impl From<ffi::WGPUFilterMode> for FilterMode {
     fn from(value: ffi::WGPUFilterMode) -> Self {
         match value as u32 {
-            0 => FilterMode::Undefined,
-            1 => FilterMode::Nearest,
-            2 => FilterMode::Linear,
+            ffi::WGPUFilterMode_WGPUFilterMode_Undefined => FilterMode::Undefined,
+            ffi::WGPUFilterMode_WGPUFilterMode_Nearest => FilterMode::Nearest,
+            ffi::WGPUFilterMode_WGPUFilterMode_Linear => FilterMode::Linear,
             _ => FilterMode::Undefined,
         }
     }
@@ -812,16 +1215,16 @@ impl From<FilterMode> for ffi::WGPUFilterMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum FrontFace {
-    Undefined = 0,
-    Ccw = 1,
-    Cw = 2,
+    Undefined = ffi::WGPUFrontFace_WGPUFrontFace_Undefined as u32,
+    Ccw = ffi::WGPUFrontFace_WGPUFrontFace_CCW as u32,
+    Cw = ffi::WGPUFrontFace_WGPUFrontFace_CW as u32,
 }
 impl From<ffi::WGPUFrontFace> for FrontFace {
     fn from(value: ffi::WGPUFrontFace) -> Self {
         match value as u32 {
-            0 => FrontFace::Undefined,
-            1 => FrontFace::Ccw,
-            2 => FrontFace::Cw,
+            ffi::WGPUFrontFace_WGPUFrontFace_Undefined => FrontFace::Undefined,
+            ffi::WGPUFrontFace_WGPUFrontFace_CCW => FrontFace::Ccw,
+            ffi::WGPUFrontFace_WGPUFrontFace_CW => FrontFace::Cw,
             _ => FrontFace::Undefined,
         }
     }
@@ -834,16 +1237,16 @@ impl From<FrontFace> for ffi::WGPUFrontFace {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum IndexFormat {
-    Undefined = 0,
-    Uint16 = 1,
-    Uint32 = 2,
+    Undefined = ffi::WGPUIndexFormat_WGPUIndexFormat_Undefined as u32,
+    Uint16 = ffi::WGPUIndexFormat_WGPUIndexFormat_Uint16 as u32,
+    Uint32 = ffi::WGPUIndexFormat_WGPUIndexFormat_Uint32 as u32,
 }
 impl From<ffi::WGPUIndexFormat> for IndexFormat {
     fn from(value: ffi::WGPUIndexFormat) -> Self {
         match value as u32 {
-            0 => IndexFormat::Undefined,
-            1 => IndexFormat::Uint16,
-            2 => IndexFormat::Uint32,
+            ffi::WGPUIndexFormat_WGPUIndexFormat_Undefined => IndexFormat::Undefined,
+            ffi::WGPUIndexFormat_WGPUIndexFormat_Uint16 => IndexFormat::Uint16,
+            ffi::WGPUIndexFormat_WGPUIndexFormat_Uint32 => IndexFormat::Uint32,
             _ => IndexFormat::Undefined,
         }
     }
@@ -856,16 +1259,25 @@ impl From<IndexFormat> for ffi::WGPUIndexFormat {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum InstanceFeatureName {
-    TimedWaitAny = 1,
-    ShaderSourceSPIRV = 2,
-    MultipleDevicesPerAdapter = 3,
+    TimedWaitAny = ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_TimedWaitAny
+        as u32,
+    ShaderSourceSPIRV = ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_ShaderSourceSPIRV
+        as u32,
+    MultipleDevicesPerAdapter = ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_MultipleDevicesPerAdapter
+        as u32,
 }
 impl From<ffi::WGPUInstanceFeatureName> for InstanceFeatureName {
     fn from(value: ffi::WGPUInstanceFeatureName) -> Self {
         match value as u32 {
-            1 => InstanceFeatureName::TimedWaitAny,
-            2 => InstanceFeatureName::ShaderSourceSPIRV,
-            3 => InstanceFeatureName::MultipleDevicesPerAdapter,
+            ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_TimedWaitAny => {
+                InstanceFeatureName::TimedWaitAny
+            }
+            ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_ShaderSourceSPIRV => {
+                InstanceFeatureName::ShaderSourceSPIRV
+            }
+            ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_MultipleDevicesPerAdapter => {
+                InstanceFeatureName::MultipleDevicesPerAdapter
+            }
             _ => InstanceFeatureName::TimedWaitAny,
         }
     }
@@ -878,18 +1290,20 @@ impl From<InstanceFeatureName> for ffi::WGPUInstanceFeatureName {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum LoadOp {
-    Undefined = 0,
-    Load = 1,
-    Clear = 2,
-    ExpandResolveTexture = 327683,
+    Undefined = ffi::WGPULoadOp_WGPULoadOp_Undefined as u32,
+    Load = ffi::WGPULoadOp_WGPULoadOp_Load as u32,
+    Clear = ffi::WGPULoadOp_WGPULoadOp_Clear as u32,
+    ExpandResolveTexture = ffi::WGPULoadOp_WGPULoadOp_ExpandResolveTexture as u32,
 }
 impl From<ffi::WGPULoadOp> for LoadOp {
     fn from(value: ffi::WGPULoadOp) -> Self {
         match value as u32 {
-            0 => LoadOp::Undefined,
-            1 => LoadOp::Load,
-            2 => LoadOp::Clear,
-            327683 => LoadOp::ExpandResolveTexture,
+            ffi::WGPULoadOp_WGPULoadOp_Undefined => LoadOp::Undefined,
+            ffi::WGPULoadOp_WGPULoadOp_Load => LoadOp::Load,
+            ffi::WGPULoadOp_WGPULoadOp_Clear => LoadOp::Clear,
+            ffi::WGPULoadOp_WGPULoadOp_ExpandResolveTexture => {
+                LoadOp::ExpandResolveTexture
+            }
             _ => LoadOp::Undefined,
         }
     }
@@ -902,18 +1316,18 @@ impl From<LoadOp> for ffi::WGPULoadOp {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum LoggingType {
-    Verbose = 1,
-    Info = 2,
-    Warning = 3,
-    Error = 4,
+    Verbose = ffi::WGPULoggingType_WGPULoggingType_Verbose as u32,
+    Info = ffi::WGPULoggingType_WGPULoggingType_Info as u32,
+    Warning = ffi::WGPULoggingType_WGPULoggingType_Warning as u32,
+    Error = ffi::WGPULoggingType_WGPULoggingType_Error as u32,
 }
 impl From<ffi::WGPULoggingType> for LoggingType {
     fn from(value: ffi::WGPULoggingType) -> Self {
         match value as u32 {
-            1 => LoggingType::Verbose,
-            2 => LoggingType::Info,
-            3 => LoggingType::Warning,
-            4 => LoggingType::Error,
+            ffi::WGPULoggingType_WGPULoggingType_Verbose => LoggingType::Verbose,
+            ffi::WGPULoggingType_WGPULoggingType_Info => LoggingType::Info,
+            ffi::WGPULoggingType_WGPULoggingType_Warning => LoggingType::Warning,
+            ffi::WGPULoggingType_WGPULoggingType_Error => LoggingType::Error,
             _ => LoggingType::Verbose,
         }
     }
@@ -926,18 +1340,21 @@ impl From<LoggingType> for ffi::WGPULoggingType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum MapAsyncStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    Error = 3,
-    Aborted = 4,
+    Success = ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Success as u32,
+    CallbackCancelled = ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_CallbackCancelled
+        as u32,
+    Error = ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Error as u32,
+    Aborted = ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Aborted as u32,
 }
 impl From<ffi::WGPUMapAsyncStatus> for MapAsyncStatus {
     fn from(value: ffi::WGPUMapAsyncStatus) -> Self {
         match value as u32 {
-            1 => MapAsyncStatus::Success,
-            2 => MapAsyncStatus::CallbackCancelled,
-            3 => MapAsyncStatus::Error,
-            4 => MapAsyncStatus::Aborted,
+            ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Success => MapAsyncStatus::Success,
+            ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_CallbackCancelled => {
+                MapAsyncStatus::CallbackCancelled
+            }
+            ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Error => MapAsyncStatus::Error,
+            ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Aborted => MapAsyncStatus::Aborted,
             _ => MapAsyncStatus::Success,
         }
     }
@@ -950,16 +1367,22 @@ impl From<MapAsyncStatus> for ffi::WGPUMapAsyncStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum MipmapFilterMode {
-    Undefined = 0,
-    Nearest = 1,
-    Linear = 2,
+    Undefined = ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Undefined as u32,
+    Nearest = ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Nearest as u32,
+    Linear = ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Linear as u32,
 }
 impl From<ffi::WGPUMipmapFilterMode> for MipmapFilterMode {
     fn from(value: ffi::WGPUMipmapFilterMode) -> Self {
         match value as u32 {
-            0 => MipmapFilterMode::Undefined,
-            1 => MipmapFilterMode::Nearest,
-            2 => MipmapFilterMode::Linear,
+            ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Undefined => {
+                MipmapFilterMode::Undefined
+            }
+            ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Nearest => {
+                MipmapFilterMode::Nearest
+            }
+            ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Linear => {
+                MipmapFilterMode::Linear
+            }
             _ => MipmapFilterMode::Undefined,
         }
     }
@@ -972,16 +1395,16 @@ impl From<MipmapFilterMode> for ffi::WGPUMipmapFilterMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum OptionalBool {
-    False = 0,
-    True = 1,
-    Undefined = 2,
+    False = ffi::WGPUOptionalBool_WGPUOptionalBool_False as u32,
+    True = ffi::WGPUOptionalBool_WGPUOptionalBool_True as u32,
+    Undefined = ffi::WGPUOptionalBool_WGPUOptionalBool_Undefined as u32,
 }
 impl From<ffi::WGPUOptionalBool> for OptionalBool {
     fn from(value: ffi::WGPUOptionalBool) -> Self {
         match value as u32 {
-            0 => OptionalBool::False,
-            1 => OptionalBool::True,
-            2 => OptionalBool::Undefined,
+            ffi::WGPUOptionalBool_WGPUOptionalBool_False => OptionalBool::False,
+            ffi::WGPUOptionalBool_WGPUOptionalBool_True => OptionalBool::True,
+            ffi::WGPUOptionalBool_WGPUOptionalBool_Undefined => OptionalBool::Undefined,
             _ => OptionalBool::False,
         }
     }
@@ -994,16 +1417,23 @@ impl From<OptionalBool> for ffi::WGPUOptionalBool {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum PopErrorScopeStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    Error = 3,
+    Success = ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Success as u32,
+    CallbackCancelled = ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_CallbackCancelled
+        as u32,
+    Error = ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Error as u32,
 }
 impl From<ffi::WGPUPopErrorScopeStatus> for PopErrorScopeStatus {
     fn from(value: ffi::WGPUPopErrorScopeStatus) -> Self {
         match value as u32 {
-            1 => PopErrorScopeStatus::Success,
-            2 => PopErrorScopeStatus::CallbackCancelled,
-            3 => PopErrorScopeStatus::Error,
+            ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Success => {
+                PopErrorScopeStatus::Success
+            }
+            ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_CallbackCancelled => {
+                PopErrorScopeStatus::CallbackCancelled
+            }
+            ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Error => {
+                PopErrorScopeStatus::Error
+            }
             _ => PopErrorScopeStatus::Success,
         }
     }
@@ -1016,16 +1446,23 @@ impl From<PopErrorScopeStatus> for ffi::WGPUPopErrorScopeStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum PowerPreference {
-    Undefined = 0,
-    LowPower = 1,
-    HighPerformance = 2,
+    Undefined = ffi::WGPUPowerPreference_WGPUPowerPreference_Undefined as u32,
+    LowPower = ffi::WGPUPowerPreference_WGPUPowerPreference_LowPower as u32,
+    HighPerformance = ffi::WGPUPowerPreference_WGPUPowerPreference_HighPerformance
+        as u32,
 }
 impl From<ffi::WGPUPowerPreference> for PowerPreference {
     fn from(value: ffi::WGPUPowerPreference) -> Self {
         match value as u32 {
-            0 => PowerPreference::Undefined,
-            1 => PowerPreference::LowPower,
-            2 => PowerPreference::HighPerformance,
+            ffi::WGPUPowerPreference_WGPUPowerPreference_Undefined => {
+                PowerPreference::Undefined
+            }
+            ffi::WGPUPowerPreference_WGPUPowerPreference_LowPower => {
+                PowerPreference::LowPower
+            }
+            ffi::WGPUPowerPreference_WGPUPowerPreference_HighPerformance => {
+                PowerPreference::HighPerformance
+            }
             _ => PowerPreference::Undefined,
         }
     }
@@ -1038,14 +1475,18 @@ impl From<PowerPreference> for ffi::WGPUPowerPreference {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum PredefinedColorSpace {
-    SRgb = 1,
-    DisplayP3 = 2,
+    SRgb = ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGB as u32,
+    DisplayP3 = ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3 as u32,
 }
 impl From<ffi::WGPUPredefinedColorSpace> for PredefinedColorSpace {
     fn from(value: ffi::WGPUPredefinedColorSpace) -> Self {
         match value as u32 {
-            1 => PredefinedColorSpace::SRgb,
-            2 => PredefinedColorSpace::DisplayP3,
+            ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGB => {
+                PredefinedColorSpace::SRgb
+            }
+            ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3 => {
+                PredefinedColorSpace::DisplayP3
+            }
             _ => PredefinedColorSpace::SRgb,
         }
     }
@@ -1058,20 +1499,20 @@ impl From<PredefinedColorSpace> for ffi::WGPUPredefinedColorSpace {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum PresentMode {
-    Undefined = 0,
-    Fifo = 1,
-    FifoRelaxed = 2,
-    Immediate = 3,
-    Mailbox = 4,
+    Undefined = ffi::WGPUPresentMode_WGPUPresentMode_Undefined as u32,
+    Fifo = ffi::WGPUPresentMode_WGPUPresentMode_Fifo as u32,
+    FifoRelaxed = ffi::WGPUPresentMode_WGPUPresentMode_FifoRelaxed as u32,
+    Immediate = ffi::WGPUPresentMode_WGPUPresentMode_Immediate as u32,
+    Mailbox = ffi::WGPUPresentMode_WGPUPresentMode_Mailbox as u32,
 }
 impl From<ffi::WGPUPresentMode> for PresentMode {
     fn from(value: ffi::WGPUPresentMode) -> Self {
         match value as u32 {
-            0 => PresentMode::Undefined,
-            1 => PresentMode::Fifo,
-            2 => PresentMode::FifoRelaxed,
-            3 => PresentMode::Immediate,
-            4 => PresentMode::Mailbox,
+            ffi::WGPUPresentMode_WGPUPresentMode_Undefined => PresentMode::Undefined,
+            ffi::WGPUPresentMode_WGPUPresentMode_Fifo => PresentMode::Fifo,
+            ffi::WGPUPresentMode_WGPUPresentMode_FifoRelaxed => PresentMode::FifoRelaxed,
+            ffi::WGPUPresentMode_WGPUPresentMode_Immediate => PresentMode::Immediate,
+            ffi::WGPUPresentMode_WGPUPresentMode_Mailbox => PresentMode::Mailbox,
             _ => PresentMode::Undefined,
         }
     }
@@ -1084,22 +1525,35 @@ impl From<PresentMode> for ffi::WGPUPresentMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum PrimitiveTopology {
-    Undefined = 0,
-    PointList = 1,
-    LineList = 2,
-    LineStrip = 3,
-    TriangleList = 4,
-    TriangleStrip = 5,
+    Undefined = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_Undefined as u32,
+    PointList = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_PointList as u32,
+    LineList = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_LineList as u32,
+    LineStrip = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_LineStrip as u32,
+    TriangleList = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleList as u32,
+    TriangleStrip = ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleStrip
+        as u32,
 }
 impl From<ffi::WGPUPrimitiveTopology> for PrimitiveTopology {
     fn from(value: ffi::WGPUPrimitiveTopology) -> Self {
         match value as u32 {
-            0 => PrimitiveTopology::Undefined,
-            1 => PrimitiveTopology::PointList,
-            2 => PrimitiveTopology::LineList,
-            3 => PrimitiveTopology::LineStrip,
-            4 => PrimitiveTopology::TriangleList,
-            5 => PrimitiveTopology::TriangleStrip,
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_Undefined => {
+                PrimitiveTopology::Undefined
+            }
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_PointList => {
+                PrimitiveTopology::PointList
+            }
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_LineList => {
+                PrimitiveTopology::LineList
+            }
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_LineStrip => {
+                PrimitiveTopology::LineStrip
+            }
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleList => {
+                PrimitiveTopology::TriangleList
+            }
+            ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleStrip => {
+                PrimitiveTopology::TriangleStrip
+            }
             _ => PrimitiveTopology::Undefined,
         }
     }
@@ -1112,14 +1566,14 @@ impl From<PrimitiveTopology> for ffi::WGPUPrimitiveTopology {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum QueryType {
-    Occlusion = 1,
-    Timestamp = 2,
+    Occlusion = ffi::WGPUQueryType_WGPUQueryType_Occlusion as u32,
+    Timestamp = ffi::WGPUQueryType_WGPUQueryType_Timestamp as u32,
 }
 impl From<ffi::WGPUQueryType> for QueryType {
     fn from(value: ffi::WGPUQueryType) -> Self {
         match value as u32 {
-            1 => QueryType::Occlusion,
-            2 => QueryType::Timestamp,
+            ffi::WGPUQueryType_WGPUQueryType_Occlusion => QueryType::Occlusion,
+            ffi::WGPUQueryType_WGPUQueryType_Timestamp => QueryType::Timestamp,
             _ => QueryType::Occlusion,
         }
     }
@@ -1132,16 +1586,23 @@ impl From<QueryType> for ffi::WGPUQueryType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum QueueWorkDoneStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    Error = 3,
+    Success = ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Success as u32,
+    CallbackCancelled = ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_CallbackCancelled
+        as u32,
+    Error = ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Error as u32,
 }
 impl From<ffi::WGPUQueueWorkDoneStatus> for QueueWorkDoneStatus {
     fn from(value: ffi::WGPUQueueWorkDoneStatus) -> Self {
         match value as u32 {
-            1 => QueueWorkDoneStatus::Success,
-            2 => QueueWorkDoneStatus::CallbackCancelled,
-            3 => QueueWorkDoneStatus::Error,
+            ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Success => {
+                QueueWorkDoneStatus::Success
+            }
+            ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_CallbackCancelled => {
+                QueueWorkDoneStatus::CallbackCancelled
+            }
+            ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Error => {
+                QueueWorkDoneStatus::Error
+            }
             _ => QueueWorkDoneStatus::Success,
         }
     }
@@ -1154,18 +1615,28 @@ impl From<QueueWorkDoneStatus> for ffi::WGPUQueueWorkDoneStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum RequestAdapterStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    Unavailable = 3,
-    Error = 4,
+    Success = ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Success as u32,
+    CallbackCancelled = ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_CallbackCancelled
+        as u32,
+    Unavailable = ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Unavailable
+        as u32,
+    Error = ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Error as u32,
 }
 impl From<ffi::WGPURequestAdapterStatus> for RequestAdapterStatus {
     fn from(value: ffi::WGPURequestAdapterStatus) -> Self {
         match value as u32 {
-            1 => RequestAdapterStatus::Success,
-            2 => RequestAdapterStatus::CallbackCancelled,
-            3 => RequestAdapterStatus::Unavailable,
-            4 => RequestAdapterStatus::Error,
+            ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Success => {
+                RequestAdapterStatus::Success
+            }
+            ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_CallbackCancelled => {
+                RequestAdapterStatus::CallbackCancelled
+            }
+            ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Unavailable => {
+                RequestAdapterStatus::Unavailable
+            }
+            ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Error => {
+                RequestAdapterStatus::Error
+            }
             _ => RequestAdapterStatus::Success,
         }
     }
@@ -1178,16 +1649,23 @@ impl From<RequestAdapterStatus> for ffi::WGPURequestAdapterStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum RequestDeviceStatus {
-    Success = 1,
-    CallbackCancelled = 2,
-    Error = 3,
+    Success = ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Success as u32,
+    CallbackCancelled = ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_CallbackCancelled
+        as u32,
+    Error = ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Error as u32,
 }
 impl From<ffi::WGPURequestDeviceStatus> for RequestDeviceStatus {
     fn from(value: ffi::WGPURequestDeviceStatus) -> Self {
         match value as u32 {
-            1 => RequestDeviceStatus::Success,
-            2 => RequestDeviceStatus::CallbackCancelled,
-            3 => RequestDeviceStatus::Error,
+            ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Success => {
+                RequestDeviceStatus::Success
+            }
+            ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_CallbackCancelled => {
+                RequestDeviceStatus::CallbackCancelled
+            }
+            ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Error => {
+                RequestDeviceStatus::Error
+            }
             _ => RequestDeviceStatus::Success,
         }
     }
@@ -1200,206 +1678,462 @@ impl From<RequestDeviceStatus> for ffi::WGPURequestDeviceStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum SType {
-    ShaderSourceSPIRV = 1,
-    ShaderSourceWGSL = 2,
-    RenderPassMaxDrawCount = 3,
-    SurfaceSourceMetalLayer = 4,
-    SurfaceSourceWindowsHWND = 5,
-    SurfaceSourceXlibWindow = 6,
-    SurfaceSourceWaylandSurface = 7,
-    SurfaceSourceAndroidNativeWindow = 8,
-    SurfaceSourceXCBWindow = 9,
-    SurfaceColorManagement = 10,
-    RequestAdapterWebXROptions = 11,
-    TextureComponentSwizzleDescriptor = 12,
-    CompatibilityModeLimits = 131072,
-    TextureBindingViewDimensionDescriptor = 131073,
-    EmscriptenSurfaceSourceCanvasHTMLSelector = 262144,
-    SurfaceDescriptorFromWindowsCoreWindow = 327680,
-    ExternalTextureBindingEntry = 262145,
-    ExternalTextureBindingLayout = 262146,
-    SurfaceDescriptorFromWindowsUWPSwapChainPanel = 327683,
-    DawnTextureInternalUsageDescriptor = 327684,
-    DawnEncoderInternalUsageDescriptor = 327685,
-    DawnInstanceDescriptor = 327686,
-    DawnCacheDeviceDescriptor = 327687,
-    DawnAdapterPropertiesPowerPreference = 327688,
-    DawnBufferDescriptorErrorInfoFromWireClient = 327689,
-    DawnTogglesDescriptor = 327690,
-    DawnShaderModuleSPIRVOptionsDescriptor = 327691,
-    RequestAdapterOptionsLuid = 327692,
-    RequestAdapterOptionsGetGlProc = 327693,
-    RequestAdapterOptionsD3D11Device = 327694,
-    DawnRenderPassColorAttachmentRenderToSingleSampled = 327695,
-    RenderPassPixelLocalStorage = 327696,
-    PipelineLayoutPixelLocalStorage = 327697,
-    BufferHostMappedPointer = 327698,
-    AdapterPropertiesMemoryHeaps = 327699,
-    AdapterPropertiesD3D = 327700,
-    AdapterPropertiesVk = 327701,
-    DawnWireWGSLControl = 327702,
-    DawnWGSLBlocklist = 327703,
-    DawnDrmFormatCapabilities = 327704,
-    ShaderModuleCompilationOptions = 327705,
-    ColorTargetStateExpandResolveTextureDawn = 327706,
-    RenderPassDescriptorExpandResolveRect = 327707,
-    SharedTextureMemoryVkDedicatedAllocationDescriptor = 327708,
-    SharedTextureMemoryAHardwareBufferDescriptor = 327709,
-    SharedTextureMemoryDmaBufDescriptor = 327710,
-    SharedTextureMemoryOpaqueFDDescriptor = 327711,
-    SharedTextureMemoryZirconHandleDescriptor = 327712,
-    SharedTextureMemoryDXGISharedHandleDescriptor = 327713,
-    SharedTextureMemoryD3D11Texture2DDescriptor = 327714,
-    SharedTextureMemoryIOSurfaceDescriptor = 327715,
-    SharedTextureMemoryEGLImageDescriptor = 327716,
-    SharedTextureMemoryInitializedBeginState = 327717,
-    SharedTextureMemoryInitializedEndState = 327718,
-    SharedTextureMemoryVkImageLayoutBeginState = 327719,
-    SharedTextureMemoryVkImageLayoutEndState = 327720,
-    SharedTextureMemoryD3DSwapchainBeginState = 327721,
-    SharedFenceVkSemaphoreOpaqueFDDescriptor = 327722,
-    SharedFenceVkSemaphoreOpaqueFDExportInfo = 327723,
-    SharedFenceSyncFDDescriptor = 327724,
-    SharedFenceSyncFDExportInfo = 327725,
-    SharedFenceVkSemaphoreZirconHandleDescriptor = 327726,
-    SharedFenceVkSemaphoreZirconHandleExportInfo = 327727,
-    SharedFenceDXGISharedHandleDescriptor = 327728,
-    SharedFenceDXGISharedHandleExportInfo = 327729,
-    SharedFenceMTLSharedEventDescriptor = 327730,
-    SharedFenceMTLSharedEventExportInfo = 327731,
-    SharedBufferMemoryD3D12ResourceDescriptor = 327732,
-    StaticSamplerBindingLayout = 327733,
-    YCbCrVkDescriptor = 327734,
-    SharedTextureMemoryAHardwareBufferProperties = 327735,
-    AHardwareBufferProperties = 327736,
-    DawnTexelCopyBufferRowAlignmentLimits = 327738,
-    AdapterPropertiesSubgroupMatrixConfigs = 327739,
-    SharedFenceEGLSyncDescriptor = 327740,
-    SharedFenceEGLSyncExportInfo = 327741,
-    DawnInjectedInvalidSType = 327742,
-    DawnCompilationMessageUtf16 = 262207,
-    DawnFakeBufferOOMForTesting = 327744,
-    SurfaceDescriptorFromWindowsWinUISwapChainPanel = 327745,
-    DawnDeviceAllocatorControl = 327746,
-    DawnHostMappedPointerLimits = 327747,
-    RenderPassDescriptorResolveRect = 327748,
-    RequestAdapterWebGPUBackendOptions = 327749,
-    DawnFakeDeviceInitializeErrorForTesting = 327750,
-    SharedTextureMemoryD3D11BeginState = 327751,
-    DawnConsumeAdapterDescriptor = 327752,
-    TexelBufferBindingEntry = 327753,
-    TexelBufferBindingLayout = 327754,
-    SharedTextureMemoryMetalEndAccessState = 327755,
-    AdapterPropertiesWGPU = 327756,
-    SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor = 327757,
-    SharedTextureMemoryD3D12ResourceDescriptor = 327758,
-    RequestAdapterOptionsAngleVirtualizationGroup = 327759,
-    ResourceTableLimits = 327760,
-    PipelineLayoutResourceTable = 327761,
-    AdapterPropertiesExplicitComputeSubgroupSizeConfigs = 327762,
+    ShaderSourceSPIRV = ffi::WGPUSType_WGPUSType_ShaderSourceSPIRV as u32,
+    ShaderSourceWGSL = ffi::WGPUSType_WGPUSType_ShaderSourceWGSL as u32,
+    RenderPassMaxDrawCount = ffi::WGPUSType_WGPUSType_RenderPassMaxDrawCount as u32,
+    SurfaceSourceMetalLayer = ffi::WGPUSType_WGPUSType_SurfaceSourceMetalLayer as u32,
+    SurfaceSourceWindowsHWND = ffi::WGPUSType_WGPUSType_SurfaceSourceWindowsHWND as u32,
+    SurfaceSourceXlibWindow = ffi::WGPUSType_WGPUSType_SurfaceSourceXlibWindow as u32,
+    SurfaceSourceWaylandSurface = ffi::WGPUSType_WGPUSType_SurfaceSourceWaylandSurface
+        as u32,
+    SurfaceSourceAndroidNativeWindow = ffi::WGPUSType_WGPUSType_SurfaceSourceAndroidNativeWindow
+        as u32,
+    SurfaceSourceXCBWindow = ffi::WGPUSType_WGPUSType_SurfaceSourceXCBWindow as u32,
+    SurfaceColorManagement = ffi::WGPUSType_WGPUSType_SurfaceColorManagement as u32,
+    RequestAdapterWebXROptions = ffi::WGPUSType_WGPUSType_RequestAdapterWebXROptions
+        as u32,
+    TextureComponentSwizzleDescriptor = ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor
+        as u32,
+    CompatibilityModeLimits = ffi::WGPUSType_WGPUSType_CompatibilityModeLimits as u32,
+    TextureBindingViewDimensionDescriptor = ffi::WGPUSType_WGPUSType_TextureBindingViewDimensionDescriptor
+        as u32,
+    EmscriptenSurfaceSourceCanvasHTMLSelector = ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector
+        as u32,
+    SurfaceDescriptorFromWindowsCoreWindow = ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow
+        as u32,
+    ExternalTextureBindingEntry = ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry
+        as u32,
+    ExternalTextureBindingLayout = ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout
+        as u32,
+    SurfaceDescriptorFromWindowsUWPSwapChainPanel = ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel
+        as u32,
+    DawnTextureInternalUsageDescriptor = ffi::WGPUSType_WGPUSType_DawnTextureInternalUsageDescriptor
+        as u32,
+    DawnEncoderInternalUsageDescriptor = ffi::WGPUSType_WGPUSType_DawnEncoderInternalUsageDescriptor
+        as u32,
+    DawnInstanceDescriptor = ffi::WGPUSType_WGPUSType_DawnInstanceDescriptor as u32,
+    DawnCacheDeviceDescriptor = ffi::WGPUSType_WGPUSType_DawnCacheDeviceDescriptor
+        as u32,
+    DawnAdapterPropertiesPowerPreference = ffi::WGPUSType_WGPUSType_DawnAdapterPropertiesPowerPreference
+        as u32,
+    DawnBufferDescriptorErrorInfoFromWireClient = ffi::WGPUSType_WGPUSType_DawnBufferDescriptorErrorInfoFromWireClient
+        as u32,
+    DawnTogglesDescriptor = ffi::WGPUSType_WGPUSType_DawnTogglesDescriptor as u32,
+    DawnShaderModuleSPIRVOptionsDescriptor = ffi::WGPUSType_WGPUSType_DawnShaderModuleSPIRVOptionsDescriptor
+        as u32,
+    RequestAdapterOptionsLuid = ffi::WGPUSType_WGPUSType_RequestAdapterOptionsLUID
+        as u32,
+    RequestAdapterOptionsGetGlProc = ffi::WGPUSType_WGPUSType_RequestAdapterOptionsGetGLProc
+        as u32,
+    RequestAdapterOptionsD3D11Device = ffi::WGPUSType_WGPUSType_RequestAdapterOptionsD3D11Device
+        as u32,
+    DawnRenderPassSampleCount = ffi::WGPUSType_WGPUSType_DawnRenderPassSampleCount
+        as u32,
+    RenderPassPixelLocalStorage = ffi::WGPUSType_WGPUSType_RenderPassPixelLocalStorage
+        as u32,
+    PipelineLayoutPixelLocalStorage = ffi::WGPUSType_WGPUSType_PipelineLayoutPixelLocalStorage
+        as u32,
+    BufferHostMappedPointer = ffi::WGPUSType_WGPUSType_BufferHostMappedPointer as u32,
+    AdapterPropertiesMemoryHeaps = ffi::WGPUSType_WGPUSType_AdapterPropertiesMemoryHeaps
+        as u32,
+    AdapterPropertiesD3D = ffi::WGPUSType_WGPUSType_AdapterPropertiesD3D as u32,
+    AdapterPropertiesVk = ffi::WGPUSType_WGPUSType_AdapterPropertiesVk as u32,
+    DawnWireWGSLControl = ffi::WGPUSType_WGPUSType_DawnWireWGSLControl as u32,
+    DawnWGSLBlocklist = ffi::WGPUSType_WGPUSType_DawnWGSLBlocklist as u32,
+    DawnDrmFormatCapabilities = ffi::WGPUSType_WGPUSType_DawnDrmFormatCapabilities
+        as u32,
+    ShaderModuleCompilationOptions = ffi::WGPUSType_WGPUSType_ShaderModuleCompilationOptions
+        as u32,
+    ColorTargetStateExpandResolveTextureDawn = ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn
+        as u32,
+    RenderPassDescriptorExpandResolveRect = ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect
+        as u32,
+    SharedTextureMemoryVkDedicatedAllocationDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor
+        as u32,
+    SharedTextureMemoryAHardwareBufferDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryAHardwareBufferDescriptor
+        as u32,
+    SharedTextureMemoryDmaBufDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryDmaBufDescriptor
+        as u32,
+    SharedTextureMemoryOpaqueFDDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryOpaqueFDDescriptor
+        as u32,
+    SharedTextureMemoryZirconHandleDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryZirconHandleDescriptor
+        as u32,
+    SharedTextureMemoryDXGISharedHandleDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryDXGISharedHandleDescriptor
+        as u32,
+    SharedTextureMemoryD3D11Texture2DDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D11Texture2DDescriptor
+        as u32,
+    SharedTextureMemoryIOSurfaceDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryIOSurfaceDescriptor
+        as u32,
+    SharedTextureMemoryEGLImageDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryEGLImageDescriptor
+        as u32,
+    SharedTextureMemoryInitializedBeginState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryInitializedBeginState
+        as u32,
+    SharedTextureMemoryInitializedEndState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryInitializedEndState
+        as u32,
+    SharedTextureMemoryVkImageLayoutBeginState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkImageLayoutBeginState
+        as u32,
+    SharedTextureMemoryVkImageLayoutEndState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkImageLayoutEndState
+        as u32,
+    SharedTextureMemoryD3DSwapchainBeginState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3DSwapchainBeginState
+        as u32,
+    SharedFenceVkSemaphoreOpaqueFDDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreOpaqueFDDescriptor
+        as u32,
+    SharedFenceVkSemaphoreOpaqueFDExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreOpaqueFDExportInfo
+        as u32,
+    SharedFenceSyncFDDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceSyncFDDescriptor
+        as u32,
+    SharedFenceSyncFDExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceSyncFDExportInfo
+        as u32,
+    SharedFenceVkSemaphoreZirconHandleDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreZirconHandleDescriptor
+        as u32,
+    SharedFenceVkSemaphoreZirconHandleExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreZirconHandleExportInfo
+        as u32,
+    SharedFenceDXGISharedHandleDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceDXGISharedHandleDescriptor
+        as u32,
+    SharedFenceDXGISharedHandleExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceDXGISharedHandleExportInfo
+        as u32,
+    SharedFenceMTLSharedEventDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceMTLSharedEventDescriptor
+        as u32,
+    SharedFenceMTLSharedEventExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceMTLSharedEventExportInfo
+        as u32,
+    SharedBufferMemoryD3D12ResourceDescriptor = ffi::WGPUSType_WGPUSType_SharedBufferMemoryD3D12ResourceDescriptor
+        as u32,
+    StaticSamplerBindingLayout = ffi::WGPUSType_WGPUSType_StaticSamplerBindingLayout
+        as u32,
+    YCbCrVkDescriptor = ffi::WGPUSType_WGPUSType_YCbCrVkDescriptor as u32,
+    SharedTextureMemoryAHardwareBufferProperties = ffi::WGPUSType_WGPUSType_SharedTextureMemoryAHardwareBufferProperties
+        as u32,
+    AHardwareBufferProperties = ffi::WGPUSType_WGPUSType_AHardwareBufferProperties
+        as u32,
+    DawnTexelCopyBufferRowAlignmentLimits = ffi::WGPUSType_WGPUSType_DawnTexelCopyBufferRowAlignmentLimits
+        as u32,
+    AdapterPropertiesSubgroupMatrixConfigs = ffi::WGPUSType_WGPUSType_AdapterPropertiesSubgroupMatrixConfigs
+        as u32,
+    SharedFenceEGLSyncDescriptor = ffi::WGPUSType_WGPUSType_SharedFenceEGLSyncDescriptor
+        as u32,
+    SharedFenceEGLSyncExportInfo = ffi::WGPUSType_WGPUSType_SharedFenceEGLSyncExportInfo
+        as u32,
+    DawnInjectedInvalidSType = ffi::WGPUSType_WGPUSType_DawnInjectedInvalidSType as u32,
+    DawnCompilationMessageUtf16 = ffi::WGPUSType_WGPUSType_DawnCompilationMessageUtf16
+        as u32,
+    DawnFakeBufferOOMForTesting = ffi::WGPUSType_WGPUSType_DawnFakeBufferOOMForTesting
+        as u32,
+    SurfaceDescriptorFromWindowsWinUISwapChainPanel = ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsWinUISwapChainPanel
+        as u32,
+    DawnDeviceAllocatorControl = ffi::WGPUSType_WGPUSType_DawnDeviceAllocatorControl
+        as u32,
+    DawnHostMappedPointerLimits = ffi::WGPUSType_WGPUSType_DawnHostMappedPointerLimits
+        as u32,
+    RenderPassDescriptorResolveRect = ffi::WGPUSType_WGPUSType_RenderPassDescriptorResolveRect
+        as u32,
+    RequestAdapterWebGPUBackendOptions = ffi::WGPUSType_WGPUSType_RequestAdapterWebGPUBackendOptions
+        as u32,
+    DawnFakeDeviceInitializeErrorForTesting = ffi::WGPUSType_WGPUSType_DawnFakeDeviceInitializeErrorForTesting
+        as u32,
+    SharedTextureMemoryD3D11BeginState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D11BeginState
+        as u32,
+    DawnConsumeAdapterDescriptor = ffi::WGPUSType_WGPUSType_DawnConsumeAdapterDescriptor
+        as u32,
+    TexelBufferBindingEntry = ffi::WGPUSType_WGPUSType_TexelBufferBindingEntry as u32,
+    TexelBufferBindingLayout = ffi::WGPUSType_WGPUSType_TexelBufferBindingLayout as u32,
+    SharedTextureMemoryMetalEndAccessState = ffi::WGPUSType_WGPUSType_SharedTextureMemoryMetalEndAccessState
+        as u32,
+    AdapterPropertiesWGPU = ffi::WGPUSType_WGPUSType_AdapterPropertiesWGPU as u32,
+    SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor = ffi::WGPUSType_WGPUSType_SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor
+        as u32,
+    SharedTextureMemoryD3D12ResourceDescriptor = ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D12ResourceDescriptor
+        as u32,
+    RequestAdapterOptionsAngleVirtualizationGroup = ffi::WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup
+        as u32,
+    ResourceTableLimits = ffi::WGPUSType_WGPUSType_ResourceTableLimits as u32,
+    PipelineLayoutResourceTable = ffi::WGPUSType_WGPUSType_PipelineLayoutResourceTable
+        as u32,
+    AdapterPropertiesExplicitComputeSubgroupSizeConfigs = ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs
+        as u32,
+    DawnRenderPassColorAttachmentRenderToSingleSampled = ffi::WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled
+        as u32,
 }
 impl From<ffi::WGPUSType> for SType {
     fn from(value: ffi::WGPUSType) -> Self {
         match value as u32 {
-            1 => SType::ShaderSourceSPIRV,
-            2 => SType::ShaderSourceWGSL,
-            3 => SType::RenderPassMaxDrawCount,
-            4 => SType::SurfaceSourceMetalLayer,
-            5 => SType::SurfaceSourceWindowsHWND,
-            6 => SType::SurfaceSourceXlibWindow,
-            7 => SType::SurfaceSourceWaylandSurface,
-            8 => SType::SurfaceSourceAndroidNativeWindow,
-            9 => SType::SurfaceSourceXCBWindow,
-            10 => SType::SurfaceColorManagement,
-            11 => SType::RequestAdapterWebXROptions,
-            12 => SType::TextureComponentSwizzleDescriptor,
-            131072 => SType::CompatibilityModeLimits,
-            131073 => SType::TextureBindingViewDimensionDescriptor,
-            262144 => SType::EmscriptenSurfaceSourceCanvasHTMLSelector,
-            327680 => SType::SurfaceDescriptorFromWindowsCoreWindow,
-            262145 => SType::ExternalTextureBindingEntry,
-            262146 => SType::ExternalTextureBindingLayout,
-            327683 => SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel,
-            327684 => SType::DawnTextureInternalUsageDescriptor,
-            327685 => SType::DawnEncoderInternalUsageDescriptor,
-            327686 => SType::DawnInstanceDescriptor,
-            327687 => SType::DawnCacheDeviceDescriptor,
-            327688 => SType::DawnAdapterPropertiesPowerPreference,
-            327689 => SType::DawnBufferDescriptorErrorInfoFromWireClient,
-            327690 => SType::DawnTogglesDescriptor,
-            327691 => SType::DawnShaderModuleSPIRVOptionsDescriptor,
-            327692 => SType::RequestAdapterOptionsLuid,
-            327693 => SType::RequestAdapterOptionsGetGlProc,
-            327694 => SType::RequestAdapterOptionsD3D11Device,
-            327695 => SType::DawnRenderPassColorAttachmentRenderToSingleSampled,
-            327696 => SType::RenderPassPixelLocalStorage,
-            327697 => SType::PipelineLayoutPixelLocalStorage,
-            327698 => SType::BufferHostMappedPointer,
-            327699 => SType::AdapterPropertiesMemoryHeaps,
-            327700 => SType::AdapterPropertiesD3D,
-            327701 => SType::AdapterPropertiesVk,
-            327702 => SType::DawnWireWGSLControl,
-            327703 => SType::DawnWGSLBlocklist,
-            327704 => SType::DawnDrmFormatCapabilities,
-            327705 => SType::ShaderModuleCompilationOptions,
-            327706 => SType::ColorTargetStateExpandResolveTextureDawn,
-            327707 => SType::RenderPassDescriptorExpandResolveRect,
-            327708 => SType::SharedTextureMemoryVkDedicatedAllocationDescriptor,
-            327709 => SType::SharedTextureMemoryAHardwareBufferDescriptor,
-            327710 => SType::SharedTextureMemoryDmaBufDescriptor,
-            327711 => SType::SharedTextureMemoryOpaqueFDDescriptor,
-            327712 => SType::SharedTextureMemoryZirconHandleDescriptor,
-            327713 => SType::SharedTextureMemoryDXGISharedHandleDescriptor,
-            327714 => SType::SharedTextureMemoryD3D11Texture2DDescriptor,
-            327715 => SType::SharedTextureMemoryIOSurfaceDescriptor,
-            327716 => SType::SharedTextureMemoryEGLImageDescriptor,
-            327717 => SType::SharedTextureMemoryInitializedBeginState,
-            327718 => SType::SharedTextureMemoryInitializedEndState,
-            327719 => SType::SharedTextureMemoryVkImageLayoutBeginState,
-            327720 => SType::SharedTextureMemoryVkImageLayoutEndState,
-            327721 => SType::SharedTextureMemoryD3DSwapchainBeginState,
-            327722 => SType::SharedFenceVkSemaphoreOpaqueFDDescriptor,
-            327723 => SType::SharedFenceVkSemaphoreOpaqueFDExportInfo,
-            327724 => SType::SharedFenceSyncFDDescriptor,
-            327725 => SType::SharedFenceSyncFDExportInfo,
-            327726 => SType::SharedFenceVkSemaphoreZirconHandleDescriptor,
-            327727 => SType::SharedFenceVkSemaphoreZirconHandleExportInfo,
-            327728 => SType::SharedFenceDXGISharedHandleDescriptor,
-            327729 => SType::SharedFenceDXGISharedHandleExportInfo,
-            327730 => SType::SharedFenceMTLSharedEventDescriptor,
-            327731 => SType::SharedFenceMTLSharedEventExportInfo,
-            327732 => SType::SharedBufferMemoryD3D12ResourceDescriptor,
-            327733 => SType::StaticSamplerBindingLayout,
-            327734 => SType::YCbCrVkDescriptor,
-            327735 => SType::SharedTextureMemoryAHardwareBufferProperties,
-            327736 => SType::AHardwareBufferProperties,
-            327738 => SType::DawnTexelCopyBufferRowAlignmentLimits,
-            327739 => SType::AdapterPropertiesSubgroupMatrixConfigs,
-            327740 => SType::SharedFenceEGLSyncDescriptor,
-            327741 => SType::SharedFenceEGLSyncExportInfo,
-            327742 => SType::DawnInjectedInvalidSType,
-            262207 => SType::DawnCompilationMessageUtf16,
-            327744 => SType::DawnFakeBufferOOMForTesting,
-            327745 => SType::SurfaceDescriptorFromWindowsWinUISwapChainPanel,
-            327746 => SType::DawnDeviceAllocatorControl,
-            327747 => SType::DawnHostMappedPointerLimits,
-            327748 => SType::RenderPassDescriptorResolveRect,
-            327749 => SType::RequestAdapterWebGPUBackendOptions,
-            327750 => SType::DawnFakeDeviceInitializeErrorForTesting,
-            327751 => SType::SharedTextureMemoryD3D11BeginState,
-            327752 => SType::DawnConsumeAdapterDescriptor,
-            327753 => SType::TexelBufferBindingEntry,
-            327754 => SType::TexelBufferBindingLayout,
-            327755 => SType::SharedTextureMemoryMetalEndAccessState,
-            327756 => SType::AdapterPropertiesWGPU,
-            327757 => {
+            ffi::WGPUSType_WGPUSType_ShaderSourceSPIRV => SType::ShaderSourceSPIRV,
+            ffi::WGPUSType_WGPUSType_ShaderSourceWGSL => SType::ShaderSourceWGSL,
+            ffi::WGPUSType_WGPUSType_RenderPassMaxDrawCount => {
+                SType::RenderPassMaxDrawCount
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceMetalLayer => {
+                SType::SurfaceSourceMetalLayer
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceWindowsHWND => {
+                SType::SurfaceSourceWindowsHWND
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceXlibWindow => {
+                SType::SurfaceSourceXlibWindow
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceWaylandSurface => {
+                SType::SurfaceSourceWaylandSurface
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceAndroidNativeWindow => {
+                SType::SurfaceSourceAndroidNativeWindow
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceSourceXCBWindow => {
+                SType::SurfaceSourceXCBWindow
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceColorManagement => {
+                SType::SurfaceColorManagement
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterWebXROptions => {
+                SType::RequestAdapterWebXROptions
+            }
+            ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor => {
+                SType::TextureComponentSwizzleDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_CompatibilityModeLimits => {
+                SType::CompatibilityModeLimits
+            }
+            ffi::WGPUSType_WGPUSType_TextureBindingViewDimensionDescriptor => {
+                SType::TextureBindingViewDimensionDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector => {
+                SType::EmscriptenSurfaceSourceCanvasHTMLSelector
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow => {
+                SType::SurfaceDescriptorFromWindowsCoreWindow
+            }
+            ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry => {
+                SType::ExternalTextureBindingEntry
+            }
+            ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout => {
+                SType::ExternalTextureBindingLayout
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
+                SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel
+            }
+            ffi::WGPUSType_WGPUSType_DawnTextureInternalUsageDescriptor => {
+                SType::DawnTextureInternalUsageDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_DawnEncoderInternalUsageDescriptor => {
+                SType::DawnEncoderInternalUsageDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_DawnInstanceDescriptor => {
+                SType::DawnInstanceDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_DawnCacheDeviceDescriptor => {
+                SType::DawnCacheDeviceDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_DawnAdapterPropertiesPowerPreference => {
+                SType::DawnAdapterPropertiesPowerPreference
+            }
+            ffi::WGPUSType_WGPUSType_DawnBufferDescriptorErrorInfoFromWireClient => {
+                SType::DawnBufferDescriptorErrorInfoFromWireClient
+            }
+            ffi::WGPUSType_WGPUSType_DawnTogglesDescriptor => {
+                SType::DawnTogglesDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_DawnShaderModuleSPIRVOptionsDescriptor => {
+                SType::DawnShaderModuleSPIRVOptionsDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterOptionsLUID => {
+                SType::RequestAdapterOptionsLuid
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterOptionsGetGLProc => {
+                SType::RequestAdapterOptionsGetGlProc
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterOptionsD3D11Device => {
+                SType::RequestAdapterOptionsD3D11Device
+            }
+            ffi::WGPUSType_WGPUSType_DawnRenderPassSampleCount => {
+                SType::DawnRenderPassSampleCount
+            }
+            ffi::WGPUSType_WGPUSType_RenderPassPixelLocalStorage => {
+                SType::RenderPassPixelLocalStorage
+            }
+            ffi::WGPUSType_WGPUSType_PipelineLayoutPixelLocalStorage => {
+                SType::PipelineLayoutPixelLocalStorage
+            }
+            ffi::WGPUSType_WGPUSType_BufferHostMappedPointer => {
+                SType::BufferHostMappedPointer
+            }
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesMemoryHeaps => {
+                SType::AdapterPropertiesMemoryHeaps
+            }
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesD3D => SType::AdapterPropertiesD3D,
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesVk => SType::AdapterPropertiesVk,
+            ffi::WGPUSType_WGPUSType_DawnWireWGSLControl => SType::DawnWireWGSLControl,
+            ffi::WGPUSType_WGPUSType_DawnWGSLBlocklist => SType::DawnWGSLBlocklist,
+            ffi::WGPUSType_WGPUSType_DawnDrmFormatCapabilities => {
+                SType::DawnDrmFormatCapabilities
+            }
+            ffi::WGPUSType_WGPUSType_ShaderModuleCompilationOptions => {
+                SType::ShaderModuleCompilationOptions
+            }
+            ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn => {
+                SType::ColorTargetStateExpandResolveTextureDawn
+            }
+            ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect => {
+                SType::RenderPassDescriptorExpandResolveRect
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor => {
+                SType::SharedTextureMemoryVkDedicatedAllocationDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryAHardwareBufferDescriptor => {
+                SType::SharedTextureMemoryAHardwareBufferDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryDmaBufDescriptor => {
+                SType::SharedTextureMemoryDmaBufDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryOpaqueFDDescriptor => {
+                SType::SharedTextureMemoryOpaqueFDDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryZirconHandleDescriptor => {
+                SType::SharedTextureMemoryZirconHandleDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryDXGISharedHandleDescriptor => {
+                SType::SharedTextureMemoryDXGISharedHandleDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D11Texture2DDescriptor => {
+                SType::SharedTextureMemoryD3D11Texture2DDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryIOSurfaceDescriptor => {
+                SType::SharedTextureMemoryIOSurfaceDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryEGLImageDescriptor => {
+                SType::SharedTextureMemoryEGLImageDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryInitializedBeginState => {
+                SType::SharedTextureMemoryInitializedBeginState
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryInitializedEndState => {
+                SType::SharedTextureMemoryInitializedEndState
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkImageLayoutBeginState => {
+                SType::SharedTextureMemoryVkImageLayoutBeginState
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkImageLayoutEndState => {
+                SType::SharedTextureMemoryVkImageLayoutEndState
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3DSwapchainBeginState => {
+                SType::SharedTextureMemoryD3DSwapchainBeginState
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreOpaqueFDDescriptor => {
+                SType::SharedFenceVkSemaphoreOpaqueFDDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreOpaqueFDExportInfo => {
+                SType::SharedFenceVkSemaphoreOpaqueFDExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceSyncFDDescriptor => {
+                SType::SharedFenceSyncFDDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceSyncFDExportInfo => {
+                SType::SharedFenceSyncFDExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreZirconHandleDescriptor => {
+                SType::SharedFenceVkSemaphoreZirconHandleDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceVkSemaphoreZirconHandleExportInfo => {
+                SType::SharedFenceVkSemaphoreZirconHandleExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceDXGISharedHandleDescriptor => {
+                SType::SharedFenceDXGISharedHandleDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceDXGISharedHandleExportInfo => {
+                SType::SharedFenceDXGISharedHandleExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceMTLSharedEventDescriptor => {
+                SType::SharedFenceMTLSharedEventDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceMTLSharedEventExportInfo => {
+                SType::SharedFenceMTLSharedEventExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_SharedBufferMemoryD3D12ResourceDescriptor => {
+                SType::SharedBufferMemoryD3D12ResourceDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_StaticSamplerBindingLayout => {
+                SType::StaticSamplerBindingLayout
+            }
+            ffi::WGPUSType_WGPUSType_YCbCrVkDescriptor => SType::YCbCrVkDescriptor,
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryAHardwareBufferProperties => {
+                SType::SharedTextureMemoryAHardwareBufferProperties
+            }
+            ffi::WGPUSType_WGPUSType_AHardwareBufferProperties => {
+                SType::AHardwareBufferProperties
+            }
+            ffi::WGPUSType_WGPUSType_DawnTexelCopyBufferRowAlignmentLimits => {
+                SType::DawnTexelCopyBufferRowAlignmentLimits
+            }
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesSubgroupMatrixConfigs => {
+                SType::AdapterPropertiesSubgroupMatrixConfigs
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceEGLSyncDescriptor => {
+                SType::SharedFenceEGLSyncDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_SharedFenceEGLSyncExportInfo => {
+                SType::SharedFenceEGLSyncExportInfo
+            }
+            ffi::WGPUSType_WGPUSType_DawnInjectedInvalidSType => {
+                SType::DawnInjectedInvalidSType
+            }
+            ffi::WGPUSType_WGPUSType_DawnCompilationMessageUtf16 => {
+                SType::DawnCompilationMessageUtf16
+            }
+            ffi::WGPUSType_WGPUSType_DawnFakeBufferOOMForTesting => {
+                SType::DawnFakeBufferOOMForTesting
+            }
+            ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsWinUISwapChainPanel => {
+                SType::SurfaceDescriptorFromWindowsWinUISwapChainPanel
+            }
+            ffi::WGPUSType_WGPUSType_DawnDeviceAllocatorControl => {
+                SType::DawnDeviceAllocatorControl
+            }
+            ffi::WGPUSType_WGPUSType_DawnHostMappedPointerLimits => {
+                SType::DawnHostMappedPointerLimits
+            }
+            ffi::WGPUSType_WGPUSType_RenderPassDescriptorResolveRect => {
+                SType::RenderPassDescriptorResolveRect
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterWebGPUBackendOptions => {
+                SType::RequestAdapterWebGPUBackendOptions
+            }
+            ffi::WGPUSType_WGPUSType_DawnFakeDeviceInitializeErrorForTesting => {
+                SType::DawnFakeDeviceInitializeErrorForTesting
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D11BeginState => {
+                SType::SharedTextureMemoryD3D11BeginState
+            }
+            ffi::WGPUSType_WGPUSType_DawnConsumeAdapterDescriptor => {
+                SType::DawnConsumeAdapterDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_TexelBufferBindingEntry => {
+                SType::TexelBufferBindingEntry
+            }
+            ffi::WGPUSType_WGPUSType_TexelBufferBindingLayout => {
+                SType::TexelBufferBindingLayout
+            }
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryMetalEndAccessState => {
+                SType::SharedTextureMemoryMetalEndAccessState
+            }
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesWGPU => {
+                SType::AdapterPropertiesWGPU
+            }
+            ffi::WGPUSType_WGPUSType_SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor => {
                 SType::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor
             }
-            327758 => SType::SharedTextureMemoryD3D12ResourceDescriptor,
-            327759 => SType::RequestAdapterOptionsAngleVirtualizationGroup,
-            327760 => SType::ResourceTableLimits,
-            327761 => SType::PipelineLayoutResourceTable,
-            327762 => SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+            ffi::WGPUSType_WGPUSType_SharedTextureMemoryD3D12ResourceDescriptor => {
+                SType::SharedTextureMemoryD3D12ResourceDescriptor
+            }
+            ffi::WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup => {
+                SType::RequestAdapterOptionsAngleVirtualizationGroup
+            }
+            ffi::WGPUSType_WGPUSType_ResourceTableLimits => SType::ResourceTableLimits,
+            ffi::WGPUSType_WGPUSType_PipelineLayoutResourceTable => {
+                SType::PipelineLayoutResourceTable
+            }
+            ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
+                SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs
+            }
+            ffi::WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled => {
+                SType::DawnRenderPassColorAttachmentRenderToSingleSampled
+            }
             _ => SType::ShaderSourceSPIRV,
         }
     }
@@ -1412,20 +2146,32 @@ impl From<SType> for ffi::WGPUSType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum SamplerBindingType {
-    BindingNotUsed = 0,
-    Undefined = 1,
-    Filtering = 2,
-    NonFiltering = 3,
-    Comparison = 4,
+    BindingNotUsed = ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_BindingNotUsed
+        as u32,
+    Undefined = ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Undefined as u32,
+    Filtering = ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Filtering as u32,
+    NonFiltering = ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_NonFiltering
+        as u32,
+    Comparison = ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Comparison as u32,
 }
 impl From<ffi::WGPUSamplerBindingType> for SamplerBindingType {
     fn from(value: ffi::WGPUSamplerBindingType) -> Self {
         match value as u32 {
-            0 => SamplerBindingType::BindingNotUsed,
-            1 => SamplerBindingType::Undefined,
-            2 => SamplerBindingType::Filtering,
-            3 => SamplerBindingType::NonFiltering,
-            4 => SamplerBindingType::Comparison,
+            ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_BindingNotUsed => {
+                SamplerBindingType::BindingNotUsed
+            }
+            ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Undefined => {
+                SamplerBindingType::Undefined
+            }
+            ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Filtering => {
+                SamplerBindingType::Filtering
+            }
+            ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_NonFiltering => {
+                SamplerBindingType::NonFiltering
+            }
+            ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Comparison => {
+                SamplerBindingType::Comparison
+            }
             _ => SamplerBindingType::BindingNotUsed,
         }
     }
@@ -1438,22 +2184,37 @@ impl From<SamplerBindingType> for ffi::WGPUSamplerBindingType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum SharedFenceType {
-    VkSemaphoreOpaqueFD = 1,
-    SyncFD = 2,
-    VkSemaphoreZirconHandle = 3,
-    DXGISharedHandle = 4,
-    MTLSharedEvent = 5,
-    EGLSync = 6,
+    VkSemaphoreOpaqueFD = ffi::WGPUSharedFenceType_WGPUSharedFenceType_VkSemaphoreOpaqueFD
+        as u32,
+    SyncFD = ffi::WGPUSharedFenceType_WGPUSharedFenceType_SyncFD as u32,
+    VkSemaphoreZirconHandle = ffi::WGPUSharedFenceType_WGPUSharedFenceType_VkSemaphoreZirconHandle
+        as u32,
+    DXGISharedHandle = ffi::WGPUSharedFenceType_WGPUSharedFenceType_DXGISharedHandle
+        as u32,
+    MTLSharedEvent = ffi::WGPUSharedFenceType_WGPUSharedFenceType_MTLSharedEvent as u32,
+    EGLSync = ffi::WGPUSharedFenceType_WGPUSharedFenceType_EGLSync as u32,
 }
 impl From<ffi::WGPUSharedFenceType> for SharedFenceType {
     fn from(value: ffi::WGPUSharedFenceType) -> Self {
         match value as u32 {
-            1 => SharedFenceType::VkSemaphoreOpaqueFD,
-            2 => SharedFenceType::SyncFD,
-            3 => SharedFenceType::VkSemaphoreZirconHandle,
-            4 => SharedFenceType::DXGISharedHandle,
-            5 => SharedFenceType::MTLSharedEvent,
-            6 => SharedFenceType::EGLSync,
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_VkSemaphoreOpaqueFD => {
+                SharedFenceType::VkSemaphoreOpaqueFD
+            }
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_SyncFD => {
+                SharedFenceType::SyncFD
+            }
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_VkSemaphoreZirconHandle => {
+                SharedFenceType::VkSemaphoreZirconHandle
+            }
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_DXGISharedHandle => {
+                SharedFenceType::DXGISharedHandle
+            }
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_MTLSharedEvent => {
+                SharedFenceType::MTLSharedEvent
+            }
+            ffi::WGPUSharedFenceType_WGPUSharedFenceType_EGLSync => {
+                SharedFenceType::EGLSync
+            }
             _ => SharedFenceType::VkSemaphoreOpaqueFD,
         }
     }
@@ -1466,14 +2227,14 @@ impl From<SharedFenceType> for ffi::WGPUSharedFenceType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum Status {
-    Success = 1,
-    Error = 2,
+    Success = ffi::WGPUStatus_WGPUStatus_Success as u32,
+    Error = ffi::WGPUStatus_WGPUStatus_Error as u32,
 }
 impl From<ffi::WGPUStatus> for Status {
     fn from(value: ffi::WGPUStatus) -> Self {
         match value as u32 {
-            1 => Status::Success,
-            2 => Status::Error,
+            ffi::WGPUStatus_WGPUStatus_Success => Status::Success,
+            ffi::WGPUStatus_WGPUStatus_Error => Status::Error,
             _ => Status::Success,
         }
     }
@@ -1486,28 +2247,44 @@ impl From<Status> for ffi::WGPUStatus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum StencilOperation {
-    Undefined = 0,
-    Keep = 1,
-    Zero = 2,
-    Replace = 3,
-    Invert = 4,
-    IncrementClamp = 5,
-    DecrementClamp = 6,
-    IncrementWrap = 7,
-    DecrementWrap = 8,
+    Undefined = ffi::WGPUStencilOperation_WGPUStencilOperation_Undefined as u32,
+    Keep = ffi::WGPUStencilOperation_WGPUStencilOperation_Keep as u32,
+    Zero = ffi::WGPUStencilOperation_WGPUStencilOperation_Zero as u32,
+    Replace = ffi::WGPUStencilOperation_WGPUStencilOperation_Replace as u32,
+    Invert = ffi::WGPUStencilOperation_WGPUStencilOperation_Invert as u32,
+    IncrementClamp = ffi::WGPUStencilOperation_WGPUStencilOperation_IncrementClamp
+        as u32,
+    DecrementClamp = ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementClamp
+        as u32,
+    IncrementWrap = ffi::WGPUStencilOperation_WGPUStencilOperation_IncrementWrap as u32,
+    DecrementWrap = ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementWrap as u32,
 }
 impl From<ffi::WGPUStencilOperation> for StencilOperation {
     fn from(value: ffi::WGPUStencilOperation) -> Self {
         match value as u32 {
-            0 => StencilOperation::Undefined,
-            1 => StencilOperation::Keep,
-            2 => StencilOperation::Zero,
-            3 => StencilOperation::Replace,
-            4 => StencilOperation::Invert,
-            5 => StencilOperation::IncrementClamp,
-            6 => StencilOperation::DecrementClamp,
-            7 => StencilOperation::IncrementWrap,
-            8 => StencilOperation::DecrementWrap,
+            ffi::WGPUStencilOperation_WGPUStencilOperation_Undefined => {
+                StencilOperation::Undefined
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_Keep => StencilOperation::Keep,
+            ffi::WGPUStencilOperation_WGPUStencilOperation_Zero => StencilOperation::Zero,
+            ffi::WGPUStencilOperation_WGPUStencilOperation_Replace => {
+                StencilOperation::Replace
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_Invert => {
+                StencilOperation::Invert
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_IncrementClamp => {
+                StencilOperation::IncrementClamp
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementClamp => {
+                StencilOperation::DecrementClamp
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_IncrementWrap => {
+                StencilOperation::IncrementWrap
+            }
+            ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementWrap => {
+                StencilOperation::DecrementWrap
+            }
             _ => StencilOperation::Undefined,
         }
     }
@@ -1520,20 +2297,31 @@ impl From<StencilOperation> for ffi::WGPUStencilOperation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum StorageTextureAccess {
-    BindingNotUsed = 0,
-    Undefined = 1,
-    WriteOnly = 2,
-    ReadOnly = 3,
-    ReadWrite = 4,
+    BindingNotUsed = ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_BindingNotUsed
+        as u32,
+    Undefined = ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_Undefined as u32,
+    WriteOnly = ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_WriteOnly as u32,
+    ReadOnly = ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadOnly as u32,
+    ReadWrite = ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadWrite as u32,
 }
 impl From<ffi::WGPUStorageTextureAccess> for StorageTextureAccess {
     fn from(value: ffi::WGPUStorageTextureAccess) -> Self {
         match value as u32 {
-            0 => StorageTextureAccess::BindingNotUsed,
-            1 => StorageTextureAccess::Undefined,
-            2 => StorageTextureAccess::WriteOnly,
-            3 => StorageTextureAccess::ReadOnly,
-            4 => StorageTextureAccess::ReadWrite,
+            ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_BindingNotUsed => {
+                StorageTextureAccess::BindingNotUsed
+            }
+            ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_Undefined => {
+                StorageTextureAccess::Undefined
+            }
+            ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_WriteOnly => {
+                StorageTextureAccess::WriteOnly
+            }
+            ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadOnly => {
+                StorageTextureAccess::ReadOnly
+            }
+            ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadWrite => {
+                StorageTextureAccess::ReadWrite
+            }
             _ => StorageTextureAccess::BindingNotUsed,
         }
     }
@@ -1546,16 +2334,16 @@ impl From<StorageTextureAccess> for ffi::WGPUStorageTextureAccess {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum StoreOp {
-    Undefined = 0,
-    Store = 1,
-    Discard = 2,
+    Undefined = ffi::WGPUStoreOp_WGPUStoreOp_Undefined as u32,
+    Store = ffi::WGPUStoreOp_WGPUStoreOp_Store as u32,
+    Discard = ffi::WGPUStoreOp_WGPUStoreOp_Discard as u32,
 }
 impl From<ffi::WGPUStoreOp> for StoreOp {
     fn from(value: ffi::WGPUStoreOp) -> Self {
         match value as u32 {
-            0 => StoreOp::Undefined,
-            1 => StoreOp::Store,
-            2 => StoreOp::Discard,
+            ffi::WGPUStoreOp_WGPUStoreOp_Undefined => StoreOp::Undefined,
+            ffi::WGPUStoreOp_WGPUStoreOp_Store => StoreOp::Store,
+            ffi::WGPUStoreOp_WGPUStoreOp_Discard => StoreOp::Discard,
             _ => StoreOp::Undefined,
         }
     }
@@ -1568,22 +2356,38 @@ impl From<StoreOp> for ffi::WGPUStoreOp {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum SubgroupMatrixComponentType {
-    F32 = 1,
-    F16 = 2,
-    U32 = 3,
-    I32 = 4,
-    U8 = 5,
-    I8 = 6,
+    F32 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32
+        as u32,
+    F16 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F16
+        as u32,
+    U32 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_U32
+        as u32,
+    I32 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I32
+        as u32,
+    U8 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_U8 as u32,
+    I8 = ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I8 as u32,
 }
 impl From<ffi::WGPUSubgroupMatrixComponentType> for SubgroupMatrixComponentType {
     fn from(value: ffi::WGPUSubgroupMatrixComponentType) -> Self {
         match value as u32 {
-            1 => SubgroupMatrixComponentType::F32,
-            2 => SubgroupMatrixComponentType::F16,
-            3 => SubgroupMatrixComponentType::U32,
-            4 => SubgroupMatrixComponentType::I32,
-            5 => SubgroupMatrixComponentType::U8,
-            6 => SubgroupMatrixComponentType::I8,
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32 => {
+                SubgroupMatrixComponentType::F32
+            }
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F16 => {
+                SubgroupMatrixComponentType::F16
+            }
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_U32 => {
+                SubgroupMatrixComponentType::U32
+            }
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I32 => {
+                SubgroupMatrixComponentType::I32
+            }
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_U8 => {
+                SubgroupMatrixComponentType::U8
+            }
+            ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I8 => {
+                SubgroupMatrixComponentType::I8
+            }
             _ => SubgroupMatrixComponentType::F32,
         }
     }
@@ -1596,22 +2400,40 @@ impl From<SubgroupMatrixComponentType> for ffi::WGPUSubgroupMatrixComponentType 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum SurfaceGetCurrentTextureStatus {
-    SuccessOptimal = 1,
-    SuccessSuboptimal = 2,
-    Timeout = 3,
-    Outdated = 4,
-    Lost = 5,
-    Error = 6,
+    SuccessOptimal = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal
+        as u32,
+    SuccessSuboptimal = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal
+        as u32,
+    Timeout = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Timeout
+        as u32,
+    Outdated = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Outdated
+        as u32,
+    Lost = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Lost
+        as u32,
+    Error = ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Error
+        as u32,
 }
 impl From<ffi::WGPUSurfaceGetCurrentTextureStatus> for SurfaceGetCurrentTextureStatus {
     fn from(value: ffi::WGPUSurfaceGetCurrentTextureStatus) -> Self {
         match value as u32 {
-            1 => SurfaceGetCurrentTextureStatus::SuccessOptimal,
-            2 => SurfaceGetCurrentTextureStatus::SuccessSuboptimal,
-            3 => SurfaceGetCurrentTextureStatus::Timeout,
-            4 => SurfaceGetCurrentTextureStatus::Outdated,
-            5 => SurfaceGetCurrentTextureStatus::Lost,
-            6 => SurfaceGetCurrentTextureStatus::Error,
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal => {
+                SurfaceGetCurrentTextureStatus::SuccessOptimal
+            }
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal => {
+                SurfaceGetCurrentTextureStatus::SuccessSuboptimal
+            }
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Timeout => {
+                SurfaceGetCurrentTextureStatus::Timeout
+            }
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Outdated => {
+                SurfaceGetCurrentTextureStatus::Outdated
+            }
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Lost => {
+                SurfaceGetCurrentTextureStatus::Lost
+            }
+            ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Error => {
+                SurfaceGetCurrentTextureStatus::Error
+            }
             _ => SurfaceGetCurrentTextureStatus::SuccessOptimal,
         }
     }
@@ -1624,16 +2446,22 @@ impl From<SurfaceGetCurrentTextureStatus> for ffi::WGPUSurfaceGetCurrentTextureS
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TexelBufferAccess {
-    Undefined = 0,
-    ReadOnly = 1,
-    ReadWrite = 2,
+    Undefined = ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_Undefined as u32,
+    ReadOnly = ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadOnly as u32,
+    ReadWrite = ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadWrite as u32,
 }
 impl From<ffi::WGPUTexelBufferAccess> for TexelBufferAccess {
     fn from(value: ffi::WGPUTexelBufferAccess) -> Self {
         match value as u32 {
-            0 => TexelBufferAccess::Undefined,
-            1 => TexelBufferAccess::ReadOnly,
-            2 => TexelBufferAccess::ReadWrite,
+            ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_Undefined => {
+                TexelBufferAccess::Undefined
+            }
+            ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadOnly => {
+                TexelBufferAccess::ReadOnly
+            }
+            ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadWrite => {
+                TexelBufferAccess::ReadWrite
+            }
             _ => TexelBufferAccess::Undefined,
         }
     }
@@ -1646,24 +2474,36 @@ impl From<TexelBufferAccess> for ffi::WGPUTexelBufferAccess {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TextureAspect {
-    Undefined = 0,
-    All = 1,
-    StencilOnly = 2,
-    DepthOnly = 3,
-    Plane0Only = 327680,
-    Plane1Only = 327681,
-    Plane2Only = 327682,
+    Undefined = ffi::WGPUTextureAspect_WGPUTextureAspect_Undefined as u32,
+    All = ffi::WGPUTextureAspect_WGPUTextureAspect_All as u32,
+    StencilOnly = ffi::WGPUTextureAspect_WGPUTextureAspect_StencilOnly as u32,
+    DepthOnly = ffi::WGPUTextureAspect_WGPUTextureAspect_DepthOnly as u32,
+    Plane0Only = ffi::WGPUTextureAspect_WGPUTextureAspect_Plane0Only as u32,
+    Plane1Only = ffi::WGPUTextureAspect_WGPUTextureAspect_Plane1Only as u32,
+    Plane2Only = ffi::WGPUTextureAspect_WGPUTextureAspect_Plane2Only as u32,
 }
 impl From<ffi::WGPUTextureAspect> for TextureAspect {
     fn from(value: ffi::WGPUTextureAspect) -> Self {
         match value as u32 {
-            0 => TextureAspect::Undefined,
-            1 => TextureAspect::All,
-            2 => TextureAspect::StencilOnly,
-            3 => TextureAspect::DepthOnly,
-            327680 => TextureAspect::Plane0Only,
-            327681 => TextureAspect::Plane1Only,
-            327682 => TextureAspect::Plane2Only,
+            ffi::WGPUTextureAspect_WGPUTextureAspect_Undefined => {
+                TextureAspect::Undefined
+            }
+            ffi::WGPUTextureAspect_WGPUTextureAspect_All => TextureAspect::All,
+            ffi::WGPUTextureAspect_WGPUTextureAspect_StencilOnly => {
+                TextureAspect::StencilOnly
+            }
+            ffi::WGPUTextureAspect_WGPUTextureAspect_DepthOnly => {
+                TextureAspect::DepthOnly
+            }
+            ffi::WGPUTextureAspect_WGPUTextureAspect_Plane0Only => {
+                TextureAspect::Plane0Only
+            }
+            ffi::WGPUTextureAspect_WGPUTextureAspect_Plane1Only => {
+                TextureAspect::Plane1Only
+            }
+            ffi::WGPUTextureAspect_WGPUTextureAspect_Plane2Only => {
+                TextureAspect::Plane2Only
+            }
             _ => TextureAspect::Undefined,
         }
     }
@@ -1676,18 +2516,20 @@ impl From<TextureAspect> for ffi::WGPUTextureAspect {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TextureDimension {
-    Undefined = 0,
-    D1 = 1,
-    D2 = 2,
-    D3 = 3,
+    Undefined = ffi::WGPUTextureDimension_WGPUTextureDimension_Undefined as u32,
+    D1 = ffi::WGPUTextureDimension_WGPUTextureDimension_1D as u32,
+    D2 = ffi::WGPUTextureDimension_WGPUTextureDimension_2D as u32,
+    D3 = ffi::WGPUTextureDimension_WGPUTextureDimension_3D as u32,
 }
 impl From<ffi::WGPUTextureDimension> for TextureDimension {
     fn from(value: ffi::WGPUTextureDimension) -> Self {
         match value as u32 {
-            0 => TextureDimension::Undefined,
-            1 => TextureDimension::D1,
-            2 => TextureDimension::D2,
-            3 => TextureDimension::D3,
+            ffi::WGPUTextureDimension_WGPUTextureDimension_Undefined => {
+                TextureDimension::Undefined
+            }
+            ffi::WGPUTextureDimension_WGPUTextureDimension_1D => TextureDimension::D1,
+            ffi::WGPUTextureDimension_WGPUTextureDimension_2D => TextureDimension::D2,
+            ffi::WGPUTextureDimension_WGPUTextureDimension_3D => TextureDimension::D3,
             _ => TextureDimension::Undefined,
         }
     }
@@ -1700,230 +2542,424 @@ impl From<TextureDimension> for ffi::WGPUTextureDimension {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TextureFormat {
-    Undefined = 0,
-    R8Unorm = 1,
-    R8Snorm = 2,
-    R8Uint = 3,
-    R8Sint = 4,
-    R16Unorm = 5,
-    R16Snorm = 6,
-    R16Uint = 7,
-    R16Sint = 8,
-    R16Float = 9,
-    Rg8Unorm = 10,
-    Rg8Snorm = 11,
-    Rg8Uint = 12,
-    Rg8Sint = 13,
-    R32Float = 14,
-    R32Uint = 15,
-    R32Sint = 16,
-    Rg16Unorm = 17,
-    Rg16Snorm = 18,
-    Rg16Uint = 19,
-    Rg16Sint = 20,
-    Rg16Float = 21,
-    Rgba8Unorm = 22,
-    Rgba8UnormSrgb = 23,
-    Rgba8Snorm = 24,
-    Rgba8Uint = 25,
-    Rgba8Sint = 26,
-    Bgra8Unorm = 27,
-    Bgra8UnormSrgb = 28,
-    Rgb10A2Uint = 29,
-    Rgb10A2Unorm = 30,
-    Rg11B10Ufloat = 31,
-    Rgb9E5Ufloat = 32,
-    Rg32Float = 33,
-    Rg32Uint = 34,
-    Rg32Sint = 35,
-    Rgba16Unorm = 36,
-    Rgba16Snorm = 37,
-    Rgba16Uint = 38,
-    Rgba16Sint = 39,
-    Rgba16Float = 40,
-    Rgba32Float = 41,
-    Rgba32Uint = 42,
-    Rgba32Sint = 43,
-    Stencil8 = 44,
-    Depth16Unorm = 45,
-    Depth24Plus = 46,
-    Depth24PlusStencil8 = 47,
-    Depth32Float = 48,
-    Depth32FloatStencil8 = 49,
-    Bc1RgbaUnorm = 50,
-    Bc1RgbaUnormSrgb = 51,
-    Bc2RgbaUnorm = 52,
-    Bc2RgbaUnormSrgb = 53,
-    Bc3RgbaUnorm = 54,
-    Bc3RgbaUnormSrgb = 55,
-    Bc4RUnorm = 56,
-    Bc4RSnorm = 57,
-    Bc5RgUnorm = 58,
-    Bc5RgSnorm = 59,
-    Bc6HRgbUfloat = 60,
-    Bc6HRgbFloat = 61,
-    Bc7RgbaUnorm = 62,
-    Bc7RgbaUnormSrgb = 63,
-    Etc2Rgb8Unorm = 64,
-    Etc2Rgb8UnormSrgb = 65,
-    Etc2Rgb8A1Unorm = 66,
-    Etc2Rgb8A1UnormSrgb = 67,
-    Etc2Rgba8Unorm = 68,
-    Etc2Rgba8UnormSrgb = 69,
-    EacR11Unorm = 70,
-    EacR11Snorm = 71,
-    EacRg11Unorm = 72,
-    EacRg11Snorm = 73,
-    Astc4X4Unorm = 74,
-    Astc4X4UnormSrgb = 75,
-    Astc5X4Unorm = 76,
-    Astc5X4UnormSrgb = 77,
-    Astc5X5Unorm = 78,
-    Astc5X5UnormSrgb = 79,
-    Astc6X5Unorm = 80,
-    Astc6X5UnormSrgb = 81,
-    Astc6X6Unorm = 82,
-    Astc6X6UnormSrgb = 83,
-    Astc8X5Unorm = 84,
-    Astc8X5UnormSrgb = 85,
-    Astc8X6Unorm = 86,
-    Astc8X6UnormSrgb = 87,
-    Astc8X8Unorm = 88,
-    Astc8X8UnormSrgb = 89,
-    Astc10X5Unorm = 90,
-    Astc10X5UnormSrgb = 91,
-    Astc10X6Unorm = 92,
-    Astc10X6UnormSrgb = 93,
-    Astc10X8Unorm = 94,
-    Astc10X8UnormSrgb = 95,
-    Astc10X10Unorm = 96,
-    Astc10X10UnormSrgb = 97,
-    Astc12X10Unorm = 98,
-    Astc12X10UnormSrgb = 99,
-    Astc12X12Unorm = 100,
-    Astc12X12UnormSrgb = 101,
-    R8Bg8Biplanar420Unorm = 327686,
-    R10X6Bg10X6Biplanar420Unorm = 327687,
-    R8Bg8A8Triplanar420Unorm = 327688,
-    R8Bg8Biplanar422Unorm = 327689,
-    R8Bg8Biplanar444Unorm = 327690,
-    R10X6Bg10X6Biplanar422Unorm = 327691,
-    R10X6Bg10X6Biplanar444Unorm = 327692,
-    External = 327693,
+    Undefined = ffi::WGPUTextureFormat_WGPUTextureFormat_Undefined as u32,
+    R8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8Unorm as u32,
+    R8Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8Snorm as u32,
+    R8Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_R8Uint as u32,
+    R8Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_R8Sint as u32,
+    R16Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R16Unorm as u32,
+    R16Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R16Snorm as u32,
+    R16Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_R16Uint as u32,
+    R16Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_R16Sint as u32,
+    R16Float = ffi::WGPUTextureFormat_WGPUTextureFormat_R16Float as u32,
+    Rg8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Unorm as u32,
+    Rg8Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Snorm as u32,
+    Rg8Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Uint as u32,
+    Rg8Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Sint as u32,
+    R32Float = ffi::WGPUTextureFormat_WGPUTextureFormat_R32Float as u32,
+    R32Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_R32Uint as u32,
+    R32Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_R32Sint as u32,
+    Rg16Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Unorm as u32,
+    Rg16Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Snorm as u32,
+    Rg16Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Uint as u32,
+    Rg16Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Sint as u32,
+    Rg16Float = ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Float as u32,
+    Rgba8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Unorm as u32,
+    Rgba8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8UnormSrgb as u32,
+    Rgba8Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Snorm as u32,
+    Rgba8Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Uint as u32,
+    Rgba8Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Sint as u32,
+    Bgra8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BGRA8Unorm as u32,
+    Bgra8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_BGRA8UnormSrgb as u32,
+    Rgb10A2Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGB10A2Uint as u32,
+    Rgb10A2Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RGB10A2Unorm as u32,
+    Rg11B10Ufloat = ffi::WGPUTextureFormat_WGPUTextureFormat_RG11B10Ufloat as u32,
+    Rgb9E5Ufloat = ffi::WGPUTextureFormat_WGPUTextureFormat_RGB9E5Ufloat as u32,
+    Rg32Float = ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Float as u32,
+    Rg32Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Uint as u32,
+    Rg32Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Sint as u32,
+    Rgba16Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Unorm as u32,
+    Rgba16Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Snorm as u32,
+    Rgba16Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Uint as u32,
+    Rgba16Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Sint as u32,
+    Rgba16Float = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Float as u32,
+    Rgba32Float = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Float as u32,
+    Rgba32Uint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Uint as u32,
+    Rgba32Sint = ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Sint as u32,
+    Stencil8 = ffi::WGPUTextureFormat_WGPUTextureFormat_Stencil8 as u32,
+    Depth16Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_Depth16Unorm as u32,
+    Depth24Plus = ffi::WGPUTextureFormat_WGPUTextureFormat_Depth24Plus as u32,
+    Depth24PlusStencil8 = ffi::WGPUTextureFormat_WGPUTextureFormat_Depth24PlusStencil8
+        as u32,
+    Depth32Float = ffi::WGPUTextureFormat_WGPUTextureFormat_Depth32Float as u32,
+    Depth32FloatStencil8 = ffi::WGPUTextureFormat_WGPUTextureFormat_Depth32FloatStencil8
+        as u32,
+    Bc1RgbaUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC1RGBAUnorm as u32,
+    Bc1RgbaUnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_BC1RGBAUnormSrgb as u32,
+    Bc2RgbaUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC2RGBAUnorm as u32,
+    Bc2RgbaUnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_BC2RGBAUnormSrgb as u32,
+    Bc3RgbaUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC3RGBAUnorm as u32,
+    Bc3RgbaUnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_BC3RGBAUnormSrgb as u32,
+    Bc4RUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC4RUnorm as u32,
+    Bc4RSnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC4RSnorm as u32,
+    Bc5RgUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC5RGUnorm as u32,
+    Bc5RgSnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC5RGSnorm as u32,
+    Bc6HRgbUfloat = ffi::WGPUTextureFormat_WGPUTextureFormat_BC6HRGBUfloat as u32,
+    Bc6HRgbFloat = ffi::WGPUTextureFormat_WGPUTextureFormat_BC6HRGBFloat as u32,
+    Bc7RgbaUnorm = ffi::WGPUTextureFormat_WGPUTextureFormat_BC7RGBAUnorm as u32,
+    Bc7RgbaUnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_BC7RGBAUnormSrgb as u32,
+    Etc2Rgb8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8Unorm as u32,
+    Etc2Rgb8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8UnormSrgb
+        as u32,
+    Etc2Rgb8A1Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8A1Unorm as u32,
+    Etc2Rgb8A1UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8A1UnormSrgb
+        as u32,
+    Etc2Rgba8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGBA8Unorm as u32,
+    Etc2Rgba8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGBA8UnormSrgb
+        as u32,
+    EacR11Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_EACR11Unorm as u32,
+    EacR11Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_EACR11Snorm as u32,
+    EacRg11Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_EACRG11Unorm as u32,
+    EacRg11Snorm = ffi::WGPUTextureFormat_WGPUTextureFormat_EACRG11Snorm as u32,
+    Astc4X4Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC4x4Unorm as u32,
+    Astc4X4UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC4x4UnormSrgb as u32,
+    Astc5X4Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x4Unorm as u32,
+    Astc5X4UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x4UnormSrgb as u32,
+    Astc5X5Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x5Unorm as u32,
+    Astc5X5UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x5UnormSrgb as u32,
+    Astc6X5Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x5Unorm as u32,
+    Astc6X5UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x5UnormSrgb as u32,
+    Astc6X6Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x6Unorm as u32,
+    Astc6X6UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x6UnormSrgb as u32,
+    Astc8X5Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x5Unorm as u32,
+    Astc8X5UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x5UnormSrgb as u32,
+    Astc8X6Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x6Unorm as u32,
+    Astc8X6UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x6UnormSrgb as u32,
+    Astc8X8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x8Unorm as u32,
+    Astc8X8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x8UnormSrgb as u32,
+    Astc10X5Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x5Unorm as u32,
+    Astc10X5UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x5UnormSrgb
+        as u32,
+    Astc10X6Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x6Unorm as u32,
+    Astc10X6UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x6UnormSrgb
+        as u32,
+    Astc10X8Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x8Unorm as u32,
+    Astc10X8UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x8UnormSrgb
+        as u32,
+    Astc10X10Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x10Unorm as u32,
+    Astc10X10UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x10UnormSrgb
+        as u32,
+    Astc12X10Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x10Unorm as u32,
+    Astc12X10UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x10UnormSrgb
+        as u32,
+    Astc12X12Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x12Unorm as u32,
+    Astc12X12UnormSrgb = ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x12UnormSrgb
+        as u32,
+    R8Bg8Biplanar420Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm
+        as u32,
+    R10X6Bg10X6Biplanar420Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar420Unorm
+        as u32,
+    R8Bg8A8Triplanar420Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm
+        as u32,
+    R8Bg8Biplanar422Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm
+        as u32,
+    R8Bg8Biplanar444Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm
+        as u32,
+    R10X6Bg10X6Biplanar422Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm
+        as u32,
+    R10X6Bg10X6Biplanar444Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm
+        as u32,
+    External = ffi::WGPUTextureFormat_WGPUTextureFormat_External as u32,
 }
 impl From<ffi::WGPUTextureFormat> for TextureFormat {
     fn from(value: ffi::WGPUTextureFormat) -> Self {
         match value as u32 {
-            0 => TextureFormat::Undefined,
-            1 => TextureFormat::R8Unorm,
-            2 => TextureFormat::R8Snorm,
-            3 => TextureFormat::R8Uint,
-            4 => TextureFormat::R8Sint,
-            5 => TextureFormat::R16Unorm,
-            6 => TextureFormat::R16Snorm,
-            7 => TextureFormat::R16Uint,
-            8 => TextureFormat::R16Sint,
-            9 => TextureFormat::R16Float,
-            10 => TextureFormat::Rg8Unorm,
-            11 => TextureFormat::Rg8Snorm,
-            12 => TextureFormat::Rg8Uint,
-            13 => TextureFormat::Rg8Sint,
-            14 => TextureFormat::R32Float,
-            15 => TextureFormat::R32Uint,
-            16 => TextureFormat::R32Sint,
-            17 => TextureFormat::Rg16Unorm,
-            18 => TextureFormat::Rg16Snorm,
-            19 => TextureFormat::Rg16Uint,
-            20 => TextureFormat::Rg16Sint,
-            21 => TextureFormat::Rg16Float,
-            22 => TextureFormat::Rgba8Unorm,
-            23 => TextureFormat::Rgba8UnormSrgb,
-            24 => TextureFormat::Rgba8Snorm,
-            25 => TextureFormat::Rgba8Uint,
-            26 => TextureFormat::Rgba8Sint,
-            27 => TextureFormat::Bgra8Unorm,
-            28 => TextureFormat::Bgra8UnormSrgb,
-            29 => TextureFormat::Rgb10A2Uint,
-            30 => TextureFormat::Rgb10A2Unorm,
-            31 => TextureFormat::Rg11B10Ufloat,
-            32 => TextureFormat::Rgb9E5Ufloat,
-            33 => TextureFormat::Rg32Float,
-            34 => TextureFormat::Rg32Uint,
-            35 => TextureFormat::Rg32Sint,
-            36 => TextureFormat::Rgba16Unorm,
-            37 => TextureFormat::Rgba16Snorm,
-            38 => TextureFormat::Rgba16Uint,
-            39 => TextureFormat::Rgba16Sint,
-            40 => TextureFormat::Rgba16Float,
-            41 => TextureFormat::Rgba32Float,
-            42 => TextureFormat::Rgba32Uint,
-            43 => TextureFormat::Rgba32Sint,
-            44 => TextureFormat::Stencil8,
-            45 => TextureFormat::Depth16Unorm,
-            46 => TextureFormat::Depth24Plus,
-            47 => TextureFormat::Depth24PlusStencil8,
-            48 => TextureFormat::Depth32Float,
-            49 => TextureFormat::Depth32FloatStencil8,
-            50 => TextureFormat::Bc1RgbaUnorm,
-            51 => TextureFormat::Bc1RgbaUnormSrgb,
-            52 => TextureFormat::Bc2RgbaUnorm,
-            53 => TextureFormat::Bc2RgbaUnormSrgb,
-            54 => TextureFormat::Bc3RgbaUnorm,
-            55 => TextureFormat::Bc3RgbaUnormSrgb,
-            56 => TextureFormat::Bc4RUnorm,
-            57 => TextureFormat::Bc4RSnorm,
-            58 => TextureFormat::Bc5RgUnorm,
-            59 => TextureFormat::Bc5RgSnorm,
-            60 => TextureFormat::Bc6HRgbUfloat,
-            61 => TextureFormat::Bc6HRgbFloat,
-            62 => TextureFormat::Bc7RgbaUnorm,
-            63 => TextureFormat::Bc7RgbaUnormSrgb,
-            64 => TextureFormat::Etc2Rgb8Unorm,
-            65 => TextureFormat::Etc2Rgb8UnormSrgb,
-            66 => TextureFormat::Etc2Rgb8A1Unorm,
-            67 => TextureFormat::Etc2Rgb8A1UnormSrgb,
-            68 => TextureFormat::Etc2Rgba8Unorm,
-            69 => TextureFormat::Etc2Rgba8UnormSrgb,
-            70 => TextureFormat::EacR11Unorm,
-            71 => TextureFormat::EacR11Snorm,
-            72 => TextureFormat::EacRg11Unorm,
-            73 => TextureFormat::EacRg11Snorm,
-            74 => TextureFormat::Astc4X4Unorm,
-            75 => TextureFormat::Astc4X4UnormSrgb,
-            76 => TextureFormat::Astc5X4Unorm,
-            77 => TextureFormat::Astc5X4UnormSrgb,
-            78 => TextureFormat::Astc5X5Unorm,
-            79 => TextureFormat::Astc5X5UnormSrgb,
-            80 => TextureFormat::Astc6X5Unorm,
-            81 => TextureFormat::Astc6X5UnormSrgb,
-            82 => TextureFormat::Astc6X6Unorm,
-            83 => TextureFormat::Astc6X6UnormSrgb,
-            84 => TextureFormat::Astc8X5Unorm,
-            85 => TextureFormat::Astc8X5UnormSrgb,
-            86 => TextureFormat::Astc8X6Unorm,
-            87 => TextureFormat::Astc8X6UnormSrgb,
-            88 => TextureFormat::Astc8X8Unorm,
-            89 => TextureFormat::Astc8X8UnormSrgb,
-            90 => TextureFormat::Astc10X5Unorm,
-            91 => TextureFormat::Astc10X5UnormSrgb,
-            92 => TextureFormat::Astc10X6Unorm,
-            93 => TextureFormat::Astc10X6UnormSrgb,
-            94 => TextureFormat::Astc10X8Unorm,
-            95 => TextureFormat::Astc10X8UnormSrgb,
-            96 => TextureFormat::Astc10X10Unorm,
-            97 => TextureFormat::Astc10X10UnormSrgb,
-            98 => TextureFormat::Astc12X10Unorm,
-            99 => TextureFormat::Astc12X10UnormSrgb,
-            100 => TextureFormat::Astc12X12Unorm,
-            101 => TextureFormat::Astc12X12UnormSrgb,
-            327686 => TextureFormat::R8Bg8Biplanar420Unorm,
-            327687 => TextureFormat::R10X6Bg10X6Biplanar420Unorm,
-            327688 => TextureFormat::R8Bg8A8Triplanar420Unorm,
-            327689 => TextureFormat::R8Bg8Biplanar422Unorm,
-            327690 => TextureFormat::R8Bg8Biplanar444Unorm,
-            327691 => TextureFormat::R10X6Bg10X6Biplanar422Unorm,
-            327692 => TextureFormat::R10X6Bg10X6Biplanar444Unorm,
-            327693 => TextureFormat::External,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Undefined => {
+                TextureFormat::Undefined
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8Unorm => TextureFormat::R8Unorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8Snorm => TextureFormat::R8Snorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8Uint => TextureFormat::R8Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8Sint => TextureFormat::R8Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R16Unorm => TextureFormat::R16Unorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R16Snorm => TextureFormat::R16Snorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R16Uint => TextureFormat::R16Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R16Sint => TextureFormat::R16Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R16Float => TextureFormat::R16Float,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Unorm => TextureFormat::Rg8Unorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Snorm => TextureFormat::Rg8Snorm,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Uint => TextureFormat::Rg8Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG8Sint => TextureFormat::Rg8Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R32Float => TextureFormat::R32Float,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R32Uint => TextureFormat::R32Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R32Sint => TextureFormat::R32Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Unorm => {
+                TextureFormat::Rg16Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Snorm => {
+                TextureFormat::Rg16Snorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Uint => TextureFormat::Rg16Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Sint => TextureFormat::Rg16Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG16Float => {
+                TextureFormat::Rg16Float
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Unorm => {
+                TextureFormat::Rgba8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8UnormSrgb => {
+                TextureFormat::Rgba8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Snorm => {
+                TextureFormat::Rgba8Snorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Uint => {
+                TextureFormat::Rgba8Uint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA8Sint => {
+                TextureFormat::Rgba8Sint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BGRA8Unorm => {
+                TextureFormat::Bgra8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BGRA8UnormSrgb => {
+                TextureFormat::Bgra8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGB10A2Uint => {
+                TextureFormat::Rgb10A2Uint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGB10A2Unorm => {
+                TextureFormat::Rgb10A2Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG11B10Ufloat => {
+                TextureFormat::Rg11B10Ufloat
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGB9E5Ufloat => {
+                TextureFormat::Rgb9E5Ufloat
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Float => {
+                TextureFormat::Rg32Float
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Uint => TextureFormat::Rg32Uint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RG32Sint => TextureFormat::Rg32Sint,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Unorm => {
+                TextureFormat::Rgba16Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Snorm => {
+                TextureFormat::Rgba16Snorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Uint => {
+                TextureFormat::Rgba16Uint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Sint => {
+                TextureFormat::Rgba16Sint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA16Float => {
+                TextureFormat::Rgba16Float
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Float => {
+                TextureFormat::Rgba32Float
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Uint => {
+                TextureFormat::Rgba32Uint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_RGBA32Sint => {
+                TextureFormat::Rgba32Sint
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Stencil8 => TextureFormat::Stencil8,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Depth16Unorm => {
+                TextureFormat::Depth16Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Depth24Plus => {
+                TextureFormat::Depth24Plus
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Depth24PlusStencil8 => {
+                TextureFormat::Depth24PlusStencil8
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Depth32Float => {
+                TextureFormat::Depth32Float
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_Depth32FloatStencil8 => {
+                TextureFormat::Depth32FloatStencil8
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC1RGBAUnorm => {
+                TextureFormat::Bc1RgbaUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC1RGBAUnormSrgb => {
+                TextureFormat::Bc1RgbaUnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC2RGBAUnorm => {
+                TextureFormat::Bc2RgbaUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC2RGBAUnormSrgb => {
+                TextureFormat::Bc2RgbaUnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC3RGBAUnorm => {
+                TextureFormat::Bc3RgbaUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC3RGBAUnormSrgb => {
+                TextureFormat::Bc3RgbaUnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC4RUnorm => {
+                TextureFormat::Bc4RUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC4RSnorm => {
+                TextureFormat::Bc4RSnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC5RGUnorm => {
+                TextureFormat::Bc5RgUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC5RGSnorm => {
+                TextureFormat::Bc5RgSnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC6HRGBUfloat => {
+                TextureFormat::Bc6HRgbUfloat
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC6HRGBFloat => {
+                TextureFormat::Bc6HRgbFloat
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC7RGBAUnorm => {
+                TextureFormat::Bc7RgbaUnorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_BC7RGBAUnormSrgb => {
+                TextureFormat::Bc7RgbaUnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8Unorm => {
+                TextureFormat::Etc2Rgb8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8UnormSrgb => {
+                TextureFormat::Etc2Rgb8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8A1Unorm => {
+                TextureFormat::Etc2Rgb8A1Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGB8A1UnormSrgb => {
+                TextureFormat::Etc2Rgb8A1UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGBA8Unorm => {
+                TextureFormat::Etc2Rgba8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ETC2RGBA8UnormSrgb => {
+                TextureFormat::Etc2Rgba8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_EACR11Unorm => {
+                TextureFormat::EacR11Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_EACR11Snorm => {
+                TextureFormat::EacR11Snorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_EACRG11Unorm => {
+                TextureFormat::EacRg11Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_EACRG11Snorm => {
+                TextureFormat::EacRg11Snorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC4x4Unorm => {
+                TextureFormat::Astc4X4Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC4x4UnormSrgb => {
+                TextureFormat::Astc4X4UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x4Unorm => {
+                TextureFormat::Astc5X4Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x4UnormSrgb => {
+                TextureFormat::Astc5X4UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x5Unorm => {
+                TextureFormat::Astc5X5Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC5x5UnormSrgb => {
+                TextureFormat::Astc5X5UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x5Unorm => {
+                TextureFormat::Astc6X5Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x5UnormSrgb => {
+                TextureFormat::Astc6X5UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x6Unorm => {
+                TextureFormat::Astc6X6Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC6x6UnormSrgb => {
+                TextureFormat::Astc6X6UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x5Unorm => {
+                TextureFormat::Astc8X5Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x5UnormSrgb => {
+                TextureFormat::Astc8X5UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x6Unorm => {
+                TextureFormat::Astc8X6Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x6UnormSrgb => {
+                TextureFormat::Astc8X6UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x8Unorm => {
+                TextureFormat::Astc8X8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC8x8UnormSrgb => {
+                TextureFormat::Astc8X8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x5Unorm => {
+                TextureFormat::Astc10X5Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x5UnormSrgb => {
+                TextureFormat::Astc10X5UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x6Unorm => {
+                TextureFormat::Astc10X6Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x6UnormSrgb => {
+                TextureFormat::Astc10X6UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x8Unorm => {
+                TextureFormat::Astc10X8Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x8UnormSrgb => {
+                TextureFormat::Astc10X8UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x10Unorm => {
+                TextureFormat::Astc10X10Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC10x10UnormSrgb => {
+                TextureFormat::Astc10X10UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x10Unorm => {
+                TextureFormat::Astc12X10Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x10UnormSrgb => {
+                TextureFormat::Astc12X10UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x12Unorm => {
+                TextureFormat::Astc12X12Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_ASTC12x12UnormSrgb => {
+                TextureFormat::Astc12X12UnormSrgb
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm => {
+                TextureFormat::R8Bg8Biplanar420Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar420Unorm => {
+                TextureFormat::R10X6Bg10X6Biplanar420Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm => {
+                TextureFormat::R8Bg8A8Triplanar420Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm => {
+                TextureFormat::R8Bg8Biplanar422Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm => {
+                TextureFormat::R8Bg8Biplanar444Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm => {
+                TextureFormat::R10X6Bg10X6Biplanar422Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm => {
+                TextureFormat::R10X6Bg10X6Biplanar444Unorm
+            }
+            ffi::WGPUTextureFormat_WGPUTextureFormat_External => TextureFormat::External,
             _ => TextureFormat::Undefined,
         }
     }
@@ -1936,24 +2972,40 @@ impl From<TextureFormat> for ffi::WGPUTextureFormat {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TextureSampleType {
-    BindingNotUsed = 0,
-    Undefined = 1,
-    Float = 2,
-    UnfilterableFloat = 3,
-    Depth = 4,
-    Sint = 5,
-    Uint = 6,
+    BindingNotUsed = ffi::WGPUTextureSampleType_WGPUTextureSampleType_BindingNotUsed
+        as u32,
+    Undefined = ffi::WGPUTextureSampleType_WGPUTextureSampleType_Undefined as u32,
+    Float = ffi::WGPUTextureSampleType_WGPUTextureSampleType_Float as u32,
+    UnfilterableFloat = ffi::WGPUTextureSampleType_WGPUTextureSampleType_UnfilterableFloat
+        as u32,
+    Depth = ffi::WGPUTextureSampleType_WGPUTextureSampleType_Depth as u32,
+    Sint = ffi::WGPUTextureSampleType_WGPUTextureSampleType_Sint as u32,
+    Uint = ffi::WGPUTextureSampleType_WGPUTextureSampleType_Uint as u32,
 }
 impl From<ffi::WGPUTextureSampleType> for TextureSampleType {
     fn from(value: ffi::WGPUTextureSampleType) -> Self {
         match value as u32 {
-            0 => TextureSampleType::BindingNotUsed,
-            1 => TextureSampleType::Undefined,
-            2 => TextureSampleType::Float,
-            3 => TextureSampleType::UnfilterableFloat,
-            4 => TextureSampleType::Depth,
-            5 => TextureSampleType::Sint,
-            6 => TextureSampleType::Uint,
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_BindingNotUsed => {
+                TextureSampleType::BindingNotUsed
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_Undefined => {
+                TextureSampleType::Undefined
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_Float => {
+                TextureSampleType::Float
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_UnfilterableFloat => {
+                TextureSampleType::UnfilterableFloat
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_Depth => {
+                TextureSampleType::Depth
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_Sint => {
+                TextureSampleType::Sint
+            }
+            ffi::WGPUTextureSampleType_WGPUTextureSampleType_Uint => {
+                TextureSampleType::Uint
+            }
             _ => TextureSampleType::BindingNotUsed,
         }
     }
@@ -1966,24 +3018,38 @@ impl From<TextureSampleType> for ffi::WGPUTextureSampleType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum TextureViewDimension {
-    Undefined = 0,
-    D1 = 1,
-    D2 = 2,
-    D2Array = 3,
-    Cube = 4,
-    CubeArray = 5,
-    D3 = 6,
+    Undefined = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_Undefined as u32,
+    D1 = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_1D as u32,
+    D2 = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_2D as u32,
+    D2Array = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_2DArray as u32,
+    Cube = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_Cube as u32,
+    CubeArray = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_CubeArray as u32,
+    D3 = ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_3D as u32,
 }
 impl From<ffi::WGPUTextureViewDimension> for TextureViewDimension {
     fn from(value: ffi::WGPUTextureViewDimension) -> Self {
         match value as u32 {
-            0 => TextureViewDimension::Undefined,
-            1 => TextureViewDimension::D1,
-            2 => TextureViewDimension::D2,
-            3 => TextureViewDimension::D2Array,
-            4 => TextureViewDimension::Cube,
-            5 => TextureViewDimension::CubeArray,
-            6 => TextureViewDimension::D3,
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_Undefined => {
+                TextureViewDimension::Undefined
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_1D => {
+                TextureViewDimension::D1
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_2D => {
+                TextureViewDimension::D2
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_2DArray => {
+                TextureViewDimension::D2Array
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_Cube => {
+                TextureViewDimension::Cube
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_CubeArray => {
+                TextureViewDimension::CubeArray
+            }
+            ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_3D => {
+                TextureViewDimension::D3
+            }
             _ => TextureViewDimension::Undefined,
         }
     }
@@ -1996,14 +3062,18 @@ impl From<TextureViewDimension> for ffi::WGPUTextureViewDimension {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum ToneMappingMode {
-    Standard = 1,
-    Extended = 2,
+    Standard = ffi::WGPUToneMappingMode_WGPUToneMappingMode_Standard as u32,
+    Extended = ffi::WGPUToneMappingMode_WGPUToneMappingMode_Extended as u32,
 }
 impl From<ffi::WGPUToneMappingMode> for ToneMappingMode {
     fn from(value: ffi::WGPUToneMappingMode) -> Self {
         match value as u32 {
-            1 => ToneMappingMode::Standard,
-            2 => ToneMappingMode::Extended,
+            ffi::WGPUToneMappingMode_WGPUToneMappingMode_Standard => {
+                ToneMappingMode::Standard
+            }
+            ffi::WGPUToneMappingMode_WGPUToneMappingMode_Extended => {
+                ToneMappingMode::Extended
+            }
             _ => ToneMappingMode::Standard,
         }
     }
@@ -2016,92 +3086,96 @@ impl From<ToneMappingMode> for ffi::WGPUToneMappingMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum VertexFormat {
-    Uint8 = 1,
-    Uint8X2 = 2,
-    Uint8X4 = 3,
-    Sint8 = 4,
-    Sint8X2 = 5,
-    Sint8X4 = 6,
-    Unorm8 = 7,
-    Unorm8X2 = 8,
-    Unorm8X4 = 9,
-    Snorm8 = 10,
-    Snorm8X2 = 11,
-    Snorm8X4 = 12,
-    Uint16 = 13,
-    Uint16X2 = 14,
-    Uint16X4 = 15,
-    Sint16 = 16,
-    Sint16X2 = 17,
-    Sint16X4 = 18,
-    Unorm16 = 19,
-    Unorm16X2 = 20,
-    Unorm16X4 = 21,
-    Snorm16 = 22,
-    Snorm16X2 = 23,
-    Snorm16X4 = 24,
-    Float16 = 25,
-    Float16X2 = 26,
-    Float16X4 = 27,
-    Float32 = 28,
-    Float32X2 = 29,
-    Float32X3 = 30,
-    Float32X4 = 31,
-    Uint32 = 32,
-    Uint32X2 = 33,
-    Uint32X3 = 34,
-    Uint32X4 = 35,
-    Sint32 = 36,
-    Sint32X2 = 37,
-    Sint32X3 = 38,
-    Sint32X4 = 39,
-    Unorm1010102 = 40,
-    Unorm8X4Bgra = 41,
+    Uint8 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8 as u32,
+    Uint8X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x2 as u32,
+    Uint8X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x4 as u32,
+    Sint8 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8 as u32,
+    Sint8X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8x2 as u32,
+    Sint8X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8x4 as u32,
+    Unorm8 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8 as u32,
+    Unorm8X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x2 as u32,
+    Unorm8X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4 as u32,
+    Snorm8 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8 as u32,
+    Snorm8X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8x2 as u32,
+    Snorm8X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8x4 as u32,
+    Uint16 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16 as u32,
+    Uint16X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16x2 as u32,
+    Uint16X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16x4 as u32,
+    Sint16 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16 as u32,
+    Sint16X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16x2 as u32,
+    Sint16X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16x4 as u32,
+    Unorm16 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16 as u32,
+    Unorm16X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16x2 as u32,
+    Unorm16X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16x4 as u32,
+    Snorm16 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16 as u32,
+    Snorm16X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16x2 as u32,
+    Snorm16X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16x4 as u32,
+    Float16 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float16 as u32,
+    Float16X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float16x2 as u32,
+    Float16X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float16x4 as u32,
+    Float32 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float32 as u32,
+    Float32X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x2 as u32,
+    Float32X3 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x3 as u32,
+    Float32X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x4 as u32,
+    Uint32 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32 as u32,
+    Uint32X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x2 as u32,
+    Uint32X3 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x3 as u32,
+    Uint32X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x4 as u32,
+    Sint32 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32 as u32,
+    Sint32X2 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x2 as u32,
+    Sint32X3 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x3 as u32,
+    Sint32X4 = ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x4 as u32,
+    Unorm1010102 = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm10_10_10_2 as u32,
+    Unorm8X4Bgra = ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4BGRA as u32,
 }
 impl From<ffi::WGPUVertexFormat> for VertexFormat {
     fn from(value: ffi::WGPUVertexFormat) -> Self {
         match value as u32 {
-            1 => VertexFormat::Uint8,
-            2 => VertexFormat::Uint8X2,
-            3 => VertexFormat::Uint8X4,
-            4 => VertexFormat::Sint8,
-            5 => VertexFormat::Sint8X2,
-            6 => VertexFormat::Sint8X4,
-            7 => VertexFormat::Unorm8,
-            8 => VertexFormat::Unorm8X2,
-            9 => VertexFormat::Unorm8X4,
-            10 => VertexFormat::Snorm8,
-            11 => VertexFormat::Snorm8X2,
-            12 => VertexFormat::Snorm8X4,
-            13 => VertexFormat::Uint16,
-            14 => VertexFormat::Uint16X2,
-            15 => VertexFormat::Uint16X4,
-            16 => VertexFormat::Sint16,
-            17 => VertexFormat::Sint16X2,
-            18 => VertexFormat::Sint16X4,
-            19 => VertexFormat::Unorm16,
-            20 => VertexFormat::Unorm16X2,
-            21 => VertexFormat::Unorm16X4,
-            22 => VertexFormat::Snorm16,
-            23 => VertexFormat::Snorm16X2,
-            24 => VertexFormat::Snorm16X4,
-            25 => VertexFormat::Float16,
-            26 => VertexFormat::Float16X2,
-            27 => VertexFormat::Float16X4,
-            28 => VertexFormat::Float32,
-            29 => VertexFormat::Float32X2,
-            30 => VertexFormat::Float32X3,
-            31 => VertexFormat::Float32X4,
-            32 => VertexFormat::Uint32,
-            33 => VertexFormat::Uint32X2,
-            34 => VertexFormat::Uint32X3,
-            35 => VertexFormat::Uint32X4,
-            36 => VertexFormat::Sint32,
-            37 => VertexFormat::Sint32X2,
-            38 => VertexFormat::Sint32X3,
-            39 => VertexFormat::Sint32X4,
-            40 => VertexFormat::Unorm1010102,
-            41 => VertexFormat::Unorm8X4Bgra,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8 => VertexFormat::Uint8,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x2 => VertexFormat::Uint8X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x4 => VertexFormat::Uint8X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8 => VertexFormat::Sint8,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8x2 => VertexFormat::Sint8X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint8x4 => VertexFormat::Sint8X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8 => VertexFormat::Unorm8,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x2 => VertexFormat::Unorm8X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4 => VertexFormat::Unorm8X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8 => VertexFormat::Snorm8,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8x2 => VertexFormat::Snorm8X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm8x4 => VertexFormat::Snorm8X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16 => VertexFormat::Uint16,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16x2 => VertexFormat::Uint16X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint16x4 => VertexFormat::Uint16X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16 => VertexFormat::Sint16,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16x2 => VertexFormat::Sint16X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint16x4 => VertexFormat::Sint16X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16 => VertexFormat::Unorm16,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16x2 => VertexFormat::Unorm16X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm16x4 => VertexFormat::Unorm16X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16 => VertexFormat::Snorm16,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16x2 => VertexFormat::Snorm16X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Snorm16x4 => VertexFormat::Snorm16X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float16 => VertexFormat::Float16,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float16x2 => VertexFormat::Float16X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float16x4 => VertexFormat::Float16X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float32 => VertexFormat::Float32,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x2 => VertexFormat::Float32X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x3 => VertexFormat::Float32X3,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Float32x4 => VertexFormat::Float32X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32 => VertexFormat::Uint32,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x2 => VertexFormat::Uint32X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x3 => VertexFormat::Uint32X3,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Uint32x4 => VertexFormat::Uint32X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32 => VertexFormat::Sint32,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x2 => VertexFormat::Sint32X2,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x3 => VertexFormat::Sint32X3,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Sint32x4 => VertexFormat::Sint32X4,
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm10_10_10_2 => {
+                VertexFormat::Unorm1010102
+            }
+            ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4BGRA => {
+                VertexFormat::Unorm8X4Bgra
+            }
             _ => VertexFormat::Uint8,
         }
     }
@@ -2114,16 +3188,20 @@ impl From<VertexFormat> for ffi::WGPUVertexFormat {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum VertexStepMode {
-    Undefined = 0,
-    Vertex = 1,
-    Instance = 2,
+    Undefined = ffi::WGPUVertexStepMode_WGPUVertexStepMode_Undefined as u32,
+    Vertex = ffi::WGPUVertexStepMode_WGPUVertexStepMode_Vertex as u32,
+    Instance = ffi::WGPUVertexStepMode_WGPUVertexStepMode_Instance as u32,
 }
 impl From<ffi::WGPUVertexStepMode> for VertexStepMode {
     fn from(value: ffi::WGPUVertexStepMode) -> Self {
         match value as u32 {
-            0 => VertexStepMode::Undefined,
-            1 => VertexStepMode::Vertex,
-            2 => VertexStepMode::Instance,
+            ffi::WGPUVertexStepMode_WGPUVertexStepMode_Undefined => {
+                VertexStepMode::Undefined
+            }
+            ffi::WGPUVertexStepMode_WGPUVertexStepMode_Vertex => VertexStepMode::Vertex,
+            ffi::WGPUVertexStepMode_WGPUVertexStepMode_Instance => {
+                VertexStepMode::Instance
+            }
             _ => VertexStepMode::Undefined,
         }
     }
@@ -2136,16 +3214,16 @@ impl From<VertexStepMode> for ffi::WGPUVertexStepMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum WaitStatus {
-    Success = 1,
-    TimedOut = 2,
-    Error = 3,
+    Success = ffi::WGPUWaitStatus_WGPUWaitStatus_Success as u32,
+    TimedOut = ffi::WGPUWaitStatus_WGPUWaitStatus_TimedOut as u32,
+    Error = ffi::WGPUWaitStatus_WGPUWaitStatus_Error as u32,
 }
 impl From<ffi::WGPUWaitStatus> for WaitStatus {
     fn from(value: ffi::WGPUWaitStatus) -> Self {
         match value as u32 {
-            1 => WaitStatus::Success,
-            2 => WaitStatus::TimedOut,
-            3 => WaitStatus::Error,
+            ffi::WGPUWaitStatus_WGPUWaitStatus_Success => WaitStatus::Success,
+            ffi::WGPUWaitStatus_WGPUWaitStatus_TimedOut => WaitStatus::TimedOut,
+            ffi::WGPUWaitStatus_WGPUWaitStatus_Error => WaitStatus::Error,
             _ => WaitStatus::Success,
         }
     }
@@ -2157,10 +3235,15 @@ impl From<WaitStatus> for ffi::WGPUWaitStatus {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct BufferUsage : u64 {
-    const NONE = 0; const MAP_READ = 1; const MAP_WRITE = 2; const COPY_SRC = 4; const
-    COPY_DST = 8; const INDEX = 16; const VERTEX = 32; const UNIFORM = 64; const STORAGE
-    = 128; const INDIRECT = 256; const QUERY_RESOLVE = 512; const TEXEL_BUFFER = 328704;
-    }
+    const NONE = ffi::WGPUBufferUsage_None as u64; const MAP_READ =
+    ffi::WGPUBufferUsage_MapRead as u64; const MAP_WRITE = ffi::WGPUBufferUsage_MapWrite
+    as u64; const COPY_SRC = ffi::WGPUBufferUsage_CopySrc as u64; const COPY_DST =
+    ffi::WGPUBufferUsage_CopyDst as u64; const INDEX = ffi::WGPUBufferUsage_Index as u64;
+    const VERTEX = ffi::WGPUBufferUsage_Vertex as u64; const UNIFORM =
+    ffi::WGPUBufferUsage_Uniform as u64; const STORAGE = ffi::WGPUBufferUsage_Storage as
+    u64; const INDIRECT = ffi::WGPUBufferUsage_Indirect as u64; const QUERY_RESOLVE =
+    ffi::WGPUBufferUsage_QueryResolve as u64; const TEXEL_BUFFER =
+    ffi::WGPUBufferUsage_TexelBuffer as u64; }
 }
 impl From<ffi::WGPUBufferUsage> for BufferUsage {
     fn from(value: ffi::WGPUBufferUsage) -> Self {
@@ -2174,8 +3257,11 @@ impl From<BufferUsage> for ffi::WGPUBufferUsage {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct ColorWriteMask : u64 {
-    const NONE = 0; const RED = 1; const GREEN = 2; const BLUE = 4; const ALPHA = 8;
-    const ALL = 15; }
+    const NONE = ffi::WGPUColorWriteMask_None as u64; const RED =
+    ffi::WGPUColorWriteMask_Red as u64; const GREEN = ffi::WGPUColorWriteMask_Green as
+    u64; const BLUE = ffi::WGPUColorWriteMask_Blue as u64; const ALPHA =
+    ffi::WGPUColorWriteMask_Alpha as u64; const ALL = ffi::WGPUColorWriteMask_All as u64;
+    }
 }
 impl From<ffi::WGPUColorWriteMask> for ColorWriteMask {
     fn from(value: ffi::WGPUColorWriteMask) -> Self {
@@ -2189,8 +3275,12 @@ impl From<ColorWriteMask> for ffi::WGPUColorWriteMask {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct HeapProperty : u64 {
-    const NONE = 0; const DEVICE_LOCAL = 1; const HOST_VISIBLE = 2; const HOST_COHERENT =
-    4; const HOST_UNCACHED = 8; const HOST_CACHED = 16; }
+    const NONE = ffi::WGPUHeapProperty_None as u64; const DEVICE_LOCAL =
+    ffi::WGPUHeapProperty_DeviceLocal as u64; const HOST_VISIBLE =
+    ffi::WGPUHeapProperty_HostVisible as u64; const HOST_COHERENT =
+    ffi::WGPUHeapProperty_HostCoherent as u64; const HOST_UNCACHED =
+    ffi::WGPUHeapProperty_HostUncached as u64; const HOST_CACHED =
+    ffi::WGPUHeapProperty_HostCached as u64; }
 }
 impl From<ffi::WGPUHeapProperty> for HeapProperty {
     fn from(value: ffi::WGPUHeapProperty) -> Self {
@@ -2204,7 +3294,8 @@ impl From<HeapProperty> for ffi::WGPUHeapProperty {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct MapMode : u64 { const
-    NONE = 0; const READ = 1; const WRITE = 2; }
+    NONE = ffi::WGPUMapMode_None as u64; const READ = ffi::WGPUMapMode_Read as u64; const
+    WRITE = ffi::WGPUMapMode_Write as u64; }
 }
 impl From<ffi::WGPUMapMode> for MapMode {
     fn from(value: ffi::WGPUMapMode) -> Self {
@@ -2218,7 +3309,9 @@ impl From<MapMode> for ffi::WGPUMapMode {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct ShaderStage : u64 {
-    const NONE = 0; const VERTEX = 1; const FRAGMENT = 2; const COMPUTE = 4; }
+    const NONE = ffi::WGPUShaderStage_None as u64; const VERTEX =
+    ffi::WGPUShaderStage_Vertex as u64; const FRAGMENT = ffi::WGPUShaderStage_Fragment as
+    u64; const COMPUTE = ffi::WGPUShaderStage_Compute as u64; }
 }
 impl From<ffi::WGPUShaderStage> for ShaderStage {
     fn from(value: ffi::WGPUShaderStage) -> Self {
@@ -2232,9 +3325,13 @@ impl From<ShaderStage> for ffi::WGPUShaderStage {
 }
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)] pub struct TextureUsage : u64 {
-    const NONE = 0; const COPY_SRC = 1; const COPY_DST = 2; const TEXTURE_BINDING = 4;
-    const STORAGE_BINDING = 8; const RENDER_ATTACHMENT = 16; const TRANSIENT_ATTACHMENT =
-    327712; const STORAGE_ATTACHMENT = 327744; }
+    const NONE = ffi::WGPUTextureUsage_None as u64; const COPY_SRC =
+    ffi::WGPUTextureUsage_CopySrc as u64; const COPY_DST = ffi::WGPUTextureUsage_CopyDst
+    as u64; const TEXTURE_BINDING = ffi::WGPUTextureUsage_TextureBinding as u64; const
+    STORAGE_BINDING = ffi::WGPUTextureUsage_StorageBinding as u64; const
+    RENDER_ATTACHMENT = ffi::WGPUTextureUsage_RenderAttachment as u64; const
+    TRANSIENT_ATTACHMENT = ffi::WGPUTextureUsage_TransientAttachment as u64; const
+    STORAGE_ATTACHMENT = ffi::WGPUTextureUsage_StorageAttachment as u64; }
 }
 impl From<ffi::WGPUTextureUsage> for TextureUsage {
     fn from(value: ffi::WGPUTextureUsage) -> Self {

@@ -36,8 +36,15 @@ impl GeneratedFiles {
 }
 
 pub fn generate_strings(model: &ApiModel) -> GeneratedFiles {
+    generate_strings_with_ffi_consts(model, None)
+}
+
+pub fn generate_strings_with_ffi_consts(
+    model: &ApiModel,
+    ffi_consts: Option<&HashSet<String>>,
+) -> GeneratedFiles {
     let c_prefix = model.c_prefix.clone();
-    let enums = format_rust_source(&emit_enums(model, &c_prefix));
+    let enums = format_rust_source(&emit_enums(model, &c_prefix, ffi_consts));
     let structs = format_rust_source(&emit_structs(model, &c_prefix));
     let extensions = format_rust_source(&emit_extensions(model, &c_prefix));
     let objects = format_rust_source(&emit_objects(model, &c_prefix));
@@ -99,7 +106,7 @@ fn format_rust_source(source: &str) -> String {
     }
 }
 
-fn emit_enums(model: &ApiModel, c_prefix: &str) -> String {
+fn emit_enums(model: &ApiModel, c_prefix: &str, ffi_consts: Option<&HashSet<String>>) -> String {
     let mut out = String::new();
     out.push_str(
         r#"#![allow(dead_code, unused_imports)]
@@ -111,10 +118,10 @@ use bitflags::bitflags;
     );
 
     for e in &model.enums {
-        out.push_str(&emit_enum(e, c_prefix));
+        out.push_str(&emit_enum(e, c_prefix, ffi_consts));
     }
     for b in &model.bitmasks {
-        out.push_str(&emit_bitmask(b, c_prefix));
+        out.push_str(&emit_bitmask(b, c_prefix, ffi_consts));
     }
 
     out
@@ -466,34 +473,39 @@ use super::*;
     out
 }
 
-fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
+fn emit_enum(e: &EnumModel, c_prefix: &str, ffi_consts: Option<&HashSet<String>>) -> String {
     let name = type_name(&e.name);
     let mut variants = Vec::new();
     let mut from_arms = Vec::new();
     let ffi_type = ffi_type_name(&e.name, c_prefix);
+    let mut first_variant: Option<String> = None;
 
     for v in &e.def.values {
         let variant = enum_variant_name_camel(&v.name);
-        let value = enum_value_u32(v);
+        let const_variant = ffi_enum_value_name(&v.name);
+        let const_name = ffi_enum_const_name(&ffi_type, &const_variant);
+        if !ffi_const_is_available(ffi_consts, &const_name) {
+            continue;
+        }
         variants.push(format!(
-            r#"    {variant} = {value},"#,
+            r#"    {variant} = ffi::{const_name} as u32,"#,
             variant = variant,
-            value = value
+            const_name = const_name
         ));
         from_arms.push(format!(
-            r#"            {value} => {name}::{variant},"#,
-            value = value,
+            r#"            ffi::{const_name} => {name}::{variant},"#,
+            const_name = const_name,
             name = name,
             variant = variant
         ));
+        if first_variant.is_none() {
+            first_variant = Some(variant);
+        }
     }
 
     let variants_block = variants.join("\n");
     let from_arms_block = from_arms.join("\n");
-    let fallback_variant = variants
-        .first()
-        .map(|v| v.split_whitespace().nth(0).unwrap_or("Undefined"))
-        .unwrap_or("Undefined");
+    let fallback_variant = first_variant.unwrap_or_else(|| "Undefined".to_string());
 
     format!(
         r#"#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -526,18 +538,22 @@ impl From<{name}> for ffi::{ffi_type} {{
     )
 }
 
-fn emit_bitmask(b: &BitmaskModel, c_prefix: &str) -> String {
+fn emit_bitmask(b: &BitmaskModel, c_prefix: &str, ffi_consts: Option<&HashSet<String>>) -> String {
     let name = type_name(&b.name);
     let mut variants = Vec::new();
     let ffi_type = ffi_type_name(&b.name, c_prefix);
 
     for v in &b.def.values {
         let variant = bitmask_variant_name(&v.name);
-        let value = enum_value_u64(v);
+        let const_variant = ffi_enum_value_name(&v.name);
+        let const_name = ffi_bitmask_const_name(&ffi_type, &const_variant);
+        if !ffi_const_is_available(ffi_consts, &const_name) {
+            continue;
+        }
         variants.push(format!(
-            r#"        const {variant} = {value};"#,
+            r#"        const {variant} = ffi::{const_name} as u64;"#,
             variant = variant,
-            value = value
+            const_name = const_name
         ));
     }
 
@@ -568,6 +584,10 @@ impl From<{name}> for ffi::{ffi_type} {{
         variants = variants_block,
         ffi_type = ffi_type
     )
+}
+
+fn ffi_const_is_available(ffi_consts: Option<&HashSet<String>>, name: &str) -> bool {
+    ffi_consts.map_or(true, |set| set.contains(name))
 }
 
 fn enum_value_u32(value: &EnumValueDef) -> String {
@@ -2160,6 +2180,61 @@ fn enum_variant_name_camel(name: &str) -> String {
     normalize_digit_prefix_camel(&raw)
 }
 
+fn ffi_enum_const_name(ffi_type: &str, variant: &str) -> String {
+    format!("{ffi_type}_{ffi_type}_{variant}")
+}
+
+fn ffi_bitmask_const_name(ffi_type: &str, variant: &str) -> String {
+    format!("{ffi_type}_{variant}")
+}
+
+fn ffi_enum_value_name(name: &str) -> String {
+    if name.trim().eq_ignore_ascii_case("srgb") {
+        return "SRGB".to_string();
+    }
+    let mut out = String::new();
+    for word in name.split_whitespace() {
+        let mut parts = Vec::new();
+        for part in word.split('-') {
+            if part.is_empty() {
+                continue;
+            }
+            let value = if part.chars().all(|c| c.is_ascii_digit()) {
+                part.to_string()
+            } else if part
+                .chars()
+                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+            {
+                part.to_string()
+            } else {
+                let mut chars = part.chars();
+                let mut s = String::new();
+                if let Some(first) = chars.next() {
+                    s.push(first.to_ascii_uppercase());
+                    s.push_str(&chars.as_str().to_ascii_lowercase());
+                }
+                s
+            };
+            parts.push(value);
+        }
+        out.push_str(&parts.join("_"));
+    }
+    for (from, to) in acronym_fixes() {
+        out = out.replace(from, to);
+    }
+    let extra_fixes = [
+        ("Opengles", "OpenGLES"),
+        ("Opengl", "OpenGL"),
+        ("Gpu", "GPU"),
+        ("Cpu", "CPU"),
+        ("Winui", "WinUI"),
+    ];
+    for (from, to) in extra_fixes {
+        out = out.replace(from, to);
+    }
+    out
+}
+
 fn bitmask_variant_name(name: &str) -> String {
     let raw = shouty_snake_case_name(name);
     if let Some(first) = raw.chars().next() {
@@ -2269,6 +2344,9 @@ fn uppercase_after_digits(value: &str) -> String {
 }
 
 fn ffi_type_name(canonical: &str, c_prefix: &str) -> String {
+    if canonical == "INTERNAL_HAVE_EMDAWNWEBGPU_HEADER" {
+        return format!("{c_prefix}{canonical}");
+    }
     format!("{}{}", c_prefix, camel_case_with_acronyms(canonical))
 }
 

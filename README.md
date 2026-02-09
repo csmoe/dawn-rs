@@ -23,7 +23,7 @@ This project is under active development and **not approved for production use**
 
 - Dawn build artifacts are expected under `DAWN_ROOT`:
   - `include/webgpu/webgpu.h`
-  - `lib/libwebgpu_dawn.a` (or `out/Release`, `out/Debug` fallback)
+  - `lib/libwebgpu_dawn.a`
 - Dawn JSON schema is expected under `DAWN_JSON`:
   - `dawn.json`
 - On macOS, `xcrun` is used to locate the SDK for clang.
@@ -37,8 +37,8 @@ DAWN_ROOT=/dawn_release_path DAWN_JSON=/path/to/dawn.json cargo run --example ad
 
 ## Upstream References (Dawn)
 
-- `dawn.json` (API schema): [dawn.json](https://dawn.googlesource.com/dawn/+/991ab98f113f5f51ec87d767b45523b19cd15b9e/dawn.json)
-- Generator design notes: [docs/codegen.md](https://dawn.googlesource.com/dawn/+/refs/heads/chromium/4478/docs/codegen.md)
+- `dawn.json` (API schema): [dawn.json](https://dawn.googlesource.com/dawn/+/HEAD/src/dawn/dawn.json)
+- Generator design notes: [docs/codegen.md](https://dawn.googlesource.com/dawn/+/HEAD/docs/dawn/codegen.md)
 - C++ wrapper template: [generator/templates/api_cpp.h](https://dawn.googlesource.com/dawn/+/HEAD/generator/templates/api_cpp.h)
 
 ## License

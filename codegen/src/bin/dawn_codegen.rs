@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -53,7 +54,8 @@ fn main() {
         api.filter_by_tags(&tags)
     };
     let model = dawn_codegen::ApiModel::from_api(&filtered);
-    let files = dawn_codegen::generate_strings(&model);
+    let ffi_consts = collect_ffi_enum_consts(&api_header);
+    let files = dawn_codegen::generate_strings_with_ffi_consts(&model, Some(&ffi_consts));
     files
         .write_to_dir(&out_dir)
         .expect("write generated files");
@@ -75,4 +77,41 @@ fn default_clang_args(api_header: &Path) -> Vec<String> {
         args.push(format!("-I{}", include_dir.display()));
     }
     args
+}
+
+fn collect_ffi_enum_consts(api_header: &Path) -> HashSet<String> {
+    let mut contents = String::new();
+    if let Ok(text) = std::fs::read_to_string(api_header) {
+        contents.push_str(&text);
+        contents.push('\n');
+    }
+    if let Some(include_root) = api_header.parent().and_then(|p| p.parent()) {
+        let dawn_header = include_root.join("dawn").join("webgpu.h");
+        if let Ok(text) = std::fs::read_to_string(&dawn_header) {
+            contents.push_str(&text);
+            contents.push('\n');
+        }
+    }
+    let mut out = HashSet::new();
+    for line in contents.lines() {
+        if !line.contains("WGPU") || !line.contains('=') {
+            continue;
+        }
+        let (left, _) = match line.split_once('=') {
+            Some(parts) => parts,
+            None => continue,
+        };
+        let token = match left.split_whitespace().last() {
+            Some(value) => value.trim_end_matches(','),
+            None => continue,
+        };
+        if !token.starts_with("WGPU") {
+            continue;
+        }
+        out.insert(token.to_string());
+        if let Some((enum_type, _)) = token.split_once('_') {
+            out.insert(format!("{enum_type}_{token}"));
+        }
+    }
+    out
 }
