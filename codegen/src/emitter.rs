@@ -127,6 +127,7 @@ fn emit_structs(model: &ApiModel, c_prefix: &str) -> String {
 
 use crate::ffi;
 use super::*;
+use std::any::Any;
 use std::ffi::CStr;
 
 fn string_view_to_string(view: ffi::{prefix}StringView) -> String {{
@@ -157,14 +158,21 @@ fn emit_extensions(model: &ApiModel, c_prefix: &str) -> String {
 
 use crate::ffi;
 use super::*;
+use std::any::Any;
 
-pub struct ChainedStructStorage {{
+pub(crate) struct ChainedStructStorage {{
     entries: Vec<Box<ffi::{prefix}ChainedStruct>>,
+    buffers: Vec<Box<dyn Any>>,
+    nested: Vec<ChainedStructStorage>,
 }}
 
 impl ChainedStructStorage {{
     pub(crate) fn new() -> Self {{
-        Self {{ entries: Vec::new() }}
+        Self {{
+            entries: Vec::new(),
+            buffers: Vec::new(),
+            nested: Vec::new(),
+        }}
     }}
 
     pub(crate) fn push(
@@ -176,6 +184,41 @@ impl ChainedStructStorage {{
         let ptr = std::ptr::from_mut(node.as_mut());
         self.entries.push(node);
         ptr
+    }}
+
+    pub(crate) fn push_value<T: 'static>(&mut self, value: T) -> *const T {{
+        let boxed = Box::new(value);
+        let ptr = std::ptr::from_ref(boxed.as_ref());
+        self.buffers.push(boxed);
+        ptr
+    }}
+
+    pub(crate) fn push_value_mut<T: 'static>(&mut self, value: T) -> *mut T {{
+        let mut boxed = Box::new(value);
+        let ptr = std::ptr::from_mut(boxed.as_mut());
+        self.buffers.push(boxed);
+        ptr
+    }}
+
+    pub(crate) fn push_vec<T: 'static>(&mut self, value: Vec<T>) -> *const T {{
+        let ptr = value.as_ptr();
+        self.buffers.push(Box::new(value));
+        ptr
+    }}
+
+    pub(crate) fn push_vec_mut<T: 'static>(&mut self, value: Vec<T>) -> *mut T {{
+        let mut value = value;
+        let ptr = value.as_mut_ptr();
+        self.buffers.push(Box::new(value));
+        ptr
+    }}
+
+    pub(crate) fn push_any<T: 'static>(&mut self, value: T) {{
+        self.buffers.push(Box::new(value));
+    }}
+
+    pub(crate) fn push_storage(&mut self, storage: ChainedStructStorage) {{
+        self.nested.push(storage);
     }}
 }}
 
@@ -569,20 +612,23 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
             ext_enum = ext_enum
         ));
         default_fields.push("extensions: Vec::new(),".to_string());
-        extra_methods.push(
-            r#"pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {
+        extra_methods.push(format!(
+            r#"    pub fn push_extension(&mut self, ext: {ext_enum}) {{
+        self.extensions.push(ext);
+    }}"#,
+            ext_enum = ext_enum
+        ));
+        let to_ffi_body = emit_struct_to_ffi_body(s, index, c_prefix, true);
+        extra_methods.push(format!(
+            r#"pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
         let mut storage = ChainedStructStorage::new();
-        let mut next: *mut ffi::{prefix}ChainedStruct = std::ptr::null_mut();
-        for ext in self.extensions.iter().rev() {
+        let mut next: *mut ffi::{c_prefix}ChainedStruct = std::ptr::null_mut();
+        for ext in self.extensions.iter().rev() {{
             next = ext.push_chain(&mut storage, next);
-        }
-        let mut raw: ffi::{ffi_name} = unsafe { std::mem::zeroed() };
-        raw.nextInChain = next;
-        (raw, storage)
-    }"#
-            .replace("{ffi_name}", &ffi_name)
-            .replace("{prefix}", c_prefix),
-        );
+        }}
+{to_ffi_body}
+    }}"#,
+        ));
         extra_methods.push(format!(
             r#"pub fn with_extension(mut self, extension: {ext_enum}) -> Self {{
             self.extensions.push(extension);
@@ -590,12 +636,17 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
         }}"#
         ));
     } else {
+        let to_ffi_body = emit_struct_to_ffi_body(s, index, c_prefix, false);
         extra_methods.push(
-            r#"    pub(crate) fn to_ffi(&self) -> ffi::{ffi_name} {
-        let _ = self;
-        unsafe { std::mem::zeroed() }
-    }"#
-            .replace("{ffi_name}", &ffi_name),
+            format!(
+                r#"    pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
+        let mut storage = ChainedStructStorage::new();
+{body}
+    }}"#,
+                ffi_name = ffi_name,
+                body = indent_block(&to_ffi_body, 8)
+            )
+            .to_string(),
         );
     }
 
@@ -1449,7 +1500,7 @@ fn emit_ffi_arg_prelude(
 
         let name = safe_ident(&snake_case_name(&arg.name));
         if arg.length.is_some() {
-            if let Some(is_extensible) = index.struct_extensible(&arg.member_type) {
+            if index.struct_extensible(&arg.member_type).is_some() {
                 let ffi_ty = ffi_type_name(&arg.member_type, c_prefix);
                 let ptr_expr = if arg.annotation.is_mut_ptr() {
                     format!("{name}_raw.as_mut_ptr()", name = name)
@@ -1462,9 +1513,8 @@ fn emit_ffi_arg_prelude(
                     "std::ptr::null()"
                 };
                 if arg.optional {
-                    if is_extensible {
-                        prelude.push(format!(
-                            r#"        let mut {name}_raw: Vec<ffi::{ffi_ty}> = Vec::new();
+                    prelude.push(format!(
+                        r#"        let mut {name}_raw: Vec<ffi::{ffi_ty}> = Vec::new();
         let mut {name}_storage: Vec<ChainedStructStorage> = Vec::new();
         let {name}_ptr = if let Some(value) = {name}.as_deref() {{
             for item in value {{
@@ -1476,27 +1526,12 @@ fn emit_ffi_arg_prelude(
         }} else {{
             {null_ptr}
         }};"#,
-                            name = name,
-                            ffi_ty = ffi_ty,
-                            ptr_expr = ptr_expr,
-                            null_ptr = null_ptr
-                        ));
-                    } else {
-                        prelude.push(format!(
-                            r#"        let mut {name}_raw: Vec<ffi::{ffi_ty}> = Vec::new();
-        let {name}_ptr = if let Some(value) = {name}.as_deref() {{
-            {name}_raw = value.iter().map(|item| item.to_ffi()).collect();
-            {ptr_expr}
-        }} else {{
-            {null_ptr}
-        }};"#,
-                            name = name,
-                            ffi_ty = ffi_ty,
-                            ptr_expr = ptr_expr,
-                            null_ptr = null_ptr
-                        ));
-                    }
-                } else if is_extensible {
+                        name = name,
+                        ffi_ty = ffi_ty,
+                        ptr_expr = ptr_expr,
+                        null_ptr = null_ptr
+                    ));
+                } else {
                     prelude.push(format!(
                         r#"        let mut {name}_raw: Vec<ffi::{ffi_ty}> = Vec::new();
         let mut {name}_storage: Vec<ChainedStructStorage> = Vec::new();
@@ -1505,14 +1540,6 @@ fn emit_ffi_arg_prelude(
             {name}_raw.push(raw);
             {name}_storage.push(storage);
         }}
-        let {name}_ptr = {ptr_expr};"#,
-                        name = name,
-                        ffi_ty = ffi_ty,
-                        ptr_expr = ptr_expr
-                    ));
-                } else {
-                    prelude.push(format!(
-                        r#"        let mut {name}_raw: Vec<ffi::{ffi_ty}> = {name}.iter().map(|item| item.to_ffi()).collect();
         let {name}_ptr = {ptr_expr};"#,
                         name = name,
                         ffi_ty = ffi_ty,
@@ -1539,7 +1566,7 @@ fn emit_ffi_arg_prelude(
                     prelude.push(format!(
                         r#"        let mut {name}_raw: Vec<ffi::{prefix}{obj}> = Vec::new();
         let {name}_ptr = if let Some(value) = {name}.as_deref() {{
-            {name}_raw = value.iter().map(|v| v.raw).collect();
+            {name}_raw = value.iter().map(|v| v.as_raw()).collect();
             {ptr_expr}
         }} else {{
             {null_ptr}
@@ -1552,7 +1579,7 @@ fn emit_ffi_arg_prelude(
                     ));
                 } else {
                     prelude.push(format!(
-                        r#"        let mut {name}_raw: Vec<ffi::{prefix}{obj}> = {name}.iter().map(|v| v.raw).collect();
+                        r#"        let mut {name}_raw: Vec<ffi::{prefix}{obj}> = {name}.iter().map(|v| v.as_raw()).collect();
         let {name}_ptr = {ptr_expr};"#,
                         name = name,
                         obj = obj,
@@ -1609,12 +1636,12 @@ fn emit_ffi_arg_prelude(
         if index.is_object(&arg.member_type) {
             if arg.optional {
                 prelude.push(format!(
-                    r#"        let {name}_raw = {name}.as_ref().map(|v| v.raw).unwrap_or(std::ptr::null_mut());"#,
+                    r#"        let {name}_raw = {name}.as_ref().map(|v| v.as_raw()).unwrap_or(std::ptr::null_mut());"#,
                     name = name
                 ));
                 ffi_args.push(format!("{name}_raw", name = name));
             } else {
-                ffi_args.push(format!("{name}.raw", name = name));
+                ffi_args.push(format!("{name}.as_raw()", name = name));
             }
             continue;
         }
@@ -1665,7 +1692,7 @@ fn emit_ffi_arg_prelude(
             continue;
         }
 
-        if let Some(is_extensible) = index.struct_extensible(&arg.member_type) {
+        if index.struct_extensible(&arg.member_type).is_some() {
             if arg.optional {
                 prelude.push(format!(r#"        let _ = {name};"#, name = name));
                 ffi_args.push("std::ptr::null()".to_string());
@@ -1673,17 +1700,10 @@ fn emit_ffi_arg_prelude(
             }
 
             if arg.annotation.is_const_ptr() {
-                if is_extensible {
-                    prelude.push(format!(
-                        r#"        let ({name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
-                        name = name
-                    ));
-                } else {
-                    prelude.push(format!(
-                        r#"        let {name}_ffi = {name}.to_ffi();"#,
-                        name = name
-                    ));
-                }
+                prelude.push(format!(
+                    r#"        let ({name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
+                    name = name
+                ));
                 prelude.push(format!(
                     r#"        let {name}_ptr = std::ptr::addr_of!({name}_ffi);"#,
                     name = name
@@ -1693,17 +1713,10 @@ fn emit_ffi_arg_prelude(
             }
 
             if arg.annotation.is_mut_ptr() {
-                if is_extensible {
-                    prelude.push(format!(
-                        r#"        let (mut {name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
-                        name = name
-                    ));
-                } else {
-                    prelude.push(format!(
-                        r#"        let mut {name}_ffi = {name}.to_ffi();"#,
-                        name = name
-                    ));
-                }
+                prelude.push(format!(
+                    r#"        let (mut {name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
+                    name = name
+                ));
                 prelude.push(format!(
                     r#"        let {name}_ptr = std::ptr::addr_of_mut!({name}_ffi);"#,
                     name = name
@@ -1712,17 +1725,10 @@ fn emit_ffi_arg_prelude(
                 continue;
             }
 
-            if is_extensible {
-                prelude.push(format!(
-                    r#"        let ({name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
-                    name = name
-                ));
-            } else {
-                prelude.push(format!(
-                    r#"        let {name}_ffi = {name}.to_ffi();"#,
-                    name = name
-                ));
-            }
+            prelude.push(format!(
+                r#"        let ({name}_ffi, _{name}_storage) = {name}.to_ffi();"#,
+                name = name
+            ));
             ffi_args.push(format!("{name}_ffi", name = name));
             continue;
         }
@@ -2514,4 +2520,284 @@ fn length_expr_for_data_arg(arg: &RecordMember, data_name: &str) -> String {
     } else {
         format!(r#"{data}.len()"#, data = data_name)
     }
+}
+
+fn emit_struct_to_ffi_body(
+    s: &StructureModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+    is_extensible: bool,
+) -> String {
+    let mut lines = Vec::new();
+    let mut length_map: HashMap<String, String> = HashMap::new();
+    let mut length_types: HashMap<String, String> = HashMap::new();
+    for member in &s.def.members {
+        length_types.insert(member.name.clone(), rust_type_for(&member.member_type));
+        if let Some(LengthValue::String(name)) = &member.length {
+            length_map.insert(name.clone(), member.name.clone());
+        }
+    }
+
+    lines.push(format!(
+        r#"let mut raw: ffi::{ffi_ty} = unsafe {{ std::mem::zeroed() }};"#,
+        ffi_ty = ffi_type_name(&s.name, c_prefix)
+    ));
+    if is_extensible {
+        lines.push("raw.nextInChain = next;".to_string());
+    }
+
+    for member in &s.def.members {
+        let field_name = safe_ident(&snake_case_name(&member.name));
+        let ffi_field = ffi_field_name(&member.name);
+        if length_map.contains_key(&member.name) {
+            let data_name = length_map.get(&member.name).cloned().unwrap();
+            let data_ident = safe_ident(&snake_case_name(&data_name));
+            let len_expr = format!(
+                r#"self.{data}.as_ref().map(|v| v.len()).unwrap_or(0)"#,
+                data = data_ident
+            );
+            let target_ty = rust_type_for(&member.member_type);
+            let len_expr = if target_ty == "usize" {
+                len_expr
+            } else {
+                format!("({len}) as {ty}", len = len_expr, ty = target_ty)
+            };
+            lines.push(format!(
+                r#"raw.{ffi_field} = {len_expr};"#,
+                ffi_field = ffi_field,
+                len_expr = len_expr
+            ));
+            continue;
+        }
+
+        if member.length.is_some() {
+            let len_field = if let Some(LengthValue::String(name)) = &member.length {
+                Some((name.clone(), ffi_field_name(name)))
+            } else {
+                None
+            };
+            let len_assign = len_field.as_ref().map(|(orig, field)| {
+                let len_ty = length_types
+                    .get(orig)
+                    .cloned()
+                    .unwrap_or_else(|| "usize".to_string());
+                let len_expr = if len_ty == "usize" {
+                    "len_value".to_string()
+                } else {
+                    format!("len_value as {len_ty}", len_ty = len_ty)
+                };
+                format!(
+                    r#"raw.{field} = {len_expr};"#,
+                    field = field,
+                    len_expr = len_expr
+                )
+            });
+
+            let mut body = Vec::new();
+            body.push("let len_value = values.len();".to_string());
+
+            if is_char_string_list(member) {
+                body.push(
+                    "let mut c_strings: Vec<std::ffi::CString> = Vec::with_capacity(values.len());"
+                        .to_string(),
+                );
+                body.push("let mut ptrs: Vec<*const std::os::raw::c_char> = Vec::with_capacity(values.len());".to_string());
+                body.push("for item in values.iter() {".to_string());
+                body.push("    let c_string = std::ffi::CString::new(item.as_str()).unwrap_or_else(|_| std::ffi::CString::new(\"\").unwrap());".to_string());
+                body.push("    ptrs.push(c_string.as_ptr());".to_string());
+                body.push("    c_strings.push(c_string);".to_string());
+                body.push("}".to_string());
+                body.push("let ptr = storage.push_vec(ptrs);".to_string());
+                body.push("storage.push_any(c_strings);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            } else if index.is_object(&member.member_type) {
+                body.push(format!(
+                    r#"let raw_vec: Vec<ffi::{prefix}{obj}> = values.iter().map(|v| v.as_raw()).collect();"#,
+                    prefix = c_prefix,
+                    obj = type_name(&member.member_type)
+                ));
+                body.push("let ptr = storage.push_vec(raw_vec);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            } else if index.is_enum(&member.member_type) || index.is_bitmask(&member.member_type) {
+                let ffi_ty = ffi_type_name(&member.member_type, c_prefix);
+                body.push(format!(
+                    r#"let raw_vec: Vec<ffi::{ffi_ty}> = values.iter().map(|v| (*v).into()).collect();"#,
+                    ffi_ty = ffi_ty
+                ));
+                body.push("let ptr = storage.push_vec(raw_vec);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            } else if index.struct_extensible(&member.member_type).is_some() {
+                let ffi_ty = ffi_type_name(&member.member_type, c_prefix);
+                body.push(format!(
+                    r#"let mut raw_vec: Vec<ffi::{ffi_ty}> = Vec::with_capacity(values.len());"#,
+                    ffi_ty = ffi_ty
+                ));
+                body.push("for item in values.iter() {".to_string());
+                body.push("    let (raw_item, storage_item) = item.to_ffi();".to_string());
+                body.push("    raw_vec.push(raw_item);".to_string());
+                body.push("    storage.push_storage(storage_item);".to_string());
+                body.push("}".to_string());
+                body.push("let ptr = storage.push_vec(raw_vec);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            } else if member.member_type == "string view" {
+                body.push(format!(
+                    r#"let raw_vec: Vec<ffi::{prefix}StringView> = values.iter().map(|value| ffi::{prefix}StringView {{ data: value.as_ptr().cast(), length: value.len() }}).collect();"#,
+                    prefix = c_prefix
+                ));
+                body.push("let ptr = storage.push_vec(raw_vec);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            } else {
+                body.push("let raw_vec = values.to_vec();".to_string());
+                body.push("let ptr = storage.push_vec(raw_vec);".to_string());
+                body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
+                if let Some(assign) = len_assign {
+                    body.push(assign);
+                }
+            }
+
+            lines.push(format!(
+                r#"if let Some(values) = &self.{field} {{
+{body}
+}} else {{
+    raw.{ffi_field} = std::ptr::null();
+    {len_zero}
+}}"#,
+                field = field_name,
+                ffi_field = ffi_field,
+                body = indent_block(&body.join("\n"), 4),
+                len_zero = if let Some((_, field)) = len_field.as_ref() {
+                    format!("raw.{field} = 0;", field = field)
+                } else {
+                    "let _ = 0;".to_string()
+                }
+            ));
+            continue;
+        }
+
+        if member.member_type == "string view" {
+            lines.push(format!(
+                r#"if let Some(value) = &self.{field} {{
+    raw.{ffi_field} = ffi::{prefix}StringView {{ data: value.as_ptr().cast(), length: value.len() }};
+}} else {{
+    raw.{ffi_field} = ffi::{prefix}StringView {{ data: std::ptr::null(), length: 0 }};
+}}"#,
+                field = field_name,
+                ffi_field = ffi_field,
+                prefix = c_prefix
+            ));
+            continue;
+        }
+
+        if member.member_type == "bool" {
+            lines.push(format!(
+                r#"raw.{ffi_field} = if self.{field}.unwrap_or(false) {{ 1 }} else {{ 0 }};"#,
+                ffi_field = ffi_field,
+                field = field_name
+            ));
+            continue;
+        }
+
+        if index.is_enum(&member.member_type) || index.is_bitmask(&member.member_type) {
+            let ffi_ty = ffi_type_name(&member.member_type, c_prefix);
+            lines.push(format!(
+                r#"if let Some(value) = self.{field} {{
+    raw.{ffi_field} = value.into();
+}} else {{
+    raw.{ffi_field} = 0 as ffi::{ffi_ty};
+}}"#,
+                field = field_name,
+                ffi_field = ffi_field,
+                ffi_ty = ffi_ty
+            ));
+            continue;
+        }
+
+        if index.is_object(&member.member_type) {
+            lines.push(format!(
+                r#"raw.{ffi_field} = self.{field}.as_ref().map(|v| v.as_raw()).unwrap_or(std::ptr::null_mut());"#,
+                ffi_field = ffi_field,
+                field = field_name
+            ));
+            continue;
+        }
+
+        if index.is_callback_info(&member.member_type) {
+            lines.push(format!(r#"let _ = &self.{field};"#, field = field_name));
+            continue;
+        }
+
+        if index.struct_extensible(&member.member_type).is_some() {
+            if member.annotation.is_value() {
+                lines.push(format!(
+                    r#"if let Some(value) = &self.{field} {{
+    let (raw_value, storage_value) = value.to_ffi();
+    raw.{ffi_field} = raw_value;
+    storage.push_storage(storage_value);
+}}"#,
+                    field = field_name,
+                    ffi_field = ffi_field
+                ));
+                continue;
+            }
+
+            if member.annotation.is_const_ptr() {
+                lines.push(format!(
+                    r#"if let Some(value) = &self.{field} {{
+    let (raw_value, storage_value) = value.to_ffi();
+    let ptr = storage.push_value(raw_value);
+    raw.{ffi_field} = ptr;
+    storage.push_storage(storage_value);
+}} else {{
+    raw.{ffi_field} = std::ptr::null();
+}}"#,
+                    field = field_name,
+                    ffi_field = ffi_field
+                ));
+                continue;
+            }
+
+            if member.annotation.is_mut_ptr() {
+                lines.push(format!(
+                    r#"if let Some(value) = &self.{field} {{
+    let (raw_value, storage_value) = value.to_ffi();
+    let ptr = storage.push_value_mut(raw_value);
+    raw.{ffi_field} = ptr;
+    storage.push_storage(storage_value);
+}} else {{
+    raw.{ffi_field} = std::ptr::null_mut();
+}}"#,
+                    field = field_name,
+                    ffi_field = ffi_field
+                ));
+                continue;
+            }
+        }
+
+        lines.push(format!(
+            r#"if let Some(value) = self.{field} {{
+    raw.{ffi_field} = value;
+}}"#,
+            field = field_name,
+            ffi_field = ffi_field
+        ));
+    }
+
+    lines.push("(raw, storage)".to_string());
+
+    lines.join("\n")
 }

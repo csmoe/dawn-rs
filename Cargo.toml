@@ -31,3 +31,7 @@ compat = []
 [[example]]
 name = "adapter-info"
 path = "examples/adapter_info.rs"
+
+[[example]]
+name = "triangle"
+path = "examples/triangle.rs"
