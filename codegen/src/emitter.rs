@@ -1119,7 +1119,7 @@ fn emit_callback_function(c: &CallbackFunctionModel, index: &TypeIndex, c_prefix
 pub(crate) unsafe extern "C" fn {trampoline}({ffi_args}, userdata1: *mut std::ffi::c_void, userdata2: *mut std::ffi::c_void) {{
     let _ = userdata2;
 {conversions}
-    let mut callback = Box::from_raw(userdata1.cast::<Option<{name}>>());
+    let mut callback = unsafe {{ Box::from_raw(userdata1.cast::<Option<{name}>>()) }};
     if let Some(mut callback) = callback.take() {{
         callback({call_args});
     }}

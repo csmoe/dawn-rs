@@ -6,19 +6,6 @@ Rust bindings and wrappers for Dawn WebGPU.
 
 This project is under active development and **not approved for production use**.
 
-## Overview
-
-- `dawn-rs` is the top-level crate that exports the generated Rust wrappers.
-- `dawn-codegen` is a build-dependency crate that parses `dawn.json` and emits Rust code.
-- `build.rs` runs the generator and produces `ffi.rs` via bindgen.
-- Generated files are written to `OUT_DIR/generated` and are not committed.
-
-## Repository Layout
-
-- `codegen/` - Code generator crate used from `build.rs`
-- `src/` - Thin wrapper that includes generated code from `OUT_DIR`
-- `examples/` - Example(s) that use only the generated API
-
 ## Build Requirements
 
 - Dawn build artifacts are expected under `DAWN_ROOT`:
@@ -26,7 +13,6 @@ This project is under active development and **not approved for production use**
   - `lib/libwebgpu_dawn.a`
 - Dawn JSON schema is expected under `DAWN_JSON`:
   - `dawn.json`
-- On macOS, `xcrun` is used to locate the SDK for clang.
 - On Windows, `RUSTFLAGS="-Clink-arg=onecore_apiset.lib -Clink-arg=dxguid.lib"` is needed to run the example.
 
 ## Example

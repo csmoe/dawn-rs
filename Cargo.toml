@@ -1,10 +1,22 @@
 [package]
 name = "dawn-rs"
-version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+version.workspace = true
+description = "Rust wrapper for the Dawn API"
+documentation = "https://docs.rs/dawn-rs"
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [workspace]
 members = ["codegen", "dawn-wgpu"]
+
+[workspace.package]
+version = "0.1.0-dev"
+edition = "2024"
+homepage = "https://github.com/csmoe/dawn-rs"
+repository = "https://github.com/csmoe/dawn-rs"
+license = "BSD-3-Clause"
 
 [dependencies]
 bitflags = "2"

@@ -40,7 +40,9 @@ pub(crate) unsafe extern "C" fn buffer_map_callback_trampoline(
     let _ = userdata2;
     let status = status.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<BufferMapCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<BufferMapCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, message);
     }
@@ -61,9 +63,9 @@ pub(crate) unsafe extern "C" fn compilation_info_callback_trampoline(
     } else {
         CompilationInfo::new()
     };
-    let mut callback = Box::from_raw(
-        userdata1.cast::<Option<CompilationInfoCallback>>(),
-    );
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<CompilationInfoCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, &compilation_info);
     }
@@ -90,9 +92,9 @@ pub(crate) unsafe extern "C" fn create_compute_pipeline_async_callback_trampolin
         Some(unsafe { ComputePipeline::from_raw(pipeline) })
     };
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(
-        userdata1.cast::<Option<CreateComputePipelineAsyncCallback>>(),
-    );
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<CreateComputePipelineAsyncCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, pipeline, message);
     }
@@ -115,9 +117,9 @@ pub(crate) unsafe extern "C" fn create_render_pipeline_async_callback_trampoline
         Some(unsafe { RenderPipeline::from_raw(pipeline) })
     };
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(
-        userdata1.cast::<Option<CreateRenderPipelineAsyncCallback>>(),
-    );
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<CreateRenderPipelineAsyncCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, pipeline, message);
     }
@@ -143,7 +145,9 @@ pub(crate) unsafe extern "C" fn device_lost_callback_trampoline(
     };
     let reason = reason.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<DeviceLostCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<DeviceLostCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(device, reason, message);
     }
@@ -158,7 +162,9 @@ pub(crate) unsafe extern "C" fn logging_callback_trampoline(
     let _ = userdata2;
     let r#type = r#type.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<LoggingCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<LoggingCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(r#type, message);
     }
@@ -177,7 +183,9 @@ pub(crate) unsafe extern "C" fn pop_error_scope_callback_trampoline(
     let status = status.into();
     let r#type = r#type.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<PopErrorScopeCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<PopErrorScopeCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, r#type, message);
     }
@@ -194,7 +202,9 @@ pub(crate) unsafe extern "C" fn queue_work_done_callback_trampoline(
     let _ = userdata2;
     let status = status.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<QueueWorkDoneCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<QueueWorkDoneCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, message);
     }
@@ -217,7 +227,9 @@ pub(crate) unsafe extern "C" fn request_adapter_callback_trampoline(
         Some(unsafe { Adapter::from_raw(adapter) })
     };
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<RequestAdapterCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<RequestAdapterCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, adapter, message);
     }
@@ -240,7 +252,9 @@ pub(crate) unsafe extern "C" fn request_device_callback_trampoline(
         Some(unsafe { Device::from_raw(device) })
     };
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(userdata1.cast::<Option<RequestDeviceCallback>>());
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<RequestDeviceCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(status, device, message);
     }
@@ -266,9 +280,9 @@ pub(crate) unsafe extern "C" fn uncaptured_error_callback_trampoline(
     };
     let r#type = r#type.into();
     let message = string_view_to_string(message);
-    let mut callback = Box::from_raw(
-        userdata1.cast::<Option<UncapturedErrorCallback>>(),
-    );
+    let mut callback = unsafe {
+        Box::from_raw(userdata1.cast::<Option<UncapturedErrorCallback>>())
+    };
     if let Some(mut callback) = callback.take() {
         callback(device, r#type, message);
     }

@@ -1,7 +1,11 @@
 [package]
 name = "dawn-wgpu"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "wgpu compatibility layer for Dawn API"
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 dawn-rs = { path = ".." }
