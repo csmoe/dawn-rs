@@ -832,6 +832,29 @@ fn emit_object(
 ) -> String {
     let name = type_name(&o.name);
     let mut methods = Vec::new();
+    let no_autolock = o.def.no_autolock.unwrap_or(false);
+    let marker_field = if no_autolock {
+        "    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,\n"
+    } else {
+        ""
+    };
+    let marker_init = if no_autolock {
+        ", _not_send_sync: std::marker::PhantomData"
+    } else {
+        ""
+    };
+    let send_sync_impl = if no_autolock {
+        String::new()
+    } else {
+        format!(
+            r#"unsafe impl Send for {name} {{}}
+
+unsafe impl Sync for {name} {{}}
+
+"#,
+            name = name
+        )
+    };
 
     if let Some(func) = constructor {
         let signature = fn_signature_params(&func.def.args, model, None);
@@ -936,11 +959,11 @@ fn emit_object(
         r#"#[derive(Debug)]
 pub struct {name} {{
     raw: ffi::{prefix}{name},
-}}
+{marker_field}}}
 
 impl {name} {{
     pub(crate) unsafe fn from_raw(raw: ffi::{prefix}{name}) -> Self {{
-        Self {{ raw }}
+        Self {{ raw{marker_init} }}
     }}
 
     pub fn as_raw(&self) -> ffi::{prefix}{name} {{
@@ -962,14 +985,17 @@ impl Drop for {name} {{
 impl Clone for {name} {{
     fn clone(&self) -> Self {{
         unsafe {{ ffi::wgpu{name}AddRef(self.raw) }};
-        Self {{ raw: self.raw }}
+        Self {{ raw: self.raw{marker_init} }}
     }}
 }}
 
-"#,
+{send_sync_impl}"#,
         name = name,
         methods = methods_block,
-        prefix = c_prefix
+        prefix = c_prefix,
+        marker_field = marker_field,
+        marker_init = marker_init,
+        send_sync_impl = send_sync_impl
     )
 }
 

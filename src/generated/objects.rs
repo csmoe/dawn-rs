@@ -4,10 +4,14 @@ use super::*;
 #[derive(Debug)]
 pub struct Adapter {
     raw: ffi::WGPUAdapter,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl Adapter {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUAdapter) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPUAdapter {
         self.raw
@@ -112,7 +116,10 @@ impl Drop for Adapter {
 impl Clone for Adapter {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuAdapterAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
@@ -149,6 +156,8 @@ impl Clone for BindGroup {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for BindGroup {}
+unsafe impl Sync for BindGroup {}
 #[derive(Debug)]
 pub struct BindGroupLayout {
     raw: ffi::WGPUBindGroupLayout,
@@ -183,6 +192,8 @@ impl Clone for BindGroupLayout {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for BindGroupLayout {}
+unsafe impl Sync for BindGroupLayout {}
 #[derive(Debug)]
 pub struct Buffer {
     raw: ffi::WGPUBuffer,
@@ -305,6 +316,8 @@ impl Clone for Buffer {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for Buffer {}
+unsafe impl Sync for Buffer {}
 #[derive(Debug)]
 pub struct CommandBuffer {
     raw: ffi::WGPUCommandBuffer,
@@ -339,13 +352,19 @@ impl Clone for CommandBuffer {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for CommandBuffer {}
+unsafe impl Sync for CommandBuffer {}
 #[derive(Debug)]
 pub struct CommandEncoder {
     raw: ffi::WGPUCommandEncoder,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl CommandEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandEncoder) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPUCommandEncoder {
         self.raw
@@ -581,16 +600,23 @@ impl Drop for CommandEncoder {
 impl Clone for CommandEncoder {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuCommandEncoderAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
 pub struct ComputePassEncoder {
     raw: ffi::WGPUComputePassEncoder,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl ComputePassEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePassEncoder) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPUComputePassEncoder {
         self.raw
@@ -719,7 +745,10 @@ impl Drop for ComputePassEncoder {
 impl Clone for ComputePassEncoder {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuComputePassEncoderAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
@@ -762,6 +791,8 @@ impl Clone for ComputePipeline {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for ComputePipeline {}
+unsafe impl Sync for ComputePipeline {}
 #[derive(Debug)]
 pub struct Device {
     raw: ffi::WGPUDevice,
@@ -1201,6 +1232,8 @@ impl Clone for Device {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for Device {}
+unsafe impl Sync for Device {}
 #[derive(Debug)]
 pub struct ExternalTexture {
     raw: ffi::WGPUExternalTexture,
@@ -1247,13 +1280,19 @@ impl Clone for ExternalTexture {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for ExternalTexture {}
+unsafe impl Sync for ExternalTexture {}
 #[derive(Debug)]
 pub struct Instance {
     raw: ffi::WGPUInstance,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl Instance {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUInstance) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPUInstance {
         self.raw
@@ -1368,7 +1407,10 @@ impl Drop for Instance {
 impl Clone for Instance {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuInstanceAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
@@ -1405,6 +1447,8 @@ impl Clone for PipelineLayout {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for PipelineLayout {}
+unsafe impl Sync for PipelineLayout {}
 #[derive(Debug)]
 pub struct QuerySet {
     raw: ffi::WGPUQuerySet,
@@ -1451,6 +1495,8 @@ impl Clone for QuerySet {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for QuerySet {}
+unsafe impl Sync for QuerySet {}
 #[derive(Debug)]
 pub struct Queue {
     raw: ffi::WGPUQueue,
@@ -1609,6 +1655,8 @@ impl Clone for Queue {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for Queue {}
+unsafe impl Sync for Queue {}
 #[derive(Debug)]
 pub struct RenderBundle {
     raw: ffi::WGPURenderBundle,
@@ -1643,13 +1691,19 @@ impl Clone for RenderBundle {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for RenderBundle {}
+unsafe impl Sync for RenderBundle {}
 #[derive(Debug)]
 pub struct RenderBundleEncoder {
     raw: ffi::WGPURenderBundleEncoder,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl RenderBundleEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundleEncoder) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPURenderBundleEncoder {
         self.raw
@@ -1851,16 +1905,23 @@ impl Drop for RenderBundleEncoder {
 impl Clone for RenderBundleEncoder {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuRenderBundleEncoderAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
 pub struct RenderPassEncoder {
     raw: ffi::WGPURenderPassEncoder,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl RenderPassEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPassEncoder) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPURenderPassEncoder {
         self.raw
@@ -2175,7 +2236,10 @@ impl Drop for RenderPassEncoder {
 impl Clone for RenderPassEncoder {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuRenderPassEncoderAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
@@ -2218,6 +2282,8 @@ impl Clone for RenderPipeline {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for RenderPipeline {}
+unsafe impl Sync for RenderPipeline {}
 #[derive(Debug)]
 pub struct ResourceTable {
     raw: ffi::WGPUResourceTable,
@@ -2272,6 +2338,8 @@ impl Clone for ResourceTable {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for ResourceTable {}
+unsafe impl Sync for ResourceTable {}
 #[derive(Debug)]
 pub struct Sampler {
     raw: ffi::WGPUSampler,
@@ -2306,6 +2374,8 @@ impl Clone for Sampler {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for Sampler {}
+unsafe impl Sync for Sampler {}
 #[derive(Debug)]
 pub struct ShaderModule {
     raw: ffi::WGPUShaderModule,
@@ -2362,6 +2432,8 @@ impl Clone for ShaderModule {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for ShaderModule {}
+unsafe impl Sync for ShaderModule {}
 #[derive(Debug)]
 pub struct SharedBufferMemory {
     raw: ffi::WGPUSharedBufferMemory,
@@ -2459,6 +2531,8 @@ impl Clone for SharedBufferMemory {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for SharedBufferMemory {}
+unsafe impl Sync for SharedBufferMemory {}
 #[derive(Debug)]
 pub struct SharedFence {
     raw: ffi::WGPUSharedFence,
@@ -2492,6 +2566,8 @@ impl Clone for SharedFence {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for SharedFence {}
+unsafe impl Sync for SharedFence {}
 #[derive(Debug)]
 pub struct SharedTextureMemory {
     raw: ffi::WGPUSharedTextureMemory,
@@ -2589,13 +2665,19 @@ impl Clone for SharedTextureMemory {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for SharedTextureMemory {}
+unsafe impl Sync for SharedTextureMemory {}
 #[derive(Debug)]
 pub struct Surface {
     raw: ffi::WGPUSurface,
+    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
 }
 impl Surface {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUSurface) -> Self {
-        Self { raw }
+        Self {
+            raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
     pub fn as_raw(&self) -> ffi::WGPUSurface {
         self.raw
@@ -2655,7 +2737,10 @@ impl Drop for Surface {
 impl Clone for Surface {
     fn clone(&self) -> Self {
         unsafe { ffi::wgpuSurfaceAddRef(self.raw) };
-        Self { raw: self.raw }
+        Self {
+            raw: self.raw,
+            _not_send_sync: std::marker::PhantomData,
+        }
     }
 }
 #[derive(Debug)]
@@ -2692,6 +2777,8 @@ impl Clone for TexelBufferView {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for TexelBufferView {}
+unsafe impl Sync for TexelBufferView {}
 #[derive(Debug)]
 pub struct Texture {
     raw: ffi::WGPUTexture,
@@ -2811,6 +2898,8 @@ impl Clone for Texture {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for Texture {}
+unsafe impl Sync for Texture {}
 #[derive(Debug)]
 pub struct TextureView {
     raw: ffi::WGPUTextureView,
@@ -2845,3 +2934,5 @@ impl Clone for TextureView {
         Self { raw: self.raw }
     }
 }
+unsafe impl Send for TextureView {}
+unsafe impl Sync for TextureView {}

@@ -863,14 +863,12 @@ fn map_texel_copy_texture_info(value: wgpu::TexelCopyTextureInfo<'_>) -> TexelCo
 }
 
 fn map_shader_module_descriptor(desc: wgpu::ShaderModuleDescriptor<'_>) -> ShaderModuleDescriptor {
-    let mut out = ShaderModuleDescriptor {
-        extensions: Vec::new(),
-        label: label_to_string(desc.label),
-    };
+    let mut out = ShaderModuleDescriptor::new();
+    out.label = label_to_string(desc.label);
     match desc.source {
         wgpu::ShaderSource::Wgsl(source) => {
             let ext = ShaderSourceWGSL { code: Some(source.to_string()) };
-            out.extensions.push(ShaderModuleDescriptorExtension::from(ext));
+            out = out.with_extension(ShaderModuleDescriptorExtension::from(ext));
         }
         _ => panic!("wgpu-compat: unsupported shader source"),
     }
@@ -878,59 +876,55 @@ fn map_shader_module_descriptor(desc: wgpu::ShaderModuleDescriptor<'_>) -> Shade
 }
 
 fn map_buffer_descriptor(desc: &wgpu::BufferDescriptor<'_>) -> BufferDescriptor {
-    BufferDescriptor {
-        label: label_to_string(desc.label),
-        size: Some(desc.size),
-        usage: Some(map_buffer_usages(desc.usage)),
-        mapped_at_creation: Some(desc.mapped_at_creation),
-        ..BufferDescriptor::default()
-    }
+    let mut out = BufferDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.size = Some(desc.size);
+    out.usage = Some(map_buffer_usages(desc.usage));
+    out.mapped_at_creation = Some(desc.mapped_at_creation);
+    out
 }
 
 fn map_texture_descriptor(desc: &wgpu::TextureDescriptor<'_>) -> TextureDescriptor {
-    TextureDescriptor {
-        label: label_to_string(desc.label),
-        size: Some(map_extent_3d(desc.size)),
-        mip_level_count: Some(desc.mip_level_count),
-        sample_count: Some(desc.sample_count),
-        dimension: Some(map_texture_dimension(desc.dimension)),
-        format: Some(map_texture_format(desc.format)),
-        usage: Some(map_texture_usages(desc.usage)),
-        view_formats: Some(desc.view_formats.iter().copied().map(map_texture_format).collect()),
-        ..TextureDescriptor::default()
-    }
+    let mut out = TextureDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.size = Some(map_extent_3d(desc.size));
+    out.mip_level_count = Some(desc.mip_level_count);
+    out.sample_count = Some(desc.sample_count);
+    out.dimension = Some(map_texture_dimension(desc.dimension));
+    out.format = Some(map_texture_format(desc.format));
+    out.usage = Some(map_texture_usages(desc.usage));
+    out.view_formats = Some(desc.view_formats.iter().copied().map(map_texture_format).collect());
+    out
 }
 
 fn map_texture_view_descriptor(desc: &wgpu::TextureViewDescriptor<'_>) -> TextureViewDescriptor {
-    TextureViewDescriptor {
-        label: label_to_string(desc.label),
-        format: desc.format.map(map_texture_format),
-        dimension: desc.dimension.map(map_texture_view_dimension),
-        aspect: Some(map_texture_aspect(desc.aspect)),
-        base_mip_level: Some(desc.base_mip_level),
-        mip_level_count: desc.mip_level_count,
-        base_array_layer: Some(desc.base_array_layer),
-        array_layer_count: desc.array_layer_count,
-        usage: desc.usage.map(map_texture_usages),
-        ..TextureViewDescriptor::default()
-    }
+    let mut out = TextureViewDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.format = desc.format.map(map_texture_format);
+    out.dimension = desc.dimension.map(map_texture_view_dimension);
+    out.aspect = Some(map_texture_aspect(desc.aspect));
+    out.base_mip_level = Some(desc.base_mip_level);
+    out.mip_level_count = desc.mip_level_count;
+    out.base_array_layer = Some(desc.base_array_layer);
+    out.array_layer_count = desc.array_layer_count;
+    out.usage = desc.usage.map(map_texture_usages);
+    out
 }
 
 fn map_sampler_descriptor(desc: &wgpu::SamplerDescriptor<'_>) -> SamplerDescriptor {
-    SamplerDescriptor {
-        label: label_to_string(desc.label),
-        address_mode_u: Some(map_address_mode(desc.address_mode_u)),
-        address_mode_v: Some(map_address_mode(desc.address_mode_v)),
-        address_mode_w: Some(map_address_mode(desc.address_mode_w)),
-        mag_filter: Some(map_filter_mode(desc.mag_filter)),
-        min_filter: Some(map_filter_mode(desc.min_filter)),
-        mipmap_filter: Some(map_mipmap_filter_mode(desc.mipmap_filter)),
-        lod_min_clamp: Some(desc.lod_min_clamp),
-        lod_max_clamp: Some(desc.lod_max_clamp),
-        compare: desc.compare.map(map_compare_function),
-        max_anisotropy: Some(desc.anisotropy_clamp),
-        ..SamplerDescriptor::default()
-    }
+    let mut out = SamplerDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.address_mode_u = Some(map_address_mode(desc.address_mode_u));
+    out.address_mode_v = Some(map_address_mode(desc.address_mode_v));
+    out.address_mode_w = Some(map_address_mode(desc.address_mode_w));
+    out.mag_filter = Some(map_filter_mode(desc.mag_filter));
+    out.min_filter = Some(map_filter_mode(desc.min_filter));
+    out.mipmap_filter = Some(map_mipmap_filter_mode(desc.mipmap_filter));
+    out.lod_min_clamp = Some(desc.lod_min_clamp);
+    out.lod_max_clamp = Some(desc.lod_max_clamp);
+    out.compare = desc.compare.map(map_compare_function);
+    out.max_anisotropy = Some(desc.anisotropy_clamp);
+    out
 }
 
 fn map_bind_group_layout_entry(entry: &wgpu::BindGroupLayoutEntry) -> BindGroupLayoutEntry {
@@ -941,40 +935,36 @@ fn map_bind_group_layout_entry(entry: &wgpu::BindGroupLayoutEntry) -> BindGroupL
 
     match entry.ty {
         wgpu::BindingType::Buffer { ty, has_dynamic_offset, min_binding_size } => {
-            out.buffer = Some(BufferBindingLayout {
-                r#type: Some(match ty {
-                    wgpu::BufferBindingType::Uniform => BufferBindingType::Uniform,
-                    wgpu::BufferBindingType::Storage { read_only } => {
-                        if read_only { BufferBindingType::ReadOnlyStorage } else { BufferBindingType::Storage }
-                    }
-                    _ => BufferBindingType::Uniform,
-                }),
-                has_dynamic_offset: Some(has_dynamic_offset),
-                min_binding_size: min_binding_size.map(|v| v.get()),
-                ..BufferBindingLayout::default()
+            let mut layout = BufferBindingLayout::new();
+            layout.r#type = Some(match ty {
+                wgpu::BufferBindingType::Uniform => BufferBindingType::Uniform,
+                wgpu::BufferBindingType::Storage { read_only } => {
+                    if read_only { BufferBindingType::ReadOnlyStorage } else { BufferBindingType::Storage }
+                }
+                _ => BufferBindingType::Uniform,
             });
+            layout.has_dynamic_offset = Some(has_dynamic_offset);
+            layout.min_binding_size = min_binding_size.map(|v| v.get());
+            out.buffer = Some(layout);
         }
         wgpu::BindingType::Sampler(ty) => {
-            out.sampler = Some(SamplerBindingLayout {
-                r#type: Some(map_sampler_binding_type(ty)),
-                ..SamplerBindingLayout::default()
-            });
+            let mut layout = SamplerBindingLayout::new();
+            layout.r#type = Some(map_sampler_binding_type(ty));
+            out.sampler = Some(layout);
         }
         wgpu::BindingType::Texture { sample_type, view_dimension, multisampled } => {
-            out.texture = Some(TextureBindingLayout {
-                sample_type: Some(map_texture_sample_type(sample_type)),
-                view_dimension: Some(map_texture_view_dimension(view_dimension)),
-                multisampled: Some(multisampled),
-                ..TextureBindingLayout::default()
-            });
+            let mut layout = TextureBindingLayout::new();
+            layout.sample_type = Some(map_texture_sample_type(sample_type));
+            layout.view_dimension = Some(map_texture_view_dimension(view_dimension));
+            layout.multisampled = Some(multisampled);
+            out.texture = Some(layout);
         }
         wgpu::BindingType::StorageTexture { access, format, view_dimension } => {
-            out.storage_texture = Some(StorageTextureBindingLayout {
-                access: Some(map_storage_texture_access(access)),
-                format: Some(map_texture_format(format)),
-                view_dimension: Some(map_texture_view_dimension(view_dimension)),
-                ..StorageTextureBindingLayout::default()
-            });
+            let mut layout = StorageTextureBindingLayout::new();
+            layout.access = Some(map_storage_texture_access(access));
+            layout.format = Some(map_texture_format(format));
+            layout.view_dimension = Some(map_texture_view_dimension(view_dimension));
+            out.storage_texture = Some(layout);
         }
         _ => panic!("wgpu-compat: unsupported binding type"),
     }
@@ -985,11 +975,10 @@ fn map_bind_group_layout_entry(entry: &wgpu::BindGroupLayoutEntry) -> BindGroupL
 fn map_bind_group_layout_descriptor(
     desc: &wgpu::BindGroupLayoutDescriptor<'_>,
 ) -> BindGroupLayoutDescriptor {
-    BindGroupLayoutDescriptor {
-        label: label_to_string(desc.label),
-        entries: Some(desc.entries.iter().map(map_bind_group_layout_entry).collect()),
-        ..BindGroupLayoutDescriptor::default()
-    }
+    let mut out = BindGroupLayoutDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.entries = Some(desc.entries.iter().map(map_bind_group_layout_entry).collect());
+    out
 }
 
 fn map_bind_group_entry(entry: &wgpu::BindGroupEntry<'_>) -> BindGroupEntry {
@@ -1013,53 +1002,49 @@ fn map_bind_group_entry(entry: &wgpu::BindGroupEntry<'_>) -> BindGroupEntry {
 }
 
 fn map_bind_group_descriptor(desc: &wgpu::BindGroupDescriptor<'_>) -> BindGroupDescriptor {
-    BindGroupDescriptor {
-        label: label_to_string(desc.label),
-        layout: Some(expect_bind_group_layout_from_api(desc.layout)),
-        entries: Some(desc.entries.iter().map(map_bind_group_entry).collect()),
-        ..BindGroupDescriptor::default()
-    }
+    let mut out = BindGroupDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.layout = Some(expect_bind_group_layout_from_api(desc.layout));
+    out.entries = Some(desc.entries.iter().map(map_bind_group_entry).collect());
+    out
 }
 
 fn map_pipeline_layout_descriptor(desc: &wgpu::PipelineLayoutDescriptor<'_>) -> PipelineLayoutDescriptor {
-    PipelineLayoutDescriptor {
-        label: label_to_string(desc.label),
-        bind_group_layouts: Some(desc.bind_group_layouts.iter().copied().map(expect_bind_group_layout_from_api).collect()),
-        immediate_size: Some(0),
-        ..PipelineLayoutDescriptor::default()
-    }
+    let mut out = PipelineLayoutDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.bind_group_layouts = Some(desc.bind_group_layouts.iter().copied().map(expect_bind_group_layout_from_api).collect());
+    out.immediate_size = Some(0);
+    out
 }
 
 fn map_vertex_attribute(attr: &wgpu::VertexAttribute) -> VertexAttribute {
-    VertexAttribute {
-        format: Some(map_vertex_format(attr.format)),
-        offset: Some(attr.offset),
-        shader_location: Some(attr.shader_location),
-        ..VertexAttribute::default()
-    }
+    let mut out = VertexAttribute::new();
+    out.format = Some(map_vertex_format(attr.format));
+    out.offset = Some(attr.offset);
+    out.shader_location = Some(attr.shader_location);
+    out
 }
 
 fn map_vertex_buffer_layout(layout: &wgpu::VertexBufferLayout<'_>) -> VertexBufferLayout {
-    VertexBufferLayout {
-        array_stride: Some(layout.array_stride),
-        step_mode: Some(map_vertex_step_mode(layout.step_mode)),
-        attributes: Some(layout.attributes.iter().map(map_vertex_attribute).collect()),
-        ..VertexBufferLayout::default()
-    }
+    let mut out = VertexBufferLayout::new();
+    out.array_stride = Some(layout.array_stride);
+    out.step_mode = Some(map_vertex_step_mode(layout.step_mode));
+    out.attributes = Some(layout.attributes.iter().map(map_vertex_attribute).collect());
+    out
 }
 
 fn map_vertex_state(state: &wgpu::VertexState<'_>) -> VertexState {
-    VertexState {
-        module: Some(expect_shader_module_from_api(state.module)),
-        entry_point: state.entry_point.map(str::to_string),
-        constants: Some(state.compilation_options.constants.iter().map(|(k, v)| ConstantEntry {
-            key: Some(k.to_string()),
-            value: Some(*v),
-            ..ConstantEntry::default()
-        }).collect()),
-        buffers: Some(state.buffers.iter().map(map_vertex_buffer_layout).collect()),
-        ..VertexState::default()
-    }
+    let mut out = VertexState::new();
+    out.module = Some(expect_shader_module_from_api(state.module));
+    out.entry_point = state.entry_point.map(str::to_string);
+    out.constants = Some(state.compilation_options.constants.iter().map(|(k, v)| {
+        let mut entry = ConstantEntry::new();
+        entry.key = Some(k.to_string());
+        entry.value = Some(*v);
+        entry
+    }).collect());
+    out.buffers = Some(state.buffers.iter().map(map_vertex_buffer_layout).collect());
+    out
 }
 
 fn map_blend_component(comp: &wgpu::BlendComponent) -> BlendComponent {
@@ -1078,26 +1063,25 @@ fn map_blend_state(state: &wgpu::BlendState) -> BlendState {
 }
 
 fn map_color_target_state(state: &wgpu::ColorTargetState) -> ColorTargetState {
-    ColorTargetState {
-        format: Some(map_texture_format(state.format)),
-        blend: state.blend.as_ref().map(map_blend_state),
-        write_mask: Some(map_color_write_mask(state.write_mask)),
-        ..ColorTargetState::default()
-    }
+    let mut out = ColorTargetState::new();
+    out.format = Some(map_texture_format(state.format));
+    out.blend = state.blend.as_ref().map(map_blend_state);
+    out.write_mask = Some(map_color_write_mask(state.write_mask));
+    out
 }
 
 fn map_fragment_state(state: &wgpu::FragmentState<'_>) -> FragmentState {
-    FragmentState {
-        module: Some(expect_shader_module_from_api(state.module)),
-        entry_point: state.entry_point.map(str::to_string),
-        constants: Some(state.compilation_options.constants.iter().map(|(k, v)| ConstantEntry {
-            key: Some(k.to_string()),
-            value: Some(*v),
-            ..ConstantEntry::default()
-        }).collect()),
-        targets: Some(state.targets.iter().map(|t| t.as_ref().map(map_color_target_state).unwrap_or_default()).collect()),
-        ..FragmentState::default()
-    }
+    let mut out = FragmentState::new();
+    out.module = Some(expect_shader_module_from_api(state.module));
+    out.entry_point = state.entry_point.map(str::to_string);
+    out.constants = Some(state.compilation_options.constants.iter().map(|(k, v)| {
+        let mut entry = ConstantEntry::new();
+        entry.key = Some(k.to_string());
+        entry.value = Some(*v);
+        entry
+    }).collect());
+    out.targets = Some(state.targets.iter().map(|t| t.as_ref().map(map_color_target_state).unwrap_or_default()).collect());
+    out
 }
 
 fn map_stencil_face_state(state: &wgpu::StencilFaceState) -> StencilFaceState {
@@ -1110,77 +1094,72 @@ fn map_stencil_face_state(state: &wgpu::StencilFaceState) -> StencilFaceState {
 }
 
 fn map_depth_stencil_state(state: &wgpu::DepthStencilState) -> DepthStencilState {
-    DepthStencilState {
-        format: Some(map_texture_format(state.format)),
-        depth_write_enabled: Some(if state.depth_write_enabled { OptionalBool::True } else { OptionalBool::False }),
-        depth_compare: Some(map_compare_function(state.depth_compare)),
-        stencil_front: Some(map_stencil_face_state(&state.stencil.front)),
-        stencil_back: Some(map_stencil_face_state(&state.stencil.back)),
-        stencil_read_mask: Some(state.stencil.read_mask),
-        stencil_write_mask: Some(state.stencil.write_mask),
-        depth_bias: Some(state.bias.constant),
-        depth_bias_slope_scale: Some(state.bias.slope_scale),
-        depth_bias_clamp: Some(state.bias.clamp),
-        ..DepthStencilState::default()
-    }
+    let mut out = DepthStencilState::new();
+    out.format = Some(map_texture_format(state.format));
+    out.depth_write_enabled = Some(if state.depth_write_enabled { OptionalBool::True } else { OptionalBool::False });
+    out.depth_compare = Some(map_compare_function(state.depth_compare));
+    out.stencil_front = Some(map_stencil_face_state(&state.stencil.front));
+    out.stencil_back = Some(map_stencil_face_state(&state.stencil.back));
+    out.stencil_read_mask = Some(state.stencil.read_mask);
+    out.stencil_write_mask = Some(state.stencil.write_mask);
+    out.depth_bias = Some(state.bias.constant);
+    out.depth_bias_slope_scale = Some(state.bias.slope_scale);
+    out.depth_bias_clamp = Some(state.bias.clamp);
+    out
 }
 
 fn map_multisample_state(state: wgpu::MultisampleState) -> MultisampleState {
-    MultisampleState {
-        count: Some(state.count),
-        mask: Some(state.mask.try_into().unwrap_or(u32::MAX)),
-        alpha_to_coverage_enabled: Some(state.alpha_to_coverage_enabled),
-        ..MultisampleState::default()
-    }
+    let mut out = MultisampleState::new();
+    out.count = Some(state.count);
+    out.mask = Some(state.mask.try_into().unwrap_or(u32::MAX));
+    out.alpha_to_coverage_enabled = Some(state.alpha_to_coverage_enabled);
+    out
 }
 
 fn map_primitive_state(state: wgpu::PrimitiveState) -> PrimitiveState {
-    PrimitiveState {
-        topology: Some(map_primitive_topology(state.topology)),
-        strip_index_format: state.strip_index_format.map(map_index_format),
-        front_face: Some(map_front_face(state.front_face)),
-        cull_mode: Some(map_cull_mode(state.cull_mode)),
-        unclipped_depth: Some(state.unclipped_depth),
-        ..PrimitiveState::default()
-    }
+    let mut out = PrimitiveState::new();
+    out.topology = Some(map_primitive_topology(state.topology));
+    out.strip_index_format = state.strip_index_format.map(map_index_format);
+    out.front_face = Some(map_front_face(state.front_face));
+    out.cull_mode = Some(map_cull_mode(state.cull_mode));
+    out.unclipped_depth = Some(state.unclipped_depth);
+    out
 }
 
 fn map_render_pipeline_descriptor(desc: &wgpu::RenderPipelineDescriptor<'_>) -> RenderPipelineDescriptor {
-    RenderPipelineDescriptor {
-        label: label_to_string(desc.label),
-        layout: desc.layout.map(expect_pipeline_layout_from_api),
-        vertex: Some(map_vertex_state(&desc.vertex)),
-        primitive: Some(map_primitive_state(desc.primitive)),
-        depth_stencil: desc.depth_stencil.as_ref().map(map_depth_stencil_state),
-        multisample: Some(map_multisample_state(desc.multisample)),
-        fragment: desc.fragment.as_ref().map(map_fragment_state),
-        ..RenderPipelineDescriptor::default()
-    }
+    let mut out = RenderPipelineDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.layout = desc.layout.map(expect_pipeline_layout_from_api);
+    out.vertex = Some(map_vertex_state(&desc.vertex));
+    out.primitive = Some(map_primitive_state(desc.primitive));
+    out.depth_stencil = desc.depth_stencil.as_ref().map(map_depth_stencil_state);
+    out.multisample = Some(map_multisample_state(desc.multisample));
+    out.fragment = desc.fragment.as_ref().map(map_fragment_state);
+    out
 }
 
 fn map_compute_pipeline_descriptor(desc: &wgpu::ComputePipelineDescriptor<'_>) -> ComputePipelineDescriptor {
-    ComputePipelineDescriptor {
-        label: label_to_string(desc.label),
-        layout: desc.layout.map(expect_pipeline_layout_from_api),
-        compute: Some(ComputeState {
-            module: Some(expect_shader_module_from_api(desc.module)),
-            entry_point: desc.entry_point.map(str::to_string),
-            constants: Some(desc.compilation_options.constants.iter().map(|(k, v)| ConstantEntry {
-                key: Some(k.to_string()),
-                value: Some(*v),
-                ..ConstantEntry::default()
-            }).collect()),
-            ..ComputeState::default()
-        }),
-        ..ComputePipelineDescriptor::default()
-    }
+    let mut compute = ComputeState::new();
+    compute.module = Some(expect_shader_module_from_api(desc.module));
+    compute.entry_point = desc.entry_point.map(str::to_string);
+    compute.constants = Some(desc.compilation_options.constants.iter().map(|(k, v)| {
+        let mut entry = ConstantEntry::new();
+        entry.key = Some(k.to_string());
+        entry.value = Some(*v);
+        entry
+    }).collect());
+
+    let mut out = ComputePipelineDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.layout = desc.layout.map(expect_pipeline_layout_from_api);
+    out.compute = Some(compute);
+    out
 }
 
 fn map_command_encoder_descriptor(desc: &wgpu::CommandEncoderDescriptor<'_>) -> CommandEncoderDescriptor {
-    CommandEncoderDescriptor {
-        label: label_to_string(desc.label),
-        ..CommandEncoderDescriptor::default()
-    }
+    let mut out = CommandEncoderDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out
 }
 
 fn map_render_bundle_encoder_descriptor(desc: &wgpu::RenderBundleEncoderDescriptor<'_>) -> RenderBundleEncoderDescriptor {
@@ -1192,20 +1171,19 @@ fn map_render_bundle_encoder_descriptor(desc: &wgpu::RenderBundleEncoderDescript
         ),
         None => (None, None, None),
     };
-    RenderBundleEncoderDescriptor {
-        label: label_to_string(desc.label),
-        color_formats: Some(
-            desc.color_formats
-                .iter()
-                .map(|v| v.map(map_texture_format).unwrap_or(TextureFormat::Undefined))
-                .collect(),
-        ),
-        depth_stencil_format,
-        sample_count: Some(desc.sample_count),
-        depth_read_only,
-        stencil_read_only,
-        ..RenderBundleEncoderDescriptor::default()
-    }
+    let mut out = RenderBundleEncoderDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.color_formats = Some(
+        desc.color_formats
+            .iter()
+            .map(|v| v.map(map_texture_format).unwrap_or(TextureFormat::Undefined))
+            .collect(),
+    );
+    out.depth_stencil_format = depth_stencil_format;
+    out.sample_count = Some(desc.sample_count);
+    out.depth_read_only = depth_read_only;
+    out.stencil_read_only = stencil_read_only;
+    out
 }
 
 fn map_render_pass_color_attachment(attachment: &wgpu::RenderPassColorAttachment<'_>) -> RenderPassColorAttachment {
@@ -1214,15 +1192,14 @@ fn map_render_pass_color_attachment(attachment: &wgpu::RenderPassColorAttachment
         wgpu::LoadOp::Clear(value) => (LoadOp::Clear, Some(map_color(value))),
         wgpu::LoadOp::DontCare(_) => (LoadOp::Load, None),
     };
-    RenderPassColorAttachment {
-        view: Some(expect_texture_view_from_api(attachment.view)),
-        depth_slice: attachment.depth_slice,
-        resolve_target: attachment.resolve_target.map(expect_texture_view_from_api),
-        load_op: Some(load_op),
-        store_op: Some(map_store_op(attachment.ops.store)),
-        clear_value,
-        ..RenderPassColorAttachment::default()
-    }
+    let mut out = RenderPassColorAttachment::new();
+    out.view = Some(expect_texture_view_from_api(attachment.view));
+    out.depth_slice = attachment.depth_slice;
+    out.resolve_target = attachment.resolve_target.map(expect_texture_view_from_api);
+    out.load_op = Some(load_op);
+    out.store_op = Some(map_store_op(attachment.ops.store));
+    out.clear_value = clear_value;
+    out
 }
 
 fn map_render_pass_depth_stencil_attachment(
@@ -1253,64 +1230,60 @@ fn map_render_pass_depth_stencil_attachment(
             },
             None => (None, None, None),
         };
-    RenderPassDepthStencilAttachment {
-        view: Some(expect_texture_view_from_api(attachment.view)),
-        depth_load_op,
-        depth_store_op,
-        depth_clear_value,
-        depth_read_only: Some(depth_read_only),
-        stencil_load_op,
-        stencil_store_op,
-        stencil_clear_value,
-        stencil_read_only: Some(stencil_read_only),
-        ..RenderPassDepthStencilAttachment::default()
-    }
+    let mut out = RenderPassDepthStencilAttachment::new();
+    out.view = Some(expect_texture_view_from_api(attachment.view));
+    out.depth_load_op = depth_load_op;
+    out.depth_store_op = depth_store_op;
+    out.depth_clear_value = depth_clear_value;
+    out.depth_read_only = Some(depth_read_only);
+    out.stencil_load_op = stencil_load_op;
+    out.stencil_store_op = stencil_store_op;
+    out.stencil_clear_value = stencil_clear_value;
+    out.stencil_read_only = Some(stencil_read_only);
+    out
 }
 
 fn map_render_pass_descriptor(desc: &wgpu::RenderPassDescriptor<'_>) -> RenderPassDescriptor {
-    RenderPassDescriptor {
-        label: label_to_string(desc.label),
-        color_attachments: Some(desc.color_attachments.iter().map(|att| att.as_ref().map(map_render_pass_color_attachment).unwrap_or_default()).collect()),
-        depth_stencil_attachment: desc.depth_stencil_attachment.as_ref().map(map_render_pass_depth_stencil_attachment),
-        occlusion_query_set: desc.occlusion_query_set.map(expect_query_set_from_api),
-        timestamp_writes: None,
-        ..RenderPassDescriptor::default()
-    }
+    let mut out = RenderPassDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.color_attachments = Some(desc.color_attachments.iter().map(|att| att.as_ref().map(map_render_pass_color_attachment).unwrap_or_default()).collect());
+    out.depth_stencil_attachment = desc.depth_stencil_attachment.as_ref().map(map_render_pass_depth_stencil_attachment);
+    out.occlusion_query_set = desc.occlusion_query_set.map(expect_query_set_from_api);
+    out.timestamp_writes = None;
+    out
 }
 
 fn map_compute_pass_descriptor(desc: &wgpu::ComputePassDescriptor<'_>) -> ComputePassDescriptor {
-    ComputePassDescriptor {
-        label: label_to_string(desc.label),
-        timestamp_writes: None,
-        ..ComputePassDescriptor::default()
-    }
+    let mut out = ComputePassDescriptor::new();
+    out.label = label_to_string(desc.label);
+    out.timestamp_writes = None;
+    out
 }
 
 fn map_surface_configuration(config: &wgpu::SurfaceConfiguration) -> SurfaceConfiguration {
-    SurfaceConfiguration {
-        format: Some(map_texture_format(config.format)),
-        usage: Some(map_texture_usages(config.usage)),
-        width: Some(config.width),
-        height: Some(config.height),
-        present_mode: Some(match config.present_mode {
-            wgpu::PresentMode::Fifo => PresentMode::Fifo,
-            wgpu::PresentMode::Mailbox => PresentMode::Mailbox,
-            wgpu::PresentMode::Immediate => PresentMode::Immediate,
-            wgpu::PresentMode::AutoVsync => PresentMode::Fifo,
-            wgpu::PresentMode::AutoNoVsync => PresentMode::Immediate,
-            _ => PresentMode::Fifo,
-        }),
-        alpha_mode: Some(match config.alpha_mode {
-            wgpu::CompositeAlphaMode::Auto => CompositeAlphaMode::Auto,
-            wgpu::CompositeAlphaMode::Opaque => CompositeAlphaMode::Opaque,
-            wgpu::CompositeAlphaMode::PreMultiplied => CompositeAlphaMode::Premultiplied,
-            wgpu::CompositeAlphaMode::PostMultiplied => CompositeAlphaMode::Premultiplied,
-            wgpu::CompositeAlphaMode::Inherit => CompositeAlphaMode::Inherit,
-            _ => CompositeAlphaMode::Auto,
-        }),
-        view_formats: Some(config.view_formats.iter().copied().map(map_texture_format).collect()),
-        ..SurfaceConfiguration::default()
-    }
+    let mut out = SurfaceConfiguration::new();
+    out.format = Some(map_texture_format(config.format));
+    out.usage = Some(map_texture_usages(config.usage));
+    out.width = Some(config.width);
+    out.height = Some(config.height);
+    out.present_mode = Some(match config.present_mode {
+        wgpu::PresentMode::Fifo => PresentMode::Fifo,
+        wgpu::PresentMode::Mailbox => PresentMode::Mailbox,
+        wgpu::PresentMode::Immediate => PresentMode::Immediate,
+        wgpu::PresentMode::AutoVsync => PresentMode::Fifo,
+        wgpu::PresentMode::AutoNoVsync => PresentMode::Immediate,
+        _ => PresentMode::Fifo,
+    });
+    out.alpha_mode = Some(match config.alpha_mode {
+        wgpu::CompositeAlphaMode::Auto => CompositeAlphaMode::Auto,
+        wgpu::CompositeAlphaMode::Opaque => CompositeAlphaMode::Opaque,
+        wgpu::CompositeAlphaMode::PreMultiplied => CompositeAlphaMode::Premultiplied,
+        wgpu::CompositeAlphaMode::PostMultiplied => CompositeAlphaMode::Premultiplied,
+        wgpu::CompositeAlphaMode::Inherit => CompositeAlphaMode::Inherit,
+        _ => CompositeAlphaMode::Auto,
+    });
+    out.view_formats = Some(config.view_formats.iter().copied().map(map_texture_format).collect());
+    out
 }
 
 fn map_surface_capabilities(caps: SurfaceCapabilities) -> wgpu::SurfaceCapabilities {
@@ -2237,10 +2210,8 @@ impl DeviceInterface for DawnDevice {
         desc: &wgpu::ExternalTextureDescriptor<'_>,
         _planes: &[&wgpu::TextureView],
     ) -> DispatchExternalTexture {
-        let dawn_desc = ExternalTextureDescriptor {
-            label: label_to_string(desc.label),
-            ..ExternalTextureDescriptor::default()
-        };
+        let mut dawn_desc = ExternalTextureDescriptor::new();
+        dawn_desc.label = label_to_string(desc.label);
         let texture = self.inner.create_external_texture(&dawn_desc);
         dispatch_external_texture(texture)
     }
@@ -2269,12 +2240,10 @@ impl DeviceInterface for DawnDevice {
             wgpu::QueryType::Timestamp => QueryType::Timestamp,
             _ => panic!("wgpu-compat: query type not supported"),
         };
-        let dawn_desc = QuerySetDescriptor {
-            label: label_to_string(desc.label),
-            r#type: Some(ty),
-            count: Some(desc.count),
-            ..QuerySetDescriptor::default()
-        };
+        let mut dawn_desc = QuerySetDescriptor::new();
+        dawn_desc.label = label_to_string(desc.label);
+        dawn_desc.r#type = Some(ty);
+        dawn_desc.count = Some(desc.count);
         let set = self.inner.create_query_set(&dawn_desc);
         dispatch_query_set(set)
     }
@@ -3029,10 +2998,8 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
     }
 
     fn finish(self, desc: &wgpu::RenderBundleDescriptor<'_>) -> DispatchRenderBundle {
-        let dawn_desc = RenderBundleDescriptor {
-            label: label_to_string(desc.label),
-            ..RenderBundleDescriptor::default()
-        };
+        let mut dawn_desc = RenderBundleDescriptor::new();
+        dawn_desc.label = label_to_string(desc.label);
         let bundle = self.inner.finish(Some(&dawn_desc));
         dispatch_render_bundle(bundle)
     }
