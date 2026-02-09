@@ -138,9 +138,8 @@ impl TriangleApp {
         };
         let mut vertex_buffer_desc = dawn_rs::BufferDescriptor::new();
         vertex_buffer_desc.size = Some(vertex_bytes.len() as u64);
-        vertex_buffer_desc.usage = Some(
-            dawn_rs::BufferUsage::VERTEX | dawn_rs::BufferUsage::COPY_DST,
-        );
+        vertex_buffer_desc.usage =
+            Some(dawn_rs::BufferUsage::VERTEX | dawn_rs::BufferUsage::COPY_DST);
         let vertex_buffer = device
             .create_buffer(&vertex_buffer_desc)
             .expect("create vertex buffer");
@@ -204,6 +203,42 @@ impl TriangleApp {
             shader_source,
         ));
         let shader = device.create_shader_module(&shader_desc);
+        let (shader_tx, shader_rx) = std::sync::mpsc::channel::<String>();
+        let _future = shader.get_compilation_info(move |status, info| {
+            if status != dawn_rs::CompilationInfoRequestStatus::Success {
+                let _ = shader_tx.send(format!("Shader compilation info status: {:?}", status));
+                return;
+            }
+            let mut output = String::new();
+            if let Some(messages) = &info.messages {
+                for message in messages.iter() {
+                    let line = message.line_num.unwrap_or(0);
+                    let col = message.line_pos.unwrap_or(0);
+                    let kind = message
+                        .r#type
+                        .unwrap_or(dawn_rs::CompilationMessageType::Info);
+                    let text = message.message.clone().unwrap_or_default();
+                    output.push_str(&format!("[{:?}] {}:{} {}\n", kind, line, col, text));
+                }
+            }
+            let _ = shader_tx.send(output);
+        });
+        loop {
+            match shader_rx.try_recv() {
+                Ok(output) => {
+                    if !output.trim().is_empty() {
+                        eprintln!("Shader compilation messages:\n{}", output);
+                    }
+                    break;
+                }
+                Err(std::sync::mpsc::TryRecvError::Empty) => {
+                    instance.process_events();
+                }
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    break;
+                }
+            }
+        }
 
         let mut vertex_state = dawn_rs::VertexState::new();
         vertex_state.module = Some(shader.clone());
@@ -231,6 +266,12 @@ impl TriangleApp {
         pipeline_desc.primitive = Some(dawn_rs::PrimitiveState::new());
         pipeline_desc.multisample = Some(dawn_rs::MultisampleState::new());
         let pipeline = device.create_render_pipeline(&pipeline_desc);
+        let _future =
+            device.create_render_pipeline_async(&pipeline_desc, |status, _pipeline, message| {
+                if status != dawn_rs::CreatePipelineAsyncStatus::Success {
+                    eprintln!("Pipeline async error: {:?}: {}", status, message);
+                }
+            });
 
         self.window = Some(window);
         self.instance = Some(instance);
@@ -260,9 +301,15 @@ impl TriangleApp {
                 Some(pipeline),
                 Some(config),
                 Some(vertex_buffer),
-            ) => {
-                (surface, device, queue, pipeline, config, vertex_buffer, self.vertex_buffer_size)
-            }
+            ) => (
+                surface,
+                device,
+                queue,
+                pipeline,
+                config,
+                vertex_buffer,
+                self.vertex_buffer_size,
+            ),
             _ => return,
         };
 
@@ -313,7 +360,10 @@ impl TriangleApp {
 
         let command_buffer = encoder.finish(None);
         queue.submit(&[command_buffer]);
-        let _ = surface.present();
+        let present_status = surface.present();
+        if present_status != dawn_rs::Status::Success {
+            eprintln!("Surface present status: {:?}", present_status);
+        }
         let _ = config;
     }
 

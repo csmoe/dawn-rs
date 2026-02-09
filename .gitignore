@@ -1,6 +1,5 @@
 /target
 .DS_Store
 /examples/target
-/src/generated
 Cargo.lock
 dawn.json

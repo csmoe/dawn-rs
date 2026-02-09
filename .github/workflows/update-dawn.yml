@@ -1,0 +1,40 @@
+name: Update Dawn Generated Code
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-dawn:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Update generated code
+        run: python3 ./scripts/update_dawn_release.py
+
+      - name: Commit changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "dawn-bot"
+            git config user.email "dawn-bot@users.noreply.github.com"
+            version="$(cat DAWN_VERSION)"
+            git add -A
+            git commit -m "chore: update Dawn to ${version}"
+            git push
+          else
+            echo "No changes to commit"
+          fi

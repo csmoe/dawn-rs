@@ -9,9 +9,6 @@ members = ["codegen"]
 [dependencies]
 bitflags = "2"
 
-[build-dependencies]
-dawn-codegen = { path = "codegen" }
-
 [dev-dependencies]
 winit = { version = "0.30", features = ["rwh_06"] }
 

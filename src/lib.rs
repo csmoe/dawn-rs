@@ -1,11 +1,8 @@
-#[allow(clippy::all, nonstandard_style, unused)]
+#[allow(dead_code, unused_imports, nonstandard_style)]
 mod ffi {
-    include!(concat!(env!("OUT_DIR"), "/generated/ffi.rs"));
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/generated/ffi.rs"));
 }
 
-#[allow(unused)]
-mod generated {
-    include!(concat!(env!("OUT_DIR"), "/generated/mod.rs"));
-}
+mod generated;
 
 pub use generated::*;

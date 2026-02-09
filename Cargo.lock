@@ -314,7 +314,6 @@ name = "dawn-rs"
 version = "0.1.0"
 dependencies = [
  "bitflags 2.10.0",
- "dawn-codegen",
  "objc2 0.5.2",
  "objc2-quartz-core 0.2.2",
  "raw-window-handle",
