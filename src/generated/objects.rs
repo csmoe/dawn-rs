@@ -28,7 +28,6 @@ impl Adapter {
         let info_ptr = std::ptr::addr_of_mut!(info_ffi);
         let result = unsafe { ffi::wgpuAdapterGetInfo(self.raw, info_ptr) };
         *info = AdapterInfo::from_ffi(info_ffi);
-        unsafe { ffi::wgpuAdapterInfoFreeMembers(info_ffi) };
         result.into()
     }
     pub fn has_feature(&self, feature: FeatureName) -> bool {
@@ -41,7 +40,6 @@ impl Adapter {
         let features_ptr = std::ptr::addr_of_mut!(features_ffi);
         unsafe { ffi::wgpuAdapterGetFeatures(self.raw, features_ptr) };
         *features = SupportedFeatures::from_ffi(features_ffi);
-        unsafe { ffi::wgpuSupportedFeaturesFreeMembers(features_ffi) };
         ()
     }
     pub fn request_device(
@@ -105,6 +103,9 @@ impl Adapter {
 }
 impl Drop for Adapter {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuAdapterRelease(self.raw) };
     }
 }
@@ -136,6 +137,9 @@ impl BindGroup {
 }
 impl Drop for BindGroup {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuBindGroupRelease(self.raw) };
     }
 }
@@ -167,6 +171,9 @@ impl BindGroupLayout {
 }
 impl Drop for BindGroupLayout {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuBindGroupLayoutRelease(self.raw) };
     }
 }
@@ -286,6 +293,9 @@ impl Buffer {
 }
 impl Drop for Buffer {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuBufferRelease(self.raw) };
     }
 }
@@ -317,6 +327,9 @@ impl CommandBuffer {
 }
 impl Drop for CommandBuffer {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuCommandBufferRelease(self.raw) };
     }
 }
@@ -559,6 +572,9 @@ impl CommandEncoder {
 }
 impl Drop for CommandEncoder {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuCommandEncoderRelease(self.raw) };
     }
 }
@@ -694,6 +710,9 @@ impl ComputePassEncoder {
 }
 impl Drop for ComputePassEncoder {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuComputePassEncoderRelease(self.raw) };
     }
 }
@@ -731,6 +750,9 @@ impl ComputePipeline {
 }
 impl Drop for ComputePipeline {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuComputePipelineRelease(self.raw) };
     }
 }
@@ -1069,7 +1091,6 @@ impl Device {
         let features_ptr = std::ptr::addr_of_mut!(features_ffi);
         unsafe { ffi::wgpuDeviceGetFeatures(self.raw, features_ptr) };
         *features = SupportedFeatures::from_ffi(features_ffi);
-        unsafe { ffi::wgpuSupportedFeaturesFreeMembers(features_ffi) };
         ()
     }
     pub fn get_adapter_info(&self, adapter_info: &mut AdapterInfo) -> Status {
@@ -1079,7 +1100,6 @@ impl Device {
             ffi::wgpuDeviceGetAdapterInfo(self.raw, adapter_info_ptr)
         };
         *adapter_info = AdapterInfo::from_ffi(adapter_info_ffi);
-        unsafe { ffi::wgpuAdapterInfoFreeMembers(adapter_info_ffi) };
         result.into()
     }
     pub fn get_adapter(&self) -> Adapter {
@@ -1169,6 +1189,9 @@ impl Device {
 }
 impl Drop for Device {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuDeviceRelease(self.raw) };
     }
 }
@@ -1212,6 +1235,9 @@ impl ExternalTexture {
 }
 impl Drop for ExternalTexture {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuExternalTextureRelease(self.raw) };
     }
 }
@@ -1328,12 +1354,14 @@ impl Instance {
         let features_ptr = std::ptr::addr_of_mut!(features_ffi);
         unsafe { ffi::wgpuInstanceGetWGSLLanguageFeatures(self.raw, features_ptr) };
         *features = SupportedWGSLLanguageFeatures::from_ffi(features_ffi);
-        unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(features_ffi) };
         ()
     }
 }
 impl Drop for Instance {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuInstanceRelease(self.raw) };
     }
 }
@@ -1365,6 +1393,9 @@ impl PipelineLayout {
 }
 impl Drop for PipelineLayout {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuPipelineLayoutRelease(self.raw) };
     }
 }
@@ -1408,6 +1439,9 @@ impl QuerySet {
 }
 impl Drop for QuerySet {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuQuerySetRelease(self.raw) };
     }
 }
@@ -1563,6 +1597,9 @@ impl Queue {
 }
 impl Drop for Queue {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuQueueRelease(self.raw) };
     }
 }
@@ -1594,6 +1631,9 @@ impl RenderBundle {
 }
 impl Drop for RenderBundle {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuRenderBundleRelease(self.raw) };
     }
 }
@@ -1802,6 +1842,9 @@ impl RenderBundleEncoder {
 }
 impl Drop for RenderBundleEncoder {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuRenderBundleEncoderRelease(self.raw) };
     }
 }
@@ -2123,6 +2166,9 @@ impl RenderPassEncoder {
 }
 impl Drop for RenderPassEncoder {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuRenderPassEncoderRelease(self.raw) };
     }
 }
@@ -2160,6 +2206,9 @@ impl RenderPipeline {
 }
 impl Drop for RenderPipeline {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuRenderPipelineRelease(self.raw) };
     }
 }
@@ -2211,6 +2260,9 @@ impl ResourceTable {
 }
 impl Drop for ResourceTable {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuResourceTableRelease(self.raw) };
     }
 }
@@ -2242,6 +2294,9 @@ impl Sampler {
 }
 impl Drop for Sampler {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuSamplerRelease(self.raw) };
     }
 }
@@ -2295,6 +2350,9 @@ impl ShaderModule {
 }
 impl Drop for ShaderModule {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuShaderModuleRelease(self.raw) };
     }
 }
@@ -2380,7 +2438,6 @@ impl SharedBufferMemory {
             )
         };
         *descriptor = SharedBufferMemoryEndAccessState::from_ffi(descriptor_ffi);
-        unsafe { ffi::wgpuSharedBufferMemoryEndAccessStateFreeMembers(descriptor_ffi) };
         result.into()
     }
     pub fn is_device_lost(&self) -> bool {
@@ -2390,6 +2447,9 @@ impl SharedBufferMemory {
 }
 impl Drop for SharedBufferMemory {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuSharedBufferMemoryRelease(self.raw) };
     }
 }
@@ -2420,6 +2480,9 @@ impl SharedFence {
 }
 impl Drop for SharedFence {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuSharedFenceRelease(self.raw) };
     }
 }
@@ -2505,7 +2568,6 @@ impl SharedTextureMemory {
             )
         };
         *descriptor = SharedTextureMemoryEndAccessState::from_ffi(descriptor_ffi);
-        unsafe { ffi::wgpuSharedTextureMemoryEndAccessStateFreeMembers(descriptor_ffi) };
         result.into()
     }
     pub fn is_device_lost(&self) -> bool {
@@ -2515,6 +2577,9 @@ impl SharedTextureMemory {
 }
 impl Drop for SharedTextureMemory {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuSharedTextureMemoryRelease(self.raw) };
     }
 }
@@ -2552,7 +2617,6 @@ impl Surface {
             ffi::wgpuSurfaceGetCapabilities(self.raw, adapter.as_raw(), capabilities_ptr)
         };
         *capabilities = SurfaceCapabilities::from_ffi(capabilities_ffi);
-        unsafe { ffi::wgpuSurfaceCapabilitiesFreeMembers(capabilities_ffi) };
         result.into()
     }
     pub fn get_current_texture(&self, surface_texture: &mut SurfaceTexture) -> () {
@@ -2582,6 +2646,9 @@ impl Surface {
 }
 impl Drop for Surface {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuSurfaceRelease(self.raw) };
     }
 }
@@ -2613,6 +2680,9 @@ impl TexelBufferView {
 }
 impl Drop for TexelBufferView {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuTexelBufferViewRelease(self.raw) };
     }
 }
@@ -2729,6 +2799,9 @@ impl Texture {
 }
 impl Drop for Texture {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuTextureRelease(self.raw) };
     }
 }
@@ -2760,6 +2833,9 @@ impl TextureView {
 }
 impl Drop for TextureView {
     fn drop(&mut self) {
+        if self.as_raw().is_null() {
+            return;
+        }
         unsafe { ffi::wgpuTextureViewRelease(self.raw) };
     }
 }

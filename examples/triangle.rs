@@ -1,3 +1,4 @@
+use dawn_rs::{FutureWaitInfo, WaitStatus};
 #[cfg(target_os = "macos")]
 use objc2::rc::autoreleasepool;
 #[cfg(target_os = "macos")]
@@ -18,22 +19,25 @@ use winit::window::{Window, WindowAttributes, WindowId};
 static SHADER: &str = r#"
 struct VertexInput {
     @location(0) position: vec2<f32>,
+    @location(1) color: vec3<f32>,
 }
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
+    @location(0) color: vec3<f32>,
 }
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.position = vec4<f32>(input.position, 0.0, 1.0);
+    out.color = input.color;
     return out;
 }
 
 @fragment
-fn fs_main() -> @location(0) vec4<f32> {
-    return vec4<f32>(1.0, 0.2, 0.3, 1.0);
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    return vec4<f32>(input.color, 1.0);
 }
 "#;
 
@@ -120,16 +124,26 @@ impl TriangleApp {
         let mut surface_desc = dawn_rs::SurfaceDescriptor::new();
         let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
         metal_layer.layer = Some(layer_ptr.cast());
-        surface_desc.push_extension(
-            dawn_rs::SurfaceDescriptorExtension::SurfaceSourceMetalLayer(metal_layer),
-        );
+        surface_desc = surface_desc.with_extension(metal_layer.into());
         let surface = instance.create_surface(&surface_desc);
 
         let adapter = instance.create_adapter_for_rendering();
-        let device = adapter.create_device(None);
+        let mut device_desc = dawn_rs::DeviceDescriptor::new();
+        let error_info = dawn_rs::UncapturedErrorCallbackInfo::new();
+        error_info
+            .callback
+            .replace(Some(Box::new(|_devices, ty, message| {
+                eprintln!("Uncaptured error {:?}: {}", ty, message);
+            })));
+        device_desc.uncaptured_error_callback_info = Some(error_info);
+        let device = adapter.create_device(Some(&device_desc));
         let queue = device.get_queue();
 
-        let vertex_data: [f32; 6] = [0.0, 0.5, -0.5, -0.5, 0.5, -0.5];
+        let vertex_data: [f32; 15] = [
+            0.0, 0.5, 1.0, 0.0, 0.0, // position + color (red)
+            -0.5, -0.5, 0.0, 1.0, 0.0, // green
+            0.5, -0.5, 0.0, 0.0, 1.0, // blue
+        ];
         let vertex_bytes: &[u8] = unsafe {
             std::slice::from_raw_parts(
                 vertex_data.as_ptr().cast::<u8>(),
@@ -149,7 +163,8 @@ impl TriangleApp {
         queue.submit(&[upload_commands]);
 
         let mut capabilities = dawn_rs::SurfaceCapabilities::new();
-        let _ = surface.get_capabilities(adapter.clone(), &mut capabilities);
+        let status = surface.get_capabilities(adapter.clone(), &mut capabilities);
+        assert_eq!(status, dawn_rs::Status::Success);
         let format = capabilities
             .formats
             .as_ref()
@@ -199,12 +214,10 @@ impl TriangleApp {
             code: Some(self.shader_source.clone()),
         };
         let mut shader_desc = dawn_rs::ShaderModuleDescriptor::new();
-        shader_desc.push_extension(dawn_rs::ShaderModuleDescriptorExtension::ShaderSourceWGSL(
-            shader_source,
-        ));
+        shader_desc = shader_desc.with_extension(shader_source.into());
         let shader = device.create_shader_module(&shader_desc);
         let (shader_tx, shader_rx) = std::sync::mpsc::channel::<String>();
-        let _future = shader.get_compilation_info(move |status, info| {
+        let future = shader.get_compilation_info(move |status, info| {
             if status != dawn_rs::CompilationInfoRequestStatus::Success {
                 let _ = shader_tx.send(format!("Shader compilation info status: {:?}", status));
                 return;
@@ -223,6 +236,14 @@ impl TriangleApp {
             }
             let _ = shader_tx.send(output);
         });
+        let status = instance.wait_any(
+            Some(&mut [FutureWaitInfo {
+                future: Some(future),
+                completed: None,
+            }]),
+            0,
+        );
+        assert_eq!(status, WaitStatus::Success);
         loop {
             match shader_rx.try_recv() {
                 Ok(output) => {
@@ -247,10 +268,14 @@ impl TriangleApp {
         vertex_attribute.format = Some(dawn_rs::VertexFormat::Float32X2);
         vertex_attribute.offset = Some(0);
         vertex_attribute.shader_location = Some(0);
+        let mut color_attribute = dawn_rs::VertexAttribute::new();
+        color_attribute.format = Some(dawn_rs::VertexFormat::Float32X3);
+        color_attribute.offset = Some(8);
+        color_attribute.shader_location = Some(1);
         let mut vertex_buffer_layout = dawn_rs::VertexBufferLayout::new();
-        vertex_buffer_layout.array_stride = Some(8);
+        vertex_buffer_layout.array_stride = Some(20);
         vertex_buffer_layout.step_mode = Some(dawn_rs::VertexStepMode::Vertex);
-        vertex_buffer_layout.attributes = Some(vec![vertex_attribute]);
+        vertex_buffer_layout.attributes = Some(vec![vertex_attribute, color_attribute]);
         vertex_state.buffers = Some(vec![vertex_buffer_layout]);
 
         let mut fragment_state = dawn_rs::FragmentState::new();
@@ -266,12 +291,6 @@ impl TriangleApp {
         pipeline_desc.primitive = Some(dawn_rs::PrimitiveState::new());
         pipeline_desc.multisample = Some(dawn_rs::MultisampleState::new());
         let pipeline = device.create_render_pipeline(&pipeline_desc);
-        let _future =
-            device.create_render_pipeline_async(&pipeline_desc, |status, _pipeline, message| {
-                if status != dawn_rs::CreatePipelineAsyncStatus::Success {
-                    eprintln!("Pipeline async error: {:?}: {}", status, message);
-                }
-            });
 
         self.window = Some(window);
         self.instance = Some(instance);

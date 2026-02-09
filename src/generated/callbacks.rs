@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports)]
 use crate::ffi;
 use super::*;
+use std::cell::RefCell;
 fn string_view_to_string(view: ffi::WGPUStringView) -> String {
     if view.data.is_null() || view.length == 0 {
         return String::new();
@@ -272,108 +273,183 @@ pub(crate) unsafe extern "C" fn uncaptured_error_callback_trampoline(
         callback(device, r#type, message);
     }
 }
-#[derive(Default)]
 pub struct BufferMapCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<BufferMapCallback>,
+    pub callback: std::cell::RefCell<Option<BufferMapCallback>>,
+}
+impl Default for BufferMapCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl BufferMapCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct CompilationInfoCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<CompilationInfoCallback>,
+    pub callback: std::cell::RefCell<Option<CompilationInfoCallback>>,
+}
+impl Default for CompilationInfoCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl CompilationInfoCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct CreateComputePipelineAsyncCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<CreateComputePipelineAsyncCallback>,
+    pub callback: std::cell::RefCell<Option<CreateComputePipelineAsyncCallback>>,
+}
+impl Default for CreateComputePipelineAsyncCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl CreateComputePipelineAsyncCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct CreateRenderPipelineAsyncCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<CreateRenderPipelineAsyncCallback>,
+    pub callback: std::cell::RefCell<Option<CreateRenderPipelineAsyncCallback>>,
+}
+impl Default for CreateRenderPipelineAsyncCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl CreateRenderPipelineAsyncCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct DeviceLostCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<DeviceLostCallback>,
+    pub callback: std::cell::RefCell<Option<DeviceLostCallback>>,
+}
+impl Default for DeviceLostCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl DeviceLostCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct LoggingCallbackInfo {
-    pub callback: Option<LoggingCallback>,
+    pub callback: std::cell::RefCell<Option<LoggingCallback>>,
+}
+impl Default for LoggingCallbackInfo {
+    fn default() -> Self {
+        Self {
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl LoggingCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct PopErrorScopeCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<PopErrorScopeCallback>,
+    pub callback: std::cell::RefCell<Option<PopErrorScopeCallback>>,
+}
+impl Default for PopErrorScopeCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl PopErrorScopeCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct QueueWorkDoneCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<QueueWorkDoneCallback>,
+    pub callback: std::cell::RefCell<Option<QueueWorkDoneCallback>>,
+}
+impl Default for QueueWorkDoneCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl QueueWorkDoneCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct RequestAdapterCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<RequestAdapterCallback>,
+    pub callback: std::cell::RefCell<Option<RequestAdapterCallback>>,
+}
+impl Default for RequestAdapterCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl RequestAdapterCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct RequestDeviceCallbackInfo {
     pub mode: Option<CallbackMode>,
-    pub callback: Option<RequestDeviceCallback>,
+    pub callback: std::cell::RefCell<Option<RequestDeviceCallback>>,
+}
+impl Default for RequestDeviceCallbackInfo {
+    fn default() -> Self {
+        Self {
+            mode: None,
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl RequestDeviceCallbackInfo {
     pub fn new() -> Self {
         Self::default()
     }
 }
-#[derive(Default)]
 pub struct UncapturedErrorCallbackInfo {
-    pub callback: Option<UncapturedErrorCallback>,
+    pub callback: std::cell::RefCell<Option<UncapturedErrorCallback>>,
+}
+impl Default for UncapturedErrorCallbackInfo {
+    fn default() -> Self {
+        Self {
+            callback: std::cell::RefCell::new(None),
+        }
+    }
 }
 impl UncapturedErrorCallbackInfo {
     pub fn new() -> Self {

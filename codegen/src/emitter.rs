@@ -144,8 +144,18 @@ fn string_view_to_string(view: ffi::{prefix}StringView) -> String {{
     ));
 
     let index = TypeIndex::new(model);
+    let constant_map = build_constant_map(model);
+    let callback_info_map = build_callback_info_map(model);
+    let callback_info_mode_map = build_callback_info_mode_map(model);
     for s in &model.structures {
-        out.push_str(&emit_struct(s, &index, c_prefix));
+        out.push_str(&emit_struct(
+            s,
+            &index,
+            c_prefix,
+            &callback_info_map,
+            &callback_info_mode_map,
+            &constant_map,
+        ));
     }
 
     out
@@ -382,6 +392,7 @@ fn emit_callbacks(model: &ApiModel, c_prefix: &str) -> String {
 
 use crate::ffi;
 use super::*;
+use std::cell::RefCell;
 
 fn string_view_to_string(view: ffi::{prefix}StringView) -> String {{
     if view.data.is_null() || view.length == 0 {{
@@ -603,7 +614,14 @@ fn parse_numeric_string_u64(value: &str) -> Option<u64> {
     }
 }
 
-fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String {
+fn emit_struct(
+    s: &StructureModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+    callback_info_map: &HashMap<String, String>,
+    callback_info_mode_map: &HashMap<String, bool>,
+    constant_map: &HashMap<String, String>,
+) -> String {
     let name = type_name(&s.name);
     let ffi_name = ffi_type_name(&s.name, c_prefix);
 
@@ -611,6 +629,7 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
     let mut default_fields = Vec::new();
     let mut extra_methods = Vec::new();
     let length_fields = length_field_names(&s.def.members);
+    let needs_free_members = index.struct_needs_free_members(&s.name);
 
     if s.def.extensible.is_extensible() {
         let ext_enum = format!("{}Extension", type_name(&s.name));
@@ -619,13 +638,14 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
             ext_enum = ext_enum
         ));
         default_fields.push("extensions: Vec::new(),".to_string());
-        extra_methods.push(format!(
-            r#"    pub fn push_extension(&mut self, ext: {ext_enum}) {{
-        self.extensions.push(ext);
-    }}"#,
-            ext_enum = ext_enum
-        ));
-        let to_ffi_body = emit_struct_to_ffi_body(s, index, c_prefix, true);
+        let to_ffi_body = emit_struct_to_ffi_body(
+            s,
+            index,
+            c_prefix,
+            true,
+            callback_info_map,
+            callback_info_mode_map,
+        );
         extra_methods.push(format!(
             r#"pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
         let mut storage = ChainedStructStorage::new();
@@ -643,7 +663,14 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
         }}"#
         ));
     } else {
-        let to_ffi_body = emit_struct_to_ffi_body(s, index, c_prefix, false);
+        let to_ffi_body = emit_struct_to_ffi_body(
+            s,
+            index,
+            c_prefix,
+            false,
+            callback_info_map,
+            callback_info_mode_map,
+        );
         extra_methods.push(
             format!(
                 r#"    pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
@@ -669,7 +696,7 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
             field_name = field_name,
             field_ty = field_ty
         ));
-        let default_value = member_default_expr(member, index, c_prefix)
+        let default_value = member_default_expr(member, index, c_prefix, constant_map)
             .map(|expr| format!("Some({expr})", expr = expr))
             .unwrap_or_else(|| "None".to_string());
         default_fields.push(format!(
@@ -679,6 +706,15 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
         ));
 
         let _ = param_ty;
+    }
+
+    if needs_free_members {
+        fields.push(format!(
+            r#"#[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::{ffi_name}>,"#,
+            ffi_name = ffi_name
+        ));
+        default_fields.push("        _free_members: None,".to_string());
     }
 
     let fields_block = fields.join("\n");
@@ -696,7 +732,7 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
     );
 
     let mut free_members = String::new();
-    if index.struct_needs_free_members(&s.name) {
+    if needs_free_members {
         let free_fn = free_members_fn_name(&s.name);
         free_members = format!(
             r#"    pub(crate) fn free_members(value: ffi::{ffi_name}) {{
@@ -715,8 +751,26 @@ fn emit_struct(s: &StructureModel, index: &TypeIndex, c_prefix: &str) -> String 
         extra_blocks.push(free_members);
     }
     let extra_methods_block = extra_blocks.join("\n\n");
+    let drop_impl = if needs_free_members {
+        let free_fn = free_members_fn_name(&s.name);
+        format!(
+            r#"impl Drop for {name} {{
+    fn drop(&mut self) {{
+        if let Some(value) = self._free_members.take() {{
+            unsafe {{ ffi::{free_fn}(value) }};
+        }}
+    }}
+}}
 
-    format!(
+"#,
+            name = name,
+            free_fn = free_fn
+        )
+    } else {
+        String::new()
+    };
+
+    let struct_block = format!(
         r#"pub struct {name} {{
 {fields}
 }}
@@ -741,6 +795,11 @@ impl {name} {{
         fields = fields_block,
         defaults = default_fields_block,
         extra_methods = extra_methods_block
+    );
+    format!(
+        "{struct_block}{drop_impl}",
+        struct_block = struct_block,
+        drop_impl = drop_impl
     )
 }
 
@@ -873,6 +932,9 @@ impl {name} {{
 
 impl Drop for {name} {{
     fn drop(&mut self) {{
+        if self.as_raw().is_null() {{
+            return;
+        }}
         unsafe {{ ffi::wgpu{name}Release(self.raw) }};
     }}
 }}
@@ -1058,7 +1120,14 @@ fn emit_callback_info(c: &CallbackInfoModel, index: &TypeIndex) -> String {
 
     for member in &c.def.members {
         let field_name = safe_ident(&snake_case_name(&member.name));
-        let field_ty = struct_field_type(member, index);
+        let field_ty = if member.name == "callback" {
+            format!(
+                r#"std::cell::RefCell<Option<{}>>"#,
+                callback_type_name(&member.member_type)
+            )
+        } else {
+            struct_field_type(member, index)
+        };
         let param_ty = builder_param_type(member, index);
         fields.push(format!(
             r#"    pub {field_name}: {field_ty},"#,
@@ -1070,10 +1139,34 @@ fn emit_callback_info(c: &CallbackInfoModel, index: &TypeIndex) -> String {
     }
 
     let fields_block = fields.join("\n");
+    let mut defaults = Vec::new();
+    for member in &c.def.members {
+        let field_name = safe_ident(&snake_case_name(&member.name));
+        if member.name == "callback" {
+            defaults.push(format!(
+                r#"            {field_name}: std::cell::RefCell::new(None),"#,
+                field_name = field_name
+            ));
+        } else {
+            defaults.push(format!(
+                r#"            {field_name}: None,"#,
+                field_name = field_name
+            ));
+        }
+    }
+    let defaults_block = defaults.join("\n");
+
     format!(
-        r#"#[derive(Default)]
-pub struct {name} {{
+        r#"pub struct {name} {{
 {fields}
+}}
+
+impl Default for {name} {{
+    fn default() -> Self {{
+        Self {{
+{defaults}
+        }}
+    }}
 }}
 
 impl {name} {{
@@ -1085,6 +1178,7 @@ impl {name} {{
 "#,
         name = name,
         fields = fields_block,
+        defaults = defaults_block,
     )
 }
 
@@ -1177,8 +1271,22 @@ fn emit_constant(c: &ConstantModel) -> Option<String> {
         Value::String(s) => {
             if let Some(parsed) = parse_numeric_string(s) {
                 parsed.to_string()
+            } else if let Some(parsed) = parse_numeric_string_u64(s) {
+                parsed.to_string()
             } else {
-                return None;
+                match s.as_str() {
+                    "UINT32_MAX" => "u32::MAX".to_string(),
+                    "UINT64_MAX" => "u64::MAX".to_string(),
+                    "SIZE_MAX" => "usize::MAX".to_string(),
+                    "NAN" => {
+                        if ty == "f32" {
+                            "f32::NAN".to_string()
+                        } else {
+                            "f64::NAN".to_string()
+                        }
+                    }
+                    _ => return None,
+                }
             }
         }
         _ => return None,
@@ -1192,6 +1300,14 @@ fn emit_constant(c: &ConstantModel) -> Option<String> {
         ty = ty,
         value = value
     ))
+}
+
+fn build_constant_map(model: &ApiModel) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for c in &model.constants {
+        map.insert(c.name.clone(), shouty_snake_case_name(&c.name));
+    }
+    map
 }
 
 fn build_constructor_map(model: &ApiModel) -> HashMap<String, FunctionModel> {
@@ -1787,14 +1903,7 @@ fn emit_out_struct_postlude(args: &[RecordMember], index: &TypeIndex) -> String 
             name = name,
             ty = ty
         ));
-        if index.struct_needs_free_members(&arg.member_type) {
-            let free_fn = free_members_fn_name(&arg.member_type);
-            lines.push(format!(
-                r#"        unsafe {{ ffi::{free_fn}({name}_ffi) }};"#,
-                free_fn = free_fn,
-                name = name
-            ));
-        }
+        let _ = index.struct_needs_free_members(&arg.member_type);
     }
     lines.join("\n")
 }
@@ -1953,7 +2062,12 @@ fn builder_param_type(member: &RecordMember, index: &TypeIndex) -> String {
     }
 }
 
-fn member_default_expr(member: &RecordMember, index: &TypeIndex, c_prefix: &str) -> Option<String> {
+fn member_default_expr(
+    member: &RecordMember,
+    index: &TypeIndex,
+    c_prefix: &str,
+    constant_map: &HashMap<String, String>,
+) -> Option<String> {
     if member.no_default == Some(true) {
         return None;
     }
@@ -2001,6 +2115,8 @@ fn member_default_expr(member: &RecordMember, index: &TypeIndex, c_prefix: &str)
                 ))
             } else if index.is_bitmask(ty) {
                 Some(format!(r#"{}::{}"#, type_name(ty), bitmask_variant_name(s)))
+            } else if let Some(const_name) = constant_map.get(s) {
+                Some(const_name.clone())
             } else {
                 None
             }
@@ -2517,6 +2633,10 @@ fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -> String {
         ));
     }
 
+    if index.struct_needs_free_members(&s.name) {
+        fields.push("    _free_members: Some(value),".to_string());
+    }
+
     if fields.is_empty() {
         return String::new();
     }
@@ -2556,6 +2676,8 @@ fn emit_struct_to_ffi_body(
     index: &TypeIndex,
     c_prefix: &str,
     is_extensible: bool,
+    callback_info_map: &HashMap<String, String>,
+    callback_info_mode_map: &HashMap<String, bool>,
 ) -> String {
     let mut lines = Vec::new();
     let mut length_map: HashMap<String, String> = HashMap::new();
@@ -2766,7 +2888,71 @@ fn emit_struct_to_ffi_body(
         }
 
         if index.is_callback_info(&member.member_type) {
-            lines.push(format!(r#"let _ = &self.{field};"#, field = field_name));
+            if let Some(callback_fn_name) = callback_info_map.get(&member.member_type) {
+                let callback_ty = callback_type_name(callback_fn_name);
+                let ffi_callback_ty = ffi_type_name(callback_fn_name, c_prefix);
+                let trampoline = callback_trampoline_name(callback_fn_name);
+                let info_name = type_name(&member.member_type);
+                let has_mode = callback_info_mode_map
+                    .get(&member.member_type)
+                    .copied()
+                    .unwrap_or(false);
+                let mode_line = if has_mode {
+                    "    let mode = info.mode.unwrap_or(CallbackMode::AllowSpontaneous);\n"
+                } else {
+                    ""
+                };
+                let mode_field = if has_mode {
+                    "        mode: mode.into(),\n"
+                } else {
+                    ""
+                };
+                let default_mode_field = if has_mode {
+                    "        mode: CallbackMode::AllowSpontaneous.into(),\n"
+                } else {
+                    ""
+                };
+
+                lines.push(format!(
+                    r#"if let Some(info) = &self.{field} {{
+    let mut callback_slot = info.callback.borrow_mut();
+    let callback = callback_slot.take();
+    let (callback_ptr, userdata1): (ffi::{ffi_callback_ty}, *mut std::ffi::c_void) = if let Some(callback) = callback {{
+        let callback_box: {callback_ty} = callback;
+        let callback_box = Box::new(Some(callback_box));
+        let userdata = Box::into_raw(callback_box).cast::<std::ffi::c_void>();
+        (Some({trampoline}), userdata)
+    }} else {{
+        (None, std::ptr::null_mut())
+    }};
+{mode_line}    raw.{ffi_field} = ffi::{prefix}{info_name} {{
+        nextInChain: std::ptr::null_mut(),
+{mode_field}        callback: callback_ptr,
+        userdata1,
+        userdata2: std::ptr::null_mut(),
+    }};
+}} else {{
+    raw.{ffi_field} = ffi::{prefix}{info_name} {{
+        nextInChain: std::ptr::null_mut(),
+{default_mode_field}        callback: None,
+        userdata1: std::ptr::null_mut(),
+        userdata2: std::ptr::null_mut(),
+    }};
+}}"#,
+                    field = field_name,
+                    callback_ty = callback_ty,
+                    ffi_callback_ty = ffi_callback_ty,
+                    trampoline = trampoline,
+                    mode_line = mode_line,
+                    mode_field = mode_field,
+                    default_mode_field = default_mode_field,
+                    ffi_field = ffi_field,
+                    info_name = info_name,
+                    prefix = c_prefix
+                ));
+            } else {
+                lines.push(format!(r#"let _ = &self.{field};"#, field = field_name));
+            }
             continue;
         }
 

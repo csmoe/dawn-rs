@@ -18,7 +18,6 @@ pub fn get_instance_features(features: &mut SupportedInstanceFeatures) -> () {
     let features_ptr = std::ptr::addr_of_mut!(features_ffi);
     unsafe { ffi::wgpuGetInstanceFeatures(features_ptr) };
     *features = SupportedInstanceFeatures::from_ffi(features_ffi);
-    unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(features_ffi) };
     ()
 }
 pub fn get_instance_limits(limits: &mut InstanceLimits) -> Status {

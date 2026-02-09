@@ -15,6 +15,7 @@ import zipfile
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 VERSION_FILE = os.path.join(REPO_ROOT, "DAWN_VERSION")
 OUT_DIR = os.path.join(REPO_ROOT, "src", "generated")
+DEFAULT_TAGS = "dawn,native"
 
 
 def read_text(path: str) -> str:
@@ -168,6 +169,7 @@ def main() -> int:
             return 1
 
         os.makedirs(OUT_DIR, exist_ok=True)
+        tags = os.environ.get("DAWN_TAGS", DEFAULT_TAGS).strip()
         cmd = [
             "cargo",
             "run",
@@ -183,6 +185,8 @@ def main() -> int:
             "--out-dir",
             OUT_DIR,
         ]
+        if tags:
+            cmd.extend(["--tags", tags])
         subprocess.check_call(cmd, cwd=REPO_ROOT)
 
     write_text(VERSION_FILE, latest_tag + "\n")

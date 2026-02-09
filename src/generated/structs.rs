@@ -53,6 +53,8 @@ pub struct AdapterInfo {
     pub device_id: Option<u32>,
     pub subgroup_min_size: Option<u32>,
     pub subgroup_max_size: Option<u32>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUAdapterInfo>,
 }
 impl Default for AdapterInfo {
     fn default() -> Self {
@@ -68,15 +70,13 @@ impl Default for AdapterInfo {
             device_id: None,
             subgroup_min_size: None,
             subgroup_max_size: None,
+            _free_members: None,
         }
     }
 }
 impl AdapterInfo {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: AdapterInfoExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUAdapterInfo, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -171,10 +171,18 @@ impl AdapterInfo {
             device_id: Some(value.deviceID),
             subgroup_min_size: Some(value.subgroupMinSize),
             subgroup_max_size: Some(value.subgroupMaxSize),
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUAdapterInfo) {
         unsafe { ffi::wgpuAdapterInfoFreeMembers(value) };
+    }
+}
+impl Drop for AdapterInfo {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuAdapterInfoFreeMembers(value) };
+        }
     }
 }
 pub struct AdapterPropertiesD3D {
@@ -284,10 +292,15 @@ impl AdapterPropertiesExplicitComputeSubgroupSizeConfigs {
 }
 pub struct AdapterPropertiesMemoryHeaps {
     pub heap_info: Option<Vec<MemoryHeapInfo>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUAdapterPropertiesMemoryHeaps>,
 }
 impl Default for AdapterPropertiesMemoryHeaps {
     fn default() -> Self {
-        Self { heap_info: None }
+        Self {
+            heap_info: None,
+            _free_members: None,
+        }
     }
 }
 impl AdapterPropertiesMemoryHeaps {
@@ -338,18 +351,31 @@ impl AdapterPropertiesMemoryHeaps {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUAdapterPropertiesMemoryHeaps) {
         unsafe { ffi::wgpuAdapterPropertiesMemoryHeapsFreeMembers(value) };
     }
 }
+impl Drop for AdapterPropertiesMemoryHeaps {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuAdapterPropertiesMemoryHeapsFreeMembers(value) };
+        }
+    }
+}
 pub struct AdapterPropertiesSubgroupMatrixConfigs {
     pub configs: Option<Vec<SubgroupMatrixConfig>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs>,
 }
 impl Default for AdapterPropertiesSubgroupMatrixConfigs {
     fn default() -> Self {
-        Self { configs: None }
+        Self {
+            configs: None,
+            _free_members: None,
+        }
     }
 }
 impl AdapterPropertiesSubgroupMatrixConfigs {
@@ -402,10 +428,18 @@ impl AdapterPropertiesSubgroupMatrixConfigs {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs) {
         unsafe { ffi::wgpuAdapterPropertiesSubgroupMatrixConfigsFreeMembers(value) };
+    }
+}
+impl Drop for AdapterPropertiesSubgroupMatrixConfigs {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuAdapterPropertiesSubgroupMatrixConfigsFreeMembers(value) };
+        }
     }
 }
 pub struct AdapterPropertiesVk {
@@ -453,9 +487,6 @@ impl Default for BindGroupDescriptor {
 impl BindGroupDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: BindGroupDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUBindGroupDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -548,7 +579,7 @@ impl Default for BindGroupEntry {
             binding: None,
             buffer: None,
             offset: Some(0),
-            size: None,
+            size: Some(WHOLE_SIZE),
             sampler: None,
             texture_view: None,
         }
@@ -557,9 +588,6 @@ impl Default for BindGroupEntry {
 impl BindGroupEntry {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: BindGroupEntryExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUBindGroupEntry, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -640,9 +668,6 @@ impl Default for BindGroupLayoutDescriptor {
 impl BindGroupLayoutDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: BindGroupLayoutDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -746,9 +771,6 @@ impl BindGroupLayoutEntry {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: BindGroupLayoutEntryExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUBindGroupLayoutEntry, ChainedStructStorage) {
@@ -825,7 +847,7 @@ impl Default for BindingResource {
             extensions: Vec::new(),
             buffer: None,
             offset: Some(0),
-            size: None,
+            size: Some(WHOLE_SIZE),
             sampler: None,
             texture_view: None,
         }
@@ -834,9 +856,6 @@ impl Default for BindingResource {
 impl BindingResource {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: BindingResourceExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUBindingResource, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -997,9 +1016,6 @@ impl BufferBindingLayout {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: BufferBindingLayoutExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUBufferBindingLayout, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -1057,9 +1073,6 @@ impl Default for BufferDescriptor {
 impl BufferDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: BufferDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUBufferDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -1221,9 +1234,6 @@ impl ColorTargetState {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ColorTargetStateExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUColorTargetState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -1315,9 +1325,6 @@ impl CommandBufferDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: CommandBufferDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUCommandBufferDescriptor, ChainedStructStorage) {
@@ -1375,9 +1382,6 @@ impl CommandEncoderDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: CommandEncoderDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUCommandEncoderDescriptor, ChainedStructStorage) {
@@ -1434,9 +1438,6 @@ impl Default for CompilationInfo {
 impl CompilationInfo {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: CompilationInfoExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUCompilationInfo, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -1517,9 +1518,6 @@ impl CompilationMessage {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: CompilationMessageExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUCompilationMessage, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -1592,9 +1590,6 @@ impl ComputePassDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ComputePassDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUComputePassDescriptor, ChainedStructStorage) {
@@ -1665,9 +1660,6 @@ impl Default for ComputePipelineDescriptor {
 impl ComputePipelineDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: ComputePipelineDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -1745,9 +1737,6 @@ impl Default for ComputeState {
 impl ComputeState {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: ComputeStateExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUComputeState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -1844,9 +1833,6 @@ impl ConstantEntry {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ConstantEntryExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUConstantEntry, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -1912,9 +1898,6 @@ impl Default for CopyTextureForBrowserOptions {
 impl CopyTextureForBrowserOptions {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: CopyTextureForBrowserOptionsExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -2329,10 +2312,15 @@ impl DawnDeviceAllocatorControl {
 }
 pub struct DawnDrmFormatCapabilities {
     pub properties: Option<Vec<DawnDrmFormatProperties>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUDawnDrmFormatCapabilities>,
 }
 impl Default for DawnDrmFormatCapabilities {
     fn default() -> Self {
-        Self { properties: None }
+        Self {
+            properties: None,
+            _free_members: None,
+        }
     }
 }
 impl DawnDrmFormatCapabilities {
@@ -2381,10 +2369,18 @@ impl DawnDrmFormatCapabilities {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUDawnDrmFormatCapabilities) {
         unsafe { ffi::wgpuDawnDrmFormatCapabilitiesFreeMembers(value) };
+    }
+}
+impl Drop for DawnDrmFormatCapabilities {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuDawnDrmFormatCapabilitiesFreeMembers(value) };
+        }
     }
 }
 pub struct DawnDrmFormatProperties {
@@ -2544,9 +2540,6 @@ impl DawnFormatCapabilities {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: DawnFormatCapabilitiesExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUDawnFormatCapabilities, ChainedStructStorage) {
@@ -2573,7 +2566,7 @@ pub struct DawnHostMappedPointerLimits {
 impl Default for DawnHostMappedPointerLimits {
     fn default() -> Self {
         Self {
-            host_mapped_pointer_alignment: None,
+            host_mapped_pointer_alignment: Some(LIMIT_U32_UNDEFINED),
         }
     }
 }
@@ -2711,7 +2704,7 @@ pub struct DawnTexelCopyBufferRowAlignmentLimits {
 impl Default for DawnTexelCopyBufferRowAlignmentLimits {
     fn default() -> Self {
         Self {
-            min_texel_copy_buffer_row_alignment: None,
+            min_texel_copy_buffer_row_alignment: Some(LIMIT_U32_UNDEFINED),
         }
     }
 }
@@ -2969,9 +2962,6 @@ impl DepthStencilState {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: DepthStencilStateExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUDepthStencilState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -3068,9 +3058,6 @@ impl DeviceDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: DeviceDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUDeviceDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -3121,8 +3108,69 @@ impl DeviceDescriptor {
             raw.defaultQueue = raw_value;
             storage.push_storage(storage_value);
         }
-        let _ = &self.device_lost_callback_info;
-        let _ = &self.uncaptured_error_callback_info;
+        if let Some(info) = &self.device_lost_callback_info {
+            let mut callback_slot = info.callback.borrow_mut();
+            let callback = callback_slot.take();
+            let (
+                callback_ptr,
+                userdata1,
+            ): (ffi::WGPUDeviceLostCallback, *mut std::ffi::c_void) = if let Some(
+                callback,
+            ) = callback {
+                let callback_box: DeviceLostCallback = callback;
+                let callback_box = Box::new(Some(callback_box));
+                let userdata = Box::into_raw(callback_box).cast::<std::ffi::c_void>();
+                (Some(device_lost_callback_trampoline), userdata)
+            } else {
+                (None, std::ptr::null_mut())
+            };
+            let mode = info.mode.unwrap_or(CallbackMode::AllowSpontaneous);
+            raw.deviceLostCallbackInfo = ffi::WGPUDeviceLostCallbackInfo {
+                nextInChain: std::ptr::null_mut(),
+                mode: mode.into(),
+                callback: callback_ptr,
+                userdata1,
+                userdata2: std::ptr::null_mut(),
+            };
+        } else {
+            raw.deviceLostCallbackInfo = ffi::WGPUDeviceLostCallbackInfo {
+                nextInChain: std::ptr::null_mut(),
+                mode: CallbackMode::AllowSpontaneous.into(),
+                callback: None,
+                userdata1: std::ptr::null_mut(),
+                userdata2: std::ptr::null_mut(),
+            };
+        }
+        if let Some(info) = &self.uncaptured_error_callback_info {
+            let mut callback_slot = info.callback.borrow_mut();
+            let callback = callback_slot.take();
+            let (
+                callback_ptr,
+                userdata1,
+            ): (ffi::WGPUUncapturedErrorCallback, *mut std::ffi::c_void) = if let Some(
+                callback,
+            ) = callback {
+                let callback_box: UncapturedErrorCallback = callback;
+                let callback_box = Box::new(Some(callback_box));
+                let userdata = Box::into_raw(callback_box).cast::<std::ffi::c_void>();
+                (Some(uncaptured_error_callback_trampoline), userdata)
+            } else {
+                (None, std::ptr::null_mut())
+            };
+            raw.uncapturedErrorCallbackInfo = ffi::WGPUUncapturedErrorCallbackInfo {
+                nextInChain: std::ptr::null_mut(),
+                callback: callback_ptr,
+                userdata1,
+                userdata2: std::ptr::null_mut(),
+            };
+        } else {
+            raw.uncapturedErrorCallbackInfo = ffi::WGPUUncapturedErrorCallbackInfo {
+                nextInChain: std::ptr::null_mut(),
+                callback: None,
+                userdata1: std::ptr::null_mut(),
+                userdata2: std::ptr::null_mut(),
+            };
+        }
         (raw, storage)
     }
     pub fn with_extension(mut self, extension: DeviceDescriptorExtension) -> Self {
@@ -3332,9 +3380,6 @@ impl ExternalTextureDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ExternalTextureDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUExternalTextureDescriptor, ChainedStructStorage) {
@@ -3540,9 +3585,6 @@ impl FragmentState {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: FragmentStateExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUFragmentState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -3731,9 +3773,6 @@ impl ImageCopyExternalTexture {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ImageCopyExternalTextureExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUImageCopyExternalTexture, ChainedStructStorage) {
@@ -3796,9 +3835,6 @@ impl Default for InstanceDescriptor {
 impl InstanceDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: InstanceDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUInstanceDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -3882,9 +3918,6 @@ impl InstanceLimits {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: InstanceLimitsExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUInstanceLimits, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -3948,47 +3981,44 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             extensions: Vec::new(),
-            max_texture_dimension_1d: None,
-            max_texture_dimension_2d: None,
-            max_texture_dimension_3d: None,
-            max_texture_array_layers: None,
-            max_bind_groups: None,
-            max_bind_groups_plus_vertex_buffers: None,
-            max_bindings_per_bind_group: None,
-            max_dynamic_uniform_buffers_per_pipeline_layout: None,
-            max_dynamic_storage_buffers_per_pipeline_layout: None,
-            max_sampled_textures_per_shader_stage: None,
-            max_samplers_per_shader_stage: None,
-            max_storage_buffers_per_shader_stage: None,
-            max_storage_textures_per_shader_stage: None,
-            max_uniform_buffers_per_shader_stage: None,
-            max_uniform_buffer_binding_size: None,
-            max_storage_buffer_binding_size: None,
-            min_uniform_buffer_offset_alignment: None,
-            min_storage_buffer_offset_alignment: None,
-            max_vertex_buffers: None,
-            max_buffer_size: None,
-            max_vertex_attributes: None,
-            max_vertex_buffer_array_stride: None,
-            max_inter_stage_shader_variables: None,
-            max_color_attachments: None,
-            max_color_attachment_bytes_per_sample: None,
-            max_compute_workgroup_storage_size: None,
-            max_compute_invocations_per_workgroup: None,
-            max_compute_workgroup_size_x: None,
-            max_compute_workgroup_size_y: None,
-            max_compute_workgroup_size_z: None,
-            max_compute_workgroups_per_dimension: None,
-            max_immediate_size: None,
+            max_texture_dimension_1d: Some(LIMIT_U32_UNDEFINED),
+            max_texture_dimension_2d: Some(LIMIT_U32_UNDEFINED),
+            max_texture_dimension_3d: Some(LIMIT_U32_UNDEFINED),
+            max_texture_array_layers: Some(LIMIT_U32_UNDEFINED),
+            max_bind_groups: Some(LIMIT_U32_UNDEFINED),
+            max_bind_groups_plus_vertex_buffers: Some(LIMIT_U32_UNDEFINED),
+            max_bindings_per_bind_group: Some(LIMIT_U32_UNDEFINED),
+            max_dynamic_uniform_buffers_per_pipeline_layout: Some(LIMIT_U32_UNDEFINED),
+            max_dynamic_storage_buffers_per_pipeline_layout: Some(LIMIT_U32_UNDEFINED),
+            max_sampled_textures_per_shader_stage: Some(LIMIT_U32_UNDEFINED),
+            max_samplers_per_shader_stage: Some(LIMIT_U32_UNDEFINED),
+            max_storage_buffers_per_shader_stage: Some(LIMIT_U32_UNDEFINED),
+            max_storage_textures_per_shader_stage: Some(LIMIT_U32_UNDEFINED),
+            max_uniform_buffers_per_shader_stage: Some(LIMIT_U32_UNDEFINED),
+            max_uniform_buffer_binding_size: Some(LIMIT_U64_UNDEFINED),
+            max_storage_buffer_binding_size: Some(LIMIT_U64_UNDEFINED),
+            min_uniform_buffer_offset_alignment: Some(LIMIT_U32_UNDEFINED),
+            min_storage_buffer_offset_alignment: Some(LIMIT_U32_UNDEFINED),
+            max_vertex_buffers: Some(LIMIT_U32_UNDEFINED),
+            max_buffer_size: Some(LIMIT_U64_UNDEFINED),
+            max_vertex_attributes: Some(LIMIT_U32_UNDEFINED),
+            max_vertex_buffer_array_stride: Some(LIMIT_U32_UNDEFINED),
+            max_inter_stage_shader_variables: Some(LIMIT_U32_UNDEFINED),
+            max_color_attachments: Some(LIMIT_U32_UNDEFINED),
+            max_color_attachment_bytes_per_sample: Some(LIMIT_U32_UNDEFINED),
+            max_compute_workgroup_storage_size: Some(LIMIT_U32_UNDEFINED),
+            max_compute_invocations_per_workgroup: Some(LIMIT_U32_UNDEFINED),
+            max_compute_workgroup_size_x: Some(LIMIT_U32_UNDEFINED),
+            max_compute_workgroup_size_y: Some(LIMIT_U32_UNDEFINED),
+            max_compute_workgroup_size_z: Some(LIMIT_U32_UNDEFINED),
+            max_compute_workgroups_per_dimension: Some(LIMIT_U32_UNDEFINED),
+            max_immediate_size: Some(LIMIT_U32_UNDEFINED),
         }
     }
 }
 impl Limits {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: LimitsExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPULimits, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -4220,9 +4250,6 @@ impl MultisampleState {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: MultisampleStateExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUMultisampleState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -4339,17 +4366,14 @@ impl Default for PassTimestampWrites {
         Self {
             extensions: Vec::new(),
             query_set: None,
-            beginning_of_pass_write_index: None,
-            end_of_pass_write_index: None,
+            beginning_of_pass_write_index: Some(QUERY_SET_INDEX_UNDEFINED),
+            end_of_pass_write_index: Some(QUERY_SET_INDEX_UNDEFINED),
         }
     }
 }
 impl PassTimestampWrites {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: PassTimestampWritesExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUPassTimestampWrites, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -4404,9 +4428,6 @@ impl Default for PipelineLayoutDescriptor {
 impl PipelineLayoutDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: PipelineLayoutDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -4607,9 +4628,6 @@ impl PipelineLayoutStorageAttachment {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: PipelineLayoutStorageAttachmentExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUPipelineLayoutStorageAttachment, ChainedStructStorage) {
@@ -4670,9 +4688,6 @@ impl Default for PrimitiveState {
 impl PrimitiveState {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: PrimitiveStateExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUPrimitiveState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -4740,9 +4755,6 @@ impl QuerySetDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: QuerySetDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUQuerySetDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -4805,9 +4817,6 @@ impl QueueDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: QueueDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUQueueDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -4859,9 +4868,6 @@ impl Default for RenderBundleDescriptor {
 impl RenderBundleDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderBundleDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -4926,9 +4932,6 @@ impl Default for RenderBundleEncoderDescriptor {
 impl RenderBundleEncoderDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderBundleEncoderDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -5034,7 +5037,7 @@ impl Default for RenderPassColorAttachment {
         Self {
             extensions: Vec::new(),
             view: None,
-            depth_slice: None,
+            depth_slice: Some(DEPTH_SLICE_UNDEFINED),
             resolve_target: None,
             load_op: None,
             store_op: None,
@@ -5045,9 +5048,6 @@ impl Default for RenderPassColorAttachment {
 impl RenderPassColorAttachment {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderPassColorAttachmentExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -5135,7 +5135,7 @@ impl Default for RenderPassDepthStencilAttachment {
             view: None,
             depth_load_op: None,
             depth_store_op: None,
-            depth_clear_value: None,
+            depth_clear_value: Some(DEPTH_CLEAR_VALUE_UNDEFINED),
             depth_read_only: None,
             stencil_load_op: None,
             stencil_store_op: None,
@@ -5147,9 +5147,6 @@ impl Default for RenderPassDepthStencilAttachment {
 impl RenderPassDepthStencilAttachment {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderPassDepthStencilAttachmentExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -5247,9 +5244,6 @@ impl Default for RenderPassDescriptor {
 impl RenderPassDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderPassDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -5605,9 +5599,6 @@ impl RenderPassStorageAttachment {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: RenderPassStorageAttachmentExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPURenderPassStorageAttachment, ChainedStructStorage) {
@@ -5690,9 +5681,6 @@ impl Default for RenderPipelineDescriptor {
 impl RenderPipelineDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: RenderPipelineDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -5863,9 +5851,6 @@ impl RequestAdapterOptions {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: RequestAdapterOptionsExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPURequestAdapterOptions, ChainedStructStorage) {
@@ -5940,9 +5925,6 @@ impl ResourceTableDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: ResourceTableDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUResourceTableDescriptor, ChainedStructStorage) {
@@ -5994,7 +5976,7 @@ pub struct ResourceTableLimits {
 impl Default for ResourceTableLimits {
     fn default() -> Self {
         Self {
-            max_resource_table_size: None,
+            max_resource_table_size: Some(LIMIT_U32_UNDEFINED),
         }
     }
 }
@@ -6031,9 +6013,6 @@ impl Default for SamplerBindingLayout {
 impl SamplerBindingLayout {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SamplerBindingLayoutExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -6098,9 +6077,6 @@ impl Default for SamplerDescriptor {
 impl SamplerDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SamplerDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUSamplerDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -6235,9 +6211,6 @@ impl Default for ShaderModuleDescriptor {
 impl ShaderModuleDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: ShaderModuleDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -6374,12 +6347,6 @@ impl SharedBufferMemoryBeginAccessDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(
-        &mut self,
-        ext: SharedBufferMemoryBeginAccessDescriptorExtension,
-    ) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUSharedBufferMemoryBeginAccessDescriptor, ChainedStructStorage) {
@@ -6479,9 +6446,6 @@ impl SharedBufferMemoryDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: SharedBufferMemoryDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUSharedBufferMemoryDescriptor, ChainedStructStorage) {
@@ -6530,6 +6494,8 @@ pub struct SharedBufferMemoryEndAccessState {
     pub initialized: Option<bool>,
     pub fences: Option<Vec<SharedFence>>,
     pub signaled_values: Option<Vec<u64>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSharedBufferMemoryEndAccessState>,
 }
 impl Default for SharedBufferMemoryEndAccessState {
     fn default() -> Self {
@@ -6538,15 +6504,13 @@ impl Default for SharedBufferMemoryEndAccessState {
             initialized: None,
             fences: None,
             signaled_values: None,
+            _free_members: None,
         }
     }
 }
 impl SharedBufferMemoryEndAccessState {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedBufferMemoryEndAccessStateExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -6626,10 +6590,18 @@ impl SharedBufferMemoryEndAccessState {
                         .to_vec(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSharedBufferMemoryEndAccessState) {
         unsafe { ffi::wgpuSharedBufferMemoryEndAccessStateFreeMembers(value) };
+    }
+}
+impl Drop for SharedBufferMemoryEndAccessState {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSharedBufferMemoryEndAccessStateFreeMembers(value) };
+        }
     }
 }
 pub struct SharedBufferMemoryProperties {
@@ -6649,9 +6621,6 @@ impl Default for SharedBufferMemoryProperties {
 impl SharedBufferMemoryProperties {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedBufferMemoryPropertiesExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -6882,9 +6851,6 @@ impl SharedFenceDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: SharedFenceDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUSharedFenceDescriptor, ChainedStructStorage) {
@@ -6938,9 +6904,6 @@ impl Default for SharedFenceExportInfo {
 impl SharedFenceExportInfo {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedFenceExportInfoExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -7418,12 +7381,6 @@ impl SharedTextureMemoryBeginAccessDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(
-        &mut self,
-        ext: SharedTextureMemoryBeginAccessDescriptorExtension,
-    ) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUSharedTextureMemoryBeginAccessDescriptor, ChainedStructStorage) {
@@ -7524,9 +7481,6 @@ impl Default for SharedTextureMemoryDescriptor {
 impl SharedTextureMemoryDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedTextureMemoryDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -7701,6 +7655,8 @@ pub struct SharedTextureMemoryEndAccessState {
     pub initialized: Option<bool>,
     pub fences: Option<Vec<SharedFence>>,
     pub signaled_values: Option<Vec<u64>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSharedTextureMemoryEndAccessState>,
 }
 impl Default for SharedTextureMemoryEndAccessState {
     fn default() -> Self {
@@ -7709,15 +7665,13 @@ impl Default for SharedTextureMemoryEndAccessState {
             initialized: None,
             fences: None,
             signaled_values: None,
+            _free_members: None,
         }
     }
 }
 impl SharedTextureMemoryEndAccessState {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedTextureMemoryEndAccessStateExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -7797,10 +7751,18 @@ impl SharedTextureMemoryEndAccessState {
                         .to_vec(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSharedTextureMemoryEndAccessState) {
         unsafe { ffi::wgpuSharedTextureMemoryEndAccessStateFreeMembers(value) };
+    }
+}
+impl Drop for SharedTextureMemoryEndAccessState {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSharedTextureMemoryEndAccessStateFreeMembers(value) };
+        }
     }
 }
 pub struct SharedTextureMemoryMetalEndAccessState {
@@ -7920,9 +7882,6 @@ impl Default for SharedTextureMemoryProperties {
 impl SharedTextureMemoryProperties {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SharedTextureMemoryPropertiesExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -8134,7 +8093,7 @@ impl Default for StaticSamplerBindingLayout {
     fn default() -> Self {
         Self {
             sampler: None,
-            sampled_texture_binding: None,
+            sampled_texture_binding: Some(LIMIT_U32_UNDEFINED),
         }
     }
 }
@@ -8238,9 +8197,6 @@ impl StorageTextureBindingLayout {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: StorageTextureBindingLayoutExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(
         &self,
     ) -> (ffi::WGPUStorageTextureBindingLayout, ChainedStructStorage) {
@@ -8292,7 +8248,10 @@ pub struct StringView {
 }
 impl Default for StringView {
     fn default() -> Self {
-        Self { data: None, length: None }
+        Self {
+            data: None,
+            length: Some(STRLEN),
+        }
     }
 }
 impl StringView {
@@ -8377,10 +8336,15 @@ impl SubgroupMatrixConfig {
 }
 pub struct SupportedWGSLLanguageFeatures {
     pub features: Option<Vec<WGSLLanguageFeatureName>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSupportedWGSLLanguageFeatures>,
 }
 impl Default for SupportedWGSLLanguageFeatures {
     fn default() -> Self {
-        Self { features: None }
+        Self {
+            features: None,
+            _free_members: None,
+        }
     }
 }
 impl SupportedWGSLLanguageFeatures {
@@ -8427,18 +8391,31 @@ impl SupportedWGSLLanguageFeatures {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSupportedWGSLLanguageFeatures) {
         unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(value) };
     }
 }
+impl Drop for SupportedWGSLLanguageFeatures {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(value) };
+        }
+    }
+}
 pub struct SupportedFeatures {
     pub features: Option<Vec<FeatureName>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSupportedFeatures>,
 }
 impl Default for SupportedFeatures {
     fn default() -> Self {
-        Self { features: None }
+        Self {
+            features: None,
+            _free_members: None,
+        }
     }
 }
 impl SupportedFeatures {
@@ -8481,18 +8458,31 @@ impl SupportedFeatures {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSupportedFeatures) {
         unsafe { ffi::wgpuSupportedFeaturesFreeMembers(value) };
     }
 }
+impl Drop for SupportedFeatures {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSupportedFeaturesFreeMembers(value) };
+        }
+    }
+}
 pub struct SupportedInstanceFeatures {
     pub features: Option<Vec<InstanceFeatureName>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSupportedInstanceFeatures>,
 }
 impl Default for SupportedInstanceFeatures {
     fn default() -> Self {
-        Self { features: None }
+        Self {
+            features: None,
+            _free_members: None,
+        }
     }
 }
 impl SupportedInstanceFeatures {
@@ -8537,10 +8527,18 @@ impl SupportedInstanceFeatures {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSupportedInstanceFeatures) {
         unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(value) };
+    }
+}
+impl Drop for SupportedInstanceFeatures {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(value) };
+        }
     }
 }
 pub struct SurfaceCapabilities {
@@ -8549,6 +8547,8 @@ pub struct SurfaceCapabilities {
     pub formats: Option<Vec<TextureFormat>>,
     pub present_modes: Option<Vec<PresentMode>>,
     pub alpha_modes: Option<Vec<CompositeAlphaMode>>,
+    #[doc(hidden)]
+    pub(crate) _free_members: Option<ffi::WGPUSurfaceCapabilities>,
 }
 impl Default for SurfaceCapabilities {
     fn default() -> Self {
@@ -8558,15 +8558,13 @@ impl Default for SurfaceCapabilities {
             formats: None,
             present_modes: None,
             alpha_modes: None,
+            _free_members: None,
         }
     }
 }
 impl SurfaceCapabilities {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SurfaceCapabilitiesExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUSurfaceCapabilities, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -8678,10 +8676,18 @@ impl SurfaceCapabilities {
                         .collect(),
                 )
             },
+            _free_members: Some(value),
         }
     }
     pub(crate) fn free_members(value: ffi::WGPUSurfaceCapabilities) {
         unsafe { ffi::wgpuSurfaceCapabilitiesFreeMembers(value) };
+    }
+}
+impl Drop for SurfaceCapabilities {
+    fn drop(&mut self) {
+        if let Some(value) = self._free_members.take() {
+            unsafe { ffi::wgpuSurfaceCapabilitiesFreeMembers(value) };
+        }
     }
 }
 pub struct SurfaceColorManagement {
@@ -8753,9 +8759,6 @@ impl Default for SurfaceConfiguration {
 impl SurfaceConfiguration {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SurfaceConfigurationExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -8861,9 +8864,6 @@ impl Default for SurfaceDescriptor {
 impl SurfaceDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: SurfaceDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUSurfaceDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -9218,9 +9218,6 @@ impl SurfaceTexture {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: SurfaceTextureExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUSurfaceTexture, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -9339,16 +9336,13 @@ impl Default for TexelBufferViewDescriptor {
             label: None,
             format: None,
             offset: Some(0),
-            size: None,
+            size: Some(WHOLE_SIZE),
         }
     }
 }
 impl TexelBufferViewDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: TexelBufferViewDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -9449,8 +9443,8 @@ impl Default for TexelCopyBufferLayout {
     fn default() -> Self {
         Self {
             offset: Some(0),
-            bytes_per_row: None,
-            rows_per_image: None,
+            bytes_per_row: Some(COPY_STRIDE_UNDEFINED),
+            rows_per_image: Some(COPY_STRIDE_UNDEFINED),
         }
     }
 }
@@ -9555,9 +9549,6 @@ impl Default for TextureBindingLayout {
 impl TextureBindingLayout {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: TextureBindingLayoutExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -9713,9 +9704,6 @@ impl TextureDescriptor {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: TextureDescriptorExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUTextureDescriptor, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -9833,9 +9821,9 @@ impl Default for TextureViewDescriptor {
             format: None,
             dimension: None,
             base_mip_level: Some(0),
-            mip_level_count: None,
+            mip_level_count: Some(MIP_LEVEL_COUNT_UNDEFINED),
             base_array_layer: Some(0),
-            array_layer_count: None,
+            array_layer_count: Some(ARRAY_LAYER_COUNT_UNDEFINED),
             aspect: Some(TextureAspect::All),
             usage: None,
         }
@@ -9844,9 +9832,6 @@ impl Default for TextureViewDescriptor {
 impl TextureViewDescriptor {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: TextureViewDescriptorExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(
         &self,
@@ -9946,9 +9931,6 @@ impl VertexAttribute {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn push_extension(&mut self, ext: VertexAttributeExtension) {
-        self.extensions.push(ext);
-    }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUVertexAttribute, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
         let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
@@ -10002,9 +9984,6 @@ impl Default for VertexBufferLayout {
 impl VertexBufferLayout {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: VertexBufferLayoutExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUVertexBufferLayout, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
@@ -10090,9 +10069,6 @@ impl Default for VertexState {
 impl VertexState {
     pub fn new() -> Self {
         Self::default()
-    }
-    pub fn push_extension(&mut self, ext: VertexStateExtension) {
-        self.extensions.push(ext);
     }
     pub(crate) fn to_ffi(&self) -> (ffi::WGPUVertexState, ChainedStructStorage) {
         let mut storage = ChainedStructStorage::new();
