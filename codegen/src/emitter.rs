@@ -293,7 +293,14 @@ impl ChainedStructStorage {{
                             )
                         });
                         arms.push(format!(
-                            r#"            {enum_name}::{ty}(_) => storage.push({stype_const} as ffi::{prefix}SType, next),"#,
+                            r#"            {enum_name}::{ty}(value) => {{
+                let (mut raw, storage_value) = value.to_ffi();
+                raw.chain.sType = {stype_const} as ffi::{prefix}SType;
+                raw.chain.next = next;
+                storage.push_storage(storage_value);
+                let raw_ptr = storage.push_value_mut(raw);
+                raw_ptr.cast::<ffi::{prefix}ChainedStruct>()
+            }}"#,
                             enum_name = enum_name,
                             ty = ty,
                             stype_const = stype_const,
@@ -1694,6 +1701,28 @@ fn emit_ffi_arg_prelude(
 
         if index.struct_extensible(&arg.member_type).is_some() {
             if arg.optional {
+                if arg.annotation.is_const_ptr() || arg.annotation.is_mut_ptr() {
+                    let (ptr_ctor, null_ptr) = if arg.annotation.is_mut_ptr() {
+                        ("std::ptr::addr_of_mut!", "std::ptr::null_mut()")
+                    } else {
+                        ("std::ptr::addr_of!", "std::ptr::null()")
+                    };
+                    prelude.push(format!(
+                        r#"        let mut {name}_storage = ChainedStructStorage::new();
+        let {name}_ptr = if let Some(value) = &{name} {{
+            let ({name}_ffi, storage) = value.to_ffi();
+            {name}_storage = storage;
+            {ptr_ctor}({name}_ffi)
+        }} else {{
+            {null_ptr}
+        }};"#,
+                        name = name,
+                        ptr_ctor = ptr_ctor,
+                        null_ptr = null_ptr
+                    ));
+                    ffi_args.push(format!("{name}_ptr", name = name));
+                    continue;
+                }
                 prelude.push(format!(r#"        let _ = {name};"#, name = name));
                 ffi_args.push("std::ptr::null()".to_string());
                 continue;

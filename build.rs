@@ -14,7 +14,8 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=QuartzCore");
         println!("cargo:rustc-link-lib=framework=IOSurface");
         println!("cargo:rustc-link-lib=framework=IOKit");
-        println!("cargo:rustc-link-lib=framework=CoreVideo");
+        println!("cargo:rustc-link-lib=framework=Foundation");
+        println!("cargo:rustc-link-lib=framework=Cocoa");
     }
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
