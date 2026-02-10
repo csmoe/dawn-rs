@@ -18,6 +18,9 @@ homepage = "https://github.com/csmoe/dawn-rs"
 repository = "https://github.com/csmoe/dawn-rs"
 license = "BSD-3-Clause"
 
+[workspace.dependencies]
+dawn-rs = {  path = "." }
+
 [dependencies]
 bitflags = "2"
 

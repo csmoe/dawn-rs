@@ -8,7 +8,7 @@ repository.workspace = true
 homepage.workspace = true
 
 [dependencies]
-dawn-rs = "0.1.0-dev"
+dawn-rs = { workspace = true }
 wgpu = { version = "28.0", features = ["custom"] }
 wgt = { package = "wgpu-types", version = "28.0" }
 

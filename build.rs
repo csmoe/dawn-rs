@@ -2,8 +2,19 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 fn main() {
-    let dawn_root = resolve_dawn_root();
-    let lib_dir = resolve_dawn_lib_dir(&dawn_root);
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=DAWN_ROOT");
+    let Some(dawn_root) = resolve_dawn_root() else {
+        println!("cargo:warning=DAWN_ROOT not set; skipping Dawn link directives");
+        return;
+    };
+    let Some(lib_dir) = resolve_dawn_lib_dir(&dawn_root) else {
+        println!(
+            "cargo:warning=Missing Dawn build output under {} (expected lib/ or out/Release or out/Debug)",
+            dawn_root.display()
+        );
+        return;
+    };
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static=webgpu_dawn");
 
@@ -20,28 +31,22 @@ fn main() {
     }
 }
 
-fn resolve_dawn_root() -> PathBuf {
-    match env::var("DAWN_ROOT") {
-        Ok(path) => PathBuf::from(path),
-        Err(_) => panic!("DAWN_ROOT not set"),
-    }
+fn resolve_dawn_root() -> Option<PathBuf> {
+    env::var("DAWN_ROOT").ok().map(PathBuf::from)
 }
 
-fn resolve_dawn_lib_dir(dawn_root: &Path) -> PathBuf {
+fn resolve_dawn_lib_dir(dawn_root: &Path) -> Option<PathBuf> {
     let lib = dawn_root.join("lib");
     if lib.exists() {
-        return lib;
+        return Some(lib);
     }
     let release = dawn_root.join("out/Release");
     if release.exists() {
-        return release;
+        return Some(release);
     }
     let debug = dawn_root.join("out/Debug");
     if debug.exists() {
-        return debug;
+        return Some(debug);
     }
-    panic!(
-        "Missing Dawn build output under {} (expected lib/ or out/Release or out/Debug)",
-        dawn_root.display()
-    );
+    None
 }

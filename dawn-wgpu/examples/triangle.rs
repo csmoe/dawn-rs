@@ -56,8 +56,8 @@ impl State {
         let instance = to_wgpu_instance(dawn_instance);
 
         let surface = unsafe {
-            let target = wgpu::SurfaceTargetUnsafe::from_window(&window)
-                .expect("create surface target");
+            let target =
+                wgpu::SurfaceTargetUnsafe::from_window(&window).expect("create surface target");
             instance
                 .create_surface_unsafe(target)
                 .expect("create surface")

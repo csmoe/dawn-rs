@@ -4,13 +4,13 @@ use super::*;
 #[derive(Debug)]
 pub struct Adapter {
     raw: ffi::WGPUAdapter,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl Adapter {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUAdapter) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPUAdapter {
@@ -118,7 +118,7 @@ impl Clone for Adapter {
         unsafe { ffi::wgpuAdapterAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
@@ -357,13 +357,13 @@ unsafe impl Sync for CommandBuffer {}
 #[derive(Debug)]
 pub struct CommandEncoder {
     raw: ffi::WGPUCommandEncoder,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl CommandEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandEncoder) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPUCommandEncoder {
@@ -602,20 +602,20 @@ impl Clone for CommandEncoder {
         unsafe { ffi::wgpuCommandEncoderAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
 #[derive(Debug)]
 pub struct ComputePassEncoder {
     raw: ffi::WGPUComputePassEncoder,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl ComputePassEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePassEncoder) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPUComputePassEncoder {
@@ -747,7 +747,7 @@ impl Clone for ComputePassEncoder {
         unsafe { ffi::wgpuComputePassEncoderAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
@@ -1285,13 +1285,13 @@ unsafe impl Sync for ExternalTexture {}
 #[derive(Debug)]
 pub struct Instance {
     raw: ffi::WGPUInstance,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl Instance {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUInstance) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPUInstance {
@@ -1409,7 +1409,7 @@ impl Clone for Instance {
         unsafe { ffi::wgpuInstanceAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
@@ -1696,13 +1696,13 @@ unsafe impl Sync for RenderBundle {}
 #[derive(Debug)]
 pub struct RenderBundleEncoder {
     raw: ffi::WGPURenderBundleEncoder,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl RenderBundleEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundleEncoder) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPURenderBundleEncoder {
@@ -1907,20 +1907,20 @@ impl Clone for RenderBundleEncoder {
         unsafe { ffi::wgpuRenderBundleEncoderAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
 #[derive(Debug)]
 pub struct RenderPassEncoder {
     raw: ffi::WGPURenderPassEncoder,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl RenderPassEncoder {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPassEncoder) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPURenderPassEncoder {
@@ -2238,7 +2238,7 @@ impl Clone for RenderPassEncoder {
         unsafe { ffi::wgpuRenderPassEncoderAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }
@@ -2670,13 +2670,13 @@ unsafe impl Sync for SharedTextureMemory {}
 #[derive(Debug)]
 pub struct Surface {
     raw: ffi::WGPUSurface,
-    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,
+    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
 }
 impl Surface {
     pub(crate) unsafe fn from_raw(raw: ffi::WGPUSurface) -> Self {
         Self {
             raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
     pub fn as_raw(&self) -> ffi::WGPUSurface {
@@ -2739,7 +2739,7 @@ impl Clone for Surface {
         unsafe { ffi::wgpuSurfaceAddRef(self.raw) };
         Self {
             raw: self.raw,
-            _not_send_sync: std::marker::PhantomData,
+            _not_sync: std::marker::PhantomData,
         }
     }
 }

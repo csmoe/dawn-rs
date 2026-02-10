@@ -2425,13 +2425,13 @@ impl AdapterInterface for DawnAdapter {
         error_info
             .callback
             .replace(Some(Box::new(|_devices, ty, message| {
-                eprintln!("Uncaptured error {:?}: {}", ty, message);
+                panic!("Uncaptured error {:?}: {}", ty, message);
             })));
         dawn_desc.uncaptured_error_callback_info = Some(error_info);
         let instance = self.inner.get_instance();
         let future_handle =
             self.inner
-                .request_device(Some(&dawn_desc), move |status, device, _message| {
+                .request_device(Some(&dawn_desc), move |status, device, message| {
                     if status == RequestDeviceStatus::Success {
                         let device = device.expect("wgpu-compat: missing device");
                         let queue = device.get_queue();
@@ -2440,7 +2440,7 @@ impl AdapterInterface for DawnAdapter {
                             Ok((dispatch_device(device), dispatch_queue(queue))),
                         );
                     } else {
-                        panic!("wgpu-compat: request_device failed");
+                        panic!("wgpu-compat: request_device failed {}", message);
                     }
                 });
         let _ = instance.wait_any(
@@ -2774,9 +2774,14 @@ impl QueueInterface for DawnQueue {
         &self,
         texture: wgpu::TexelCopyTextureInfo<'_>,
         data: &[u8],
-        data_layout: wgpu::TexelCopyBufferLayout,
+        mut data_layout: wgpu::TexelCopyBufferLayout,
         size: wgpu::Extent3d,
     ) {
+        if data_layout.rows_per_image.is_none()
+            && (size.height > 1 || size.depth_or_array_layers > 1)
+        {
+            data_layout.rows_per_image = Some(size.height.max(1));
+        }
         let destination = map_texel_copy_texture_info(texture);
         let data_layout = map_texel_copy_buffer_layout(data_layout);
         let write_size = map_extent_3d(size);

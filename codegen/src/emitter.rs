@@ -834,12 +834,12 @@ fn emit_object(
     let mut methods = Vec::new();
     let no_autolock = o.def.no_autolock.unwrap_or(false);
     let marker_field = if no_autolock {
-        "    _not_send_sync: std::marker::PhantomData<std::rc::Rc<()>>,\n"
+        "    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,\n"
     } else {
         ""
     };
     let marker_init = if no_autolock {
-        ", _not_send_sync: std::marker::PhantomData"
+        ", _not_sync: std::marker::PhantomData"
     } else {
         ""
     };
