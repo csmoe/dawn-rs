@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_imports)]
-use super::*;
+use crate::generated::*;
+use crate::ffi;
 pub const ARRAY_LAYER_COUNT_UNDEFINED: u32 = u32::MAX;
 pub const COPY_STRIDE_UNDEFINED: u32 = u32::MAX;
 pub const DEPTH_CLEAR_VALUE_UNDEFINED: f32 = f32::NAN;

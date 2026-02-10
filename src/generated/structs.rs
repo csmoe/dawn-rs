@@ -1,9 +1,9 @@
 #![allow(dead_code, unused_imports)]
 use crate::ffi;
-use super::*;
+use crate::generated::*;
 use std::any::Any;
 use std::ffi::CStr;
-fn string_view_to_string(view: ffi::WGPUStringView) -> String {
+pub(crate) fn string_view_to_string(view: ffi::WGPUStringView) -> String {
     if view.data.is_null() || view.length == 0 {
         return String::new();
     }

@@ -1,6 +1,6 @@
 use crate::api_model::{
     ApiModel, BitmaskModel, CallbackFunctionModel, CallbackInfoModel, CallbackModel, ConstantModel,
-    EnumModel, FunctionModel, ObjectModel, StructureModel,
+    EnumModel, FunctionModel, FunctionPointerModel, ObjectModel, StructureModel,
 };
 
 pub trait ApiVisitor {
@@ -10,6 +10,7 @@ pub trait ApiVisitor {
     fn visit_struct(&mut self, _s: &StructureModel) {}
     fn visit_object(&mut self, _o: &ObjectModel) {}
     fn visit_function(&mut self, _f: &FunctionModel) {}
+    fn visit_function_pointer(&mut self, _f: &FunctionPointerModel) {}
     fn visit_callback(&mut self, _c: &CallbackModel) {}
     fn visit_callback_function(&mut self, _c: &CallbackFunctionModel) {}
     fn visit_callback_info(&mut self, _c: &CallbackInfoModel) {}
@@ -28,6 +29,9 @@ pub fn walk_model<V: ApiVisitor>(visitor: &mut V, model: &ApiModel) {
     }
     for s in &model.structures {
         visitor.visit_struct(s);
+    }
+    for f in &model.function_pointers {
+        visitor.visit_function_pointer(f);
     }
     for c in &model.callback_functions {
         visitor.visit_callback_function(c);

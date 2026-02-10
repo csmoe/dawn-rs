@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports)]
 use crate::ffi;
-use super::*;
+use crate::generated::*;
 use std::any::Any;
 pub(crate) struct ChainedStructStorage {
     entries: Vec<Box<ffi::WGPUChainedStruct>>,

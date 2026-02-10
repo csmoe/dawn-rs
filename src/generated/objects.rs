@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports)]
+use crate::generated::*;
 use crate::ffi;
-use super::*;
 #[derive(Debug)]
 pub struct Adapter {
     raw: ffi::WGPUAdapter,

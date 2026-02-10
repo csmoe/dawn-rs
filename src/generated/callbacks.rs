@@ -1,15 +1,6 @@
 #![allow(dead_code, unused_imports)]
 use crate::ffi;
-use super::*;
-use std::cell::RefCell;
-fn string_view_to_string(view: ffi::WGPUStringView) -> String {
-    if view.data.is_null() || view.length == 0 {
-        return String::new();
-    }
-    let data = view.data.cast::<u8>();
-    let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
-    String::from_utf8_lossy(slice).into_owned()
-}
+use crate::generated::*;
 pub type Callback = Option<unsafe extern "C" fn(*mut std::ffi::c_void) -> ()>;
 pub type DawnLoadCacheDataFunction = Option<
     unsafe extern "C" fn(

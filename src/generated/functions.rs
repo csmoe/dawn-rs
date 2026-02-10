@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports)]
+use crate::generated::*;
 use crate::ffi;
-use super::*;
 pub fn create_instance(descriptor: Option<&InstanceDescriptor>) -> Instance {
     let mut descriptor_storage = ChainedStructStorage::new();
     let descriptor_ptr = if let Some(value) = &descriptor {
