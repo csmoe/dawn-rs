@@ -834,7 +834,7 @@ fn emit_object(
     let mut methods = Vec::new();
     let no_autolock = o.def.no_autolock.unwrap_or(false);
     let marker_field = if no_autolock {
-        "    _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,\n"
+        "_not_sync: std::marker::PhantomData<std::cell::Cell<()>>,"
     } else {
         ""
     };
@@ -844,7 +844,7 @@ fn emit_object(
         ""
     };
     let send_sync_impl = if no_autolock {
-        String::new()
+        format!(r#"unsafe impl Send for {name} {{}}"#)
     } else {
         format!(
             r#"unsafe impl Send for {name} {{}}

@@ -122,6 +122,7 @@ impl Clone for Adapter {
         }
     }
 }
+unsafe impl Send for Adapter {}
 #[derive(Debug)]
 pub struct BindGroup {
     raw: ffi::WGPUBindGroup,
@@ -606,6 +607,7 @@ impl Clone for CommandEncoder {
         }
     }
 }
+unsafe impl Send for CommandEncoder {}
 #[derive(Debug)]
 pub struct ComputePassEncoder {
     raw: ffi::WGPUComputePassEncoder,
@@ -751,6 +753,7 @@ impl Clone for ComputePassEncoder {
         }
     }
 }
+unsafe impl Send for ComputePassEncoder {}
 #[derive(Debug)]
 pub struct ComputePipeline {
     raw: ffi::WGPUComputePipeline,
@@ -1413,6 +1416,7 @@ impl Clone for Instance {
         }
     }
 }
+unsafe impl Send for Instance {}
 #[derive(Debug)]
 pub struct PipelineLayout {
     raw: ffi::WGPUPipelineLayout,
@@ -1911,6 +1915,7 @@ impl Clone for RenderBundleEncoder {
         }
     }
 }
+unsafe impl Send for RenderBundleEncoder {}
 #[derive(Debug)]
 pub struct RenderPassEncoder {
     raw: ffi::WGPURenderPassEncoder,
@@ -2242,6 +2247,7 @@ impl Clone for RenderPassEncoder {
         }
     }
 }
+unsafe impl Send for RenderPassEncoder {}
 #[derive(Debug)]
 pub struct RenderPipeline {
     raw: ffi::WGPURenderPipeline,
@@ -2743,6 +2749,7 @@ impl Clone for Surface {
         }
     }
 }
+unsafe impl Send for Surface {}
 #[derive(Debug)]
 pub struct TexelBufferView {
     raw: ffi::WGPUTexelBufferView,
