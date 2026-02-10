@@ -9,4 +9,4 @@ mod objects;
 mod render;
 mod structs;
 
-pub use render::{generate_strings, generate_to_dir, GeneratedFiles};
+pub use render::{GeneratedFiles, format_rust_source, generate_strings, generate_to_dir};

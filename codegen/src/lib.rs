@@ -4,7 +4,7 @@ pub mod parser;
 pub mod visitor;
 
 pub use api_model::ApiModel;
-pub use emitter::{generate_strings, GeneratedFiles};
+pub use emitter::{GeneratedFiles, format_rust_source, generate_strings};
 pub use parser::DawnJsonParser;
 
 use std::path::Path;

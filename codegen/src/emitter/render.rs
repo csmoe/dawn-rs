@@ -56,7 +56,7 @@ pub fn generate_to_dir(model: &ApiModel, out_dir: &Path) -> std::io::Result<()> 
     files.write_to_dir(out_dir)
 }
 
-fn format_rust_source(source: &str) -> String {
+pub fn format_rust_source(source: &str) -> String {
     match syn::parse_file(source) {
         Ok(file) => prettyplease::unparse(&file),
         Err(_) => source.to_string(),
