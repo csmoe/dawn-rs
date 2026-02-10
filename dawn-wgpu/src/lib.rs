@@ -26,14 +26,50 @@ impl fmt::Display for WgpuCompatError {
 
 impl std::error::Error for WgpuCompatError {}
 
+#[derive(Clone)]
+struct SendSync<T>(Arc<Mutex<T>>);
+
+unsafe impl<T> Send for SendSync<T> {}
+unsafe impl<T> Sync for SendSync<T> {}
+
+impl<T> SendSync<T> {
+    fn new(inner: T) -> Self {
+        Self(Arc::new(Mutex::new(inner)))
+    }
+
+    fn get(&self) -> T
+    where
+        T: Clone,
+    {
+        self.0.lock().expect("send sync wrapper poisoned").clone()
+    }
+
+    fn with<R>(&self, f: impl FnOnce(&T) -> R) -> R {
+        let guard = self.0.lock().expect("send sync wrapper poisoned");
+        f(&*guard)
+    }
+
+    fn with_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
+        let mut guard = self.0.lock().expect("send sync wrapper poisoned");
+        f(&mut *guard)
+    }
+}
+
+impl<T: fmt::Debug> fmt::Debug for SendSync<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let guard = self.0.lock().map_err(|_| fmt::Error)?;
+        f.debug_tuple("SendSync").field(&*guard).finish()
+    }
+}
+
 #[derive(Debug, Clone)]
 struct DawnInstance {
-    inner: Instance,
+    inner: SendSync<Instance>,
 }
 
 #[derive(Debug, Clone)]
 struct DawnAdapter {
-    inner: Adapter,
+    inner: SendSync<Adapter>,
 }
 
 #[derive(Debug, Clone)]
@@ -108,18 +144,18 @@ struct DawnComputePipeline {
 
 #[derive(Debug)]
 struct DawnCommandEncoder {
-    inner: CommandEncoder,
+    inner: SendSync<CommandEncoder>,
 }
 
 #[derive(Debug)]
 struct DawnComputePass {
-    inner: ComputePassEncoder,
+    inner: SendSync<ComputePassEncoder>,
     ended: bool,
 }
 
 #[derive(Debug)]
 struct DawnRenderPass {
-    inner: RenderPassEncoder,
+    inner: SendSync<RenderPassEncoder>,
     ended: bool,
 }
 
@@ -130,7 +166,7 @@ struct DawnCommandBuffer {
 
 #[derive(Debug)]
 struct DawnRenderBundleEncoder {
-    inner: RenderBundleEncoder,
+    inner: SendSync<RenderBundleEncoder>,
 }
 
 #[derive(Debug, Clone)]
@@ -164,14 +200,14 @@ impl Drop for MetalLayerHandle {
 
 #[derive(Debug, Clone)]
 struct DawnSurface {
-    inner: Surface,
+    inner: SendSync<Surface>,
     #[cfg(target_os = "macos")]
     metal_layer: Option<Arc<MetalLayerHandle>>,
 }
 
 #[derive(Debug, Clone)]
 struct DawnSurfaceOutputDetail {
-    surface: Surface,
+    surface: SendSync<Surface>,
 }
 
 #[derive(Debug)]
@@ -184,6 +220,9 @@ struct DawnBufferMappedRange {
     data: *mut u8,
     size: usize,
 }
+
+unsafe impl Send for DawnBufferMappedRange {}
+unsafe impl Sync for DawnBufferMappedRange {}
 
 #[derive(Debug)]
 struct DawnPipelineCache;
@@ -204,46 +243,6 @@ impl fmt::Display for DawnError {
 }
 
 impl std::error::Error for DawnError {}
-
-macro_rules! unsafe_send_sync {
-    ($($ty:ty),+ $(,)?) => {
-        $(unsafe impl Send for $ty {}
-        unsafe impl Sync for $ty {})+
-    };
-}
-
-unsafe_send_sync!(
-    DawnInstance,
-    DawnAdapter,
-    DawnDevice,
-    DawnQueue,
-    DawnShaderModule,
-    DawnBindGroupLayout,
-    DawnBindGroup,
-    DawnTextureView,
-    DawnSampler,
-    DawnBuffer,
-    DawnTexture,
-    DawnExternalTexture,
-    DawnQuerySet,
-    DawnPipelineLayout,
-    DawnRenderPipeline,
-    DawnComputePipeline,
-    DawnCommandEncoder,
-    DawnComputePass,
-    DawnRenderPass,
-    DawnCommandBuffer,
-    DawnRenderBundleEncoder,
-    DawnRenderBundle,
-    DawnSurface,
-    DawnSurfaceOutputDetail,
-    DawnQueueWriteBuffer,
-    DawnBufferMappedRange,
-    DawnPipelineCache,
-    DawnBlas,
-    DawnTlas,
-    DawnError,
-);
 
 struct CallbackFuture<T> {
     shared: Arc<Mutex<CallbackShared<T>>>,
@@ -1856,7 +1855,9 @@ fn bytes_to_u32(data: &[u8]) -> Vec<u32> {
 }
 
 fn dispatch_adapter(adapter: Adapter) -> DispatchAdapter {
-    DispatchAdapter::custom(DawnAdapter { inner: adapter })
+    DispatchAdapter::custom(DawnAdapter {
+        inner: SendSync::new(adapter),
+    })
 }
 
 fn dispatch_device(device: Device) -> DispatchDevice {
@@ -1920,7 +1921,9 @@ fn dispatch_compute_pipeline(pipeline: ComputePipeline) -> DispatchComputePipeli
 }
 
 fn dispatch_command_encoder(encoder: CommandEncoder) -> DispatchCommandEncoder {
-    DispatchCommandEncoder::custom(DawnCommandEncoder { inner: encoder })
+    DispatchCommandEncoder::custom(DawnCommandEncoder {
+        inner: SendSync::new(encoder),
+    })
 }
 
 fn dispatch_command_buffer(buffer: CommandBuffer) -> DispatchCommandBuffer {
@@ -1929,20 +1932,22 @@ fn dispatch_command_buffer(buffer: CommandBuffer) -> DispatchCommandBuffer {
 
 fn dispatch_compute_pass(pass: ComputePassEncoder) -> DispatchComputePass {
     DispatchComputePass::custom(DawnComputePass {
-        inner: pass,
+        inner: SendSync::new(pass),
         ended: false,
     })
 }
 
 fn dispatch_render_pass(pass: RenderPassEncoder) -> DispatchRenderPass {
     DispatchRenderPass::custom(DawnRenderPass {
-        inner: pass,
+        inner: SendSync::new(pass),
         ended: false,
     })
 }
 
 fn dispatch_render_bundle_encoder(encoder: RenderBundleEncoder) -> DispatchRenderBundleEncoder {
-    DispatchRenderBundleEncoder::custom(DawnRenderBundleEncoder { inner: encoder })
+    DispatchRenderBundleEncoder::custom(DawnRenderBundleEncoder {
+        inner: SendSync::new(encoder),
+    })
 }
 
 fn dispatch_render_bundle(bundle: RenderBundle) -> DispatchRenderBundle {
@@ -1950,7 +1955,9 @@ fn dispatch_render_bundle(bundle: RenderBundle) -> DispatchRenderBundle {
 }
 
 fn dispatch_surface_output_detail(surface: Surface) -> DispatchSurfaceOutputDetail {
-    DispatchSurfaceOutputDetail::custom(DawnSurfaceOutputDetail { surface })
+    DispatchSurfaceOutputDetail::custom(DawnSurfaceOutputDetail {
+        surface: SendSync::new(surface),
+    })
 }
 
 fn dispatch_queue_write_buffer(data: Vec<u8>) -> DispatchQueueWriteBuffer {
@@ -1978,7 +1985,7 @@ fn expect_adapter(adapter: &DispatchAdapter) -> Adapter {
         .as_custom::<DawnAdapter>()
         .expect("wgpu-compat: adapter not dawn")
         .inner
-        .clone()
+        .get()
 }
 
 fn expect_device(device: &DispatchDevice) -> Device {
@@ -2104,7 +2111,7 @@ fn expect_command_encoder(encoder: &DispatchCommandEncoder) -> CommandEncoder {
         .as_custom::<DawnCommandEncoder>()
         .expect("wgpu-compat: command encoder not dawn")
         .inner
-        .clone()
+        .get()
 }
 
 fn expect_command_buffer(buffer: &DispatchCommandBuffer) -> CommandBuffer {
@@ -2128,7 +2135,7 @@ fn expect_surface_output_detail(detail: &DispatchSurfaceOutputDetail) -> Surface
         .as_custom::<DawnSurfaceOutputDetail>()
         .expect("wgpu-compat: surface output detail not dawn")
         .surface
-        .clone()
+        .get()
 }
 
 fn expect_device_from_api(device: &wgpu::Device) -> Device {
@@ -2222,7 +2229,9 @@ impl InstanceInterface for DawnInstance {
         let mut desc = InstanceDescriptor::new();
         desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
         let instance = Instance::new(Some(&desc));
-        Self { inner: instance }
+        Self {
+            inner: SendSync::new(instance),
+        }
     }
 
     unsafe fn create_surface(
@@ -2235,9 +2244,9 @@ impl InstanceInterface for DawnInstance {
                 let mut desc = SurfaceDescriptor::new();
                 let source = SurfaceSourceMetalLayer { layer: Some(layer) };
                 desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                let surface = self.inner.create_surface(&desc);
+                let surface = self.inner.get().create_surface(&desc);
                 let dawn_surface = DawnSurface {
-                    inner: surface,
+                    inner: SendSync::new(surface),
                     metal_layer: None,
                 };
                 Ok(dispatch_surface(dawn_surface))
@@ -2257,12 +2266,12 @@ impl InstanceInterface for DawnInstance {
                             layer: Some(layer_ptr.as_ptr().cast()),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                        let surface = self.inner.create_surface(&desc);
+                        let surface = self.inner.get().create_surface(&desc);
                         let handle = MetalLayerHandle {
                             ptr: layer_ptr.as_ptr().cast(),
                         };
                         let dawn_surface = DawnSurface {
-                            inner: surface,
+                            inner: SendSync::new(surface),
                             metal_layer: Some(Arc::new(handle)),
                         };
                         Ok(dispatch_surface(dawn_surface))
@@ -2283,8 +2292,10 @@ impl InstanceInterface for DawnInstance {
                             hwnd: Some(handle.hwnd.cast()),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                        let surface = self.inner.create_surface(&desc);
-                        let dawn_surface = DawnSurface { inner: surface };
+                        let surface = self.inner.get().create_surface(&desc);
+                        let dawn_surface = DawnSurface {
+                            inner: SendSync::new(surface),
+                        };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     _ => panic!("wgpu-compat: unsupported raw window handle on Windows"),
@@ -2304,8 +2315,10 @@ impl InstanceInterface for DawnInstance {
                             surface: Some(window.surface.cast()),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                        let surface = self.inner.create_surface(&desc);
-                        let dawn_surface = DawnSurface { inner: surface };
+                        let surface = self.inner.get().create_surface(&desc);
+                        let dawn_surface = DawnSurface {
+                            inner: SendSync::new(surface),
+                        };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xlib(display), RawWindowHandle::Xlib(window)) => {
@@ -2315,8 +2328,10 @@ impl InstanceInterface for DawnInstance {
                             window: Some(window.window as u64),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                        let surface = self.inner.create_surface(&desc);
-                        let dawn_surface = DawnSurface { inner: surface };
+                        let surface = self.inner.get().create_surface(&desc);
+                        let dawn_surface = DawnSurface {
+                            inner: SendSync::new(surface),
+                        };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xcb(display), RawWindowHandle::Xcb(window)) => {
@@ -2326,8 +2341,10 @@ impl InstanceInterface for DawnInstance {
                             window: Some(window.window),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                        let surface = self.inner.create_surface(&desc);
-                        let dawn_surface = DawnSurface { inner: surface };
+                        let surface = self.inner.get().create_surface(&desc);
+                        let dawn_surface = DawnSurface {
+                            inner: SendSync::new(surface),
+                        };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     _ => panic!("wgpu-compat: unsupported raw window handle on unix"),
@@ -2346,10 +2363,11 @@ impl InstanceInterface for DawnInstance {
         dawn_options.power_preference = Some(map_power_preference(options.power_preference));
         dawn_options.force_fallback_adapter = Some(options.force_fallback_adapter);
         if let Some(surface) = options.compatible_surface {
-            dawn_options.compatible_surface = Some(expect_surface_from_api(surface).inner);
+            dawn_options.compatible_surface = Some(expect_surface_from_api(surface).inner.get());
         }
         let future_handle =
             self.inner
+                .get()
                 .request_adapter(Some(&dawn_options), move |status, adapter, _message| {
                     if status == RequestAdapterStatus::Success {
                         let adapter = adapter.expect("wgpu-compat: missing adapter");
@@ -2368,7 +2386,7 @@ impl InstanceInterface for DawnInstance {
                         );
                     }
                 });
-        let _ = self.inner.wait_any(
+        let _ = self.inner.get().wait_any(
             Some(&mut [FutureWaitInfo {
                 future: Some(future_handle),
                 completed: None,
@@ -2379,13 +2397,13 @@ impl InstanceInterface for DawnInstance {
     }
 
     fn poll_all_devices(&self, _force_wait: bool) -> bool {
-        self.inner.process_events();
+        self.inner.get().process_events();
         true
     }
 
     fn wgsl_language_features(&self) -> wgpu::WgslLanguageFeatures {
         let mut features = SupportedWGSLLanguageFeatures::new();
-        self.inner.get_wgsl_language_features(&mut features);
+        self.inner.get().get_wgsl_language_features(&mut features);
         let mut out = wgpu::WgslLanguageFeatures::empty();
         if let Some(list) = features.features.as_ref() {
             for feature in list {
@@ -2428,9 +2446,10 @@ impl AdapterInterface for DawnAdapter {
                 panic!("Uncaptured error {:?}: {}", ty, message);
             })));
         dawn_desc.uncaptured_error_callback_info = Some(error_info);
-        let instance = self.inner.get_instance();
+        let instance = self.inner.get().get_instance();
         let future_handle =
             self.inner
+                .get()
                 .request_device(Some(&dawn_desc), move |status, device, message| {
                     if status == RequestDeviceStatus::Success {
                         let device = device.expect("wgpu-compat: missing device");
@@ -2459,13 +2478,13 @@ impl AdapterInterface for DawnAdapter {
 
     fn features(&self) -> wgpu::Features {
         let mut features = SupportedFeatures::new();
-        self.inner.get_features(&mut features);
+        self.inner.get().get_features(&mut features);
         map_features_to_wgpu(&features)
     }
 
     fn limits(&self) -> wgpu::Limits {
         let mut limits = Limits::new();
-        let _ = self.inner.get_limits(&mut limits);
+        let _ = self.inner.get().get_limits(&mut limits);
         map_limits_to_wgpu(&limits)
     }
 
@@ -2475,7 +2494,7 @@ impl AdapterInterface for DawnAdapter {
 
     fn get_info(&self) -> wgpu::AdapterInfo {
         let mut info = AdapterInfo::new();
-        let _ = self.inner.get_info(&mut info);
+        let _ = self.inner.get().get_info(&mut info);
         wgpu::AdapterInfo {
             name: info.description.clone().unwrap_or_default(),
             vendor: info.vendor_id.unwrap_or(0),
@@ -2514,12 +2533,18 @@ impl AdapterInterface for DawnAdapter {
 impl DeviceInterface for DawnDevice {
     fn features(&self) -> wgpu::Features {
         let adapter = self.inner.get_adapter();
-        DawnAdapter { inner: adapter }.features()
+        DawnAdapter {
+            inner: SendSync::new(adapter),
+        }
+        .features()
     }
 
     fn limits(&self) -> wgpu::Limits {
         let adapter = self.inner.get_adapter();
-        DawnAdapter { inner: adapter }.limits()
+        DawnAdapter {
+            inner: SendSync::new(adapter),
+        }
+        .limits()
     }
 
     fn create_shader_module(
@@ -2962,7 +2987,7 @@ impl CommandEncoderInterface for DawnCommandEncoder {
     ) {
         let source = expect_buffer(source);
         let destination = expect_buffer(destination);
-        self.inner.copy_buffer_to_buffer(
+        self.inner.get().copy_buffer_to_buffer(
             source,
             source_offset,
             destination,
@@ -2980,7 +3005,7 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_buffer_info(source);
         let dest = map_texel_copy_texture_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.copy_buffer_to_texture(&source, &dest, &size);
+        self.inner.get().copy_buffer_to_texture(&source, &dest, &size);
     }
 
     fn copy_texture_to_buffer(
@@ -2992,7 +3017,7 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_texture_info(source);
         let dest = map_texel_copy_buffer_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.copy_texture_to_buffer(&source, &dest, &size);
+        self.inner.get().copy_texture_to_buffer(&source, &dest, &size);
     }
 
     fn copy_texture_to_texture(
@@ -3004,23 +3029,23 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_texture_info(source);
         let dest = map_texel_copy_texture_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.copy_texture_to_texture(&source, &dest, &size);
+        self.inner.get().copy_texture_to_texture(&source, &dest, &size);
     }
 
     fn begin_compute_pass(&self, desc: &wgpu::ComputePassDescriptor<'_>) -> DispatchComputePass {
         let dawn_desc = map_compute_pass_descriptor(desc);
-        let pass = self.inner.begin_compute_pass(Some(&dawn_desc));
+        let pass = self.inner.get().begin_compute_pass(Some(&dawn_desc));
         dispatch_compute_pass(pass)
     }
 
     fn begin_render_pass(&self, desc: &wgpu::RenderPassDescriptor<'_>) -> DispatchRenderPass {
         let dawn_desc = map_render_pass_descriptor(desc);
-        let pass = self.inner.begin_render_pass(&dawn_desc);
+        let pass = self.inner.get().begin_render_pass(&dawn_desc);
         dispatch_render_pass(pass)
     }
 
     fn finish(&mut self) -> DispatchCommandBuffer {
-        let buffer = self.inner.finish(None);
+        let buffer = self.inner.get().finish(None);
         dispatch_command_buffer(buffer)
     }
 
@@ -3041,24 +3066,25 @@ impl CommandEncoderInterface for DawnCommandEncoder {
     ) {
         let buffer = expect_buffer(buffer);
         self.inner
+            .get()
             .clear_buffer(buffer, offset, size.unwrap_or(WHOLE_SIZE));
     }
 
     fn insert_debug_marker(&self, label: &str) {
-        self.inner.insert_debug_marker(label.to_string());
+        self.inner.get().insert_debug_marker(label.to_string());
     }
 
     fn push_debug_group(&self, label: &str) {
-        self.inner.push_debug_group(label.to_string());
+        self.inner.get().push_debug_group(label.to_string());
     }
 
     fn pop_debug_group(&self) {
-        self.inner.pop_debug_group();
+        self.inner.get().pop_debug_group();
     }
 
     fn write_timestamp(&self, query_set: &DispatchQuerySet, query_index: u32) {
         let set = expect_query_set(query_set);
-        self.inner.write_timestamp(set, query_index);
+        self.inner.get().write_timestamp(set, query_index);
     }
 
     fn resolve_query_set(
@@ -3072,6 +3098,7 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let set = expect_query_set(query_set);
         let buffer = expect_buffer(destination);
         self.inner
+            .get()
             .resolve_query_set(set, first_query, query_count, buffer, destination_offset);
     }
 
@@ -3104,7 +3131,7 @@ impl CommandEncoderInterface for DawnCommandEncoder {
 impl ComputePassInterface for DawnComputePass {
     fn set_pipeline(&mut self, pipeline: &DispatchComputePipeline) {
         let pipeline = expect_compute_pipeline(pipeline);
-        self.inner.set_pipeline(pipeline);
+        self.inner.get().set_pipeline(pipeline);
     }
 
     fn set_bind_group(
@@ -3114,7 +3141,7 @@ impl ComputePassInterface for DawnComputePass {
         offsets: &[wgpu::DynamicOffset],
     ) {
         let group = bind_group.map(expect_bind_group);
-        self.inner.set_bind_group(index, group, offsets);
+        self.inner.get().set_bind_group(index, group, offsets);
     }
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
@@ -3122,24 +3149,24 @@ impl ComputePassInterface for DawnComputePass {
         let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
         let data_len = data.len() * std::mem::size_of::<u32>();
         let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.set_immediates(offset, data_slice);
+        self.inner.get().set_immediates(offset, data_slice);
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
-        self.inner.insert_debug_marker(label.to_string());
+        self.inner.get().insert_debug_marker(label.to_string());
     }
 
     fn push_debug_group(&mut self, group_label: &str) {
-        self.inner.push_debug_group(group_label.to_string());
+        self.inner.get().push_debug_group(group_label.to_string());
     }
 
     fn pop_debug_group(&mut self) {
-        self.inner.pop_debug_group();
+        self.inner.get().pop_debug_group();
     }
 
     fn write_timestamp(&mut self, query_set: &DispatchQuerySet, query_index: u32) {
         let set = expect_query_set(query_set);
-        self.inner.write_timestamp(set, query_index);
+        self.inner.get().write_timestamp(set, query_index);
     }
 
     fn begin_pipeline_statistics_query(
@@ -3155,7 +3182,7 @@ impl ComputePassInterface for DawnComputePass {
     }
 
     fn dispatch_workgroups(&mut self, x: u32, y: u32, z: u32) {
-        self.inner.dispatch_workgroups(x, y, z);
+        self.inner.get().dispatch_workgroups(x, y, z);
     }
 
     fn dispatch_workgroups_indirect(
@@ -3165,12 +3192,13 @@ impl ComputePassInterface for DawnComputePass {
     ) {
         let buffer = expect_buffer(indirect_buffer);
         self.inner
+            .get()
             .dispatch_workgroups_indirect(buffer, indirect_offset);
     }
 
     fn end(&mut self) {
         if !self.ended {
-            self.inner.end();
+            self.inner.get().end();
             self.ended = true;
         }
     }
@@ -3179,7 +3207,7 @@ impl ComputePassInterface for DawnComputePass {
 impl Drop for DawnComputePass {
     fn drop(&mut self) {
         if !self.ended {
-            self.inner.end();
+            self.inner.get().end();
             self.ended = true;
         }
     }
@@ -3188,7 +3216,7 @@ impl Drop for DawnComputePass {
 impl RenderPassInterface for DawnRenderPass {
     fn set_pipeline(&mut self, pipeline: &DispatchRenderPipeline) {
         let pipeline = expect_render_pipeline(pipeline);
-        self.inner.set_pipeline(pipeline);
+        self.inner.get().set_pipeline(pipeline);
     }
 
     fn set_bind_group(
@@ -3198,7 +3226,7 @@ impl RenderPassInterface for DawnRenderPass {
         offsets: &[wgpu::DynamicOffset],
     ) {
         let group = bind_group.map(expect_bind_group);
-        self.inner.set_bind_group(index, group, offsets);
+        self.inner.get().set_bind_group(index, group, offsets);
     }
 
     fn set_index_buffer(
@@ -3211,6 +3239,7 @@ impl RenderPassInterface for DawnRenderPass {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
         self.inner
+            .get()
             .set_index_buffer(buffer, map_index_format(index_format), offset, size);
     }
 
@@ -3224,6 +3253,7 @@ impl RenderPassInterface for DawnRenderPass {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
         self.inner
+            .get()
             .set_vertex_buffer(slot, Some(buffer), offset, size);
     }
 
@@ -3232,16 +3262,16 @@ impl RenderPassInterface for DawnRenderPass {
         let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
         let data_len = data.len() * std::mem::size_of::<u32>();
         let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.set_immediates(offset, data_slice);
+        self.inner.get().set_immediates(offset, data_slice);
     }
 
     fn set_blend_constant(&mut self, color: wgpu::Color) {
         let color = map_color(color);
-        self.inner.set_blend_constant(&color);
+        self.inner.get().set_blend_constant(&color);
     }
 
     fn set_scissor_rect(&mut self, x: u32, y: u32, width: u32, height: u32) {
-        self.inner.set_scissor_rect(x, y, width, height);
+        self.inner.get().set_scissor_rect(x, y, width, height);
     }
 
     fn set_viewport(
@@ -3254,15 +3284,16 @@ impl RenderPassInterface for DawnRenderPass {
         max_depth: f32,
     ) {
         self.inner
+            .get()
             .set_viewport(x, y, width, height, min_depth, max_depth);
     }
 
     fn set_stencil_reference(&mut self, reference: u32) {
-        self.inner.set_stencil_reference(reference);
+        self.inner.get().set_stencil_reference(reference);
     }
 
     fn draw(&mut self, vertices: std::ops::Range<u32>, instances: std::ops::Range<u32>) {
-        self.inner.draw(
+        self.inner.get().draw(
             vertices.end - vertices.start,
             instances.end - instances.start,
             vertices.start,
@@ -3276,7 +3307,7 @@ impl RenderPassInterface for DawnRenderPass {
         base_vertex: i32,
         instances: std::ops::Range<u32>,
     ) {
-        self.inner.draw_indexed(
+        self.inner.get().draw_indexed(
             indices.end - indices.start,
             instances.end - instances.start,
             indices.start,
@@ -3295,7 +3326,7 @@ impl RenderPassInterface for DawnRenderPass {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.draw_indirect(buffer, indirect_offset);
+        self.inner.get().draw_indirect(buffer, indirect_offset);
     }
 
     fn draw_indexed_indirect(
@@ -3304,7 +3335,7 @@ impl RenderPassInterface for DawnRenderPass {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.draw_indexed_indirect(buffer, indirect_offset);
+        self.inner.get().draw_indexed_indirect(buffer, indirect_offset);
     }
 
     fn draw_mesh_tasks_indirect(
@@ -3323,6 +3354,7 @@ impl RenderPassInterface for DawnRenderPass {
     ) {
         let buffer = expect_buffer(indirect_buffer);
         self.inner
+            .get()
             .multi_draw_indirect(buffer, indirect_offset, count, None, 0);
     }
 
@@ -3334,6 +3366,7 @@ impl RenderPassInterface for DawnRenderPass {
     ) {
         let buffer = expect_buffer(indirect_buffer);
         self.inner
+            .get()
             .multi_draw_indexed_indirect(buffer, indirect_offset, count, None, 0);
     }
 
@@ -3380,28 +3413,28 @@ impl RenderPassInterface for DawnRenderPass {
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
-        self.inner.insert_debug_marker(label.to_string());
+        self.inner.get().insert_debug_marker(label.to_string());
     }
 
     fn push_debug_group(&mut self, group_label: &str) {
-        self.inner.push_debug_group(group_label.to_string());
+        self.inner.get().push_debug_group(group_label.to_string());
     }
 
     fn pop_debug_group(&mut self) {
-        self.inner.pop_debug_group();
+        self.inner.get().pop_debug_group();
     }
 
     fn write_timestamp(&mut self, query_set: &DispatchQuerySet, query_index: u32) {
         let set = expect_query_set(query_set);
-        self.inner.write_timestamp(set, query_index);
+        self.inner.get().write_timestamp(set, query_index);
     }
 
     fn begin_occlusion_query(&mut self, query_index: u32) {
-        self.inner.begin_occlusion_query(query_index);
+        self.inner.get().begin_occlusion_query(query_index);
     }
 
     fn end_occlusion_query(&mut self) {
-        self.inner.end_occlusion_query();
+        self.inner.get().end_occlusion_query();
     }
 
     fn begin_pipeline_statistics_query(
@@ -3418,12 +3451,12 @@ impl RenderPassInterface for DawnRenderPass {
 
     fn execute_bundles(&mut self, render_bundles: &mut dyn Iterator<Item = &DispatchRenderBundle>) {
         let bundles = render_bundles.map(expect_render_bundle).collect::<Vec<_>>();
-        self.inner.execute_bundles(&bundles);
+        self.inner.get().execute_bundles(&bundles);
     }
 
     fn end(&mut self) {
         if !self.ended {
-            self.inner.end();
+            self.inner.get().end();
             self.ended = true;
         }
     }
@@ -3432,7 +3465,7 @@ impl RenderPassInterface for DawnRenderPass {
 impl Drop for DawnRenderPass {
     fn drop(&mut self) {
         if !self.ended {
-            self.inner.end();
+            self.inner.get().end();
             self.ended = true;
         }
     }
@@ -3441,7 +3474,7 @@ impl Drop for DawnRenderPass {
 impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
     fn set_pipeline(&mut self, pipeline: &DispatchRenderPipeline) {
         let pipeline = expect_render_pipeline(pipeline);
-        self.inner.set_pipeline(pipeline);
+        self.inner.get().set_pipeline(pipeline);
     }
 
     fn set_bind_group(
@@ -3451,7 +3484,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         offsets: &[wgpu::DynamicOffset],
     ) {
         let group = bind_group.map(expect_bind_group);
-        self.inner.set_bind_group(index, group, offsets);
+        self.inner.get().set_bind_group(index, group, offsets);
     }
 
     fn set_index_buffer(
@@ -3464,6 +3497,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
         self.inner
+            .get()
             .set_index_buffer(buffer, map_index_format(index_format), offset, size);
     }
 
@@ -3477,6 +3511,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
         self.inner
+            .get()
             .set_vertex_buffer(slot, Some(buffer), offset, size);
     }
 
@@ -3485,11 +3520,11 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
         let data_len = data.len() * std::mem::size_of::<u32>();
         let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.set_immediates(offset, data_slice);
+        self.inner.get().set_immediates(offset, data_slice);
     }
 
     fn draw(&mut self, vertices: std::ops::Range<u32>, instances: std::ops::Range<u32>) {
-        self.inner.draw(
+        self.inner.get().draw(
             vertices.end - vertices.start,
             instances.end - instances.start,
             vertices.start,
@@ -3503,7 +3538,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         base_vertex: i32,
         instances: std::ops::Range<u32>,
     ) {
-        self.inner.draw_indexed(
+        self.inner.get().draw_indexed(
             indices.end - indices.start,
             instances.end - instances.start,
             indices.start,
@@ -3518,7 +3553,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.draw_indirect(buffer, indirect_offset);
+        self.inner.get().draw_indirect(buffer, indirect_offset);
     }
 
     fn draw_indexed_indirect(
@@ -3527,13 +3562,13 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.draw_indexed_indirect(buffer, indirect_offset);
+        self.inner.get().draw_indexed_indirect(buffer, indirect_offset);
     }
 
     fn finish(self, desc: &wgpu::RenderBundleDescriptor<'_>) -> DispatchRenderBundle {
         let mut dawn_desc = RenderBundleDescriptor::new();
         dawn_desc.label = label_to_string(desc.label);
-        let bundle = self.inner.finish(Some(&dawn_desc));
+        let bundle = self.inner.get().finish(Some(&dawn_desc));
         dispatch_render_bundle(bundle)
     }
 }
@@ -3545,14 +3580,14 @@ impl SurfaceInterface for DawnSurface {
     fn get_capabilities(&self, adapter: &DispatchAdapter) -> wgpu::SurfaceCapabilities {
         let adapter = expect_adapter(adapter);
         let mut caps = SurfaceCapabilities::new();
-        let _ = self.inner.get_capabilities(adapter, &mut caps);
+        let _ = self.inner.get().get_capabilities(adapter, &mut caps);
         map_surface_capabilities(caps)
     }
 
     fn configure(&self, device: &DispatchDevice, config: &wgpu::SurfaceConfiguration) {
         let mut config = map_surface_configuration(config);
         config.device = Some(expect_device(device));
-        self.inner.configure(&config);
+        self.inner.get().configure(&config);
     }
 
     fn get_current_texture(
@@ -3563,7 +3598,7 @@ impl SurfaceInterface for DawnSurface {
         DispatchSurfaceOutputDetail,
     ) {
         let mut surface_texture = SurfaceTexture::new();
-        self.inner.get_current_texture(&mut surface_texture);
+        self.inner.get().get_current_texture(&mut surface_texture);
         let status = match surface_texture
             .status
             .unwrap_or(SurfaceGetCurrentTextureStatus::Error)
@@ -3578,14 +3613,14 @@ impl SurfaceInterface for DawnSurface {
         (
             surface_texture.texture.map(dispatch_texture),
             status,
-            dispatch_surface_output_detail(self.inner.clone()),
+            dispatch_surface_output_detail(self.inner.get()),
         )
     }
 }
 
 impl SurfaceOutputDetailInterface for DawnSurfaceOutputDetail {
     fn present(&self) {
-        let _ = self.surface.present();
+        let _ = self.surface.get().present();
     }
 
     fn texture_discard(&self) {
@@ -3626,24 +3661,28 @@ impl BufferMappedRangeInterface for DawnBufferMappedRange {
 }
 
 pub fn to_wgpu_instance(instance: Instance) -> wgpu::Instance {
-    wgpu::Instance::from_custom(DawnInstance { inner: instance })
+    wgpu::Instance::from_custom(DawnInstance {
+        inner: SendSync::new(instance),
+    })
 }
 
 pub fn from_wgpu_instance(instance: &wgpu::Instance) -> Result<Instance, WgpuCompatError> {
     instance
         .as_custom::<DawnInstance>()
-        .map(|i| i.inner.clone())
+        .map(|i| i.inner.get())
         .ok_or(WgpuCompatError::NotDawnBackend)
 }
 
 pub fn to_wgpu_adapter(adapter: Adapter) -> wgpu::Adapter {
-    wgpu::Adapter::from_custom(DawnAdapter { inner: adapter })
+    wgpu::Adapter::from_custom(DawnAdapter {
+        inner: SendSync::new(adapter),
+    })
 }
 
 pub fn from_wgpu_adapter(adapter: &wgpu::Adapter) -> Result<Adapter, WgpuCompatError> {
     adapter
         .as_custom::<DawnAdapter>()
-        .map(|a| a.inner.clone())
+        .map(|a| a.inner.get())
         .ok_or(WgpuCompatError::NotDawnBackend)
 }
 
@@ -3672,7 +3711,7 @@ pub fn from_wgpu_queue(queue: &wgpu::Queue) -> Result<Queue, WgpuCompatError> {
 pub fn from_wgpu_surface(surface: &wgpu::Surface) -> Result<Surface, WgpuCompatError> {
     surface
         .as_custom::<DawnSurface>()
-        .map(|s| s.inner.clone())
+        .map(|s| s.inner.get())
         .ok_or(WgpuCompatError::NotDawnBackend)
 }
 
@@ -3764,7 +3803,7 @@ pub fn from_wgpu_command_encoder(
 ) -> Result<CommandEncoder, WgpuCompatError> {
     encoder
         .as_custom::<DawnCommandEncoder>()
-        .map(|e| e.inner.clone())
+        .map(|e| e.inner.get())
         .ok_or(WgpuCompatError::NotDawnBackend)
 }
 
