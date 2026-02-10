@@ -49,7 +49,7 @@ pub enum WGSLLanguageFeatureName {
 }
 impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
     fn from(value: ffi::WGPUWGSLLanguageFeatureName) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ReadonlyAndReadwriteStorageTextures => {
                 WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures
             }
@@ -132,7 +132,7 @@ pub enum AdapterType {
 }
 impl From<ffi::WGPUAdapterType> for AdapterType {
     fn from(value: ffi::WGPUAdapterType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUAdapterType_WGPUAdapterType_DiscreteGPU => AdapterType::DiscreteGpu,
             ffi::WGPUAdapterType_WGPUAdapterType_IntegratedGPU => {
                 AdapterType::IntegratedGpu
@@ -158,7 +158,7 @@ pub enum AddressMode {
 }
 impl From<ffi::WGPUAddressMode> for AddressMode {
     fn from(value: ffi::WGPUAddressMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUAddressMode_WGPUAddressMode_Undefined => AddressMode::Undefined,
             ffi::WGPUAddressMode_WGPUAddressMode_ClampToEdge => AddressMode::ClampToEdge,
             ffi::WGPUAddressMode_WGPUAddressMode_Repeat => AddressMode::Repeat,
@@ -183,7 +183,7 @@ pub enum AlphaMode {
 }
 impl From<ffi::WGPUAlphaMode> for AlphaMode {
     fn from(value: ffi::WGPUAlphaMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUAlphaMode_WGPUAlphaMode_Opaque => AlphaMode::Opaque,
             ffi::WGPUAlphaMode_WGPUAlphaMode_Premultiplied => AlphaMode::Premultiplied,
             ffi::WGPUAlphaMode_WGPUAlphaMode_Unpremultiplied => {
@@ -213,7 +213,7 @@ pub enum BackendType {
 }
 impl From<ffi::WGPUBackendType> for BackendType {
     fn from(value: ffi::WGPUBackendType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUBackendType_WGPUBackendType_Undefined => BackendType::Undefined,
             ffi::WGPUBackendType_WGPUBackendType_Null => BackendType::Null,
             ffi::WGPUBackendType_WGPUBackendType_WebGPU => BackendType::WebGPU,
@@ -256,7 +256,7 @@ pub enum BlendFactor {
 }
 impl From<ffi::WGPUBlendFactor> for BlendFactor {
     fn from(value: ffi::WGPUBlendFactor) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUBlendFactor_WGPUBlendFactor_Undefined => BlendFactor::Undefined,
             ffi::WGPUBlendFactor_WGPUBlendFactor_Zero => BlendFactor::Zero,
             ffi::WGPUBlendFactor_WGPUBlendFactor_One => BlendFactor::One,
@@ -308,7 +308,7 @@ pub enum BlendOperation {
 }
 impl From<ffi::WGPUBlendOperation> for BlendOperation {
     fn from(value: ffi::WGPUBlendOperation) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUBlendOperation_WGPUBlendOperation_Undefined => {
                 BlendOperation::Undefined
             }
@@ -343,7 +343,7 @@ pub enum BufferBindingType {
 }
 impl From<ffi::WGPUBufferBindingType> for BufferBindingType {
     fn from(value: ffi::WGPUBufferBindingType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUBufferBindingType_WGPUBufferBindingType_BindingNotUsed => {
                 BufferBindingType::BindingNotUsed
             }
@@ -377,7 +377,7 @@ pub enum BufferMapState {
 }
 impl From<ffi::WGPUBufferMapState> for BufferMapState {
     fn from(value: ffi::WGPUBufferMapState) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUBufferMapState_WGPUBufferMapState_Unmapped => {
                 BufferMapState::Unmapped
             }
@@ -402,7 +402,7 @@ pub enum CallbackMode {
 }
 impl From<ffi::WGPUCallbackMode> for CallbackMode {
     fn from(value: ffi::WGPUCallbackMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCallbackMode_WGPUCallbackMode_WaitAnyOnly => {
                 CallbackMode::WaitAnyOnly
             }
@@ -436,7 +436,7 @@ pub enum CompareFunction {
 }
 impl From<ffi::WGPUCompareFunction> for CompareFunction {
     fn from(value: ffi::WGPUCompareFunction) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCompareFunction_WGPUCompareFunction_Undefined => {
                 CompareFunction::Undefined
             }
@@ -477,7 +477,7 @@ pub enum CompilationInfoRequestStatus {
 }
 impl From<ffi::WGPUCompilationInfoRequestStatus> for CompilationInfoRequestStatus {
     fn from(value: ffi::WGPUCompilationInfoRequestStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_Success => {
                 CompilationInfoRequestStatus::Success
             }
@@ -502,7 +502,7 @@ pub enum CompilationMessageType {
 }
 impl From<ffi::WGPUCompilationMessageType> for CompilationMessageType {
     fn from(value: ffi::WGPUCompilationMessageType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Error => {
                 CompilationMessageType::Error
             }
@@ -534,7 +534,7 @@ pub enum ComponentSwizzle {
 }
 impl From<ffi::WGPUComponentSwizzle> for ComponentSwizzle {
     fn from(value: ffi::WGPUComponentSwizzle) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_Undefined => {
                 ComponentSwizzle::Undefined
             }
@@ -566,7 +566,7 @@ pub enum CompositeAlphaMode {
 }
 impl From<ffi::WGPUCompositeAlphaMode> for CompositeAlphaMode {
     fn from(value: ffi::WGPUCompositeAlphaMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Auto => {
                 CompositeAlphaMode::Auto
             }
@@ -605,7 +605,7 @@ pub enum CreatePipelineAsyncStatus {
 }
 impl From<ffi::WGPUCreatePipelineAsyncStatus> for CreatePipelineAsyncStatus {
     fn from(value: ffi::WGPUCreatePipelineAsyncStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_Success => {
                 CreatePipelineAsyncStatus::Success
             }
@@ -637,7 +637,7 @@ pub enum CullMode {
 }
 impl From<ffi::WGPUCullMode> for CullMode {
     fn from(value: ffi::WGPUCullMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUCullMode_WGPUCullMode_Undefined => CullMode::Undefined,
             ffi::WGPUCullMode_WGPUCullMode_None => CullMode::None,
             ffi::WGPUCullMode_WGPUCullMode_Front => CullMode::Front,
@@ -663,7 +663,7 @@ pub enum DeviceLostReason {
 }
 impl From<ffi::WGPUDeviceLostReason> for DeviceLostReason {
     fn from(value: ffi::WGPUDeviceLostReason) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_Unknown => {
                 DeviceLostReason::Unknown
             }
@@ -694,7 +694,7 @@ pub enum ErrorFilter {
 }
 impl From<ffi::WGPUErrorFilter> for ErrorFilter {
     fn from(value: ffi::WGPUErrorFilter) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUErrorFilter_WGPUErrorFilter_Validation => ErrorFilter::Validation,
             ffi::WGPUErrorFilter_WGPUErrorFilter_OutOfMemory => ErrorFilter::OutOfMemory,
             ffi::WGPUErrorFilter_WGPUErrorFilter_Internal => ErrorFilter::Internal,
@@ -718,7 +718,7 @@ pub enum ErrorType {
 }
 impl From<ffi::WGPUErrorType> for ErrorType {
     fn from(value: ffi::WGPUErrorType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUErrorType_WGPUErrorType_NoError => ErrorType::NoError,
             ffi::WGPUErrorType_WGPUErrorType_Validation => ErrorType::Validation,
             ffi::WGPUErrorType_WGPUErrorType_OutOfMemory => ErrorType::OutOfMemory,
@@ -747,7 +747,7 @@ pub enum ExternalTextureRotation {
 }
 impl From<ffi::WGPUExternalTextureRotation> for ExternalTextureRotation {
     fn from(value: ffi::WGPUExternalTextureRotation) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate0Degrees => {
                 ExternalTextureRotation::Rotate0Degrees
             }
@@ -778,7 +778,7 @@ pub enum FeatureLevel {
 }
 impl From<ffi::WGPUFeatureLevel> for FeatureLevel {
     fn from(value: ffi::WGPUFeatureLevel) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUFeatureLevel_WGPUFeatureLevel_Undefined => FeatureLevel::Undefined,
             ffi::WGPUFeatureLevel_WGPUFeatureLevel_Compatibility => {
                 FeatureLevel::Compatibility
@@ -943,7 +943,7 @@ pub enum FeatureName {
 }
 impl From<ffi::WGPUFeatureName> for FeatureName {
     fn from(value: ffi::WGPUFeatureName) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUFeatureName_WGPUFeatureName_CoreFeaturesAndLimits => {
                 FeatureName::CoreFeaturesAndLimits
             }
@@ -1199,7 +1199,7 @@ pub enum FilterMode {
 }
 impl From<ffi::WGPUFilterMode> for FilterMode {
     fn from(value: ffi::WGPUFilterMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUFilterMode_WGPUFilterMode_Undefined => FilterMode::Undefined,
             ffi::WGPUFilterMode_WGPUFilterMode_Nearest => FilterMode::Nearest,
             ffi::WGPUFilterMode_WGPUFilterMode_Linear => FilterMode::Linear,
@@ -1221,7 +1221,7 @@ pub enum FrontFace {
 }
 impl From<ffi::WGPUFrontFace> for FrontFace {
     fn from(value: ffi::WGPUFrontFace) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUFrontFace_WGPUFrontFace_Undefined => FrontFace::Undefined,
             ffi::WGPUFrontFace_WGPUFrontFace_CCW => FrontFace::Ccw,
             ffi::WGPUFrontFace_WGPUFrontFace_CW => FrontFace::Cw,
@@ -1243,7 +1243,7 @@ pub enum IndexFormat {
 }
 impl From<ffi::WGPUIndexFormat> for IndexFormat {
     fn from(value: ffi::WGPUIndexFormat) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUIndexFormat_WGPUIndexFormat_Undefined => IndexFormat::Undefined,
             ffi::WGPUIndexFormat_WGPUIndexFormat_Uint16 => IndexFormat::Uint16,
             ffi::WGPUIndexFormat_WGPUIndexFormat_Uint32 => IndexFormat::Uint32,
@@ -1268,7 +1268,7 @@ pub enum InstanceFeatureName {
 }
 impl From<ffi::WGPUInstanceFeatureName> for InstanceFeatureName {
     fn from(value: ffi::WGPUInstanceFeatureName) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_TimedWaitAny => {
                 InstanceFeatureName::TimedWaitAny
             }
@@ -1297,7 +1297,7 @@ pub enum LoadOp {
 }
 impl From<ffi::WGPULoadOp> for LoadOp {
     fn from(value: ffi::WGPULoadOp) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPULoadOp_WGPULoadOp_Undefined => LoadOp::Undefined,
             ffi::WGPULoadOp_WGPULoadOp_Load => LoadOp::Load,
             ffi::WGPULoadOp_WGPULoadOp_Clear => LoadOp::Clear,
@@ -1323,7 +1323,7 @@ pub enum LoggingType {
 }
 impl From<ffi::WGPULoggingType> for LoggingType {
     fn from(value: ffi::WGPULoggingType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPULoggingType_WGPULoggingType_Verbose => LoggingType::Verbose,
             ffi::WGPULoggingType_WGPULoggingType_Info => LoggingType::Info,
             ffi::WGPULoggingType_WGPULoggingType_Warning => LoggingType::Warning,
@@ -1348,7 +1348,7 @@ pub enum MapAsyncStatus {
 }
 impl From<ffi::WGPUMapAsyncStatus> for MapAsyncStatus {
     fn from(value: ffi::WGPUMapAsyncStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Success => MapAsyncStatus::Success,
             ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_CallbackCancelled => {
                 MapAsyncStatus::CallbackCancelled
@@ -1373,7 +1373,7 @@ pub enum MipmapFilterMode {
 }
 impl From<ffi::WGPUMipmapFilterMode> for MipmapFilterMode {
     fn from(value: ffi::WGPUMipmapFilterMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Undefined => {
                 MipmapFilterMode::Undefined
             }
@@ -1401,7 +1401,7 @@ pub enum OptionalBool {
 }
 impl From<ffi::WGPUOptionalBool> for OptionalBool {
     fn from(value: ffi::WGPUOptionalBool) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUOptionalBool_WGPUOptionalBool_False => OptionalBool::False,
             ffi::WGPUOptionalBool_WGPUOptionalBool_True => OptionalBool::True,
             ffi::WGPUOptionalBool_WGPUOptionalBool_Undefined => OptionalBool::Undefined,
@@ -1424,7 +1424,7 @@ pub enum PopErrorScopeStatus {
 }
 impl From<ffi::WGPUPopErrorScopeStatus> for PopErrorScopeStatus {
     fn from(value: ffi::WGPUPopErrorScopeStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Success => {
                 PopErrorScopeStatus::Success
             }
@@ -1453,7 +1453,7 @@ pub enum PowerPreference {
 }
 impl From<ffi::WGPUPowerPreference> for PowerPreference {
     fn from(value: ffi::WGPUPowerPreference) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUPowerPreference_WGPUPowerPreference_Undefined => {
                 PowerPreference::Undefined
             }
@@ -1480,7 +1480,7 @@ pub enum PredefinedColorSpace {
 }
 impl From<ffi::WGPUPredefinedColorSpace> for PredefinedColorSpace {
     fn from(value: ffi::WGPUPredefinedColorSpace) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGB => {
                 PredefinedColorSpace::SRgb
             }
@@ -1507,7 +1507,7 @@ pub enum PresentMode {
 }
 impl From<ffi::WGPUPresentMode> for PresentMode {
     fn from(value: ffi::WGPUPresentMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUPresentMode_WGPUPresentMode_Undefined => PresentMode::Undefined,
             ffi::WGPUPresentMode_WGPUPresentMode_Fifo => PresentMode::Fifo,
             ffi::WGPUPresentMode_WGPUPresentMode_FifoRelaxed => PresentMode::FifoRelaxed,
@@ -1535,7 +1535,7 @@ pub enum PrimitiveTopology {
 }
 impl From<ffi::WGPUPrimitiveTopology> for PrimitiveTopology {
     fn from(value: ffi::WGPUPrimitiveTopology) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_Undefined => {
                 PrimitiveTopology::Undefined
             }
@@ -1571,7 +1571,7 @@ pub enum QueryType {
 }
 impl From<ffi::WGPUQueryType> for QueryType {
     fn from(value: ffi::WGPUQueryType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUQueryType_WGPUQueryType_Occlusion => QueryType::Occlusion,
             ffi::WGPUQueryType_WGPUQueryType_Timestamp => QueryType::Timestamp,
             _ => QueryType::Occlusion,
@@ -1593,7 +1593,7 @@ pub enum QueueWorkDoneStatus {
 }
 impl From<ffi::WGPUQueueWorkDoneStatus> for QueueWorkDoneStatus {
     fn from(value: ffi::WGPUQueueWorkDoneStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Success => {
                 QueueWorkDoneStatus::Success
             }
@@ -1624,7 +1624,7 @@ pub enum RequestAdapterStatus {
 }
 impl From<ffi::WGPURequestAdapterStatus> for RequestAdapterStatus {
     fn from(value: ffi::WGPURequestAdapterStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Success => {
                 RequestAdapterStatus::Success
             }
@@ -1656,7 +1656,7 @@ pub enum RequestDeviceStatus {
 }
 impl From<ffi::WGPURequestDeviceStatus> for RequestDeviceStatus {
     fn from(value: ffi::WGPURequestDeviceStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Success => {
                 RequestDeviceStatus::Success
             }
@@ -1855,7 +1855,7 @@ pub enum SType {
 }
 impl From<ffi::WGPUSType> for SType {
     fn from(value: ffi::WGPUSType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUSType_WGPUSType_ShaderSourceSPIRV => SType::ShaderSourceSPIRV,
             ffi::WGPUSType_WGPUSType_ShaderSourceWGSL => SType::ShaderSourceWGSL,
             ffi::WGPUSType_WGPUSType_RenderPassMaxDrawCount => {
@@ -2156,7 +2156,7 @@ pub enum SamplerBindingType {
 }
 impl From<ffi::WGPUSamplerBindingType> for SamplerBindingType {
     fn from(value: ffi::WGPUSamplerBindingType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_BindingNotUsed => {
                 SamplerBindingType::BindingNotUsed
             }
@@ -2196,7 +2196,7 @@ pub enum SharedFenceType {
 }
 impl From<ffi::WGPUSharedFenceType> for SharedFenceType {
     fn from(value: ffi::WGPUSharedFenceType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUSharedFenceType_WGPUSharedFenceType_VkSemaphoreOpaqueFD => {
                 SharedFenceType::VkSemaphoreOpaqueFD
             }
@@ -2232,7 +2232,7 @@ pub enum Status {
 }
 impl From<ffi::WGPUStatus> for Status {
     fn from(value: ffi::WGPUStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUStatus_WGPUStatus_Success => Status::Success,
             ffi::WGPUStatus_WGPUStatus_Error => Status::Error,
             _ => Status::Success,
@@ -2261,7 +2261,7 @@ pub enum StencilOperation {
 }
 impl From<ffi::WGPUStencilOperation> for StencilOperation {
     fn from(value: ffi::WGPUStencilOperation) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUStencilOperation_WGPUStencilOperation_Undefined => {
                 StencilOperation::Undefined
             }
@@ -2306,7 +2306,7 @@ pub enum StorageTextureAccess {
 }
 impl From<ffi::WGPUStorageTextureAccess> for StorageTextureAccess {
     fn from(value: ffi::WGPUStorageTextureAccess) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_BindingNotUsed => {
                 StorageTextureAccess::BindingNotUsed
             }
@@ -2340,7 +2340,7 @@ pub enum StoreOp {
 }
 impl From<ffi::WGPUStoreOp> for StoreOp {
     fn from(value: ffi::WGPUStoreOp) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUStoreOp_WGPUStoreOp_Undefined => StoreOp::Undefined,
             ffi::WGPUStoreOp_WGPUStoreOp_Store => StoreOp::Store,
             ffi::WGPUStoreOp_WGPUStoreOp_Discard => StoreOp::Discard,
@@ -2369,7 +2369,7 @@ pub enum SubgroupMatrixComponentType {
 }
 impl From<ffi::WGPUSubgroupMatrixComponentType> for SubgroupMatrixComponentType {
     fn from(value: ffi::WGPUSubgroupMatrixComponentType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32 => {
                 SubgroupMatrixComponentType::F32
             }
@@ -2415,7 +2415,7 @@ pub enum SurfaceGetCurrentTextureStatus {
 }
 impl From<ffi::WGPUSurfaceGetCurrentTextureStatus> for SurfaceGetCurrentTextureStatus {
     fn from(value: ffi::WGPUSurfaceGetCurrentTextureStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal => {
                 SurfaceGetCurrentTextureStatus::SuccessOptimal
             }
@@ -2452,7 +2452,7 @@ pub enum TexelBufferAccess {
 }
 impl From<ffi::WGPUTexelBufferAccess> for TexelBufferAccess {
     fn from(value: ffi::WGPUTexelBufferAccess) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_Undefined => {
                 TexelBufferAccess::Undefined
             }
@@ -2484,7 +2484,7 @@ pub enum TextureAspect {
 }
 impl From<ffi::WGPUTextureAspect> for TextureAspect {
     fn from(value: ffi::WGPUTextureAspect) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTextureAspect_WGPUTextureAspect_Undefined => {
                 TextureAspect::Undefined
             }
@@ -2523,7 +2523,7 @@ pub enum TextureDimension {
 }
 impl From<ffi::WGPUTextureDimension> for TextureDimension {
     fn from(value: ffi::WGPUTextureDimension) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTextureDimension_WGPUTextureDimension_Undefined => {
                 TextureDimension::Undefined
             }
@@ -2673,7 +2673,7 @@ pub enum TextureFormat {
 }
 impl From<ffi::WGPUTextureFormat> for TextureFormat {
     fn from(value: ffi::WGPUTextureFormat) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTextureFormat_WGPUTextureFormat_Undefined => {
                 TextureFormat::Undefined
             }
@@ -2984,7 +2984,7 @@ pub enum TextureSampleType {
 }
 impl From<ffi::WGPUTextureSampleType> for TextureSampleType {
     fn from(value: ffi::WGPUTextureSampleType) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTextureSampleType_WGPUTextureSampleType_BindingNotUsed => {
                 TextureSampleType::BindingNotUsed
             }
@@ -3028,7 +3028,7 @@ pub enum TextureViewDimension {
 }
 impl From<ffi::WGPUTextureViewDimension> for TextureViewDimension {
     fn from(value: ffi::WGPUTextureViewDimension) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_Undefined => {
                 TextureViewDimension::Undefined
             }
@@ -3067,7 +3067,7 @@ pub enum ToneMappingMode {
 }
 impl From<ffi::WGPUToneMappingMode> for ToneMappingMode {
     fn from(value: ffi::WGPUToneMappingMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUToneMappingMode_WGPUToneMappingMode_Standard => {
                 ToneMappingMode::Standard
             }
@@ -3130,7 +3130,7 @@ pub enum VertexFormat {
 }
 impl From<ffi::WGPUVertexFormat> for VertexFormat {
     fn from(value: ffi::WGPUVertexFormat) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8 => VertexFormat::Uint8,
             ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x2 => VertexFormat::Uint8X2,
             ffi::WGPUVertexFormat_WGPUVertexFormat_Uint8x4 => VertexFormat::Uint8X4,
@@ -3194,7 +3194,7 @@ pub enum VertexStepMode {
 }
 impl From<ffi::WGPUVertexStepMode> for VertexStepMode {
     fn from(value: ffi::WGPUVertexStepMode) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUVertexStepMode_WGPUVertexStepMode_Undefined => {
                 VertexStepMode::Undefined
             }
@@ -3220,7 +3220,7 @@ pub enum WaitStatus {
 }
 impl From<ffi::WGPUWaitStatus> for WaitStatus {
     fn from(value: ffi::WGPUWaitStatus) -> Self {
-        match value as u32 {
+        match value {
             ffi::WGPUWaitStatus_WGPUWaitStatus_Success => WaitStatus::Success,
             ffi::WGPUWaitStatus_WGPUWaitStatus_TimedOut => WaitStatus::TimedOut,
             ffi::WGPUWaitStatus_WGPUWaitStatus_Error => WaitStatus::Error,

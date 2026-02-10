@@ -72,8 +72,8 @@ impl InstanceInterface for DawnInstance {
                     RawWindowHandle::Win32(handle) => {
                         let mut desc = SurfaceDescriptor::new();
                         let source = SurfaceSourceWindowsHWND {
-                            hinstance: Some(handle.hinstance.cast()),
-                            hwnd: Some(handle.hwnd.cast()),
+                            hinstance: handle.hinstance.map(|h| h.get() as _),
+                            hwnd: Some(handle.hwnd.get() as _),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.get().create_surface(&desc);

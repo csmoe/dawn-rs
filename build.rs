@@ -29,6 +29,11 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Foundation");
         println!("cargo:rustc-link-lib=framework=Cocoa");
     }
+    #[cfg(target_os = "windows")]
+    {
+        println!("cargo:rustc-link-lib=onecore_apiset");
+        println!("cargo:rustc-link-lib=dxguid");
+    }
 }
 
 fn resolve_dawn_root() -> Option<PathBuf> {

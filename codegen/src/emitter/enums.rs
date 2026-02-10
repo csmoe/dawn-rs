@@ -66,7 +66,7 @@ pub enum {name} {{
 
 impl From<ffi::{ffi_type}> for {name} {{
     fn from(value: ffi::{ffi_type}) -> Self {{
-        match value as u32 {{
+        match value {{
 {from_arms}
             _ => {name}::{fallback},
         }}
