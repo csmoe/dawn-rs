@@ -803,15 +803,9 @@ impl InstanceLimitsExtension {
 }
 #[allow(dead_code)]
 pub enum LimitsExtension {
-    CompatibilityModeLimits(CompatibilityModeLimits),
     DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
     DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
     ResourceTableLimits(ResourceTableLimits),
-}
-impl std::convert::From<CompatibilityModeLimits> for LimitsExtension {
-    fn from(ext: CompatibilityModeLimits) -> Self {
-        LimitsExtension::CompatibilityModeLimits(ext)
-    }
 }
 impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
     fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -835,14 +829,6 @@ impl LimitsExtension {
         next: *mut ffi::WGPUChainedStruct,
     ) -> *mut ffi::WGPUChainedStruct {
         match self {
-            LimitsExtension::CompatibilityModeLimits(value) => {
-                let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = SType::CompatibilityModeLimits as ffi::WGPUSType;
-                raw.chain.next = next;
-                storage.push_storage(storage_value);
-                let raw_ptr = storage.push_value_mut(raw);
-                raw_ptr.cast::<ffi::WGPUChainedStruct>()
-            }
             LimitsExtension::DawnHostMappedPointerLimits(value) => {
                 let (mut raw, storage_value) = value.to_ffi();
                 raw.chain.sType = SType::DawnHostMappedPointerLimits as ffi::WGPUSType;
@@ -2036,7 +2022,6 @@ impl SurfaceConfigurationExtension {
 }
 #[allow(dead_code)]
 pub enum SurfaceDescriptorExtension {
-    EmscriptenSurfaceSourceCanvasHTMLSelector(EmscriptenSurfaceSourceCanvasHTMLSelector),
     SurfaceColorManagement(SurfaceColorManagement),
     SurfaceDescriptorFromWindowsUWPSwapChainPanel(
         SurfaceDescriptorFromWindowsUWPSwapChainPanel,
@@ -2051,12 +2036,6 @@ pub enum SurfaceDescriptorExtension {
     SurfaceSourceWaylandSurface(SurfaceSourceWaylandSurface),
     SurfaceSourceWindowsHWND(SurfaceSourceWindowsHWND),
     SurfaceSourceXlibWindow(SurfaceSourceXlibWindow),
-}
-impl std::convert::From<EmscriptenSurfaceSourceCanvasHTMLSelector>
-for SurfaceDescriptorExtension {
-    fn from(ext: EmscriptenSurfaceSourceCanvasHTMLSelector) -> Self {
-        SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(ext)
-    }
 }
 impl std::convert::From<SurfaceColorManagement> for SurfaceDescriptorExtension {
     fn from(ext: SurfaceColorManagement) -> Self {
@@ -2119,17 +2098,6 @@ impl SurfaceDescriptorExtension {
         next: *mut ffi::WGPUChainedStruct,
     ) -> *mut ffi::WGPUChainedStruct {
         match self {
-            SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(
-                value,
-            ) => {
-                let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = SType::EmscriptenSurfaceSourceCanvasHTMLSelector
-                    as ffi::WGPUSType;
-                raw.chain.next = next;
-                storage.push_storage(storage_value);
-                let raw_ptr = storage.push_value_mut(raw);
-                raw_ptr.cast::<ffi::WGPUChainedStruct>()
-            }
             SurfaceDescriptorExtension::SurfaceColorManagement(value) => {
                 let (mut raw, storage_value) = value.to_ffi();
                 raw.chain.sType = SType::SurfaceColorManagement as ffi::WGPUSType;
@@ -2265,18 +2233,11 @@ impl TextureBindingLayoutExtension {
 #[allow(dead_code)]
 pub enum TextureDescriptorExtension {
     DawnTextureInternalUsageDescriptor(DawnTextureInternalUsageDescriptor),
-    TextureBindingViewDimensionDescriptor(TextureBindingViewDimensionDescriptor),
 }
 impl std::convert::From<DawnTextureInternalUsageDescriptor>
 for TextureDescriptorExtension {
     fn from(ext: DawnTextureInternalUsageDescriptor) -> Self {
         TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(ext)
-    }
-}
-impl std::convert::From<TextureBindingViewDimensionDescriptor>
-for TextureDescriptorExtension {
-    fn from(ext: TextureBindingViewDimensionDescriptor) -> Self {
-        TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(ext)
     }
 }
 impl TextureDescriptorExtension {
@@ -2289,15 +2250,6 @@ impl TextureDescriptorExtension {
             TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(value) => {
                 let (mut raw, storage_value) = value.to_ffi();
                 raw.chain.sType = SType::DawnTextureInternalUsageDescriptor
-                    as ffi::WGPUSType;
-                raw.chain.next = next;
-                storage.push_storage(storage_value);
-                let raw_ptr = storage.push_value_mut(raw);
-                raw_ptr.cast::<ffi::WGPUChainedStruct>()
-            }
-            TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(value) => {
-                let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = SType::TextureBindingViewDimensionDescriptor
                     as ffi::WGPUSType;
                 raw.chain.next = next;
                 storage.push_storage(storage_value);
