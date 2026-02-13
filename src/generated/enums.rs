@@ -1850,8 +1850,6 @@ pub enum SType {
         as u32,
     AdapterPropertiesExplicitComputeSubgroupSizeConfigs = ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs
         as u32,
-    DawnRenderPassColorAttachmentRenderToSingleSampled = ffi::WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled
-        as u32,
 }
 impl From<ffi::WGPUSType> for SType {
     fn from(value: ffi::WGPUSType) -> Self {
@@ -2130,9 +2128,6 @@ impl From<ffi::WGPUSType> for SType {
             }
             ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
                 SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs
-            }
-            ffi::WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled => {
-                SType::DawnRenderPassColorAttachmentRenderToSingleSampled
             }
             _ => SType::ShaderSourceSPIRV,
         }

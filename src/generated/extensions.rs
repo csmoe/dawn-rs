@@ -1008,38 +1008,16 @@ impl RenderBundleEncoderDescriptorExtension {
     }
 }
 #[allow(dead_code)]
-pub enum RenderPassColorAttachmentExtension {
-    DawnRenderPassColorAttachmentRenderToSingleSampled(
-        DawnRenderPassColorAttachmentRenderToSingleSampled,
-    ),
-}
-impl std::convert::From<DawnRenderPassColorAttachmentRenderToSingleSampled>
-for RenderPassColorAttachmentExtension {
-    fn from(ext: DawnRenderPassColorAttachmentRenderToSingleSampled) -> Self {
-        RenderPassColorAttachmentExtension::DawnRenderPassColorAttachmentRenderToSingleSampled(
-            ext,
-        )
-    }
-}
+pub enum RenderPassColorAttachmentExtension {}
 impl RenderPassColorAttachmentExtension {
     pub(crate) fn push_chain(
         &self,
         storage: &mut ChainedStructStorage,
         next: *mut ffi::WGPUChainedStruct,
     ) -> *mut ffi::WGPUChainedStruct {
-        match self {
-            RenderPassColorAttachmentExtension::DawnRenderPassColorAttachmentRenderToSingleSampled(
-                value,
-            ) => {
-                let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = SType::DawnRenderPassColorAttachmentRenderToSingleSampled
-                    as ffi::WGPUSType;
-                raw.chain.next = next;
-                storage.push_storage(storage_value);
-                let raw_ptr = storage.push_value_mut(raw);
-                raw_ptr.cast::<ffi::WGPUChainedStruct>()
-            }
-        }
+        let _ = self;
+        let _ = storage;
+        next
     }
 }
 #[allow(dead_code)]

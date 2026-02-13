@@ -2628,43 +2628,6 @@ impl DawnInjectedInvalidSType {
         }
     }
 }
-pub struct DawnRenderPassColorAttachmentRenderToSingleSampled {
-    pub implicit_sample_count: Option<u32>,
-}
-impl Default for DawnRenderPassColorAttachmentRenderToSingleSampled {
-    fn default() -> Self {
-        Self {
-            implicit_sample_count: Some(1),
-        }
-    }
-}
-impl DawnRenderPassColorAttachmentRenderToSingleSampled {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub(crate) fn to_ffi(
-        &self,
-    ) -> (
-        ffi::WGPUDawnRenderPassColorAttachmentRenderToSingleSampled,
-        ChainedStructStorage,
-    ) {
-        let mut storage = ChainedStructStorage::new();
-        let mut raw: ffi::WGPUDawnRenderPassColorAttachmentRenderToSingleSampled = unsafe {
-            std::mem::zeroed()
-        };
-        if let Some(value) = self.implicit_sample_count {
-            raw.implicitSampleCount = value;
-        }
-        (raw, storage)
-    }
-    pub(crate) fn from_ffi(
-        value: ffi::WGPUDawnRenderPassColorAttachmentRenderToSingleSampled,
-    ) -> Self {
-        Self {
-            implicit_sample_count: Some(value.implicitSampleCount),
-        }
-    }
-}
 pub struct DawnRenderPassSampleCount {
     pub sample_count: Option<u32>,
 }
