@@ -2292,8 +2292,6 @@ pub const WGPUSType_WGPUSType_ResourceTableLimits: WGPUSType = 327760;
 pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327761;
 pub const WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs: WGPUSType =
     327762;
-pub const WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled: WGPUSType =
-    327763;
 pub const WGPUSType_WGPUSType_Force32: WGPUSType = 2147483647;
 pub type WGPUSType = ::std::os::raw::c_uint;
 pub const WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32:
@@ -3576,24 +3574,6 @@ const _: () = {
         [::std::mem::offset_of!(WGPUDawnInjectedInvalidSType, chain) - 0usize];
     ["Offset of field: WGPUDawnInjectedInvalidSType::invalidSType"]
         [::std::mem::offset_of!(WGPUDawnInjectedInvalidSType, invalidSType) - 16usize];
-};
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUDawnRenderPassColorAttachmentRenderToSingleSampled {
-    pub chain: WGPUChainedStruct,
-    pub implicitSampleCount: u32,
-}
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of WGPUDawnRenderPassColorAttachmentRenderToSingleSampled"]
-        [::std::mem::size_of::<WGPUDawnRenderPassColorAttachmentRenderToSingleSampled>() - 24usize];
-    ["Alignment of WGPUDawnRenderPassColorAttachmentRenderToSingleSampled"]
-        [::std::mem::align_of::<WGPUDawnRenderPassColorAttachmentRenderToSingleSampled>() - 8usize];
-    ["Offset of field: WGPUDawnRenderPassColorAttachmentRenderToSingleSampled::chain"][::std::mem::offset_of!(
-        WGPUDawnRenderPassColorAttachmentRenderToSingleSampled,
-        chain
-    ) - 0usize];
-    ["Offset of field: WGPUDawnRenderPassColorAttachmentRenderToSingleSampled::implicitSampleCount"] [:: std :: mem :: offset_of ! (WGPUDawnRenderPassColorAttachmentRenderToSingleSampled , implicitSampleCount) - 16usize] ;
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
