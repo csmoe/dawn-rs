@@ -581,14 +581,6 @@ impl CommandEncoder {
         unsafe { ffi::wgpuCommandEncoderSetLabel(self.raw, label_ffi) };
         ()
     }
-    pub fn set_resource_table(&self, table: Option<ResourceTable>) -> () {
-        let table_raw = table
-            .as_ref()
-            .map(|v| v.as_raw())
-            .unwrap_or(std::ptr::null_mut());
-        unsafe { ffi::wgpuCommandEncoderSetResourceTable(self.raw, table_raw) };
-        ()
-    }
 }
 impl Drop for CommandEncoder {
     fn drop(&mut self) {
@@ -733,6 +725,14 @@ impl ComputePassEncoder {
                 data.len(),
             )
         };
+        ()
+    }
+    pub fn set_resource_table(&self, table: Option<ResourceTable>) -> () {
+        let table_raw = table
+            .as_ref()
+            .map(|v| v.as_raw())
+            .unwrap_or(std::ptr::null_mut());
+        unsafe { ffi::wgpuComputePassEncoderSetResourceTable(self.raw, table_raw) };
         ()
     }
 }
@@ -1897,6 +1897,14 @@ impl RenderBundleEncoder {
         };
         ()
     }
+    pub fn set_resource_table(&self, table: Option<ResourceTable>) -> () {
+        let table_raw = table
+            .as_ref()
+            .map(|v| v.as_raw())
+            .unwrap_or(std::ptr::null_mut());
+        unsafe { ffi::wgpuRenderBundleEncoderSetResourceTable(self.raw, table_raw) };
+        ()
+    }
 }
 impl Drop for RenderBundleEncoder {
     fn drop(&mut self) {
@@ -2227,6 +2235,14 @@ impl RenderPassEncoder {
                 data.len(),
             )
         };
+        ()
+    }
+    pub fn set_resource_table(&self, table: Option<ResourceTable>) -> () {
+        let table_raw = table
+            .as_ref()
+            .map(|v| v.as_raw())
+            .unwrap_or(std::ptr::null_mut());
+        unsafe { ffi::wgpuRenderPassEncoderSetResourceTable(self.raw, table_raw) };
         ()
     }
 }
