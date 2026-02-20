@@ -9822,7 +9822,7 @@ impl Default for TextureViewDescriptor {
             base_array_layer: Some(0),
             array_layer_count: Some(ARRAY_LAYER_COUNT_UNDEFINED),
             aspect: Some(TextureAspect::All),
-            usage: None,
+            usage: Some(TextureUsage::NONE),
         }
     }
 }

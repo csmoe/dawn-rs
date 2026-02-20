@@ -1639,6 +1639,12 @@ pub struct WGPUCommandBufferImpl {
 pub type WGPUCommandBuffer = *mut WGPUCommandBufferImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUCommandEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePipelineImpl {
     _unused: [u8; 0],
 }
@@ -1751,12 +1757,6 @@ pub struct WGPUTextureViewImpl {
     _unused: [u8; 0],
 }
 pub type WGPUTextureView = *mut WGPUTextureViewImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUCommandEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePassEncoderImpl {
@@ -2035,6 +2035,7 @@ pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSamplingResourceTa
     WGPUFeatureName = 327738;
 pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl: WGPUFeatureName =
     327739;
+pub const WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax: WGPUFeatureName = 327740;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -2547,24 +2548,6 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupId:
     WGPUWGSLLanguageFeatureName = 6;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet:
     WGPUWGSLLanguageFeatureName = 7;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray:
-    WGPUWGSLLanguageFeatureName = 327688;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers:
-    WGPUWGSLLanguageFeatureName = 327689;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint:
-    WGPUWGSLLanguageFeatureName = 327690;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth:
-    WGPUWGSLLanguageFeatureName = 327691;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace:
-    WGPUWGSLLanguageFeatureName = 327692;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
-    WGPUWGSLLanguageFeatureName = 327693;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView:
-    WGPUWGSLLanguageFeatureName = 327694;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters:
-    WGPUWGSLLanguageFeatureName = 327695;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment:
-    WGPUWGSLLanguageFeatureName = 327696;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented:
     WGPUWGSLLanguageFeatureName = 327680;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental : WGPUWGSLLanguageFeatureName = 327681 ;
@@ -2573,6 +2556,26 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestin
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch : WGPUWGSLLanguageFeatureName = 327683 ;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped:
     WGPUWGSLLanguageFeatureName = 327684;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray:
+    WGPUWGSLLanguageFeatureName = 327685;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers:
+    WGPUWGSLLanguageFeatureName = 327686;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint:
+    WGPUWGSLLanguageFeatureName = 327687;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth:
+    WGPUWGSLLanguageFeatureName = 327688;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace:
+    WGPUWGSLLanguageFeatureName = 327689;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
+    WGPUWGSLLanguageFeatureName = 327690;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView:
+    WGPUWGSLLanguageFeatureName = 327691;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters:
+    WGPUWGSLLanguageFeatureName = 327692;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment:
+    WGPUWGSLLanguageFeatureName = 327693;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing:
+    WGPUWGSLLanguageFeatureName = 327694;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_Force32:
     WGPUWGSLLanguageFeatureName = 2147483647;
 pub type WGPUWGSLLanguageFeatureName = ::std::os::raw::c_uint;
@@ -7238,9 +7241,6 @@ pub type WGPUProcCommandEncoderResolveQuerySet = ::std::option::Option<
 pub type WGPUProcCommandEncoderSetLabel = ::std::option::Option<
     unsafe extern "C" fn(commandEncoder: WGPUCommandEncoder, label: WGPUStringView),
 >;
-pub type WGPUProcCommandEncoderSetResourceTable = ::std::option::Option<
-    unsafe extern "C" fn(commandEncoder: WGPUCommandEncoder, table: WGPUResourceTable),
->;
 pub type WGPUProcCommandEncoderWriteBuffer = ::std::option::Option<
     unsafe extern "C" fn(
         commandEncoder: WGPUCommandEncoder,
@@ -7308,6 +7308,9 @@ pub type WGPUProcComputePassEncoderSetLabel = ::std::option::Option<
 >;
 pub type WGPUProcComputePassEncoderSetPipeline = ::std::option::Option<
     unsafe extern "C" fn(computePassEncoder: WGPUComputePassEncoder, pipeline: WGPUComputePipeline),
+>;
+pub type WGPUProcComputePassEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(computePassEncoder: WGPUComputePassEncoder, table: WGPUResourceTable),
 >;
 pub type WGPUProcComputePassEncoderWriteTimestamp = ::std::option::Option<
     unsafe extern "C" fn(
@@ -7722,6 +7725,9 @@ pub type WGPUProcRenderBundleEncoderSetPipeline = ::std::option::Option<
         pipeline: WGPURenderPipeline,
     ),
 >;
+pub type WGPUProcRenderBundleEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(renderBundleEncoder: WGPURenderBundleEncoder, table: WGPUResourceTable),
+>;
 pub type WGPUProcRenderBundleEncoderSetVertexBuffer = ::std::option::Option<
     unsafe extern "C" fn(
         renderBundleEncoder: WGPURenderBundleEncoder,
@@ -7846,6 +7852,9 @@ pub type WGPUProcRenderPassEncoderSetLabel = ::std::option::Option<
 >;
 pub type WGPUProcRenderPassEncoderSetPipeline = ::std::option::Option<
     unsafe extern "C" fn(renderPassEncoder: WGPURenderPassEncoder, pipeline: WGPURenderPipeline),
+>;
+pub type WGPUProcRenderPassEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(renderPassEncoder: WGPURenderPassEncoder, table: WGPUResourceTable),
 >;
 pub type WGPUProcRenderPassEncoderSetScissorRect = ::std::option::Option<
     unsafe extern "C" fn(
@@ -8374,12 +8383,6 @@ unsafe extern "C" {
     pub fn wgpuCommandEncoderSetLabel(commandEncoder: WGPUCommandEncoder, label: WGPUStringView);
 }
 unsafe extern "C" {
-    pub fn wgpuCommandEncoderSetResourceTable(
-        commandEncoder: WGPUCommandEncoder,
-        table: WGPUResourceTable,
-    );
-}
-unsafe extern "C" {
     pub fn wgpuCommandEncoderWriteBuffer(
         commandEncoder: WGPUCommandEncoder,
         buffer: WGPUBuffer,
@@ -8461,6 +8464,12 @@ unsafe extern "C" {
     pub fn wgpuComputePassEncoderSetPipeline(
         computePassEncoder: WGPUComputePassEncoder,
         pipeline: WGPUComputePipeline,
+    );
+}
+unsafe extern "C" {
+    pub fn wgpuComputePassEncoderSetResourceTable(
+        computePassEncoder: WGPUComputePassEncoder,
+        table: WGPUResourceTable,
     );
 }
 unsafe extern "C" {
@@ -8956,6 +8965,12 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn wgpuRenderBundleEncoderSetResourceTable(
+        renderBundleEncoder: WGPURenderBundleEncoder,
+        table: WGPUResourceTable,
+    );
+}
+unsafe extern "C" {
     pub fn wgpuRenderBundleEncoderSetVertexBuffer(
         renderBundleEncoder: WGPURenderBundleEncoder,
         slot: u32,
@@ -9102,6 +9117,12 @@ unsafe extern "C" {
     pub fn wgpuRenderPassEncoderSetPipeline(
         renderPassEncoder: WGPURenderPassEncoder,
         pipeline: WGPURenderPipeline,
+    );
+}
+unsafe extern "C" {
+    pub fn wgpuRenderPassEncoderSetResourceTable(
+        renderPassEncoder: WGPURenderPassEncoder,
+        table: WGPUResourceTable,
     );
 }
 unsafe extern "C" {

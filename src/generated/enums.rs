@@ -18,6 +18,16 @@ pub enum WGSLLanguageFeatureName {
         as u32,
     TextureAndSamplerLet = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet
         as u32,
+    ChromiumTestingUnimplemented = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
+        as u32,
+    ChromiumTestingUnsafeExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental
+        as u32,
+    ChromiumTestingExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental
+        as u32,
+    ChromiumTestingShippedWithKillswitch = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch
+        as u32,
+    ChromiumTestingShipped = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped
+        as u32,
     SizedBindingArray = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray
         as u32,
     TexelBuffers = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers
@@ -36,15 +46,7 @@ pub enum WGSLLanguageFeatureName {
         as u32,
     SwizzleAssignment = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment
         as u32,
-    ChromiumTestingUnimplemented = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
-        as u32,
-    ChromiumTestingUnsafeExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental
-        as u32,
-    ChromiumTestingExperimental = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental
-        as u32,
-    ChromiumTestingShippedWithKillswitch = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch
-        as u32,
-    ChromiumTestingShipped = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped
+    LinearIndexing = ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing
         as u32,
 }
 impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
@@ -70,6 +72,21 @@ impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
             }
             ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet => {
                 WGSLLanguageFeatureName::TextureAndSamplerLet
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
+                WGSLLanguageFeatureName::ChromiumTestingUnimplemented
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental => {
+                WGSLLanguageFeatureName::ChromiumTestingUnsafeExperimental
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental => {
+                WGSLLanguageFeatureName::ChromiumTestingExperimental
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch => {
+                WGSLLanguageFeatureName::ChromiumTestingShippedWithKillswitch
+            }
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped => {
+                WGSLLanguageFeatureName::ChromiumTestingShipped
             }
             ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray => {
                 WGSLLanguageFeatureName::SizedBindingArray
@@ -98,20 +115,8 @@ impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
             ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment => {
                 WGSLLanguageFeatureName::SwizzleAssignment
             }
-            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
-                WGSLLanguageFeatureName::ChromiumTestingUnimplemented
-            }
-            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental => {
-                WGSLLanguageFeatureName::ChromiumTestingUnsafeExperimental
-            }
-            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingExperimental => {
-                WGSLLanguageFeatureName::ChromiumTestingExperimental
-            }
-            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch => {
-                WGSLLanguageFeatureName::ChromiumTestingShippedWithKillswitch
-            }
-            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped => {
-                WGSLLanguageFeatureName::ChromiumTestingShipped
+            ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing => {
+                WGSLLanguageFeatureName::LinearIndexing
             }
             _ => WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures,
         }
@@ -940,6 +945,7 @@ pub enum FeatureName {
         as u32,
     ChromiumExperimentalSubgroupSizeControl = ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl
         as u32,
+    AtomicVec2UMinMax = ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax as u32,
 }
 impl From<ffi::WGPUFeatureName> for FeatureName {
     fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1180,6 +1186,9 @@ impl From<ffi::WGPUFeatureName> for FeatureName {
             }
             ffi::WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl => {
                 FeatureName::ChromiumExperimentalSubgroupSizeControl
+            }
+            ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax => {
+                FeatureName::AtomicVec2UMinMax
             }
             _ => FeatureName::CoreFeaturesAndLimits,
         }
