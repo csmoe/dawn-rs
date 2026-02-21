@@ -2289,10 +2289,9 @@ pub const WGPUSType_WGPUSType_SharedBufferMemoryD3D12SharedMemoryFileMappingHand
     WGPUSType = 327757;
 pub const WGPUSType_WGPUSType_SharedTextureMemoryD3D12ResourceDescriptor: WGPUSType = 327758;
 pub const WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup: WGPUSType = 327759;
-pub const WGPUSType_WGPUSType_ResourceTableLimits: WGPUSType = 327760;
-pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327761;
+pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327760;
 pub const WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs: WGPUSType =
-    327762;
+    327761;
 pub const WGPUSType_WGPUSType_Force32: WGPUSType = 2147483647;
 pub type WGPUSType = ::std::os::raw::c_uint;
 pub const WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32:
@@ -2446,17 +2445,18 @@ pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x10Unorm: WGPUTextureFormat 
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x10UnormSrgb: WGPUTextureFormat = 99;
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x12Unorm: WGPUTextureFormat = 100;
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x12UnormSrgb: WGPUTextureFormat = 101;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm: WGPUTextureFormat = 327686;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm: WGPUTextureFormat = 327680;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar420Unorm: WGPUTextureFormat =
-    327687;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm: WGPUTextureFormat = 327688;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm: WGPUTextureFormat = 327689;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm: WGPUTextureFormat = 327690;
+    327681;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm: WGPUTextureFormat = 327682;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm: WGPUTextureFormat = 327683;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm: WGPUTextureFormat = 327684;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm: WGPUTextureFormat =
-    327691;
+    327685;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm: WGPUTextureFormat =
-    327692;
-pub const WGPUTextureFormat_WGPUTextureFormat_External: WGPUTextureFormat = 327693;
+    327686;
+pub const WGPUTextureFormat_WGPUTextureFormat_External: WGPUTextureFormat = 327687;
+pub const WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid: WGPUTextureFormat = 327687;
 pub const WGPUTextureFormat_WGPUTextureFormat_Force32: WGPUTextureFormat = 2147483647;
 pub type WGPUTextureFormat = ::std::os::raw::c_uint;
 pub const WGPUTextureSampleType_WGPUTextureSampleType_BindingNotUsed: WGPUTextureSampleType = 0;
@@ -4239,22 +4239,6 @@ const _: () = {
         [::std::mem::offset_of!(WGPUResourceTableDescriptor, label) - 8usize];
     ["Offset of field: WGPUResourceTableDescriptor::size"]
         [::std::mem::offset_of!(WGPUResourceTableDescriptor, size) - 24usize];
-};
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUResourceTableLimits {
-    pub chain: WGPUChainedStruct,
-    pub maxResourceTableSize: u32,
-}
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of WGPUResourceTableLimits"][::std::mem::size_of::<WGPUResourceTableLimits>() - 24usize];
-    ["Alignment of WGPUResourceTableLimits"]
-        [::std::mem::align_of::<WGPUResourceTableLimits>() - 8usize];
-    ["Offset of field: WGPUResourceTableLimits::chain"]
-        [::std::mem::offset_of!(WGPUResourceTableLimits, chain) - 0usize];
-    ["Offset of field: WGPUResourceTableLimits::maxResourceTableSize"]
-        [::std::mem::offset_of!(WGPUResourceTableLimits, maxResourceTableSize) - 16usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

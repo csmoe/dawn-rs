@@ -805,7 +805,6 @@ impl InstanceLimitsExtension {
 pub enum LimitsExtension {
     DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
     DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
-    ResourceTableLimits(ResourceTableLimits),
 }
 impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
     fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -815,11 +814,6 @@ impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
 impl std::convert::From<DawnTexelCopyBufferRowAlignmentLimits> for LimitsExtension {
     fn from(ext: DawnTexelCopyBufferRowAlignmentLimits) -> Self {
         LimitsExtension::DawnTexelCopyBufferRowAlignmentLimits(ext)
-    }
-}
-impl std::convert::From<ResourceTableLimits> for LimitsExtension {
-    fn from(ext: ResourceTableLimits) -> Self {
-        LimitsExtension::ResourceTableLimits(ext)
     }
 }
 impl LimitsExtension {
@@ -841,14 +835,6 @@ impl LimitsExtension {
                 let (mut raw, storage_value) = value.to_ffi();
                 raw.chain.sType = SType::DawnTexelCopyBufferRowAlignmentLimits
                     as ffi::WGPUSType;
-                raw.chain.next = next;
-                storage.push_storage(storage_value);
-                let raw_ptr = storage.push_value_mut(raw);
-                raw_ptr.cast::<ffi::WGPUChainedStruct>()
-            }
-            LimitsExtension::ResourceTableLimits(value) => {
-                let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = SType::ResourceTableLimits as ffi::WGPUSType;
                 raw.chain.next = next;
                 storage.push_storage(storage_value);
                 let raw_ptr = storage.push_value_mut(raw);

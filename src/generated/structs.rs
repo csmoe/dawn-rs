@@ -5967,34 +5967,6 @@ impl ResourceTableDescriptor {
         }
     }
 }
-pub struct ResourceTableLimits {
-    pub max_resource_table_size: Option<u32>,
-}
-impl Default for ResourceTableLimits {
-    fn default() -> Self {
-        Self {
-            max_resource_table_size: Some(LIMIT_U32_UNDEFINED),
-        }
-    }
-}
-impl ResourceTableLimits {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub(crate) fn to_ffi(&self) -> (ffi::WGPUResourceTableLimits, ChainedStructStorage) {
-        let mut storage = ChainedStructStorage::new();
-        let mut raw: ffi::WGPUResourceTableLimits = unsafe { std::mem::zeroed() };
-        if let Some(value) = self.max_resource_table_size {
-            raw.maxResourceTableSize = value;
-        }
-        (raw, storage)
-    }
-    pub(crate) fn from_ffi(value: ffi::WGPUResourceTableLimits) -> Self {
-        Self {
-            max_resource_table_size: Some(value.maxResourceTableSize),
-        }
-    }
-}
 pub struct SamplerBindingLayout {
     pub(crate) extensions: Vec<SamplerBindingLayoutExtension>,
     pub r#type: Option<SamplerBindingType>,

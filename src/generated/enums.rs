@@ -1854,7 +1854,6 @@ pub enum SType {
         as u32,
     RequestAdapterOptionsAngleVirtualizationGroup = ffi::WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup
         as u32,
-    ResourceTableLimits = ffi::WGPUSType_WGPUSType_ResourceTableLimits as u32,
     PipelineLayoutResourceTable = ffi::WGPUSType_WGPUSType_PipelineLayoutResourceTable
         as u32,
     AdapterPropertiesExplicitComputeSubgroupSizeConfigs = ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs
@@ -2131,7 +2130,6 @@ impl From<ffi::WGPUSType> for SType {
             ffi::WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup => {
                 SType::RequestAdapterOptionsAngleVirtualizationGroup
             }
-            ffi::WGPUSType_WGPUSType_ResourceTableLimits => SType::ResourceTableLimits,
             ffi::WGPUSType_WGPUSType_PipelineLayoutResourceTable => {
                 SType::PipelineLayoutResourceTable
             }
@@ -2674,6 +2672,8 @@ pub enum TextureFormat {
     R10X6Bg10X6Biplanar444Unorm = ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm
         as u32,
     External = ffi::WGPUTextureFormat_WGPUTextureFormat_External as u32,
+    OpaqueYCbCrAndroid = ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid
+        as u32,
 }
 impl From<ffi::WGPUTextureFormat> for TextureFormat {
     fn from(value: ffi::WGPUTextureFormat) -> Self {
@@ -2964,6 +2964,9 @@ impl From<ffi::WGPUTextureFormat> for TextureFormat {
                 TextureFormat::R10X6Bg10X6Biplanar444Unorm
             }
             ffi::WGPUTextureFormat_WGPUTextureFormat_External => TextureFormat::External,
+            ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid => {
+                TextureFormat::OpaqueYCbCrAndroid
+            }
             _ => TextureFormat::Undefined,
         }
     }
