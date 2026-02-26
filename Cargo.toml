@@ -12,14 +12,14 @@ homepage.workspace = true
 members = ["codegen", "dawn-wgpu"]
 
 [workspace.package]
-version = "0.1.1-dev"
+version = "0.1.2-dev"
 edition = "2024"
 homepage = "https://github.com/csmoe/dawn-rs"
 repository = "https://github.com/csmoe/dawn-rs"
 license = "BSD-3-Clause"
 
 [workspace.dependencies]
-dawn-rs = { version = "0.1.1-dev", path = "." }
+dawn-rs = { version = "0.1.2-dev", path = "." }
 
 [dependencies]
 bitflags = "2"
