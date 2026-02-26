@@ -13,7 +13,10 @@ pub fn generate_ffi_string(
     api_header: &Path,
     clang_args: &[String],
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut builder = bindgen::Builder::default().header(api_header.to_string_lossy());
+    let mut builder = bindgen::Builder::default()
+        .header(api_header.to_string_lossy())
+        .allowlist_item("WGPU.*")
+        .allowlist_item("wgpu.*");
     for arg in clang_args {
         builder = builder.clang_arg(arg);
     }
