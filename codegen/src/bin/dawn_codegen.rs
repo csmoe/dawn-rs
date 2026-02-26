@@ -45,6 +45,10 @@ fn main() {
     let dawn_json = dawn_json.expect("--dawn-json is required");
     let api_header = api_header.expect("--api-header is required");
     let out_dir = out_dir.expect("--out-dir is required");
+    let src_dir = out_dir
+        .parent()
+        .expect("--out-dir should point inside the src directory");
+    let ffi_dir = src_dir.join("ffi");
 
     let api = dawn_codegen::DawnJsonParser::parse_file(&dawn_json).expect("parse dawn.json");
     let filtered = if tags.is_empty() {
@@ -56,10 +60,12 @@ fn main() {
     let files = dawn_codegen::generate_strings(&model);
 
     std::fs::create_dir_all(&out_dir).expect("create output dir");
-    let ffi_dir = out_dir.join("ffi");
-    fs::create_dir_all(&ffi_dir).expect("create ffi output dir");
+    cleanup_old_layout(&out_dir).expect("cleanup old generated layout");
+    remove_legacy_generated_files(&out_dir).expect("remove legacy generated files");
+
     let target_os = env::consts::OS;
     let target_arch = env::consts::ARCH;
+    fs::create_dir_all(&ffi_dir).expect("create ffi module dir");
     let ffi_out = ffi_dir.join(format!("{target_os}_{target_arch}.rs"));
 
     let mut combined_clang_args = clang_args;
@@ -71,7 +77,7 @@ fn main() {
 
     write_generated_single_files(&out_dir, &ffi_dir, &files).expect("write generated single files");
     write_generated_wrapper(&out_dir).expect("write generated wrapper");
-    write_ffi_wrapper(&out_dir, &ffi_dir).expect("write ffi wrapper");
+    write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
 }
 
 fn default_clang_args(api_header: &Path) -> Vec<String> {
@@ -82,8 +88,92 @@ fn default_clang_args(api_header: &Path) -> Vec<String> {
     args
 }
 
-fn write_ffi_wrapper(out_dir: &Path, ffi_dir: &Path) -> std::io::Result<()> {
-    let mut targets: Vec<(String, String, String)> = Vec::new();
+fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
+    let targets_dir = out_dir.join("targets");
+    if targets_dir.exists() {
+        fs::remove_dir_all(targets_dir)?;
+    }
+
+    let ffi_dir = out_dir.join("ffi");
+    if ffi_dir.exists() {
+        fs::remove_dir_all(ffi_dir)?;
+    }
+
+    let old_generated_ffi = out_dir.join("ffi.rs");
+    if old_generated_ffi.exists() {
+        fs::remove_file(old_generated_ffi)?;
+    }
+
+    let src_dir = out_dir
+        .parent()
+        .expect("--out-dir should point inside the src directory");
+    let old_root_ffi = src_dir.join("ffi.rs");
+    if old_root_ffi.exists() {
+        fs::remove_file(old_root_ffi)?;
+    }
+    for entry in fs::read_dir(src_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) != Some("rs") {
+            continue;
+        }
+        if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+            if name.starts_with("ffi_") {
+                fs::remove_file(path)?;
+            }
+        }
+    }
+    for entry in fs::read_dir(out_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) != Some("rs") {
+            continue;
+        }
+        if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+            if name.starts_with("generated_") || name.starts_with("ffi_") {
+                fs::remove_file(path)?;
+            }
+        }
+    }
+    let ffi_dir = src_dir.join("ffi");
+    if ffi_dir.exists() {
+        for entry in fs::read_dir(&ffi_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("rs") {
+                continue;
+            }
+            if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                if name.starts_with("ffi_") {
+                    fs::remove_file(path)?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn remove_legacy_generated_files(out_dir: &Path) -> std::io::Result<()> {
+    for file_name in [
+        "enums.rs",
+        "structs.rs",
+        "extensions.rs",
+        "objects.rs",
+        "callbacks.rs",
+        "functions.rs",
+        "constants.rs",
+    ] {
+        let path = out_dir.join(file_name);
+        if path.exists() {
+            fs::remove_file(path)?;
+        }
+    }
+    Ok(())
+}
+
+fn write_ffi_wrapper(ffi_dir: &Path) -> std::io::Result<()> {
+    let mut targets: Vec<(String, String)> = Vec::new();
     for entry in fs::read_dir(ffi_dir)? {
         let entry = entry?;
         let path = entry.path();
@@ -91,49 +181,45 @@ fn write_ffi_wrapper(out_dir: &Path, ffi_dir: &Path) -> std::io::Result<()> {
             continue;
         }
         let file_name = match path.file_name().and_then(|s| s.to_str()) {
-            Some(name) => name.to_string(),
+            Some(name) => name,
             None => continue,
         };
         let stem = match file_name.strip_suffix(".rs") {
             Some(stem) => stem,
             None => continue,
         };
+        if stem == "mod" || stem.starts_with("ffi_") {
+            continue;
+        }
         let (os, arch) = match stem.split_once('_') {
             Some((os, arch)) if !os.is_empty() && !arch.is_empty() => {
                 (os.to_string(), arch.to_string())
             }
             _ => continue,
         };
-        targets.push((os, arch, file_name));
+        targets.push((os, arch));
     }
-    targets.sort_by(|a, b| a.2.cmp(&b.2));
+    targets.sort();
+    targets.dedup();
 
     let mut out = String::new();
-    for (os, arch, file_name) in targets {
-        let module_name = format!("ffi_{}_{}", os.replace('-', "_"), arch.replace('-', "_"));
+    for (os, arch) in targets {
+        let module_name = format!("{}_{}", os.replace('-', "_"), arch.replace('-', "_"));
         out.push_str(&format!(
             r#"#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
-            mod {module_name} {{
-                include!("ffi/{file_name}");
-            }}
-            "#,
+mod {module_name};
+#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
+pub use {module_name}::*;
+
+"#,
             os = os,
             arch = arch,
             module_name = module_name,
-            file_name = file_name
-        ));
-        out.push_str(&format!(
-            r#"#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
-            pub use {module_name}::*;
-            "#,
-            os = os,
-            arch = arch,
-            module_name = module_name
         ));
     }
 
     let out = dawn_codegen::emitter::format_rust_source(&out);
-    fs::write(out_dir.join("ffi.rs"), out)
+    fs::write(ffi_dir.join("mod.rs"), out)
 }
 
 fn write_generated_single_files(
@@ -142,8 +228,6 @@ fn write_generated_single_files(
     files: &dawn_codegen::GeneratedFiles,
 ) -> std::io::Result<()> {
     let combined = build_combined_generated_source(files);
-    let generated_dir = out_dir.join("targets");
-    fs::create_dir_all(&generated_dir)?;
 
     let mut targets: Vec<(String, String)> = Vec::new();
     for entry in fs::read_dir(ffi_dir)? {
@@ -160,6 +244,9 @@ fn write_generated_single_files(
             Some(stem) => stem,
             None => continue,
         };
+        if stem == "mod" || stem.starts_with("ffi_") {
+            continue;
+        }
         let (os, arch) = match stem.split_once('_') {
             Some((os, arch)) if !os.is_empty() && !arch.is_empty() => {
                 (os.to_string(), arch.to_string())
@@ -175,7 +262,7 @@ fn write_generated_single_files(
     targets.dedup();
 
     for (os, arch) in targets {
-        let target_file = generated_dir.join(format!("{os}_{arch}.rs"));
+        let target_file = out_dir.join(format!("{os}_{arch}.rs"));
         fs::write(target_file, &combined)?;
     }
 
@@ -183,44 +270,41 @@ fn write_generated_single_files(
 }
 
 fn write_generated_wrapper(out_dir: &Path) -> std::io::Result<()> {
-    let generated_dir = out_dir.join("targets");
-    let mut targets: Vec<(String, String, String)> = Vec::new();
-    for entry in fs::read_dir(&generated_dir)? {
+    let mut targets: Vec<(String, String)> = Vec::new();
+    for entry in fs::read_dir(out_dir)? {
         let entry = entry?;
         let path = entry.path();
         if path.extension().and_then(|s| s.to_str()) != Some("rs") {
             continue;
         }
         let file_name = match path.file_name().and_then(|s| s.to_str()) {
-            Some(name) => name.to_string(),
+            Some(name) => name,
             None => continue,
         };
         let stem = match file_name.strip_suffix(".rs") {
             Some(stem) => stem,
             None => continue,
         };
+        if stem == "mod" || stem.starts_with("ffi_") || stem.starts_with("generated_") {
+            continue;
+        }
         let (os, arch) = match stem.split_once('_') {
             Some((os, arch)) if !os.is_empty() && !arch.is_empty() => {
                 (os.to_string(), arch.to_string())
             }
             _ => continue,
         };
-        targets.push((os, arch, file_name));
+        targets.push((os, arch));
     }
-    targets.sort_by(|a, b| a.2.cmp(&b.2));
+    targets.sort();
+    targets.dedup();
 
     let mut out = String::new();
-    for (os, arch, file_name) in &targets {
-        let module_name = format!(
-            "generated_{}_{}",
-            os.replace('-', "_"),
-            arch.replace('-', "_")
-        );
+    for (os, arch) in targets {
+        let module_name = format!("{}_{}", os.replace('-', "_"), arch.replace('-', "_"));
         out.push_str(&format!(
             r#"#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
-mod {module_name} {{
-    include!("targets/{file_name}");
-}}
+mod {module_name};
 
 #[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
 pub use {module_name}::*;
@@ -229,7 +313,6 @@ pub use {module_name}::*;
             os = os,
             arch = arch,
             module_name = module_name,
-            file_name = file_name
         ));
     }
 
