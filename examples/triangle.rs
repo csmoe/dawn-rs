@@ -1,13 +1,14 @@
 use dawn_rs::{FutureWaitInfo, WaitStatus};
-use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 #[cfg(all(unix, not(target_os = "macos")))]
 use raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
 use std::time::Instant;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::raw_window_handle;
 use winit::window::{Window, WindowAttributes, WindowId};
 
 static SHADER: &str = r#"
@@ -127,7 +128,7 @@ impl TriangleApp {
                 RawWindowHandle::Win32(handle) => handle,
                 _ => panic!("expected Win32 window handle"),
             };
-            let mut win32_layer = dawn_rs::SurfaceSourceWin32::new();
+            let mut win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new();
             win32_layer.hwnd = Some((win.hwnd.get() as *mut std::ffi::c_void).cast());
             win32_layer.hinstance = win
                 .hinstance
