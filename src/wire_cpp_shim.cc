@@ -5,6 +5,7 @@
 
 #include "dawn/dawn_proc.h"
 #include "dawn/native/DawnNative.h"
+#include "dawn/wire/client/webgpu.h"
 #include "dawn/wire/WireClient.h"
 #include "dawn/wire/WireServer.h"
 
@@ -56,6 +57,9 @@ class SerializerBridge final : public dawn::wire::CommandSerializer {
         if (!callbacks_.on_flush) {
             return false;
         }
+        if (buffer_.empty()) {
+            return true;
+        }
         callbacks_.on_flush(callbacks_.userdata, buffer_.data(), buffer_.size());
         buffer_.clear();
         return true;
@@ -84,6 +88,12 @@ struct DawnRsWireServer {
     std::unique_ptr<SerializerBridge> serializer;
     std::unique_ptr<dawn::wire::WireServer> wire;
 };
+// The wire server lifecycle (construction + Inject* + HandleCommands) is currently exposed
+// through C++ dawn::wire APIs, so we keep this control plane in C++.
+
+// dawnProcSetProcs stores a pointer, so the table must outlive the call site.
+static DawnProcTable gWireClientProcs = {};
+static bool gWireClientProcsInitialized = false;
 
 }  // namespace
 
@@ -108,7 +118,7 @@ void dawn_rs_wire_client_destroy(DawnRsWireClient* client) {
 bool dawn_rs_wire_client_handle_commands(DawnRsWireClient* client,
                                          const uint8_t* data,
                                          size_t size) {
-    if (!client || !data) {
+    if (!client || (size > 0 && !data)) {
         return false;
     }
     return client->wire->HandleCommands(reinterpret_cast<const volatile char*>(data), size) !=
@@ -164,7 +174,7 @@ void dawn_rs_wire_server_destroy(DawnRsWireServer* server) {
 bool dawn_rs_wire_server_handle_commands(DawnRsWireServer* server,
                                          const uint8_t* data,
                                          size_t size) {
-    if (!server || !data) {
+    if (!server || (size > 0 && !data)) {
         return false;
     }
     return server->wire->HandleCommands(reinterpret_cast<const volatile char*>(data), size) !=
@@ -191,8 +201,13 @@ bool dawn_rs_wire_server_inject_instance(DawnRsWireServer* server,
 }
 
 void dawn_rs_wire_set_client_procs() {
-    const DawnProcTable& procs = dawn::wire::client::GetProcs();
-    dawnProcSetProcs(&procs);
+    if (!gWireClientProcsInitialized) {
+        gWireClientProcs = dawn::wire::client::GetProcs();
+        // Reuse generated wire C API proc-address resolver from dawn/wire/client/webgpu.h.
+        gWireClientProcs.getProcAddress = wgpuDawnWireClientGetProcAddress;
+        gWireClientProcsInitialized = true;
+    }
+    dawnProcSetProcs(&gWireClientProcs);
 }
 
 void dawn_rs_wire_set_native_procs() {

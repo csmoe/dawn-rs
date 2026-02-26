@@ -1,17 +1,18 @@
 use std::ffi::c_void;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct DawnRsWireHandle {
+pub struct WireInstanceHandle {
     pub id: u32,
     pub generation: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct DawnRsWireReservedInstance {
+pub struct ReservedWireInstance {
     pub instance: *mut c_void,
-    pub handle: DawnRsWireHandle,
+    pub handle: WireInstanceHandle,
 }
 
 #[repr(C)]
@@ -46,7 +47,7 @@ unsafe extern "C" {
     fn dawn_rs_wire_client_disconnect(client: *mut DawnRsWireClientOpaque);
     fn dawn_rs_wire_client_reserve_instance(
         client: *mut DawnRsWireClientOpaque,
-    ) -> DawnRsWireReservedInstance;
+    ) -> ReservedWireInstance;
 
     fn dawn_rs_wire_server_create_native(
         callbacks: *const DawnRsWireSerializerCallbacks,
@@ -62,7 +63,7 @@ unsafe extern "C" {
     fn dawn_rs_wire_server_inject_instance(
         server: *mut DawnRsWireServerOpaque,
         instance: *mut c_void,
-        handle: DawnRsWireHandle,
+        handle: WireInstanceHandle,
     ) -> bool;
     fn dawn_rs_wire_set_client_procs();
     fn dawn_rs_wire_set_native_procs();
@@ -70,6 +71,7 @@ unsafe extern "C" {
 }
 
 struct CallbackState {
+    closed: AtomicBool,
     on_flush: Box<dyn FnMut(&[u8]) + Send + 'static>,
     on_error: Box<dyn FnMut(&str) + Send + 'static>,
 }
@@ -79,7 +81,13 @@ extern "C" fn on_flush_trampoline(userdata: *mut c_void, data: *const u8, size: 
         return;
     }
     let state = unsafe { &mut *(userdata as *mut CallbackState) };
+    if state.closed.load(Ordering::Relaxed) {
+        return;
+    }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
+    if bytes.is_empty() {
+        return;
+    }
     (state.on_flush)(bytes);
 }
 
@@ -88,26 +96,30 @@ extern "C" fn on_error_trampoline(userdata: *mut c_void, data: *const u8, size: 
         return;
     }
     let state = unsafe { &mut *(userdata as *mut CallbackState) };
+    if state.closed.load(Ordering::Relaxed) {
+        return;
+    }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
     if let Ok(msg) = std::str::from_utf8(bytes) {
         (state.on_error)(msg);
     }
 }
 
-pub struct WireClientShim {
+pub struct WireHelperClient {
     raw: *mut DawnRsWireClientOpaque,
     state: *mut CallbackState,
 }
 
-unsafe impl Send for WireClientShim {}
+unsafe impl Send for WireHelperClient {}
 
-impl WireClientShim {
+impl WireHelperClient {
     pub fn new<F, E>(max_allocation_size: usize, on_flush: F, on_error: E) -> Result<Self, String>
     where
         F: FnMut(&[u8]) + Send + 'static,
         E: FnMut(&str) + Send + 'static,
     {
         let state = Box::new(CallbackState {
+            closed: AtomicBool::new(false),
             on_flush: Box::new(on_flush),
             on_error: Box::new(on_error),
         });
@@ -143,34 +155,33 @@ impl WireClientShim {
         unsafe { dawn_rs_wire_client_disconnect(self.raw) }
     }
 
-    pub fn reserve_instance(&mut self) -> DawnRsWireReservedInstance {
+    pub fn reserve_instance(&mut self) -> ReservedWireInstance {
         unsafe { dawn_rs_wire_client_reserve_instance(self.raw) }
     }
 
-    pub unsafe fn reserved_instance_to_instance(
-        reserved: DawnRsWireReservedInstance,
-    ) -> crate::Instance {
+    pub unsafe fn reserved_instance_to_instance(reserved: ReservedWireInstance) -> crate::Instance {
         unsafe { crate::Instance::from_raw(reserved.instance.cast()) }
     }
 }
 
-impl Drop for WireClientShim {
+impl Drop for WireHelperClient {
     fn drop(&mut self) {
         unsafe {
+            (*self.state).closed.store(true, Ordering::Relaxed);
             dawn_rs_wire_client_destroy(self.raw);
             drop(Box::from_raw(self.state));
         }
     }
 }
 
-pub struct WireServerShim {
+pub struct WireHelperServer {
     raw: *mut DawnRsWireServerOpaque,
     state: *mut CallbackState,
 }
 
-unsafe impl Send for WireServerShim {}
+unsafe impl Send for WireHelperServer {}
 
-impl WireServerShim {
+impl WireHelperServer {
     pub fn new_native<F, E>(
         max_allocation_size: usize,
         use_spontaneous_callbacks: bool,
@@ -182,6 +193,7 @@ impl WireServerShim {
         E: FnMut(&str) + Send + 'static,
     {
         let state = Box::new(CallbackState {
+            closed: AtomicBool::new(false),
             on_flush: Box::new(on_flush),
             on_error: Box::new(on_error),
         });
@@ -214,28 +226,61 @@ impl WireServerShim {
         unsafe { dawn_rs_wire_server_flush(self.raw) }
     }
 
-    pub fn inject_instance(&mut self, instance: *mut c_void, handle: DawnRsWireHandle) -> bool {
+    pub fn inject_instance(&mut self, instance: *mut c_void, handle: WireInstanceHandle) -> bool {
         unsafe { dawn_rs_wire_server_inject_instance(self.raw, instance, handle) }
     }
 }
 
-impl Drop for WireServerShim {
+impl Drop for WireHelperServer {
     fn drop(&mut self) {
         unsafe {
+            (*self.state).closed.store(true, Ordering::Relaxed);
             dawn_rs_wire_server_destroy(self.raw);
             drop(Box::from_raw(self.state));
         }
     }
 }
 
-pub fn set_client_procs() {
+fn set_client_procs() {
     unsafe { dawn_rs_wire_set_client_procs() }
 }
 
-pub fn set_native_procs() {
+fn set_native_procs() {
     unsafe { dawn_rs_wire_set_native_procs() }
 }
 
-pub fn clear_procs() {
+fn clear_procs() {
     unsafe { dawn_rs_wire_clear_procs() }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ProcTableMode {
+    WireClient,
+    Native,
+}
+
+pub struct ProcTableGuard;
+
+impl ProcTableGuard {
+    pub fn new(mode: ProcTableMode) -> Self {
+        match mode {
+            ProcTableMode::WireClient => set_client_procs(),
+            ProcTableMode::Native => set_native_procs(),
+        }
+        Self
+    }
+
+    pub fn wire_client() -> Self {
+        Self::new(ProcTableMode::WireClient)
+    }
+
+    pub fn native() -> Self {
+        Self::new(ProcTableMode::Native)
+    }
+}
+
+impl Drop for ProcTableGuard {
+    fn drop(&mut self) {
+        clear_procs();
+    }
 }
