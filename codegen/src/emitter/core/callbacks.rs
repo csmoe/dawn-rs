@@ -2,7 +2,11 @@ use crate::api_model::{CallbackFunctionModel, CallbackInfoModel, CallbackModel};
 use crate::emitter::core::*;
 use crate::parser::RecordMember;
 
-pub(crate) fn emit_callback_function(c: &CallbackFunctionModel, index: &TypeIndex, c_prefix: &str) -> String {
+pub(crate) fn emit_callback_function(
+    c: &CallbackFunctionModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> String {
     let name = callback_type_name(&c.name);
     let args = callback_arg_list(&c.def.args);
     let signature = format!(r#"{args}"#, args = args);

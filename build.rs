@@ -17,7 +17,10 @@ fn main() {
     };
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static=webgpu_dawn");
-
+    #[cfg(target_os = "linux")]
+    {
+        println!("cargo:rustc-link-lib=stdc++");
+    }
     #[cfg(target_os = "macos")]
     {
         println!("cargo:rustc-link-lib=c++");
@@ -42,6 +45,10 @@ fn resolve_dawn_root() -> Option<PathBuf> {
 
 fn resolve_dawn_lib_dir(dawn_root: &Path) -> Option<PathBuf> {
     let lib = dawn_root.join("lib");
+    if lib.exists() {
+        return Some(lib);
+    }
+    let lib = dawn_root.join("lib64");
     if lib.exists() {
         return Some(lib);
     }

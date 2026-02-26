@@ -367,7 +367,9 @@ pub(crate) fn map_texture_dimension(value: wgpu::TextureDimension) -> TextureDim
     }
 }
 
-pub(crate) fn map_texture_view_dimension(value: wgpu::TextureViewDimension) -> TextureViewDimension {
+pub(crate) fn map_texture_view_dimension(
+    value: wgpu::TextureViewDimension,
+) -> TextureViewDimension {
     match value {
         wgpu::TextureViewDimension::D1 => TextureViewDimension::D1,
         wgpu::TextureViewDimension::D2 => TextureViewDimension::D2,
@@ -576,7 +578,9 @@ pub(crate) fn map_texture_sample_type(value: wgpu::TextureSampleType) -> Texture
     }
 }
 
-pub(crate) fn map_storage_texture_access(value: wgpu::StorageTextureAccess) -> StorageTextureAccess {
+pub(crate) fn map_storage_texture_access(
+    value: wgpu::StorageTextureAccess,
+) -> StorageTextureAccess {
     match value {
         wgpu::StorageTextureAccess::ReadOnly => StorageTextureAccess::ReadOnly,
         wgpu::StorageTextureAccess::WriteOnly => StorageTextureAccess::WriteOnly,
@@ -672,7 +676,9 @@ pub(crate) fn map_extent_3d(value: wgpu::Extent3d) -> Extent3D {
     }
 }
 
-pub(crate) fn map_texel_copy_buffer_layout(value: wgpu::TexelCopyBufferLayout) -> TexelCopyBufferLayout {
+pub(crate) fn map_texel_copy_buffer_layout(
+    value: wgpu::TexelCopyBufferLayout,
+) -> TexelCopyBufferLayout {
     TexelCopyBufferLayout {
         offset: Some(value.offset),
         bytes_per_row: value.bytes_per_row,
@@ -680,14 +686,18 @@ pub(crate) fn map_texel_copy_buffer_layout(value: wgpu::TexelCopyBufferLayout) -
     }
 }
 
-pub(crate) fn map_texel_copy_buffer_info(value: wgpu::TexelCopyBufferInfo<'_>) -> TexelCopyBufferInfo {
+pub(crate) fn map_texel_copy_buffer_info(
+    value: wgpu::TexelCopyBufferInfo<'_>,
+) -> TexelCopyBufferInfo {
     TexelCopyBufferInfo {
         layout: Some(map_texel_copy_buffer_layout(value.layout)),
         buffer: Some(expect_buffer_from_api(value.buffer)),
     }
 }
 
-pub(crate) fn map_texel_copy_texture_info(value: wgpu::TexelCopyTextureInfo<'_>) -> TexelCopyTextureInfo {
+pub(crate) fn map_texel_copy_texture_info(
+    value: wgpu::TexelCopyTextureInfo<'_>,
+) -> TexelCopyTextureInfo {
     TexelCopyTextureInfo {
         texture: Some(expect_texture_from_api(value.texture)),
         mip_level: Some(value.mip_level),
@@ -696,7 +706,9 @@ pub(crate) fn map_texel_copy_texture_info(value: wgpu::TexelCopyTextureInfo<'_>)
     }
 }
 
-pub(crate) fn map_shader_module_descriptor(desc: wgpu::ShaderModuleDescriptor<'_>) -> ShaderModuleDescriptor {
+pub(crate) fn map_shader_module_descriptor(
+    desc: wgpu::ShaderModuleDescriptor<'_>,
+) -> ShaderModuleDescriptor {
     let mut out = ShaderModuleDescriptor::new();
     out.label = label_to_string(desc.label);
     match desc.source {
@@ -739,7 +751,9 @@ pub(crate) fn map_texture_descriptor(desc: &wgpu::TextureDescriptor<'_>) -> Text
     out
 }
 
-pub(crate) fn map_texture_view_descriptor(desc: &wgpu::TextureViewDescriptor<'_>) -> TextureViewDescriptor {
+pub(crate) fn map_texture_view_descriptor(
+    desc: &wgpu::TextureViewDescriptor<'_>,
+) -> TextureViewDescriptor {
     let mut out = TextureViewDescriptor::new();
     out.label = label_to_string(desc.label);
     out.format = desc.format.map(map_texture_format);
@@ -773,7 +787,9 @@ pub(crate) fn map_sampler_descriptor(desc: &wgpu::SamplerDescriptor<'_>) -> Samp
     out
 }
 
-pub(crate) fn map_bind_group_layout_entry(entry: &wgpu::BindGroupLayoutEntry) -> BindGroupLayoutEntry {
+pub(crate) fn map_bind_group_layout_entry(
+    entry: &wgpu::BindGroupLayoutEntry,
+) -> BindGroupLayoutEntry {
     let mut out = BindGroupLayoutEntry::new();
     out.binding = Some(entry.binding);
     out.visibility = Some(map_shader_stages(entry.visibility));
@@ -868,7 +884,9 @@ pub(crate) fn map_bind_group_entry(entry: &wgpu::BindGroupEntry<'_>) -> BindGrou
     out
 }
 
-pub(crate) fn map_bind_group_descriptor(desc: &wgpu::BindGroupDescriptor<'_>) -> BindGroupDescriptor {
+pub(crate) fn map_bind_group_descriptor(
+    desc: &wgpu::BindGroupDescriptor<'_>,
+) -> BindGroupDescriptor {
     let mut out = BindGroupDescriptor::new();
     out.label = label_to_string(desc.label);
     out.layout = Some(expect_bind_group_layout_from_api(desc.layout));
@@ -900,7 +918,9 @@ pub(crate) fn map_vertex_attribute(attr: &wgpu::VertexAttribute) -> VertexAttrib
     out
 }
 
-pub(crate) fn map_vertex_buffer_layout(layout: &wgpu::VertexBufferLayout<'_>) -> VertexBufferLayout {
+pub(crate) fn map_vertex_buffer_layout(
+    layout: &wgpu::VertexBufferLayout<'_>,
+) -> VertexBufferLayout {
     let mut out = VertexBufferLayout::new();
     out.array_stride = Some(layout.array_stride);
     out.step_mode = Some(map_vertex_step_mode(layout.step_mode));
@@ -1167,7 +1187,9 @@ pub(crate) fn map_render_pass_depth_stencil_attachment(
     out
 }
 
-pub(crate) fn map_render_pass_descriptor(desc: &wgpu::RenderPassDescriptor<'_>) -> RenderPassDescriptor {
+pub(crate) fn map_render_pass_descriptor(
+    desc: &wgpu::RenderPassDescriptor<'_>,
+) -> RenderPassDescriptor {
     let mut out = RenderPassDescriptor::new();
     out.label = label_to_string(desc.label);
     out.color_attachments = Some(
@@ -1189,14 +1211,18 @@ pub(crate) fn map_render_pass_descriptor(desc: &wgpu::RenderPassDescriptor<'_>) 
     out
 }
 
-pub(crate) fn map_compute_pass_descriptor(desc: &wgpu::ComputePassDescriptor<'_>) -> ComputePassDescriptor {
+pub(crate) fn map_compute_pass_descriptor(
+    desc: &wgpu::ComputePassDescriptor<'_>,
+) -> ComputePassDescriptor {
     let mut out = ComputePassDescriptor::new();
     out.label = label_to_string(desc.label);
     out.timestamp_writes = None;
     out
 }
 
-pub(crate) fn map_surface_configuration(config: &wgpu::SurfaceConfiguration) -> SurfaceConfiguration {
+pub(crate) fn map_surface_configuration(
+    config: &wgpu::SurfaceConfiguration,
+) -> SurfaceConfiguration {
     let mut out = SurfaceConfiguration::new();
     out.format = Some(map_texture_format(config.format));
     out.usage = Some(map_texture_usages(config.usage));

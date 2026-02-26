@@ -1,7 +1,7 @@
 use crate::api_model::{ApiModel, CallbackFunctionModel, FunctionModel, StructureModel};
-use std::collections::HashMap;
-use crate::emitter::core::names::{enum_variant_name_camel, shouty_snake_case_name, type_name};
 use crate::emitter::core::is_char_string_list;
+use crate::emitter::core::names::{enum_variant_name_camel, shouty_snake_case_name, type_name};
+use std::collections::HashMap;
 
 pub(crate) struct TypeIndex {
     objects: HashMap<String, ()>,
@@ -104,7 +104,9 @@ pub(crate) fn build_callback_info_map(model: &ApiModel) -> HashMap<String, Strin
     }
     map
 }
-pub(crate) fn build_callback_function_map(model: &ApiModel) -> HashMap<String, CallbackFunctionModel> {
+pub(crate) fn build_callback_function_map(
+    model: &ApiModel,
+) -> HashMap<String, CallbackFunctionModel> {
     let mut map = HashMap::new();
     for callback in &model.callback_functions {
         map.insert(callback.name.clone(), callback.clone());

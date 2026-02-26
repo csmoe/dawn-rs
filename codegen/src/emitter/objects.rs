@@ -1,6 +1,6 @@
 use crate::api_model::ApiModel;
 
-use crate::emitter::core::{build_constructor_map, emit_object, TypeIndex};
+use crate::emitter::core::{TypeIndex, build_constructor_map, emit_object};
 
 pub(crate) fn emit(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
@@ -16,13 +16,7 @@ use crate::ffi;
     let constructor_map = build_constructor_map(model);
     for o in &model.objects {
         let constructor = constructor_map.get(&o.name);
-        out.push_str(&emit_object(
-            o,
-            constructor,
-            model,
-            &index,
-            c_prefix,
-        ));
+        out.push_str(&emit_object(o, constructor, model, &index, c_prefix));
     }
 
     out

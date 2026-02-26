@@ -1,7 +1,7 @@
 use crate::api_model::ApiModel;
 
 use crate::emitter::core::{
-    emit_callback, emit_callback_function, emit_callback_info, emit_function_pointer, TypeIndex,
+    TypeIndex, emit_callback, emit_callback_function, emit_callback_info, emit_function_pointer,
 };
 
 pub(crate) fn emit(model: &ApiModel, c_prefix: &str) -> String {
