@@ -25,6 +25,9 @@ dawn-rs = { version = "0.1.3-dev", path = "." }
 bitflags = "2"
 
 [dev-dependencies]
+interprocess = "2.4.0"
+postcard = { version = "1", features = ["use-std"] }
+serde = { version = "1", features = ["derive"] }
 winit = { version = "0.30", features = ["rwh_06"] }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
@@ -35,12 +38,16 @@ raw-window-metal = "1"
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 windows = { version = "0.62", features = ["Win32_Graphics_Dxgi","Win32_Graphics_Direct3D", "Win32_Foundation", "Win32","Win32_Graphics_Dxgi_Common"]}
 
+[build-dependencies]
+cc = "1"
+
 [features]
 default = ["dawn", "native"]
 dawn = []
 native = []
 emscripten = []
 compat = []
+wire = []
 
 [[example]]
 name = "adapter-info"
@@ -49,3 +56,8 @@ path = "examples/adapter_info.rs"
 [[example]]
 name = "triangle"
 path = "examples/triangle.rs"
+
+[[example]]
+name = "triangle-ipc"
+path = "examples/triangle_ipc.rs"
+required-features = ["wire"]

@@ -7,3 +7,6 @@ mod ffi;
 mod generated;
 
 pub use generated::*;
+
+#[cfg(feature = "wire")]
+pub mod wire_shim;

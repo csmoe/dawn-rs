@@ -2,10 +2,12 @@ pub mod api_model;
 pub mod emitter;
 pub mod parser;
 pub mod visitor;
+pub mod wire;
 
 pub use api_model::ApiModel;
 pub use emitter::{GeneratedFiles, format_rust_source, generate_strings};
 pub use parser::DawnJsonParser;
+pub use wire::{DawnWireJsonParser, WireGeneratedFiles, generate_wire_files};
 
 use std::path::Path;
 
