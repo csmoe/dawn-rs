@@ -1,12 +1,9 @@
-use dawn_rs::wire_shim::{
-    DawnRsWireHandle, WireClientShim, WireServerShim, clear_procs, set_client_procs,
-    set_native_procs,
-};
-use dawn_rs::wire_types::{WireCommand, WirePacket, WireValue, build_packet};
+use dawn_rs::wire_shim::{ProcTableGuard, WireHelperClient, WireHelperServer, WireInstanceHandle};
+mod wire_transport;
 use dawn_rs::{
     BufferDescriptor, BufferUsage, Color, Device, Extent3D, FragmentState, Instance, LoadOp,
-    MapAsyncStatus, MapMode, MultisampleState, PipelineLayoutDescriptor,
-    PrimitiveState, RenderPassColorAttachment, RenderPassDescriptor, RenderPipelineDescriptor,
+    MapAsyncStatus, MapMode, MultisampleState, PipelineLayoutDescriptor, PrimitiveState,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipelineDescriptor,
     RequestAdapterStatus, ShaderModuleDescriptor, ShaderSourceWGSL, StoreOp, TexelCopyBufferInfo,
     TexelCopyBufferLayout, TexelCopyTextureInfo, TextureDescriptor, TextureDimension,
     TextureFormat, TextureUsage, VertexState,
@@ -15,17 +12,14 @@ use interprocess::TryClone;
 use interprocess::local_socket::{
     GenericFilePath, GenericNamespaced, ListenerOptions, Stream, prelude::*,
 };
-use serde::{Deserialize, Serialize};
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
 use std::env;
 use std::error::Error;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::process::{Child, Command};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
-use std::thread::JoinHandle;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
@@ -34,6 +28,9 @@ use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::{Window, WindowAttributes, WindowId};
+use wire_transport::{
+    IpcMessage, OutboundPacket, PumpGuard, read_message, start_transport_threads, write_message,
+};
 
 const SHADER: &str = r#"
 @vertex
@@ -56,26 +53,6 @@ fn main() {
     if let Err(e) = run() {
         eprintln!("triangle-ipc error: {e}");
         std::process::exit(1);
-    }
-}
-
-struct ProcTableGuard;
-
-impl ProcTableGuard {
-    fn client() -> Self {
-        set_client_procs();
-        Self
-    }
-
-    fn native() -> Self {
-        set_native_procs();
-        Self
-    }
-}
-
-impl Drop for ProcTableGuard {
-    fn drop(&mut self) {
-        clear_procs();
     }
 }
 
@@ -102,61 +79,6 @@ impl Drop for ChildGuard {
         if let Some(mut child) = self.child.take() {
             let _ = child.kill();
             let _ = child.wait();
-        }
-    }
-}
-
-struct PumpGuard {
-    stop: Arc<AtomicBool>,
-    tx: Option<mpsc::Sender<WirePacket>>,
-    writer_thread: Option<JoinHandle<Result<(), String>>>,
-    reader_thread: Option<JoinHandle<Result<(), String>>>,
-}
-
-impl PumpGuard {
-    fn new(
-        stop: Arc<AtomicBool>,
-        tx: mpsc::Sender<WirePacket>,
-        writer_thread: JoinHandle<Result<(), String>>,
-        reader_thread: JoinHandle<Result<(), String>>,
-    ) -> Self {
-        Self {
-            stop,
-            tx: Some(tx),
-            writer_thread: Some(writer_thread),
-            reader_thread: Some(reader_thread),
-        }
-    }
-
-    fn shutdown_and_join(mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-        self.tx.take();
-        if let Some(writer_thread) = self.writer_thread.take() {
-            match writer_thread.join() {
-                Ok(Err(e)) => eprintln!("wire writer thread error: {e}"),
-                Err(_) => eprintln!("wire writer thread panic"),
-                Ok(Ok(())) => {}
-            }
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            match reader_thread.join() {
-                Ok(Err(e)) => eprintln!("wire reader thread error: {e}"),
-                Err(_) => eprintln!("wire reader thread panic"),
-                Ok(Ok(())) => {}
-            }
-        }
-    }
-}
-
-impl Drop for PumpGuard {
-    fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-        self.tx.take();
-        if let Some(writer_thread) = self.writer_thread.take() {
-            let _ = writer_thread.join();
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            let _ = reader_thread.join();
         }
     }
 }
@@ -202,20 +124,15 @@ fn run_client() -> Result<(), Box<dyn Error>> {
     let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
     let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
 
-    let _procs_guard = ProcTableGuard::client();
+    let _procs_guard = ProcTableGuard::wire_client();
 
-    let (to_writer_tx, to_writer_rx) = mpsc::channel::<WirePacket>();
-    let chunk_id = Arc::new(std::sync::atomic::AtomicU64::new(1));
-    let client = Arc::new(Mutex::new(WireClientShim::new(
+    let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
+    let client = Arc::new(Mutex::new(WireHelperClient::new(
         0,
         {
             let to_writer_tx = to_writer_tx.clone();
-            let chunk_id = chunk_id.clone();
             move |bytes: &[u8]| {
-                let id = chunk_id.fetch_add(1, Ordering::Relaxed);
-                if let Ok(packet) = build_chunked_packet(id, bytes) {
-                    let _ = to_writer_tx.send(packet);
-                }
+                let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
             }
         },
         |msg: &str| eprintln!("wire client error: {msg}"),
@@ -229,85 +146,54 @@ fn run_client() -> Result<(), Box<dyn Error>> {
         return Err("wire client reserve_instance returned null instance".into());
     }
 
-    write_u32(&mut writer_stream, reserved.handle.id)?;
-    write_u32(&mut writer_stream, reserved.handle.generation)?;
+    write_message(
+        &mut writer_stream,
+        &IpcMessage::ReserveInstance {
+            id: reserved.handle.id,
+            generation: reserved.handle.generation,
+        },
+    )?;
     writer_stream.flush()?;
 
-    let mut ack = [0u8; 1];
-    reader_stream.read_exact(&mut ack)?;
-    if ack[0] != 1 {
-        return Err("server rejected wire instance injection".into());
-    }
-
-    let stop = Arc::new(AtomicBool::new(false));
-    let writer_stop = stop.clone();
-    let writer_thread = thread::spawn(move || -> Result<(), String> {
-        loop {
-            match to_writer_rx.recv_timeout(Duration::from_millis(100)) {
-                Ok(packet) => {
-                    if writer_stop.load(Ordering::Relaxed) {
-                        break;
-                    }
-                    write_packet(&mut writer_stream, &packet).map_err(|e| e.to_string())?;
-                    writer_stream.flush().map_err(|e| e.to_string())?;
-                }
-                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                    if writer_stop.load(Ordering::Relaxed) {
-                        break;
-                    }
-                }
-                Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+    match read_message(&mut reader_stream)? {
+        IpcMessage::ReserveAck { ok } => {
+            if !ok {
+                return Err("server rejected wire instance injection".into());
             }
         }
-        Ok(())
-    });
+        _ => return Err("unexpected IPC message during wire handshake".into()),
+    }
 
-    let reader_stop = stop.clone();
+    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let client_for_reader = client.clone();
-    let reader_thread = thread::spawn(move || -> Result<(), String> {
-        while !reader_stop.load(Ordering::Relaxed) {
-            let packet = match read_packet(&mut reader_stream) {
-                Ok(packet) => packet,
-                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e)
-                    if e.kind() == std::io::ErrorKind::TimedOut
-                        || e.kind() == std::io::ErrorKind::WouldBlock =>
-                {
-                    continue;
-                }
-                Err(e) => return Err(e.to_string()),
-            };
-            let frame = decode_chunked_packet(packet)?;
+    let (writer_thread, reader_thread) = start_transport_threads(
+        stop.clone(),
+        reader_stream,
+        writer_stream,
+        to_writer_rx,
+        move |frame: &[u8]| {
             let mut guard = client_for_reader
                 .lock()
                 .map_err(|_| "wire client lock poisoned".to_string())?;
-            if !guard.handle_commands(&frame) {
+            if !guard.handle_commands(frame) {
                 return Err("wire client failed to handle commands".to_string());
             }
+            Ok(())
+        },
+        || {},
+    );
+    let wire_instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved) };
+    let client_for_flush = client.clone();
+    let mut flush_wire = move || {
+        if let Ok(mut guard) = client_for_flush.lock() {
+            let _ = guard.flush();
         }
-        Ok(())
-    });
-    let flusher_stop = stop.clone();
-    let client_for_flusher = client.clone();
-    let flusher_thread = thread::spawn(move || -> Result<(), String> {
-        while !flusher_stop.load(Ordering::Relaxed) {
-            {
-                let mut guard = client_for_flusher
-                    .lock()
-                    .map_err(|_| "wire client lock poisoned".to_string())?;
-                let _ = guard.flush();
-            }
-            thread::sleep(Duration::from_millis(1));
-        }
-        Ok(())
-    });
-
-    let wire_instance = unsafe { WireClientShim::reserved_instance_to_instance(reserved) };
+    };
 
     let pump = PumpGuard::new(stop, to_writer_tx, writer_thread, reader_thread);
 
     let (checksum, nonzero_pixels) =
-        render_triangle_rgba_with_instance(&wire_instance, width, height)?;
+        render_triangle_rgba_with_instance(&wire_instance, width, height, &mut flush_wire)?;
     println!(
         "triangle rendered via wire+ipc: {width}x{height}, checksum={checksum}, nonzero_pixels={nonzero_pixels}"
     );
@@ -319,11 +205,6 @@ fn run_client() -> Result<(), Box<dyn Error>> {
     }
     drop(stream);
     pump.shutdown_and_join();
-    match flusher_thread.join() {
-        Ok(Err(e)) => eprintln!("wire flusher thread error: {e}"),
-        Err(_) => eprintln!("wire flusher thread panic"),
-        Ok(Ok(())) => {}
-    }
     child.wait_success()?;
     Ok(())
 }
@@ -341,19 +222,14 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
     let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
     let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
 
-    let (to_writer_tx, to_writer_rx) = mpsc::channel::<WirePacket>();
-    let chunk_id = Arc::new(std::sync::atomic::AtomicU64::new(1));
-    let server = Arc::new(Mutex::new(WireServerShim::new_native(
+    let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
+    let server = Arc::new(Mutex::new(WireHelperServer::new_native(
         0,
         true,
         {
             let to_writer_tx = to_writer_tx.clone();
-            let chunk_id = chunk_id.clone();
             move |bytes: &[u8]| {
-                let id = chunk_id.fetch_add(1, Ordering::Relaxed);
-                if let Ok(packet) = build_chunked_packet(id, bytes) {
-                    let _ = to_writer_tx.send(packet);
-                }
+                let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
             }
         },
         |msg: &str| eprintln!("wire server error: {msg}"),
@@ -362,69 +238,43 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
     let _procs_guard = ProcTableGuard::native();
     let native_instance = Instance::new(None);
 
-    let handle = DawnRsWireHandle {
-        id: read_u32(&mut reader_stream)?,
-        generation: read_u32(&mut reader_stream)?,
+    let handle = match read_message(&mut reader_stream)? {
+        IpcMessage::ReserveInstance { id, generation } => WireInstanceHandle { id, generation },
+        _ => return Err("unexpected IPC message during reserve instance".into()),
     };
     let injected = {
         let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
         guard.inject_instance(native_instance.as_raw().cast(), handle)
     };
-    writer_stream.write_all(&[if injected { 1 } else { 0 }])?;
+    write_message(&mut writer_stream, &IpcMessage::ReserveAck { ok: injected })?;
     writer_stream.flush()?;
     if !injected {
         return Err("failed to inject native instance into wire server".into());
     }
 
-    let stop = Arc::new(AtomicBool::new(false));
-    let writer_stop = stop.clone();
-    let writer_thread = thread::spawn(move || -> Result<(), String> {
-        loop {
-            match to_writer_rx.recv_timeout(Duration::from_millis(100)) {
-                Ok(packet) => {
-                    if writer_stop.load(Ordering::Relaxed) {
-                        break;
-                    }
-                    write_packet(&mut writer_stream, &packet).map_err(|e| e.to_string())?;
-                    writer_stream.flush().map_err(|e| e.to_string())?;
-                }
-                Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                    if writer_stop.load(Ordering::Relaxed) {
-                        break;
-                    }
-                }
-                Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
-            }
-        }
-        Ok(())
-    });
-
-    let reader_stop = stop.clone();
+    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let server_for_reader = server.clone();
-    let reader_thread = thread::spawn(move || -> Result<(), String> {
-        while !reader_stop.load(Ordering::Relaxed) {
-            let packet = match read_packet(&mut reader_stream) {
-                Ok(packet) => packet,
-                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e)
-                    if e.kind() == std::io::ErrorKind::TimedOut
-                        || e.kind() == std::io::ErrorKind::WouldBlock =>
-                {
-                    continue;
-                }
-                Err(e) => return Err(e.to_string()),
-            };
-            let frame = decode_chunked_packet(packet)?;
+    let server_for_after = server.clone();
+    let (writer_thread, reader_thread) = start_transport_threads(
+        stop.clone(),
+        reader_stream,
+        writer_stream,
+        to_writer_rx,
+        move |frame: &[u8]| {
             let mut guard = server_for_reader
                 .lock()
                 .map_err(|_| "wire server lock poisoned".to_string())?;
-            if !guard.handle_commands(&frame) {
+            if !guard.handle_commands(frame) {
                 return Err("wire server failed to handle commands".to_string());
             }
-            let _ = guard.flush();
-        }
-        Ok(())
-    });
+            Ok(())
+        },
+        move || {
+            if let Ok(mut guard) = server_for_after.lock() {
+                let _ = guard.flush();
+            }
+        },
+    );
 
     let pump = PumpGuard::new(stop, to_writer_tx, writer_thread, reader_thread);
     render_triangle_window(width, height)?;
@@ -445,7 +295,10 @@ fn connect_with_retry(
     Err("failed to connect to ipc server".into())
 }
 
-fn request_adapter_sync(instance: &Instance) -> Result<dawn_rs::Adapter, String> {
+fn request_adapter_sync(
+    instance: &Instance,
+    mut flush_wire: impl FnMut(),
+) -> Result<dawn_rs::Adapter, String> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Adapter, String>>();
     let _future = instance.request_adapter(None, move |status, adapter, message| {
         if status != RequestAdapterStatus::Success {
@@ -465,7 +318,10 @@ fn request_adapter_sync(instance: &Instance) -> Result<dawn_rs::Adapter, String>
     loop {
         match rx.try_recv() {
             Ok(result) => return result,
-            Err(std::sync::mpsc::TryRecvError::Empty) => instance.process_events(),
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                flush_wire();
+                instance.process_events();
+            }
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                 return Err("request_adapter callback disconnected".to_string());
             }
@@ -476,6 +332,7 @@ fn request_adapter_sync(instance: &Instance) -> Result<dawn_rs::Adapter, String>
 fn request_device_sync(
     instance: &Instance,
     adapter: &dawn_rs::Adapter,
+    mut flush_wire: impl FnMut(),
 ) -> Result<dawn_rs::Device, String> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Device, String>>();
     let _future = adapter.request_device(None, move |status, device, message| {
@@ -496,7 +353,10 @@ fn request_device_sync(
     loop {
         match rx.try_recv() {
             Ok(result) => return result,
-            Err(std::sync::mpsc::TryRecvError::Empty) => instance.process_events(),
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                flush_wire();
+                instance.process_events();
+            }
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                 return Err("request_device callback disconnected".to_string());
             }
@@ -508,9 +368,10 @@ fn render_triangle_rgba_with_instance(
     instance: &Instance,
     width: u32,
     height: u32,
+    mut flush_wire: impl FnMut(),
 ) -> Result<(u64, u32), Box<dyn Error>> {
-    let adapter = request_adapter_sync(instance)?;
-    let device = request_device_sync(instance, &adapter)?;
+    let adapter = request_adapter_sync(instance, &mut flush_wire)?;
+    let device = request_device_sync(instance, &adapter, &mut flush_wire)?;
     let queue = device.get_queue();
 
     let texture = create_render_target(&device, width, height);
@@ -568,6 +429,7 @@ fn render_triangle_rgba_with_instance(
 
     let commands = encoder.finish(None);
     queue.submit(&[commands]);
+    flush_wire();
 
     let (tx, rx) = std::sync::mpsc::channel::<Result<(), String>>();
     let _future = readback.map_async(
@@ -589,6 +451,7 @@ fn render_triangle_rgba_with_instance(
             Ok(Ok(())) => break,
             Ok(Err(message)) => return Err(format!("map_async failed: {message}").into()),
             Err(std::sync::mpsc::TryRecvError::Empty) => {
+                flush_wire();
                 instance.process_events();
                 if started.elapsed() > Duration::from_secs(30) {
                     return Err("map_async timed out".into());
@@ -736,7 +599,7 @@ impl IpcTriangleWindowApp {
         }
 
         let surface = instance.create_surface(&surface_desc);
-        let adapter = request_adapter_sync(&instance).expect("request adapter");
+        let adapter = request_adapter_sync(&instance, || {}).expect("request adapter");
         let device = adapter.create_device(None);
         let queue = device.get_queue();
 
@@ -960,125 +823,4 @@ fn to_ipc_name(name: &str) -> Result<interprocess::local_socket::Name<'static>, 
 
 fn align_up(value: u32, align: u32) -> u32 {
     value.div_ceil(align) * align
-}
-
-fn write_u32<W: Write>(writer: &mut W, value: u32) -> Result<(), Box<dyn Error>> {
-    writer.write_all(&value.to_le_bytes())?;
-    Ok(())
-}
-
-fn read_u32<R: Read>(reader: &mut R) -> Result<u32, Box<dyn Error>> {
-    let mut buf = [0u8; 4];
-    reader.read_exact(&mut buf)?;
-    Ok(u32::from_le_bytes(buf))
-}
-
-fn build_chunked_packet(id: u64, chunk: &[u8]) -> Result<WirePacket, String> {
-    build_packet(
-        WireCommand::ChunkedCommand,
-        vec![
-            WireValue::U64(id),
-            WireValue::U64(chunk.len() as u64),
-            WireValue::Bytes(chunk.to_vec()),
-            WireValue::U64(chunk.len() as u64),
-        ],
-    )
-}
-
-fn decode_chunked_packet(packet: WirePacket) -> Result<Vec<u8>, String> {
-    if packet.command != WireCommand::ChunkedCommand {
-        return Err("unexpected control packet for wire transport".to_string());
-    }
-    if packet.fields.len() != 4 {
-        return Err("invalid chunked packet field count".to_string());
-    }
-    match &packet.fields[2].value {
-        WireValue::Bytes(bytes) => Ok(bytes.clone()),
-        _ => Err("invalid chunked packet bytes field".to_string()),
-    }
-}
-
-fn write_packet<W: Write>(writer: &mut W, packet: &WirePacket) -> std::io::Result<()> {
-    let encoded = postcard::to_stdvec(&packet_to_ipc(packet)?)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
-    let len = u32::try_from(encoded.len()).map_err(|_| {
-        std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "wire packet too large to encode",
-        )
-    })?;
-    writer.write_all(&len.to_le_bytes())?;
-    writer.write_all(&encoded)
-}
-
-fn read_packet<R: Read>(reader: &mut R) -> std::io::Result<WirePacket> {
-    let mut len_buf = [0u8; 4];
-    reader.read_exact(&mut len_buf)?;
-    let len = u32::from_le_bytes(len_buf) as usize;
-    if len > 64 * 1024 * 1024 {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "wire packet exceeds max size",
-        ));
-    }
-    let mut data = vec![0u8; len];
-    reader.read_exact(&mut data)?;
-    let ipc: IpcPacket = postcard::from_bytes(&data)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
-    ipc_to_packet(ipc)
-}
-
-fn parse_wire_command(name: &str) -> Option<WireCommand> {
-    match name {
-        "ChunkedCommand" => Some(WireCommand::ChunkedCommand),
-        _ => None,
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct IpcPacket {
-    command: String,
-    values: Vec<IpcWireValue>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum IpcWireValue {
-    U64(u64),
-    Bytes(Vec<u8>),
-}
-
-fn packet_to_ipc(packet: &WirePacket) -> std::io::Result<IpcPacket> {
-    let mut values = Vec::with_capacity(packet.fields.len());
-    for field in &packet.fields {
-        let value = match &field.value {
-            WireValue::U64(v) => IpcWireValue::U64(*v),
-            WireValue::Bytes(v) => IpcWireValue::Bytes(v.clone()),
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "unsupported wire value in postcard transport",
-                ))
-            }
-        };
-        values.push(value);
-    }
-    Ok(IpcPacket {
-        command: format!("{:?}", packet.command),
-        values,
-    })
-}
-
-fn ipc_to_packet(ipc: IpcPacket) -> std::io::Result<WirePacket> {
-    let command = parse_wire_command(&ipc.command)
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "unknown wire command"))?;
-    let values = ipc
-        .values
-        .into_iter()
-        .map(|v| match v {
-            IpcWireValue::U64(v) => WireValue::U64(v),
-            IpcWireValue::Bytes(v) => WireValue::Bytes(v),
-        })
-        .collect();
-    build_packet(command, values)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))
 }
