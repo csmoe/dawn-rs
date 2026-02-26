@@ -4,19 +4,39 @@ use std::path::{Path, PathBuf};
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=DAWN_ROOT");
+    println!("cargo:rerun-if-changed=src/wire_cpp_shim.cc");
     let Some(dawn_root) = resolve_dawn_root() else {
         println!("cargo:warning=DAWN_ROOT not set; skipping Dawn link directives");
         return;
     };
-    let Some(lib_dir) = resolve_dawn_lib_dir(&dawn_root) else {
+    let wire_enabled = env::var_os("CARGO_FEATURE_WIRE").is_some();
+    let lib_dirs = resolve_dawn_lib_dirs(&dawn_root);
+    if lib_dirs.is_empty() {
         println!(
             "cargo:warning=Missing Dawn build output under {} (expected lib/ or out/Release or out/Debug)",
             dawn_root.display()
         );
         return;
-    };
-    println!("cargo:rustc-link-search=native={}", lib_dir.display());
-    println!("cargo:rustc-link-lib=static=webgpu_dawn");
+    }
+    for lib_dir in &lib_dirs {
+        println!("cargo:rustc-link-search=native={}", lib_dir.display());
+    }
+    if wire_enabled {
+        // Link dawn_proc first so WebGPU C symbols resolve to proc-table dispatch stubs.
+        println!("cargo:rustc-link-lib=static=dawn_proc");
+        println!("cargo:rustc-link-lib=static=webgpu_dawn");
+        println!("cargo:rustc-link-lib=static=dawn_wire");
+        if let Some(gen_include) = resolve_dawn_gen_include_dir(&dawn_root) {
+            build_wire_cpp_shim(&dawn_root, &gen_include);
+        } else {
+            println!(
+                "cargo:warning=Missing Dawn generated headers for wire shim under {}",
+                dawn_root.display()
+            );
+        }
+    } else {
+        println!("cargo:rustc-link-lib=static=webgpu_dawn");
+    }
     #[cfg(target_os = "linux")]
     {
         println!("cargo:rustc-link-lib=stdc++");
@@ -43,22 +63,50 @@ fn resolve_dawn_root() -> Option<PathBuf> {
     env::var("DAWN_ROOT").ok().map(PathBuf::from)
 }
 
-fn resolve_dawn_lib_dir(dawn_root: &Path) -> Option<PathBuf> {
-    let lib = dawn_root.join("lib");
-    if lib.exists() {
-        return Some(lib);
+fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    for dir in [
+        dawn_root.join("lib"),
+        dawn_root.join("lib64"),
+        dawn_root.join("out/Release"),
+        dawn_root.join("out/Release/lib"),
+        dawn_root.join("out/Release/src/dawn"),
+        dawn_root.join("out/Release/src/dawn/native"),
+        dawn_root.join("out/Release/src/dawn/wire"),
+        dawn_root.join("out/Debug"),
+        dawn_root.join("out/Debug/lib"),
+        dawn_root.join("out/Debug/src/dawn"),
+        dawn_root.join("out/Debug/src/dawn/native"),
+        dawn_root.join("out/Debug/src/dawn/wire"),
+    ] {
+        if dir.exists() {
+            dirs.push(dir);
+        }
     }
-    let lib = dawn_root.join("lib64");
-    if lib.exists() {
-        return Some(lib);
-    }
-    let release = dawn_root.join("out/Release");
+    dirs
+}
+
+fn resolve_dawn_gen_include_dir(dawn_root: &Path) -> Option<PathBuf> {
+    let release = dawn_root.join("out/Release/gen/include");
     if release.exists() {
         return Some(release);
     }
-    let debug = dawn_root.join("out/Debug");
+    let debug = dawn_root.join("out/Debug/gen/include");
     if debug.exists() {
         return Some(debug);
     }
     None
+}
+
+fn build_wire_cpp_shim(dawn_root: &Path, gen_include_dir: &Path) {
+    let mut build = cc::Build::new();
+    build.cpp(true);
+    build.file("src/wire_cpp_shim.cc");
+    build.include(dawn_root.join("include"));
+    build.include(gen_include_dir);
+    build.flag_if_supported("-std=c++20");
+    // Match Dawn's own toolchain settings to avoid ABI/RTTI mismatches.
+    build.flag_if_supported("-fno-rtti");
+    build.flag_if_supported("-fno-exceptions");
+    build.compile("dawn_rs_wire_cpp_shim");
 }

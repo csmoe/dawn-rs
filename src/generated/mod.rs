@@ -14,3 +14,9 @@ pub use macos_x86_64::*;
 mod windows_x86_64;
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 pub use windows_x86_64::*;
+#[cfg(feature = "wire")]
+pub mod wire_types;
+#[cfg(feature = "wire")]
+pub mod wire_client;
+#[cfg(feature = "wire")]
+pub mod wire_server;
