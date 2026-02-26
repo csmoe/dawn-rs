@@ -64,6 +64,13 @@ jobs:
           path: src/ffi/${{ matrix.target_file }}
           if-no-files-found: error
 
+      - name: Upload platform generated
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-${{ matrix.name }}
+          path: src/generated/${{ matrix.target_file }}
+          if-no-files-found: error
+
   update-dawn:
     name: Merge and Commit
     needs: update-platform
@@ -91,11 +98,23 @@ jobs:
           name: ffi-linux-x86_64
           path: src/ffi
 
+      - name: Download Linux generated
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-linux-x86_64
+          path: src/generated
+
       - name: Download Windows ffi
         uses: actions/download-artifact@v4
         with:
           name: ffi-windows-x86_64
           path: src/ffi
+
+      - name: Download Windows generated
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-windows-x86_64
+          path: src/generated
 
       - name: Download macOS x86_64 ffi
         uses: actions/download-artifact@v4
@@ -103,11 +122,23 @@ jobs:
           name: ffi-macos-x86_64
           path: src/ffi
 
+      - name: Download macOS x86_64 generated
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-macos-x86_64
+          path: src/generated
+
       - name: Download macOS aarch64 ffi
         uses: actions/download-artifact@v4
         with:
           name: ffi-macos-aarch64
           path: src/ffi
+
+      - name: Download macOS aarch64 generated
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-macos-aarch64
+          path: src/generated
 
       - name: Regenerate wrappers and target modules
         run: python ./scripts/update_dawn_release.py --force

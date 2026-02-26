@@ -75,7 +75,8 @@ fn main() {
         .expect("generate ffi.rs");
     std::fs::write(&ffi_out, ffi_rs).expect("write ffi bindings");
 
-    write_generated_single_files(&out_dir, &ffi_dir, &files).expect("write generated single files");
+    write_generated_single_file(&out_dir, target_os, target_arch, &files)
+        .expect("write generated single file");
     write_generated_wrapper(&out_dir).expect("write generated wrapper");
     write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
 }
@@ -222,49 +223,15 @@ pub use {module_name}::*;
     fs::write(ffi_dir.join("mod.rs"), out)
 }
 
-fn write_generated_single_files(
+fn write_generated_single_file(
     out_dir: &Path,
-    ffi_dir: &Path,
+    target_os: &str,
+    target_arch: &str,
     files: &dawn_codegen::GeneratedFiles,
 ) -> std::io::Result<()> {
     let combined = build_combined_generated_source(files);
-
-    let mut targets: Vec<(String, String)> = Vec::new();
-    for entry in fs::read_dir(ffi_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        let file_name = match path.file_name().and_then(|s| s.to_str()) {
-            Some(name) => name,
-            None => continue,
-        };
-        let stem = match file_name.strip_suffix(".rs") {
-            Some(stem) => stem,
-            None => continue,
-        };
-        if stem == "mod" || stem.starts_with("ffi_") {
-            continue;
-        }
-        let (os, arch) = match stem.split_once('_') {
-            Some((os, arch)) if !os.is_empty() && !arch.is_empty() => {
-                (os.to_string(), arch.to_string())
-            }
-            _ => continue,
-        };
-        targets.push((os, arch));
-    }
-    if targets.is_empty() {
-        targets.push((env::consts::OS.to_string(), env::consts::ARCH.to_string()));
-    }
-    targets.sort();
-    targets.dedup();
-
-    for (os, arch) in targets {
-        let target_file = out_dir.join(format!("{os}_{arch}.rs"));
-        fs::write(target_file, &combined)?;
-    }
+    let target_file = out_dir.join(format!("{target_os}_{target_arch}.rs"));
+    fs::write(target_file, &combined)?;
 
     Ok(())
 }
