@@ -1527,6 +1527,12 @@ pub struct WGPUCommandBufferImpl {
 pub type WGPUCommandBuffer = *mut WGPUCommandBufferImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUCommandEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePipelineImpl {
     _unused: [u8; 0],
 }
@@ -1639,12 +1645,6 @@ pub struct WGPUTextureViewImpl {
     _unused: [u8; 0],
 }
 pub type WGPUTextureView = *mut WGPUTextureViewImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUCommandEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePassEncoderImpl {
@@ -1923,6 +1923,7 @@ pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSamplingResourceTa
     WGPUFeatureName = 327738;
 pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl: WGPUFeatureName =
     327739;
+pub const WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax: WGPUFeatureName = 327740;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -2176,12 +2177,9 @@ pub const WGPUSType_WGPUSType_SharedBufferMemoryD3D12SharedMemoryFileMappingHand
     WGPUSType = 327757;
 pub const WGPUSType_WGPUSType_SharedTextureMemoryD3D12ResourceDescriptor: WGPUSType = 327758;
 pub const WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup: WGPUSType = 327759;
-pub const WGPUSType_WGPUSType_ResourceTableLimits: WGPUSType = 327760;
-pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327761;
+pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327760;
 pub const WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs: WGPUSType =
-    327762;
-pub const WGPUSType_WGPUSType_DawnRenderPassColorAttachmentRenderToSingleSampled: WGPUSType =
-    327763;
+    327761;
 pub const WGPUSType_WGPUSType_Force32: WGPUSType = 2147483647;
 pub type WGPUSType = ::std::os::raw::c_uint;
 pub const WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32:
@@ -2335,17 +2333,18 @@ pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x10Unorm: WGPUTextureFormat 
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x10UnormSrgb: WGPUTextureFormat = 99;
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x12Unorm: WGPUTextureFormat = 100;
 pub const WGPUTextureFormat_WGPUTextureFormat_ASTC12x12UnormSrgb: WGPUTextureFormat = 101;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm: WGPUTextureFormat = 327686;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar420Unorm: WGPUTextureFormat = 327680;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar420Unorm: WGPUTextureFormat =
-    327687;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm: WGPUTextureFormat = 327688;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm: WGPUTextureFormat = 327689;
-pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm: WGPUTextureFormat = 327690;
+    327681;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8A8Triplanar420Unorm: WGPUTextureFormat = 327682;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar422Unorm: WGPUTextureFormat = 327683;
+pub const WGPUTextureFormat_WGPUTextureFormat_R8BG8Biplanar444Unorm: WGPUTextureFormat = 327684;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm: WGPUTextureFormat =
-    327691;
+    327685;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm: WGPUTextureFormat =
-    327692;
-pub const WGPUTextureFormat_WGPUTextureFormat_External: WGPUTextureFormat = 327693;
+    327686;
+pub const WGPUTextureFormat_WGPUTextureFormat_External: WGPUTextureFormat = 327687;
+pub const WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid: WGPUTextureFormat = 327687;
 pub const WGPUTextureFormat_WGPUTextureFormat_Force32: WGPUTextureFormat = 2147483647;
 pub type WGPUTextureFormat = ::std::os::raw::c_uint;
 pub const WGPUTextureSampleType_WGPUTextureSampleType_BindingNotUsed: WGPUTextureSampleType = 0;
@@ -2437,24 +2436,6 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupId:
     WGPUWGSLLanguageFeatureName = 6;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet:
     WGPUWGSLLanguageFeatureName = 7;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray:
-    WGPUWGSLLanguageFeatureName = 327688;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers:
-    WGPUWGSLLanguageFeatureName = 327689;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint:
-    WGPUWGSLLanguageFeatureName = 327690;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth:
-    WGPUWGSLLanguageFeatureName = 327691;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace:
-    WGPUWGSLLanguageFeatureName = 327692;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
-    WGPUWGSLLanguageFeatureName = 327693;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView:
-    WGPUWGSLLanguageFeatureName = 327694;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters:
-    WGPUWGSLLanguageFeatureName = 327695;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment:
-    WGPUWGSLLanguageFeatureName = 327696;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented:
     WGPUWGSLLanguageFeatureName = 327680;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental : WGPUWGSLLanguageFeatureName = 327681 ;
@@ -2463,6 +2444,26 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestin
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShippedWithKillswitch : WGPUWGSLLanguageFeatureName = 327683 ;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingShipped:
     WGPUWGSLLanguageFeatureName = 327684;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SizedBindingArray:
+    WGPUWGSLLanguageFeatureName = 327685;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TexelBuffers:
+    WGPUWGSLLanguageFeatureName = 327686;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumPrint:
+    WGPUWGSLLanguageFeatureName = 327687;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth:
+    WGPUWGSLLanguageFeatureName = 327688;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace:
+    WGPUWGSLLanguageFeatureName = 327689;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
+    WGPUWGSLLanguageFeatureName = 327690;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView:
+    WGPUWGSLLanguageFeatureName = 327691;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters:
+    WGPUWGSLLanguageFeatureName = 327692;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment:
+    WGPUWGSLLanguageFeatureName = 327693;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing:
+    WGPUWGSLLanguageFeatureName = 327694;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_Force32:
     WGPUWGSLLanguageFeatureName = 2147483647;
 pub type WGPUWGSLLanguageFeatureName = ::std::os::raw::c_uint;
@@ -3467,24 +3468,6 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct WGPUDawnRenderPassColorAttachmentRenderToSingleSampled {
-    pub chain: WGPUChainedStruct,
-    pub implicitSampleCount: u32,
-}
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of WGPUDawnRenderPassColorAttachmentRenderToSingleSampled"]
-        [::std::mem::size_of::<WGPUDawnRenderPassColorAttachmentRenderToSingleSampled>() - 24usize];
-    ["Alignment of WGPUDawnRenderPassColorAttachmentRenderToSingleSampled"]
-        [::std::mem::align_of::<WGPUDawnRenderPassColorAttachmentRenderToSingleSampled>() - 8usize];
-    ["Offset of field: WGPUDawnRenderPassColorAttachmentRenderToSingleSampled::chain"][::std::mem::offset_of!(
-        WGPUDawnRenderPassColorAttachmentRenderToSingleSampled,
-        chain
-    ) - 0usize];
-    ["Offset of field: WGPUDawnRenderPassColorAttachmentRenderToSingleSampled::implicitSampleCount"] [:: std :: mem :: offset_of ! (WGPUDawnRenderPassColorAttachmentRenderToSingleSampled , implicitSampleCount) - 16usize] ;
-};
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
 pub struct WGPUDawnRenderPassSampleCount {
     pub chain: WGPUChainedStruct,
     pub sampleCount: u32,
@@ -4144,22 +4127,6 @@ const _: () = {
         [::std::mem::offset_of!(WGPUResourceTableDescriptor, label) - 8usize];
     ["Offset of field: WGPUResourceTableDescriptor::size"]
         [::std::mem::offset_of!(WGPUResourceTableDescriptor, size) - 24usize];
-};
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUResourceTableLimits {
-    pub chain: WGPUChainedStruct,
-    pub maxResourceTableSize: u32,
-}
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of WGPUResourceTableLimits"][::std::mem::size_of::<WGPUResourceTableLimits>() - 24usize];
-    ["Alignment of WGPUResourceTableLimits"]
-        [::std::mem::align_of::<WGPUResourceTableLimits>() - 8usize];
-    ["Offset of field: WGPUResourceTableLimits::chain"]
-        [::std::mem::offset_of!(WGPUResourceTableLimits, chain) - 0usize];
-    ["Offset of field: WGPUResourceTableLimits::maxResourceTableSize"]
-        [::std::mem::offset_of!(WGPUResourceTableLimits, maxResourceTableSize) - 16usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7146,9 +7113,6 @@ pub type WGPUProcCommandEncoderResolveQuerySet = ::std::option::Option<
 pub type WGPUProcCommandEncoderSetLabel = ::std::option::Option<
     unsafe extern "C" fn(commandEncoder: WGPUCommandEncoder, label: WGPUStringView),
 >;
-pub type WGPUProcCommandEncoderSetResourceTable = ::std::option::Option<
-    unsafe extern "C" fn(commandEncoder: WGPUCommandEncoder, table: WGPUResourceTable),
->;
 pub type WGPUProcCommandEncoderWriteBuffer = ::std::option::Option<
     unsafe extern "C" fn(
         commandEncoder: WGPUCommandEncoder,
@@ -7216,6 +7180,9 @@ pub type WGPUProcComputePassEncoderSetLabel = ::std::option::Option<
 >;
 pub type WGPUProcComputePassEncoderSetPipeline = ::std::option::Option<
     unsafe extern "C" fn(computePassEncoder: WGPUComputePassEncoder, pipeline: WGPUComputePipeline),
+>;
+pub type WGPUProcComputePassEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(computePassEncoder: WGPUComputePassEncoder, table: WGPUResourceTable),
 >;
 pub type WGPUProcComputePassEncoderWriteTimestamp = ::std::option::Option<
     unsafe extern "C" fn(
@@ -7630,6 +7597,9 @@ pub type WGPUProcRenderBundleEncoderSetPipeline = ::std::option::Option<
         pipeline: WGPURenderPipeline,
     ),
 >;
+pub type WGPUProcRenderBundleEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(renderBundleEncoder: WGPURenderBundleEncoder, table: WGPUResourceTable),
+>;
 pub type WGPUProcRenderBundleEncoderSetVertexBuffer = ::std::option::Option<
     unsafe extern "C" fn(
         renderBundleEncoder: WGPURenderBundleEncoder,
@@ -7754,6 +7724,9 @@ pub type WGPUProcRenderPassEncoderSetLabel = ::std::option::Option<
 >;
 pub type WGPUProcRenderPassEncoderSetPipeline = ::std::option::Option<
     unsafe extern "C" fn(renderPassEncoder: WGPURenderPassEncoder, pipeline: WGPURenderPipeline),
+>;
+pub type WGPUProcRenderPassEncoderSetResourceTable = ::std::option::Option<
+    unsafe extern "C" fn(renderPassEncoder: WGPURenderPassEncoder, table: WGPUResourceTable),
 >;
 pub type WGPUProcRenderPassEncoderSetScissorRect = ::std::option::Option<
     unsafe extern "C" fn(
@@ -8282,12 +8255,6 @@ unsafe extern "C" {
     pub fn wgpuCommandEncoderSetLabel(commandEncoder: WGPUCommandEncoder, label: WGPUStringView);
 }
 unsafe extern "C" {
-    pub fn wgpuCommandEncoderSetResourceTable(
-        commandEncoder: WGPUCommandEncoder,
-        table: WGPUResourceTable,
-    );
-}
-unsafe extern "C" {
     pub fn wgpuCommandEncoderWriteBuffer(
         commandEncoder: WGPUCommandEncoder,
         buffer: WGPUBuffer,
@@ -8369,6 +8336,12 @@ unsafe extern "C" {
     pub fn wgpuComputePassEncoderSetPipeline(
         computePassEncoder: WGPUComputePassEncoder,
         pipeline: WGPUComputePipeline,
+    );
+}
+unsafe extern "C" {
+    pub fn wgpuComputePassEncoderSetResourceTable(
+        computePassEncoder: WGPUComputePassEncoder,
+        table: WGPUResourceTable,
     );
 }
 unsafe extern "C" {
@@ -8864,6 +8837,12 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn wgpuRenderBundleEncoderSetResourceTable(
+        renderBundleEncoder: WGPURenderBundleEncoder,
+        table: WGPUResourceTable,
+    );
+}
+unsafe extern "C" {
     pub fn wgpuRenderBundleEncoderSetVertexBuffer(
         renderBundleEncoder: WGPURenderBundleEncoder,
         slot: u32,
@@ -9010,6 +8989,12 @@ unsafe extern "C" {
     pub fn wgpuRenderPassEncoderSetPipeline(
         renderPassEncoder: WGPURenderPassEncoder,
         pipeline: WGPURenderPipeline,
+    );
+}
+unsafe extern "C" {
+    pub fn wgpuRenderPassEncoderSetResourceTable(
+        renderPassEncoder: WGPURenderPassEncoder,
+        table: WGPUResourceTable,
     );
 }
 unsafe extern "C" {
