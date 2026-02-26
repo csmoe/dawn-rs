@@ -61,7 +61,6 @@ fn main() {
 
     std::fs::create_dir_all(&out_dir).expect("create output dir");
     cleanup_old_layout(&out_dir).expect("cleanup old generated layout");
-    remove_legacy_generated_files(&out_dir).expect("remove legacy generated files");
 
     let target_os = env::consts::OS;
     let target_arch = env::consts::ARCH;
@@ -152,24 +151,6 @@ fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
         }
     }
 
-    Ok(())
-}
-
-fn remove_legacy_generated_files(out_dir: &Path) -> std::io::Result<()> {
-    for file_name in [
-        "enums.rs",
-        "structs.rs",
-        "extensions.rs",
-        "objects.rs",
-        "callbacks.rs",
-        "functions.rs",
-        "constants.rs",
-    ] {
-        let path = out_dir.join(file_name);
-        if path.exists() {
-            fs::remove_file(path)?;
-        }
-    }
     Ok(())
 }
 
@@ -314,23 +295,8 @@ pub use constants::*;
 
 fn emit_inline_module(name: &str, source: &str) -> String {
     format!(
-        "mod {name} {{\n{body}\n}}\n\n",
-        name = name,
-        body = indent_block(source, 4)
+        r#"mod {name} {{
+        {source}
+    }}"#,
     )
-}
-
-fn indent_block(source: &str, spaces: usize) -> String {
-    let prefix = " ".repeat(spaces);
-    source
-        .lines()
-        .map(|line| {
-            if line.is_empty() {
-                String::new()
-            } else {
-                format!("{prefix}{line}", prefix = prefix, line = line)
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }
