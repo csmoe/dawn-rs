@@ -7880,3 +7880,858 @@ unsafe extern "C" {
 unsafe extern "C" {
     pub fn wgpuTextureViewRelease(textureView: WGPUTextureView);
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct DawnProcTable {
+    pub createInstance: WGPUProcCreateInstance,
+    pub getInstanceFeatures: WGPUProcGetInstanceFeatures,
+    pub getInstanceLimits: WGPUProcGetInstanceLimits,
+    pub hasInstanceFeature: WGPUProcHasInstanceFeature,
+    pub getProcAddress: WGPUProcGetProcAddress,
+    pub adapterCreateDevice: WGPUProcAdapterCreateDevice,
+    pub adapterGetFeatures: WGPUProcAdapterGetFeatures,
+    pub adapterGetFormatCapabilities: WGPUProcAdapterGetFormatCapabilities,
+    pub adapterGetInfo: WGPUProcAdapterGetInfo,
+    pub adapterGetInstance: WGPUProcAdapterGetInstance,
+    pub adapterGetLimits: WGPUProcAdapterGetLimits,
+    pub adapterHasFeature: WGPUProcAdapterHasFeature,
+    pub adapterRequestDevice: WGPUProcAdapterRequestDevice,
+    pub adapterAddRef: WGPUProcAdapterAddRef,
+    pub adapterRelease: WGPUProcAdapterRelease,
+    pub adapterInfoFreeMembers: WGPUProcAdapterInfoFreeMembers,
+    pub adapterPropertiesMemoryHeapsFreeMembers: WGPUProcAdapterPropertiesMemoryHeapsFreeMembers,
+    pub adapterPropertiesSubgroupMatrixConfigsFreeMembers:
+        WGPUProcAdapterPropertiesSubgroupMatrixConfigsFreeMembers,
+    pub bindGroupSetLabel: WGPUProcBindGroupSetLabel,
+    pub bindGroupAddRef: WGPUProcBindGroupAddRef,
+    pub bindGroupRelease: WGPUProcBindGroupRelease,
+    pub bindGroupLayoutSetLabel: WGPUProcBindGroupLayoutSetLabel,
+    pub bindGroupLayoutAddRef: WGPUProcBindGroupLayoutAddRef,
+    pub bindGroupLayoutRelease: WGPUProcBindGroupLayoutRelease,
+    pub bufferCreateTexelView: WGPUProcBufferCreateTexelView,
+    pub bufferDestroy: WGPUProcBufferDestroy,
+    pub bufferGetConstMappedRange: WGPUProcBufferGetConstMappedRange,
+    pub bufferGetMappedRange: WGPUProcBufferGetMappedRange,
+    pub bufferGetMapState: WGPUProcBufferGetMapState,
+    pub bufferGetSize: WGPUProcBufferGetSize,
+    pub bufferGetUsage: WGPUProcBufferGetUsage,
+    pub bufferMapAsync: WGPUProcBufferMapAsync,
+    pub bufferReadMappedRange: WGPUProcBufferReadMappedRange,
+    pub bufferSetLabel: WGPUProcBufferSetLabel,
+    pub bufferUnmap: WGPUProcBufferUnmap,
+    pub bufferWriteMappedRange: WGPUProcBufferWriteMappedRange,
+    pub bufferAddRef: WGPUProcBufferAddRef,
+    pub bufferRelease: WGPUProcBufferRelease,
+    pub commandBufferSetLabel: WGPUProcCommandBufferSetLabel,
+    pub commandBufferAddRef: WGPUProcCommandBufferAddRef,
+    pub commandBufferRelease: WGPUProcCommandBufferRelease,
+    pub commandEncoderBeginComputePass: WGPUProcCommandEncoderBeginComputePass,
+    pub commandEncoderBeginRenderPass: WGPUProcCommandEncoderBeginRenderPass,
+    pub commandEncoderClearBuffer: WGPUProcCommandEncoderClearBuffer,
+    pub commandEncoderCopyBufferToBuffer: WGPUProcCommandEncoderCopyBufferToBuffer,
+    pub commandEncoderCopyBufferToTexture: WGPUProcCommandEncoderCopyBufferToTexture,
+    pub commandEncoderCopyTextureToBuffer: WGPUProcCommandEncoderCopyTextureToBuffer,
+    pub commandEncoderCopyTextureToTexture: WGPUProcCommandEncoderCopyTextureToTexture,
+    pub commandEncoderFinish: WGPUProcCommandEncoderFinish,
+    pub commandEncoderInjectValidationError: WGPUProcCommandEncoderInjectValidationError,
+    pub commandEncoderInsertDebugMarker: WGPUProcCommandEncoderInsertDebugMarker,
+    pub commandEncoderPopDebugGroup: WGPUProcCommandEncoderPopDebugGroup,
+    pub commandEncoderPushDebugGroup: WGPUProcCommandEncoderPushDebugGroup,
+    pub commandEncoderResolveQuerySet: WGPUProcCommandEncoderResolveQuerySet,
+    pub commandEncoderSetLabel: WGPUProcCommandEncoderSetLabel,
+    pub commandEncoderWriteBuffer: WGPUProcCommandEncoderWriteBuffer,
+    pub commandEncoderWriteTimestamp: WGPUProcCommandEncoderWriteTimestamp,
+    pub commandEncoderAddRef: WGPUProcCommandEncoderAddRef,
+    pub commandEncoderRelease: WGPUProcCommandEncoderRelease,
+    pub computePassEncoderDispatchWorkgroups: WGPUProcComputePassEncoderDispatchWorkgroups,
+    pub computePassEncoderDispatchWorkgroupsIndirect:
+        WGPUProcComputePassEncoderDispatchWorkgroupsIndirect,
+    pub computePassEncoderEnd: WGPUProcComputePassEncoderEnd,
+    pub computePassEncoderInsertDebugMarker: WGPUProcComputePassEncoderInsertDebugMarker,
+    pub computePassEncoderPopDebugGroup: WGPUProcComputePassEncoderPopDebugGroup,
+    pub computePassEncoderPushDebugGroup: WGPUProcComputePassEncoderPushDebugGroup,
+    pub computePassEncoderSetBindGroup: WGPUProcComputePassEncoderSetBindGroup,
+    pub computePassEncoderSetImmediates: WGPUProcComputePassEncoderSetImmediates,
+    pub computePassEncoderSetLabel: WGPUProcComputePassEncoderSetLabel,
+    pub computePassEncoderSetPipeline: WGPUProcComputePassEncoderSetPipeline,
+    pub computePassEncoderSetResourceTable: WGPUProcComputePassEncoderSetResourceTable,
+    pub computePassEncoderWriteTimestamp: WGPUProcComputePassEncoderWriteTimestamp,
+    pub computePassEncoderAddRef: WGPUProcComputePassEncoderAddRef,
+    pub computePassEncoderRelease: WGPUProcComputePassEncoderRelease,
+    pub computePipelineGetBindGroupLayout: WGPUProcComputePipelineGetBindGroupLayout,
+    pub computePipelineSetLabel: WGPUProcComputePipelineSetLabel,
+    pub computePipelineAddRef: WGPUProcComputePipelineAddRef,
+    pub computePipelineRelease: WGPUProcComputePipelineRelease,
+    pub dawnDrmFormatCapabilitiesFreeMembers: WGPUProcDawnDrmFormatCapabilitiesFreeMembers,
+    pub deviceCreateBindGroup: WGPUProcDeviceCreateBindGroup,
+    pub deviceCreateBindGroupLayout: WGPUProcDeviceCreateBindGroupLayout,
+    pub deviceCreateBuffer: WGPUProcDeviceCreateBuffer,
+    pub deviceCreateCommandEncoder: WGPUProcDeviceCreateCommandEncoder,
+    pub deviceCreateComputePipeline: WGPUProcDeviceCreateComputePipeline,
+    pub deviceCreateComputePipelineAsync: WGPUProcDeviceCreateComputePipelineAsync,
+    pub deviceCreateErrorBuffer: WGPUProcDeviceCreateErrorBuffer,
+    pub deviceCreateErrorExternalTexture: WGPUProcDeviceCreateErrorExternalTexture,
+    pub deviceCreateErrorShaderModule: WGPUProcDeviceCreateErrorShaderModule,
+    pub deviceCreateErrorTexture: WGPUProcDeviceCreateErrorTexture,
+    pub deviceCreateExternalTexture: WGPUProcDeviceCreateExternalTexture,
+    pub deviceCreatePipelineLayout: WGPUProcDeviceCreatePipelineLayout,
+    pub deviceCreateQuerySet: WGPUProcDeviceCreateQuerySet,
+    pub deviceCreateRenderBundleEncoder: WGPUProcDeviceCreateRenderBundleEncoder,
+    pub deviceCreateRenderPipeline: WGPUProcDeviceCreateRenderPipeline,
+    pub deviceCreateRenderPipelineAsync: WGPUProcDeviceCreateRenderPipelineAsync,
+    pub deviceCreateResourceTable: WGPUProcDeviceCreateResourceTable,
+    pub deviceCreateSampler: WGPUProcDeviceCreateSampler,
+    pub deviceCreateShaderModule: WGPUProcDeviceCreateShaderModule,
+    pub deviceCreateTexture: WGPUProcDeviceCreateTexture,
+    pub deviceDestroy: WGPUProcDeviceDestroy,
+    pub deviceForceLoss: WGPUProcDeviceForceLoss,
+    pub deviceGetAdapter: WGPUProcDeviceGetAdapter,
+    pub deviceGetAdapterInfo: WGPUProcDeviceGetAdapterInfo,
+    pub deviceGetAHardwareBufferProperties: WGPUProcDeviceGetAHardwareBufferProperties,
+    pub deviceGetFeatures: WGPUProcDeviceGetFeatures,
+    pub deviceGetLimits: WGPUProcDeviceGetLimits,
+    pub deviceGetLostFuture: WGPUProcDeviceGetLostFuture,
+    pub deviceGetQueue: WGPUProcDeviceGetQueue,
+    pub deviceHasFeature: WGPUProcDeviceHasFeature,
+    pub deviceImportSharedBufferMemory: WGPUProcDeviceImportSharedBufferMemory,
+    pub deviceImportSharedFence: WGPUProcDeviceImportSharedFence,
+    pub deviceImportSharedTextureMemory: WGPUProcDeviceImportSharedTextureMemory,
+    pub deviceInjectError: WGPUProcDeviceInjectError,
+    pub devicePopErrorScope: WGPUProcDevicePopErrorScope,
+    pub devicePushErrorScope: WGPUProcDevicePushErrorScope,
+    pub deviceSetLabel: WGPUProcDeviceSetLabel,
+    pub deviceSetLoggingCallback: WGPUProcDeviceSetLoggingCallback,
+    pub deviceTick: WGPUProcDeviceTick,
+    pub deviceValidateTextureDescriptor: WGPUProcDeviceValidateTextureDescriptor,
+    pub deviceAddRef: WGPUProcDeviceAddRef,
+    pub deviceRelease: WGPUProcDeviceRelease,
+    pub externalTextureDestroy: WGPUProcExternalTextureDestroy,
+    pub externalTextureExpire: WGPUProcExternalTextureExpire,
+    pub externalTextureRefresh: WGPUProcExternalTextureRefresh,
+    pub externalTextureSetLabel: WGPUProcExternalTextureSetLabel,
+    pub externalTextureAddRef: WGPUProcExternalTextureAddRef,
+    pub externalTextureRelease: WGPUProcExternalTextureRelease,
+    pub instanceCreateSurface: WGPUProcInstanceCreateSurface,
+    pub instanceGetWGSLLanguageFeatures: WGPUProcInstanceGetWGSLLanguageFeatures,
+    pub instanceHasWGSLLanguageFeature: WGPUProcInstanceHasWGSLLanguageFeature,
+    pub instanceProcessEvents: WGPUProcInstanceProcessEvents,
+    pub instanceRequestAdapter: WGPUProcInstanceRequestAdapter,
+    pub instanceWaitAny: WGPUProcInstanceWaitAny,
+    pub instanceAddRef: WGPUProcInstanceAddRef,
+    pub instanceRelease: WGPUProcInstanceRelease,
+    pub pipelineLayoutSetLabel: WGPUProcPipelineLayoutSetLabel,
+    pub pipelineLayoutAddRef: WGPUProcPipelineLayoutAddRef,
+    pub pipelineLayoutRelease: WGPUProcPipelineLayoutRelease,
+    pub querySetDestroy: WGPUProcQuerySetDestroy,
+    pub querySetGetCount: WGPUProcQuerySetGetCount,
+    pub querySetGetType: WGPUProcQuerySetGetType,
+    pub querySetSetLabel: WGPUProcQuerySetSetLabel,
+    pub querySetAddRef: WGPUProcQuerySetAddRef,
+    pub querySetRelease: WGPUProcQuerySetRelease,
+    pub queueCopyExternalTextureForBrowser: WGPUProcQueueCopyExternalTextureForBrowser,
+    pub queueCopyTextureForBrowser: WGPUProcQueueCopyTextureForBrowser,
+    pub queueOnSubmittedWorkDone: WGPUProcQueueOnSubmittedWorkDone,
+    pub queueSetLabel: WGPUProcQueueSetLabel,
+    pub queueSubmit: WGPUProcQueueSubmit,
+    pub queueWriteBuffer: WGPUProcQueueWriteBuffer,
+    pub queueWriteTexture: WGPUProcQueueWriteTexture,
+    pub queueAddRef: WGPUProcQueueAddRef,
+    pub queueRelease: WGPUProcQueueRelease,
+    pub renderBundleSetLabel: WGPUProcRenderBundleSetLabel,
+    pub renderBundleAddRef: WGPUProcRenderBundleAddRef,
+    pub renderBundleRelease: WGPUProcRenderBundleRelease,
+    pub renderBundleEncoderDraw: WGPUProcRenderBundleEncoderDraw,
+    pub renderBundleEncoderDrawIndexed: WGPUProcRenderBundleEncoderDrawIndexed,
+    pub renderBundleEncoderDrawIndexedIndirect: WGPUProcRenderBundleEncoderDrawIndexedIndirect,
+    pub renderBundleEncoderDrawIndirect: WGPUProcRenderBundleEncoderDrawIndirect,
+    pub renderBundleEncoderFinish: WGPUProcRenderBundleEncoderFinish,
+    pub renderBundleEncoderInsertDebugMarker: WGPUProcRenderBundleEncoderInsertDebugMarker,
+    pub renderBundleEncoderPopDebugGroup: WGPUProcRenderBundleEncoderPopDebugGroup,
+    pub renderBundleEncoderPushDebugGroup: WGPUProcRenderBundleEncoderPushDebugGroup,
+    pub renderBundleEncoderSetBindGroup: WGPUProcRenderBundleEncoderSetBindGroup,
+    pub renderBundleEncoderSetImmediates: WGPUProcRenderBundleEncoderSetImmediates,
+    pub renderBundleEncoderSetIndexBuffer: WGPUProcRenderBundleEncoderSetIndexBuffer,
+    pub renderBundleEncoderSetLabel: WGPUProcRenderBundleEncoderSetLabel,
+    pub renderBundleEncoderSetPipeline: WGPUProcRenderBundleEncoderSetPipeline,
+    pub renderBundleEncoderSetResourceTable: WGPUProcRenderBundleEncoderSetResourceTable,
+    pub renderBundleEncoderSetVertexBuffer: WGPUProcRenderBundleEncoderSetVertexBuffer,
+    pub renderBundleEncoderAddRef: WGPUProcRenderBundleEncoderAddRef,
+    pub renderBundleEncoderRelease: WGPUProcRenderBundleEncoderRelease,
+    pub renderPassEncoderBeginOcclusionQuery: WGPUProcRenderPassEncoderBeginOcclusionQuery,
+    pub renderPassEncoderDraw: WGPUProcRenderPassEncoderDraw,
+    pub renderPassEncoderDrawIndexed: WGPUProcRenderPassEncoderDrawIndexed,
+    pub renderPassEncoderDrawIndexedIndirect: WGPUProcRenderPassEncoderDrawIndexedIndirect,
+    pub renderPassEncoderDrawIndirect: WGPUProcRenderPassEncoderDrawIndirect,
+    pub renderPassEncoderEnd: WGPUProcRenderPassEncoderEnd,
+    pub renderPassEncoderEndOcclusionQuery: WGPUProcRenderPassEncoderEndOcclusionQuery,
+    pub renderPassEncoderExecuteBundles: WGPUProcRenderPassEncoderExecuteBundles,
+    pub renderPassEncoderInsertDebugMarker: WGPUProcRenderPassEncoderInsertDebugMarker,
+    pub renderPassEncoderMultiDrawIndexedIndirect:
+        WGPUProcRenderPassEncoderMultiDrawIndexedIndirect,
+    pub renderPassEncoderMultiDrawIndirect: WGPUProcRenderPassEncoderMultiDrawIndirect,
+    pub renderPassEncoderPixelLocalStorageBarrier:
+        WGPUProcRenderPassEncoderPixelLocalStorageBarrier,
+    pub renderPassEncoderPopDebugGroup: WGPUProcRenderPassEncoderPopDebugGroup,
+    pub renderPassEncoderPushDebugGroup: WGPUProcRenderPassEncoderPushDebugGroup,
+    pub renderPassEncoderSetBindGroup: WGPUProcRenderPassEncoderSetBindGroup,
+    pub renderPassEncoderSetBlendConstant: WGPUProcRenderPassEncoderSetBlendConstant,
+    pub renderPassEncoderSetImmediates: WGPUProcRenderPassEncoderSetImmediates,
+    pub renderPassEncoderSetIndexBuffer: WGPUProcRenderPassEncoderSetIndexBuffer,
+    pub renderPassEncoderSetLabel: WGPUProcRenderPassEncoderSetLabel,
+    pub renderPassEncoderSetPipeline: WGPUProcRenderPassEncoderSetPipeline,
+    pub renderPassEncoderSetResourceTable: WGPUProcRenderPassEncoderSetResourceTable,
+    pub renderPassEncoderSetScissorRect: WGPUProcRenderPassEncoderSetScissorRect,
+    pub renderPassEncoderSetStencilReference: WGPUProcRenderPassEncoderSetStencilReference,
+    pub renderPassEncoderSetVertexBuffer: WGPUProcRenderPassEncoderSetVertexBuffer,
+    pub renderPassEncoderSetViewport: WGPUProcRenderPassEncoderSetViewport,
+    pub renderPassEncoderWriteTimestamp: WGPUProcRenderPassEncoderWriteTimestamp,
+    pub renderPassEncoderAddRef: WGPUProcRenderPassEncoderAddRef,
+    pub renderPassEncoderRelease: WGPUProcRenderPassEncoderRelease,
+    pub renderPipelineGetBindGroupLayout: WGPUProcRenderPipelineGetBindGroupLayout,
+    pub renderPipelineSetLabel: WGPUProcRenderPipelineSetLabel,
+    pub renderPipelineAddRef: WGPUProcRenderPipelineAddRef,
+    pub renderPipelineRelease: WGPUProcRenderPipelineRelease,
+    pub resourceTableDestroy: WGPUProcResourceTableDestroy,
+    pub resourceTableGetSize: WGPUProcResourceTableGetSize,
+    pub resourceTableInsertBinding: WGPUProcResourceTableInsertBinding,
+    pub resourceTableRemoveBinding: WGPUProcResourceTableRemoveBinding,
+    pub resourceTableUpdate: WGPUProcResourceTableUpdate,
+    pub resourceTableAddRef: WGPUProcResourceTableAddRef,
+    pub resourceTableRelease: WGPUProcResourceTableRelease,
+    pub samplerSetLabel: WGPUProcSamplerSetLabel,
+    pub samplerAddRef: WGPUProcSamplerAddRef,
+    pub samplerRelease: WGPUProcSamplerRelease,
+    pub shaderModuleGetCompilationInfo: WGPUProcShaderModuleGetCompilationInfo,
+    pub shaderModuleSetLabel: WGPUProcShaderModuleSetLabel,
+    pub shaderModuleAddRef: WGPUProcShaderModuleAddRef,
+    pub shaderModuleRelease: WGPUProcShaderModuleRelease,
+    pub sharedBufferMemoryBeginAccess: WGPUProcSharedBufferMemoryBeginAccess,
+    pub sharedBufferMemoryCreateBuffer: WGPUProcSharedBufferMemoryCreateBuffer,
+    pub sharedBufferMemoryEndAccess: WGPUProcSharedBufferMemoryEndAccess,
+    pub sharedBufferMemoryGetProperties: WGPUProcSharedBufferMemoryGetProperties,
+    pub sharedBufferMemoryIsDeviceLost: WGPUProcSharedBufferMemoryIsDeviceLost,
+    pub sharedBufferMemorySetLabel: WGPUProcSharedBufferMemorySetLabel,
+    pub sharedBufferMemoryAddRef: WGPUProcSharedBufferMemoryAddRef,
+    pub sharedBufferMemoryRelease: WGPUProcSharedBufferMemoryRelease,
+    pub sharedBufferMemoryEndAccessStateFreeMembers:
+        WGPUProcSharedBufferMemoryEndAccessStateFreeMembers,
+    pub sharedFenceExportInfo: WGPUProcSharedFenceExportInfo,
+    pub sharedFenceAddRef: WGPUProcSharedFenceAddRef,
+    pub sharedFenceRelease: WGPUProcSharedFenceRelease,
+    pub sharedTextureMemoryBeginAccess: WGPUProcSharedTextureMemoryBeginAccess,
+    pub sharedTextureMemoryCreateTexture: WGPUProcSharedTextureMemoryCreateTexture,
+    pub sharedTextureMemoryEndAccess: WGPUProcSharedTextureMemoryEndAccess,
+    pub sharedTextureMemoryGetProperties: WGPUProcSharedTextureMemoryGetProperties,
+    pub sharedTextureMemoryIsDeviceLost: WGPUProcSharedTextureMemoryIsDeviceLost,
+    pub sharedTextureMemorySetLabel: WGPUProcSharedTextureMemorySetLabel,
+    pub sharedTextureMemoryAddRef: WGPUProcSharedTextureMemoryAddRef,
+    pub sharedTextureMemoryRelease: WGPUProcSharedTextureMemoryRelease,
+    pub sharedTextureMemoryEndAccessStateFreeMembers:
+        WGPUProcSharedTextureMemoryEndAccessStateFreeMembers,
+    pub supportedFeaturesFreeMembers: WGPUProcSupportedFeaturesFreeMembers,
+    pub supportedInstanceFeaturesFreeMembers: WGPUProcSupportedInstanceFeaturesFreeMembers,
+    pub supportedWGSLLanguageFeaturesFreeMembers: WGPUProcSupportedWGSLLanguageFeaturesFreeMembers,
+    pub surfaceConfigure: WGPUProcSurfaceConfigure,
+    pub surfaceGetCapabilities: WGPUProcSurfaceGetCapabilities,
+    pub surfaceGetCurrentTexture: WGPUProcSurfaceGetCurrentTexture,
+    pub surfacePresent: WGPUProcSurfacePresent,
+    pub surfaceSetLabel: WGPUProcSurfaceSetLabel,
+    pub surfaceUnconfigure: WGPUProcSurfaceUnconfigure,
+    pub surfaceAddRef: WGPUProcSurfaceAddRef,
+    pub surfaceRelease: WGPUProcSurfaceRelease,
+    pub surfaceCapabilitiesFreeMembers: WGPUProcSurfaceCapabilitiesFreeMembers,
+    pub texelBufferViewSetLabel: WGPUProcTexelBufferViewSetLabel,
+    pub texelBufferViewAddRef: WGPUProcTexelBufferViewAddRef,
+    pub texelBufferViewRelease: WGPUProcTexelBufferViewRelease,
+    pub textureCreateErrorView: WGPUProcTextureCreateErrorView,
+    pub textureCreateView: WGPUProcTextureCreateView,
+    pub textureDestroy: WGPUProcTextureDestroy,
+    pub textureGetDepthOrArrayLayers: WGPUProcTextureGetDepthOrArrayLayers,
+    pub textureGetDimension: WGPUProcTextureGetDimension,
+    pub textureGetFormat: WGPUProcTextureGetFormat,
+    pub textureGetHeight: WGPUProcTextureGetHeight,
+    pub textureGetMipLevelCount: WGPUProcTextureGetMipLevelCount,
+    pub textureGetSampleCount: WGPUProcTextureGetSampleCount,
+    pub textureGetTextureBindingViewDimension: WGPUProcTextureGetTextureBindingViewDimension,
+    pub textureGetUsage: WGPUProcTextureGetUsage,
+    pub textureGetWidth: WGPUProcTextureGetWidth,
+    pub texturePin: WGPUProcTexturePin,
+    pub textureSetLabel: WGPUProcTextureSetLabel,
+    pub textureSetOwnershipForMemoryDump: WGPUProcTextureSetOwnershipForMemoryDump,
+    pub textureUnpin: WGPUProcTextureUnpin,
+    pub textureAddRef: WGPUProcTextureAddRef,
+    pub textureRelease: WGPUProcTextureRelease,
+    pub textureViewSetLabel: WGPUProcTextureViewSetLabel,
+    pub textureViewAddRef: WGPUProcTextureViewAddRef,
+    pub textureViewRelease: WGPUProcTextureViewRelease,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of DawnProcTable"][::std::mem::size_of::<DawnProcTable>() - 2200usize];
+    ["Alignment of DawnProcTable"][::std::mem::align_of::<DawnProcTable>() - 8usize];
+    ["Offset of field: DawnProcTable::createInstance"]
+        [::std::mem::offset_of!(DawnProcTable, createInstance) - 0usize];
+    ["Offset of field: DawnProcTable::getInstanceFeatures"]
+        [::std::mem::offset_of!(DawnProcTable, getInstanceFeatures) - 8usize];
+    ["Offset of field: DawnProcTable::getInstanceLimits"]
+        [::std::mem::offset_of!(DawnProcTable, getInstanceLimits) - 16usize];
+    ["Offset of field: DawnProcTable::hasInstanceFeature"]
+        [::std::mem::offset_of!(DawnProcTable, hasInstanceFeature) - 24usize];
+    ["Offset of field: DawnProcTable::getProcAddress"]
+        [::std::mem::offset_of!(DawnProcTable, getProcAddress) - 32usize];
+    ["Offset of field: DawnProcTable::adapterCreateDevice"]
+        [::std::mem::offset_of!(DawnProcTable, adapterCreateDevice) - 40usize];
+    ["Offset of field: DawnProcTable::adapterGetFeatures"]
+        [::std::mem::offset_of!(DawnProcTable, adapterGetFeatures) - 48usize];
+    ["Offset of field: DawnProcTable::adapterGetFormatCapabilities"]
+        [::std::mem::offset_of!(DawnProcTable, adapterGetFormatCapabilities) - 56usize];
+    ["Offset of field: DawnProcTable::adapterGetInfo"]
+        [::std::mem::offset_of!(DawnProcTable, adapterGetInfo) - 64usize];
+    ["Offset of field: DawnProcTable::adapterGetInstance"]
+        [::std::mem::offset_of!(DawnProcTable, adapterGetInstance) - 72usize];
+    ["Offset of field: DawnProcTable::adapterGetLimits"]
+        [::std::mem::offset_of!(DawnProcTable, adapterGetLimits) - 80usize];
+    ["Offset of field: DawnProcTable::adapterHasFeature"]
+        [::std::mem::offset_of!(DawnProcTable, adapterHasFeature) - 88usize];
+    ["Offset of field: DawnProcTable::adapterRequestDevice"]
+        [::std::mem::offset_of!(DawnProcTable, adapterRequestDevice) - 96usize];
+    ["Offset of field: DawnProcTable::adapterAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, adapterAddRef) - 104usize];
+    ["Offset of field: DawnProcTable::adapterRelease"]
+        [::std::mem::offset_of!(DawnProcTable, adapterRelease) - 112usize];
+    ["Offset of field: DawnProcTable::adapterInfoFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, adapterInfoFreeMembers) - 120usize];
+    ["Offset of field: DawnProcTable::adapterPropertiesMemoryHeapsFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, adapterPropertiesMemoryHeapsFreeMembers) - 128usize];
+    ["Offset of field: DawnProcTable::adapterPropertiesSubgroupMatrixConfigsFreeMembers"][::std::mem::offset_of!(
+        DawnProcTable,
+        adapterPropertiesSubgroupMatrixConfigsFreeMembers
+    )
+        - 136usize];
+    ["Offset of field: DawnProcTable::bindGroupSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupSetLabel) - 144usize];
+    ["Offset of field: DawnProcTable::bindGroupAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupAddRef) - 152usize];
+    ["Offset of field: DawnProcTable::bindGroupRelease"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupRelease) - 160usize];
+    ["Offset of field: DawnProcTable::bindGroupLayoutSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupLayoutSetLabel) - 168usize];
+    ["Offset of field: DawnProcTable::bindGroupLayoutAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupLayoutAddRef) - 176usize];
+    ["Offset of field: DawnProcTable::bindGroupLayoutRelease"]
+        [::std::mem::offset_of!(DawnProcTable, bindGroupLayoutRelease) - 184usize];
+    ["Offset of field: DawnProcTable::bufferCreateTexelView"]
+        [::std::mem::offset_of!(DawnProcTable, bufferCreateTexelView) - 192usize];
+    ["Offset of field: DawnProcTable::bufferDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, bufferDestroy) - 200usize];
+    ["Offset of field: DawnProcTable::bufferGetConstMappedRange"]
+        [::std::mem::offset_of!(DawnProcTable, bufferGetConstMappedRange) - 208usize];
+    ["Offset of field: DawnProcTable::bufferGetMappedRange"]
+        [::std::mem::offset_of!(DawnProcTable, bufferGetMappedRange) - 216usize];
+    ["Offset of field: DawnProcTable::bufferGetMapState"]
+        [::std::mem::offset_of!(DawnProcTable, bufferGetMapState) - 224usize];
+    ["Offset of field: DawnProcTable::bufferGetSize"]
+        [::std::mem::offset_of!(DawnProcTable, bufferGetSize) - 232usize];
+    ["Offset of field: DawnProcTable::bufferGetUsage"]
+        [::std::mem::offset_of!(DawnProcTable, bufferGetUsage) - 240usize];
+    ["Offset of field: DawnProcTable::bufferMapAsync"]
+        [::std::mem::offset_of!(DawnProcTable, bufferMapAsync) - 248usize];
+    ["Offset of field: DawnProcTable::bufferReadMappedRange"]
+        [::std::mem::offset_of!(DawnProcTable, bufferReadMappedRange) - 256usize];
+    ["Offset of field: DawnProcTable::bufferSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, bufferSetLabel) - 264usize];
+    ["Offset of field: DawnProcTable::bufferUnmap"]
+        [::std::mem::offset_of!(DawnProcTable, bufferUnmap) - 272usize];
+    ["Offset of field: DawnProcTable::bufferWriteMappedRange"]
+        [::std::mem::offset_of!(DawnProcTable, bufferWriteMappedRange) - 280usize];
+    ["Offset of field: DawnProcTable::bufferAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, bufferAddRef) - 288usize];
+    ["Offset of field: DawnProcTable::bufferRelease"]
+        [::std::mem::offset_of!(DawnProcTable, bufferRelease) - 296usize];
+    ["Offset of field: DawnProcTable::commandBufferSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, commandBufferSetLabel) - 304usize];
+    ["Offset of field: DawnProcTable::commandBufferAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, commandBufferAddRef) - 312usize];
+    ["Offset of field: DawnProcTable::commandBufferRelease"]
+        [::std::mem::offset_of!(DawnProcTable, commandBufferRelease) - 320usize];
+    ["Offset of field: DawnProcTable::commandEncoderBeginComputePass"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderBeginComputePass) - 328usize];
+    ["Offset of field: DawnProcTable::commandEncoderBeginRenderPass"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderBeginRenderPass) - 336usize];
+    ["Offset of field: DawnProcTable::commandEncoderClearBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderClearBuffer) - 344usize];
+    ["Offset of field: DawnProcTable::commandEncoderCopyBufferToBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderCopyBufferToBuffer) - 352usize];
+    ["Offset of field: DawnProcTable::commandEncoderCopyBufferToTexture"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderCopyBufferToTexture) - 360usize];
+    ["Offset of field: DawnProcTable::commandEncoderCopyTextureToBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderCopyTextureToBuffer) - 368usize];
+    ["Offset of field: DawnProcTable::commandEncoderCopyTextureToTexture"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderCopyTextureToTexture) - 376usize];
+    ["Offset of field: DawnProcTable::commandEncoderFinish"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderFinish) - 384usize];
+    ["Offset of field: DawnProcTable::commandEncoderInjectValidationError"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderInjectValidationError) - 392usize];
+    ["Offset of field: DawnProcTable::commandEncoderInsertDebugMarker"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderInsertDebugMarker) - 400usize];
+    ["Offset of field: DawnProcTable::commandEncoderPopDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderPopDebugGroup) - 408usize];
+    ["Offset of field: DawnProcTable::commandEncoderPushDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderPushDebugGroup) - 416usize];
+    ["Offset of field: DawnProcTable::commandEncoderResolveQuerySet"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderResolveQuerySet) - 424usize];
+    ["Offset of field: DawnProcTable::commandEncoderSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderSetLabel) - 432usize];
+    ["Offset of field: DawnProcTable::commandEncoderWriteBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderWriteBuffer) - 440usize];
+    ["Offset of field: DawnProcTable::commandEncoderWriteTimestamp"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderWriteTimestamp) - 448usize];
+    ["Offset of field: DawnProcTable::commandEncoderAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderAddRef) - 456usize];
+    ["Offset of field: DawnProcTable::commandEncoderRelease"]
+        [::std::mem::offset_of!(DawnProcTable, commandEncoderRelease) - 464usize];
+    ["Offset of field: DawnProcTable::computePassEncoderDispatchWorkgroups"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderDispatchWorkgroups) - 472usize];
+    ["Offset of field: DawnProcTable::computePassEncoderDispatchWorkgroupsIndirect"][::std::mem::offset_of!(
+        DawnProcTable,
+        computePassEncoderDispatchWorkgroupsIndirect
+    ) - 480usize];
+    ["Offset of field: DawnProcTable::computePassEncoderEnd"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderEnd) - 488usize];
+    ["Offset of field: DawnProcTable::computePassEncoderInsertDebugMarker"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderInsertDebugMarker) - 496usize];
+    ["Offset of field: DawnProcTable::computePassEncoderPopDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderPopDebugGroup) - 504usize];
+    ["Offset of field: DawnProcTable::computePassEncoderPushDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderPushDebugGroup) - 512usize];
+    ["Offset of field: DawnProcTable::computePassEncoderSetBindGroup"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderSetBindGroup) - 520usize];
+    ["Offset of field: DawnProcTable::computePassEncoderSetImmediates"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderSetImmediates) - 528usize];
+    ["Offset of field: DawnProcTable::computePassEncoderSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderSetLabel) - 536usize];
+    ["Offset of field: DawnProcTable::computePassEncoderSetPipeline"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderSetPipeline) - 544usize];
+    ["Offset of field: DawnProcTable::computePassEncoderSetResourceTable"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderSetResourceTable) - 552usize];
+    ["Offset of field: DawnProcTable::computePassEncoderWriteTimestamp"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderWriteTimestamp) - 560usize];
+    ["Offset of field: DawnProcTable::computePassEncoderAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderAddRef) - 568usize];
+    ["Offset of field: DawnProcTable::computePassEncoderRelease"]
+        [::std::mem::offset_of!(DawnProcTable, computePassEncoderRelease) - 576usize];
+    ["Offset of field: DawnProcTable::computePipelineGetBindGroupLayout"]
+        [::std::mem::offset_of!(DawnProcTable, computePipelineGetBindGroupLayout) - 584usize];
+    ["Offset of field: DawnProcTable::computePipelineSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, computePipelineSetLabel) - 592usize];
+    ["Offset of field: DawnProcTable::computePipelineAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, computePipelineAddRef) - 600usize];
+    ["Offset of field: DawnProcTable::computePipelineRelease"]
+        [::std::mem::offset_of!(DawnProcTable, computePipelineRelease) - 608usize];
+    ["Offset of field: DawnProcTable::dawnDrmFormatCapabilitiesFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, dawnDrmFormatCapabilitiesFreeMembers) - 616usize];
+    ["Offset of field: DawnProcTable::deviceCreateBindGroup"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateBindGroup) - 624usize];
+    ["Offset of field: DawnProcTable::deviceCreateBindGroupLayout"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateBindGroupLayout) - 632usize];
+    ["Offset of field: DawnProcTable::deviceCreateBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateBuffer) - 640usize];
+    ["Offset of field: DawnProcTable::deviceCreateCommandEncoder"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateCommandEncoder) - 648usize];
+    ["Offset of field: DawnProcTable::deviceCreateComputePipeline"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateComputePipeline) - 656usize];
+    ["Offset of field: DawnProcTable::deviceCreateComputePipelineAsync"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateComputePipelineAsync) - 664usize];
+    ["Offset of field: DawnProcTable::deviceCreateErrorBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateErrorBuffer) - 672usize];
+    ["Offset of field: DawnProcTable::deviceCreateErrorExternalTexture"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateErrorExternalTexture) - 680usize];
+    ["Offset of field: DawnProcTable::deviceCreateErrorShaderModule"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateErrorShaderModule) - 688usize];
+    ["Offset of field: DawnProcTable::deviceCreateErrorTexture"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateErrorTexture) - 696usize];
+    ["Offset of field: DawnProcTable::deviceCreateExternalTexture"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateExternalTexture) - 704usize];
+    ["Offset of field: DawnProcTable::deviceCreatePipelineLayout"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreatePipelineLayout) - 712usize];
+    ["Offset of field: DawnProcTable::deviceCreateQuerySet"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateQuerySet) - 720usize];
+    ["Offset of field: DawnProcTable::deviceCreateRenderBundleEncoder"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateRenderBundleEncoder) - 728usize];
+    ["Offset of field: DawnProcTable::deviceCreateRenderPipeline"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateRenderPipeline) - 736usize];
+    ["Offset of field: DawnProcTable::deviceCreateRenderPipelineAsync"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateRenderPipelineAsync) - 744usize];
+    ["Offset of field: DawnProcTable::deviceCreateResourceTable"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateResourceTable) - 752usize];
+    ["Offset of field: DawnProcTable::deviceCreateSampler"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateSampler) - 760usize];
+    ["Offset of field: DawnProcTable::deviceCreateShaderModule"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateShaderModule) - 768usize];
+    ["Offset of field: DawnProcTable::deviceCreateTexture"]
+        [::std::mem::offset_of!(DawnProcTable, deviceCreateTexture) - 776usize];
+    ["Offset of field: DawnProcTable::deviceDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, deviceDestroy) - 784usize];
+    ["Offset of field: DawnProcTable::deviceForceLoss"]
+        [::std::mem::offset_of!(DawnProcTable, deviceForceLoss) - 792usize];
+    ["Offset of field: DawnProcTable::deviceGetAdapter"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetAdapter) - 800usize];
+    ["Offset of field: DawnProcTable::deviceGetAdapterInfo"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetAdapterInfo) - 808usize];
+    ["Offset of field: DawnProcTable::deviceGetAHardwareBufferProperties"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetAHardwareBufferProperties) - 816usize];
+    ["Offset of field: DawnProcTable::deviceGetFeatures"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetFeatures) - 824usize];
+    ["Offset of field: DawnProcTable::deviceGetLimits"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetLimits) - 832usize];
+    ["Offset of field: DawnProcTable::deviceGetLostFuture"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetLostFuture) - 840usize];
+    ["Offset of field: DawnProcTable::deviceGetQueue"]
+        [::std::mem::offset_of!(DawnProcTable, deviceGetQueue) - 848usize];
+    ["Offset of field: DawnProcTable::deviceHasFeature"]
+        [::std::mem::offset_of!(DawnProcTable, deviceHasFeature) - 856usize];
+    ["Offset of field: DawnProcTable::deviceImportSharedBufferMemory"]
+        [::std::mem::offset_of!(DawnProcTable, deviceImportSharedBufferMemory) - 864usize];
+    ["Offset of field: DawnProcTable::deviceImportSharedFence"]
+        [::std::mem::offset_of!(DawnProcTable, deviceImportSharedFence) - 872usize];
+    ["Offset of field: DawnProcTable::deviceImportSharedTextureMemory"]
+        [::std::mem::offset_of!(DawnProcTable, deviceImportSharedTextureMemory) - 880usize];
+    ["Offset of field: DawnProcTable::deviceInjectError"]
+        [::std::mem::offset_of!(DawnProcTable, deviceInjectError) - 888usize];
+    ["Offset of field: DawnProcTable::devicePopErrorScope"]
+        [::std::mem::offset_of!(DawnProcTable, devicePopErrorScope) - 896usize];
+    ["Offset of field: DawnProcTable::devicePushErrorScope"]
+        [::std::mem::offset_of!(DawnProcTable, devicePushErrorScope) - 904usize];
+    ["Offset of field: DawnProcTable::deviceSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, deviceSetLabel) - 912usize];
+    ["Offset of field: DawnProcTable::deviceSetLoggingCallback"]
+        [::std::mem::offset_of!(DawnProcTable, deviceSetLoggingCallback) - 920usize];
+    ["Offset of field: DawnProcTable::deviceTick"]
+        [::std::mem::offset_of!(DawnProcTable, deviceTick) - 928usize];
+    ["Offset of field: DawnProcTable::deviceValidateTextureDescriptor"]
+        [::std::mem::offset_of!(DawnProcTable, deviceValidateTextureDescriptor) - 936usize];
+    ["Offset of field: DawnProcTable::deviceAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, deviceAddRef) - 944usize];
+    ["Offset of field: DawnProcTable::deviceRelease"]
+        [::std::mem::offset_of!(DawnProcTable, deviceRelease) - 952usize];
+    ["Offset of field: DawnProcTable::externalTextureDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureDestroy) - 960usize];
+    ["Offset of field: DawnProcTable::externalTextureExpire"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureExpire) - 968usize];
+    ["Offset of field: DawnProcTable::externalTextureRefresh"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureRefresh) - 976usize];
+    ["Offset of field: DawnProcTable::externalTextureSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureSetLabel) - 984usize];
+    ["Offset of field: DawnProcTable::externalTextureAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureAddRef) - 992usize];
+    ["Offset of field: DawnProcTable::externalTextureRelease"]
+        [::std::mem::offset_of!(DawnProcTable, externalTextureRelease) - 1000usize];
+    ["Offset of field: DawnProcTable::instanceCreateSurface"]
+        [::std::mem::offset_of!(DawnProcTable, instanceCreateSurface) - 1008usize];
+    ["Offset of field: DawnProcTable::instanceGetWGSLLanguageFeatures"]
+        [::std::mem::offset_of!(DawnProcTable, instanceGetWGSLLanguageFeatures) - 1016usize];
+    ["Offset of field: DawnProcTable::instanceHasWGSLLanguageFeature"]
+        [::std::mem::offset_of!(DawnProcTable, instanceHasWGSLLanguageFeature) - 1024usize];
+    ["Offset of field: DawnProcTable::instanceProcessEvents"]
+        [::std::mem::offset_of!(DawnProcTable, instanceProcessEvents) - 1032usize];
+    ["Offset of field: DawnProcTable::instanceRequestAdapter"]
+        [::std::mem::offset_of!(DawnProcTable, instanceRequestAdapter) - 1040usize];
+    ["Offset of field: DawnProcTable::instanceWaitAny"]
+        [::std::mem::offset_of!(DawnProcTable, instanceWaitAny) - 1048usize];
+    ["Offset of field: DawnProcTable::instanceAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, instanceAddRef) - 1056usize];
+    ["Offset of field: DawnProcTable::instanceRelease"]
+        [::std::mem::offset_of!(DawnProcTable, instanceRelease) - 1064usize];
+    ["Offset of field: DawnProcTable::pipelineLayoutSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, pipelineLayoutSetLabel) - 1072usize];
+    ["Offset of field: DawnProcTable::pipelineLayoutAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, pipelineLayoutAddRef) - 1080usize];
+    ["Offset of field: DawnProcTable::pipelineLayoutRelease"]
+        [::std::mem::offset_of!(DawnProcTable, pipelineLayoutRelease) - 1088usize];
+    ["Offset of field: DawnProcTable::querySetDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, querySetDestroy) - 1096usize];
+    ["Offset of field: DawnProcTable::querySetGetCount"]
+        [::std::mem::offset_of!(DawnProcTable, querySetGetCount) - 1104usize];
+    ["Offset of field: DawnProcTable::querySetGetType"]
+        [::std::mem::offset_of!(DawnProcTable, querySetGetType) - 1112usize];
+    ["Offset of field: DawnProcTable::querySetSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, querySetSetLabel) - 1120usize];
+    ["Offset of field: DawnProcTable::querySetAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, querySetAddRef) - 1128usize];
+    ["Offset of field: DawnProcTable::querySetRelease"]
+        [::std::mem::offset_of!(DawnProcTable, querySetRelease) - 1136usize];
+    ["Offset of field: DawnProcTable::queueCopyExternalTextureForBrowser"]
+        [::std::mem::offset_of!(DawnProcTable, queueCopyExternalTextureForBrowser) - 1144usize];
+    ["Offset of field: DawnProcTable::queueCopyTextureForBrowser"]
+        [::std::mem::offset_of!(DawnProcTable, queueCopyTextureForBrowser) - 1152usize];
+    ["Offset of field: DawnProcTable::queueOnSubmittedWorkDone"]
+        [::std::mem::offset_of!(DawnProcTable, queueOnSubmittedWorkDone) - 1160usize];
+    ["Offset of field: DawnProcTable::queueSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, queueSetLabel) - 1168usize];
+    ["Offset of field: DawnProcTable::queueSubmit"]
+        [::std::mem::offset_of!(DawnProcTable, queueSubmit) - 1176usize];
+    ["Offset of field: DawnProcTable::queueWriteBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, queueWriteBuffer) - 1184usize];
+    ["Offset of field: DawnProcTable::queueWriteTexture"]
+        [::std::mem::offset_of!(DawnProcTable, queueWriteTexture) - 1192usize];
+    ["Offset of field: DawnProcTable::queueAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, queueAddRef) - 1200usize];
+    ["Offset of field: DawnProcTable::queueRelease"]
+        [::std::mem::offset_of!(DawnProcTable, queueRelease) - 1208usize];
+    ["Offset of field: DawnProcTable::renderBundleSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleSetLabel) - 1216usize];
+    ["Offset of field: DawnProcTable::renderBundleAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleAddRef) - 1224usize];
+    ["Offset of field: DawnProcTable::renderBundleRelease"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleRelease) - 1232usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderDraw"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderDraw) - 1240usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderDrawIndexed"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderDrawIndexed) - 1248usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderDrawIndexedIndirect"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderDrawIndexedIndirect) - 1256usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderDrawIndirect"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderDrawIndirect) - 1264usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderFinish"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderFinish) - 1272usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderInsertDebugMarker"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderInsertDebugMarker) - 1280usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderPopDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderPopDebugGroup) - 1288usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderPushDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderPushDebugGroup) - 1296usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetBindGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetBindGroup) - 1304usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetImmediates"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetImmediates) - 1312usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetIndexBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetIndexBuffer) - 1320usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetLabel) - 1328usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetPipeline"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetPipeline) - 1336usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetResourceTable"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetResourceTable) - 1344usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderSetVertexBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderSetVertexBuffer) - 1352usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderAddRef) - 1360usize];
+    ["Offset of field: DawnProcTable::renderBundleEncoderRelease"]
+        [::std::mem::offset_of!(DawnProcTable, renderBundleEncoderRelease) - 1368usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderBeginOcclusionQuery"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderBeginOcclusionQuery) - 1376usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderDraw"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderDraw) - 1384usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderDrawIndexed"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderDrawIndexed) - 1392usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderDrawIndexedIndirect"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderDrawIndexedIndirect) - 1400usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderDrawIndirect"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderDrawIndirect) - 1408usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderEnd"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderEnd) - 1416usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderEndOcclusionQuery"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderEndOcclusionQuery) - 1424usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderExecuteBundles"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderExecuteBundles) - 1432usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderInsertDebugMarker"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderInsertDebugMarker) - 1440usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderMultiDrawIndexedIndirect"][::std::mem::offset_of!(
+        DawnProcTable,
+        renderPassEncoderMultiDrawIndexedIndirect
+    ) - 1448usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderMultiDrawIndirect"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderMultiDrawIndirect) - 1456usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderPixelLocalStorageBarrier"][::std::mem::offset_of!(
+        DawnProcTable,
+        renderPassEncoderPixelLocalStorageBarrier
+    ) - 1464usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderPopDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderPopDebugGroup) - 1472usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderPushDebugGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderPushDebugGroup) - 1480usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetBindGroup"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetBindGroup) - 1488usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetBlendConstant"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetBlendConstant) - 1496usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetImmediates"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetImmediates) - 1504usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetIndexBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetIndexBuffer) - 1512usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetLabel) - 1520usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetPipeline"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetPipeline) - 1528usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetResourceTable"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetResourceTable) - 1536usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetScissorRect"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetScissorRect) - 1544usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetStencilReference"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetStencilReference) - 1552usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetVertexBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetVertexBuffer) - 1560usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderSetViewport"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderSetViewport) - 1568usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderWriteTimestamp"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderWriteTimestamp) - 1576usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderAddRef) - 1584usize];
+    ["Offset of field: DawnProcTable::renderPassEncoderRelease"]
+        [::std::mem::offset_of!(DawnProcTable, renderPassEncoderRelease) - 1592usize];
+    ["Offset of field: DawnProcTable::renderPipelineGetBindGroupLayout"]
+        [::std::mem::offset_of!(DawnProcTable, renderPipelineGetBindGroupLayout) - 1600usize];
+    ["Offset of field: DawnProcTable::renderPipelineSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, renderPipelineSetLabel) - 1608usize];
+    ["Offset of field: DawnProcTable::renderPipelineAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, renderPipelineAddRef) - 1616usize];
+    ["Offset of field: DawnProcTable::renderPipelineRelease"]
+        [::std::mem::offset_of!(DawnProcTable, renderPipelineRelease) - 1624usize];
+    ["Offset of field: DawnProcTable::resourceTableDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableDestroy) - 1632usize];
+    ["Offset of field: DawnProcTable::resourceTableGetSize"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableGetSize) - 1640usize];
+    ["Offset of field: DawnProcTable::resourceTableInsertBinding"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableInsertBinding) - 1648usize];
+    ["Offset of field: DawnProcTable::resourceTableRemoveBinding"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableRemoveBinding) - 1656usize];
+    ["Offset of field: DawnProcTable::resourceTableUpdate"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableUpdate) - 1664usize];
+    ["Offset of field: DawnProcTable::resourceTableAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableAddRef) - 1672usize];
+    ["Offset of field: DawnProcTable::resourceTableRelease"]
+        [::std::mem::offset_of!(DawnProcTable, resourceTableRelease) - 1680usize];
+    ["Offset of field: DawnProcTable::samplerSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, samplerSetLabel) - 1688usize];
+    ["Offset of field: DawnProcTable::samplerAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, samplerAddRef) - 1696usize];
+    ["Offset of field: DawnProcTable::samplerRelease"]
+        [::std::mem::offset_of!(DawnProcTable, samplerRelease) - 1704usize];
+    ["Offset of field: DawnProcTable::shaderModuleGetCompilationInfo"]
+        [::std::mem::offset_of!(DawnProcTable, shaderModuleGetCompilationInfo) - 1712usize];
+    ["Offset of field: DawnProcTable::shaderModuleSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, shaderModuleSetLabel) - 1720usize];
+    ["Offset of field: DawnProcTable::shaderModuleAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, shaderModuleAddRef) - 1728usize];
+    ["Offset of field: DawnProcTable::shaderModuleRelease"]
+        [::std::mem::offset_of!(DawnProcTable, shaderModuleRelease) - 1736usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryBeginAccess"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryBeginAccess) - 1744usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryCreateBuffer"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryCreateBuffer) - 1752usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryEndAccess"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryEndAccess) - 1760usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryGetProperties"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryGetProperties) - 1768usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryIsDeviceLost"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryIsDeviceLost) - 1776usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemorySetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemorySetLabel) - 1784usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryAddRef) - 1792usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryRelease"]
+        [::std::mem::offset_of!(DawnProcTable, sharedBufferMemoryRelease) - 1800usize];
+    ["Offset of field: DawnProcTable::sharedBufferMemoryEndAccessStateFreeMembers"][::std::mem::offset_of!(
+        DawnProcTable,
+        sharedBufferMemoryEndAccessStateFreeMembers
+    ) - 1808usize];
+    ["Offset of field: DawnProcTable::sharedFenceExportInfo"]
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceExportInfo) - 1816usize];
+    ["Offset of field: DawnProcTable::sharedFenceAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceAddRef) - 1824usize];
+    ["Offset of field: DawnProcTable::sharedFenceRelease"]
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceRelease) - 1832usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryBeginAccess"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryBeginAccess) - 1840usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryCreateTexture"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryCreateTexture) - 1848usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryEndAccess"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryEndAccess) - 1856usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryGetProperties"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryGetProperties) - 1864usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryIsDeviceLost"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryIsDeviceLost) - 1872usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemorySetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemorySetLabel) - 1880usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryAddRef) - 1888usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryRelease"]
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryRelease) - 1896usize];
+    ["Offset of field: DawnProcTable::sharedTextureMemoryEndAccessStateFreeMembers"][::std::mem::offset_of!(
+        DawnProcTable,
+        sharedTextureMemoryEndAccessStateFreeMembers
+    ) - 1904usize];
+    ["Offset of field: DawnProcTable::supportedFeaturesFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, supportedFeaturesFreeMembers) - 1912usize];
+    ["Offset of field: DawnProcTable::supportedInstanceFeaturesFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, supportedInstanceFeaturesFreeMembers) - 1920usize];
+    ["Offset of field: DawnProcTable::supportedWGSLLanguageFeaturesFreeMembers"][::std::mem::offset_of!(
+        DawnProcTable,
+        supportedWGSLLanguageFeaturesFreeMembers
+    ) - 1928usize];
+    ["Offset of field: DawnProcTable::surfaceConfigure"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceConfigure) - 1936usize];
+    ["Offset of field: DawnProcTable::surfaceGetCapabilities"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceGetCapabilities) - 1944usize];
+    ["Offset of field: DawnProcTable::surfaceGetCurrentTexture"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceGetCurrentTexture) - 1952usize];
+    ["Offset of field: DawnProcTable::surfacePresent"]
+        [::std::mem::offset_of!(DawnProcTable, surfacePresent) - 1960usize];
+    ["Offset of field: DawnProcTable::surfaceSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceSetLabel) - 1968usize];
+    ["Offset of field: DawnProcTable::surfaceUnconfigure"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceUnconfigure) - 1976usize];
+    ["Offset of field: DawnProcTable::surfaceAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceAddRef) - 1984usize];
+    ["Offset of field: DawnProcTable::surfaceRelease"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceRelease) - 1992usize];
+    ["Offset of field: DawnProcTable::surfaceCapabilitiesFreeMembers"]
+        [::std::mem::offset_of!(DawnProcTable, surfaceCapabilitiesFreeMembers) - 2000usize];
+    ["Offset of field: DawnProcTable::texelBufferViewSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewSetLabel) - 2008usize];
+    ["Offset of field: DawnProcTable::texelBufferViewAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewAddRef) - 2016usize];
+    ["Offset of field: DawnProcTable::texelBufferViewRelease"]
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewRelease) - 2024usize];
+    ["Offset of field: DawnProcTable::textureCreateErrorView"]
+        [::std::mem::offset_of!(DawnProcTable, textureCreateErrorView) - 2032usize];
+    ["Offset of field: DawnProcTable::textureCreateView"]
+        [::std::mem::offset_of!(DawnProcTable, textureCreateView) - 2040usize];
+    ["Offset of field: DawnProcTable::textureDestroy"]
+        [::std::mem::offset_of!(DawnProcTable, textureDestroy) - 2048usize];
+    ["Offset of field: DawnProcTable::textureGetDepthOrArrayLayers"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetDepthOrArrayLayers) - 2056usize];
+    ["Offset of field: DawnProcTable::textureGetDimension"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetDimension) - 2064usize];
+    ["Offset of field: DawnProcTable::textureGetFormat"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetFormat) - 2072usize];
+    ["Offset of field: DawnProcTable::textureGetHeight"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetHeight) - 2080usize];
+    ["Offset of field: DawnProcTable::textureGetMipLevelCount"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetMipLevelCount) - 2088usize];
+    ["Offset of field: DawnProcTable::textureGetSampleCount"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetSampleCount) - 2096usize];
+    ["Offset of field: DawnProcTable::textureGetTextureBindingViewDimension"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetTextureBindingViewDimension) - 2104usize];
+    ["Offset of field: DawnProcTable::textureGetUsage"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetUsage) - 2112usize];
+    ["Offset of field: DawnProcTable::textureGetWidth"]
+        [::std::mem::offset_of!(DawnProcTable, textureGetWidth) - 2120usize];
+    ["Offset of field: DawnProcTable::texturePin"]
+        [::std::mem::offset_of!(DawnProcTable, texturePin) - 2128usize];
+    ["Offset of field: DawnProcTable::textureSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, textureSetLabel) - 2136usize];
+    ["Offset of field: DawnProcTable::textureSetOwnershipForMemoryDump"]
+        [::std::mem::offset_of!(DawnProcTable, textureSetOwnershipForMemoryDump) - 2144usize];
+    ["Offset of field: DawnProcTable::textureUnpin"]
+        [::std::mem::offset_of!(DawnProcTable, textureUnpin) - 2152usize];
+    ["Offset of field: DawnProcTable::textureAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, textureAddRef) - 2160usize];
+    ["Offset of field: DawnProcTable::textureRelease"]
+        [::std::mem::offset_of!(DawnProcTable, textureRelease) - 2168usize];
+    ["Offset of field: DawnProcTable::textureViewSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, textureViewSetLabel) - 2176usize];
+    ["Offset of field: DawnProcTable::textureViewAddRef"]
+        [::std::mem::offset_of!(DawnProcTable, textureViewAddRef) - 2184usize];
+    ["Offset of field: DawnProcTable::textureViewRelease"]
+        [::std::mem::offset_of!(DawnProcTable, textureViewRelease) - 2192usize];
+};

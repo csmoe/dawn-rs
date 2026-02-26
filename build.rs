@@ -25,7 +25,21 @@ fn main() {
         // Link dawn_proc first so WebGPU C symbols resolve to proc-table dispatch stubs.
         println!("cargo:rustc-link-lib=static=dawn_proc");
         println!("cargo:rustc-link-lib=static=webgpu_dawn");
-        println!("cargo:rustc-link-lib=static=dawn_wire");
+        if has_static_lib(&lib_dirs, "wire_client") {
+            println!("cargo:rustc-link-lib=static=wire_client");
+        }
+        if has_static_lib(&lib_dirs, "wire_server") {
+            println!("cargo:rustc-link-lib=static=wire_server");
+        }
+        // Dawn's default GN/CMake static build usually emits libdawn_wire.a containing both
+        // client/server symbols.
+        if has_static_lib(&lib_dirs, "dawn_wire") {
+            println!("cargo:rustc-link-lib=static=dawn_wire");
+        } else if !has_static_lib(&lib_dirs, "wire_server") {
+            println!(
+                "cargo:warning=Missing Dawn wire runtime library (expected dawn_wire or wire_server)"
+            );
+        }
         if let Some(gen_include) = resolve_dawn_gen_include_dir(&dawn_root) {
             build_wire_cpp_shim(&dawn_root, &gen_include);
         } else {
@@ -68,6 +82,10 @@ fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
     for dir in [
         dawn_root.join("lib"),
         dawn_root.join("lib64"),
+        dawn_root.join("out/cmake-install-static/lib"),
+        dawn_root.join("out/cmake-install-static/src/dawn"),
+        dawn_root.join("out/cmake-install-static/src/dawn/native"),
+        dawn_root.join("out/cmake-install-static/src/dawn/wire"),
         dawn_root.join("out/Release"),
         dawn_root.join("out/Release/lib"),
         dawn_root.join("out/Release/src/dawn"),
@@ -84,6 +102,17 @@ fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
         }
     }
     dirs
+}
+
+fn has_static_lib(lib_dirs: &[PathBuf], name: &str) -> bool {
+    for dir in lib_dirs {
+        let unix = dir.join(format!("lib{name}.a"));
+        let windows = dir.join(format!("{name}.lib"));
+        if unix.exists() || windows.exists() {
+            return true;
+        }
+    }
+    false
 }
 
 fn resolve_dawn_gen_include_dir(dawn_root: &Path) -> Option<PathBuf> {
