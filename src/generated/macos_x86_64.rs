@@ -4817,6 +4817,36 @@ mod structs {
         let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
         String::from_utf8_lossy(slice).into_owned()
     }
+    pub struct InternalHaveEmdawnwebgpuHeader {
+        pub unused: Option<bool>,
+    }
+    impl Default for InternalHaveEmdawnwebgpuHeader {
+        fn default() -> Self {
+            Self { unused: None }
+        }
+    }
+    impl InternalHaveEmdawnwebgpuHeader {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER = unsafe {
+                std::mem::zeroed()
+            };
+            raw.unused = if self.unused.unwrap_or(false) { 1 } else { 0 };
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER,
+        ) -> Self {
+            Self {
+                unused: Some(value.unused != 0),
+            }
+        }
+    }
     pub struct AHardwareBufferProperties {
         pub y_cb_cr_info: Option<YCbCrVkDescriptor>,
     }
@@ -6267,6 +6297,64 @@ mod structs {
                 } else {
                     Some(string_view_to_string(value.label))
                 },
+            }
+        }
+    }
+    pub struct CompatibilityModeLimits {
+        pub max_storage_buffers_in_vertex_stage: Option<u32>,
+        pub max_storage_textures_in_vertex_stage: Option<u32>,
+        pub max_storage_buffers_in_fragment_stage: Option<u32>,
+        pub max_storage_textures_in_fragment_stage: Option<u32>,
+    }
+    impl Default for CompatibilityModeLimits {
+        fn default() -> Self {
+            Self {
+                max_storage_buffers_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_textures_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_buffers_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_textures_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
+            }
+        }
+    }
+    impl CompatibilityModeLimits {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUCompatibilityModeLimits, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUCompatibilityModeLimits = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.max_storage_buffers_in_vertex_stage {
+                raw.maxStorageBuffersInVertexStage = value;
+            }
+            if let Some(value) = self.max_storage_textures_in_vertex_stage {
+                raw.maxStorageTexturesInVertexStage = value;
+            }
+            if let Some(value) = self.max_storage_buffers_in_fragment_stage {
+                raw.maxStorageBuffersInFragmentStage = value;
+            }
+            if let Some(value) = self.max_storage_textures_in_fragment_stage {
+                raw.maxStorageTexturesInFragmentStage = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPUCompatibilityModeLimits) -> Self {
+            Self {
+                max_storage_buffers_in_vertex_stage: Some(
+                    value.maxStorageBuffersInVertexStage,
+                ),
+                max_storage_textures_in_vertex_stage: Some(
+                    value.maxStorageTexturesInVertexStage,
+                ),
+                max_storage_buffers_in_fragment_stage: Some(
+                    value.maxStorageBuffersInFragmentStage,
+                ),
+                max_storage_textures_in_fragment_stage: Some(
+                    value.maxStorageTexturesInFragmentStage,
+                ),
             }
         }
     }
@@ -8103,6 +8191,46 @@ mod structs {
                 default_queue: Some(QueueDescriptor::from_ffi(value.defaultQueue)),
                 device_lost_callback_info: None,
                 uncaptured_error_callback_info: None,
+            }
+        }
+    }
+    pub struct EmscriptenSurfaceSourceCanvasHTMLSelector {
+        pub selector: Option<String>,
+    }
+    impl Default for EmscriptenSurfaceSourceCanvasHTMLSelector {
+        fn default() -> Self {
+            Self { selector: None }
+        }
+    }
+    impl EmscriptenSurfaceSourceCanvasHTMLSelector {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = &self.selector {
+                raw.selector = ffi::WGPUStringView {
+                    data: value.as_ptr().cast(),
+                    length: value.len(),
+                };
+            } else {
+                raw.selector = ffi::WGPUStringView {
+                    data: std::ptr::null(),
+                    length: 0,
+                };
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector,
+        ) -> Self {
+            Self {
+                selector: Some(string_view_to_string(value.selector)),
             }
         }
     }
@@ -14632,6 +14760,44 @@ mod structs {
             }
         }
     }
+    pub struct TextureBindingViewDimensionDescriptor {
+        pub texture_binding_view_dimension: Option<TextureViewDimension>,
+    }
+    impl Default for TextureBindingViewDimensionDescriptor {
+        fn default() -> Self {
+            Self {
+                texture_binding_view_dimension: None,
+            }
+        }
+    }
+    impl TextureBindingViewDimensionDescriptor {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUTextureBindingViewDimensionDescriptor, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUTextureBindingViewDimensionDescriptor = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.texture_binding_view_dimension {
+                raw.textureBindingViewDimension = value.into();
+            } else {
+                raw.textureBindingViewDimension = 0 as ffi::WGPUTextureViewDimension;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUTextureBindingViewDimensionDescriptor,
+        ) -> Self {
+            Self {
+                texture_binding_view_dimension: Some(
+                    value.textureBindingViewDimension.into(),
+                ),
+            }
+        }
+    }
     pub struct TextureComponentSwizzle {
         pub r: Option<ComponentSwizzle>,
         pub g: Option<ComponentSwizzle>,
@@ -16160,8 +16326,14 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum LimitsExtension {
+        CompatibilityModeLimits(CompatibilityModeLimits),
         DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
         DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
+    }
+    impl std::convert::From<CompatibilityModeLimits> for LimitsExtension {
+        fn from(ext: CompatibilityModeLimits) -> Self {
+            LimitsExtension::CompatibilityModeLimits(ext)
+        }
     }
     impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
         fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -16180,6 +16352,14 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
+                LimitsExtension::CompatibilityModeLimits(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::CompatibilityModeLimits.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
                 LimitsExtension::DawnHostMappedPointerLimits(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnHostMappedPointerLimits.into();
@@ -17362,6 +17542,9 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum SurfaceDescriptorExtension {
+        EmscriptenSurfaceSourceCanvasHTMLSelector(
+            EmscriptenSurfaceSourceCanvasHTMLSelector,
+        ),
         SurfaceColorManagement(SurfaceColorManagement),
         SurfaceDescriptorFromWindowsUWPSwapChainPanel(
             SurfaceDescriptorFromWindowsUWPSwapChainPanel,
@@ -17376,6 +17559,12 @@ mod extensions {
         SurfaceSourceWaylandSurface(SurfaceSourceWaylandSurface),
         SurfaceSourceWindowsHWND(SurfaceSourceWindowsHWND),
         SurfaceSourceXlibWindow(SurfaceSourceXlibWindow),
+    }
+    impl std::convert::From<EmscriptenSurfaceSourceCanvasHTMLSelector>
+    for SurfaceDescriptorExtension {
+        fn from(ext: EmscriptenSurfaceSourceCanvasHTMLSelector) -> Self {
+            SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(ext)
+        }
     }
     impl std::convert::From<SurfaceColorManagement> for SurfaceDescriptorExtension {
         fn from(ext: SurfaceColorManagement) -> Self {
@@ -17442,6 +17631,17 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
+                SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::EmscriptenSurfaceSourceCanvasHTMLSelector
+                        .into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
                 SurfaceDescriptorExtension::SurfaceColorManagement(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::SurfaceColorManagement.into();
@@ -17576,11 +17776,18 @@ mod extensions {
     #[allow(dead_code)]
     pub enum TextureDescriptorExtension {
         DawnTextureInternalUsageDescriptor(DawnTextureInternalUsageDescriptor),
+        TextureBindingViewDimensionDescriptor(TextureBindingViewDimensionDescriptor),
     }
     impl std::convert::From<DawnTextureInternalUsageDescriptor>
     for TextureDescriptorExtension {
         fn from(ext: DawnTextureInternalUsageDescriptor) -> Self {
             TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(ext)
+        }
+    }
+    impl std::convert::From<TextureBindingViewDimensionDescriptor>
+    for TextureDescriptorExtension {
+        fn from(ext: TextureBindingViewDimensionDescriptor) -> Self {
+            TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(ext)
         }
     }
     impl TextureDescriptorExtension {
@@ -17595,6 +17802,17 @@ mod extensions {
                 ) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnTextureInternalUsageDescriptor.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::TextureBindingViewDimensionDescriptor
+                        .into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
