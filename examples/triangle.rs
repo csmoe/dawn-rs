@@ -1,19 +1,13 @@
 use dawn_rs::{FutureWaitInfo, WaitStatus};
-#[cfg(target_os = "macos")]
-use objc2::rc::autoreleasepool;
-#[cfg(target_os = "macos")]
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+#[cfg(all(unix, not(target_os = "macos")))]
+use raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
-#[cfg(target_os = "macos")]
 use std::time::Instant;
-#[cfg(target_os = "macos")]
 use winit::application::ApplicationHandler;
-#[cfg(target_os = "macos")]
 use winit::event::WindowEvent;
-#[cfg(target_os = "macos")]
 use winit::event_loop::{ActiveEventLoop, EventLoop};
-#[cfg(target_os = "macos")]
 use winit::window::{Window, WindowAttributes, WindowId};
 
 static SHADER: &str = r#"
@@ -41,20 +35,12 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 "#;
 
-#[cfg(target_os = "macos")]
 fn main() {
-    autoreleasepool(|_| {
-        let event_loop = EventLoop::new().expect("create event loop");
+    let event_loop = EventLoop::new().expect("create event loop");
 
-        let mut app = TriangleApp::new(SHADER);
+    let mut app = TriangleApp::new(SHADER);
 
-        event_loop.run_app(&mut app).expect("run app");
-    });
-}
-
-#[cfg(not(target_os = "macos"))]
-fn main() {
-    eprintln!("triangle example is only implemented for macOS");
+    event_loop.run_app(&mut app).expect("run app");
 }
 
 trait InstanceExt {
@@ -86,6 +72,7 @@ struct TriangleApp {
     config: Option<dawn_rs::SurfaceConfiguration>,
     vertex_buffer: Option<dawn_rs::Buffer>,
     vertex_buffer_size: u64,
+    #[cfg(target_os = "macos")]
     metal_layer: Option<Layer>,
     last_redraw: Instant,
 }
@@ -103,6 +90,7 @@ impl TriangleApp {
             config: None,
             vertex_buffer: None,
             vertex_buffer_size: 0,
+            #[cfg(target_os = "macos")]
             metal_layer: None,
             last_redraw: Instant::now(),
         }
@@ -114,17 +102,71 @@ impl TriangleApp {
             .expect("create window");
 
         let window_handle = window.window_handle().expect("window handle");
-        let layer = match window_handle.as_raw() {
-            RawWindowHandle::AppKit(handle) => unsafe { Layer::from_ns_view(handle.ns_view) },
-            _ => panic!("expected AppKit window handle"),
-        };
-        let layer_ptr = layer.as_ptr().as_ptr();
+        #[cfg(all(unix, not(target_os = "macos")))]
+        let display_handle = window.display_handle().expect("display handle");
 
         let instance = dawn_rs::Instance::new(None);
         let mut surface_desc = dawn_rs::SurfaceDescriptor::new();
-        let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
-        metal_layer.layer = Some(layer_ptr.cast());
-        surface_desc = surface_desc.with_extension(metal_layer.into());
+
+        #[cfg(target_os = "macos")]
+        {
+            let layer = match window_handle.as_raw() {
+                RawWindowHandle::AppKit(handle) => unsafe { Layer::from_ns_view(handle.ns_view) },
+                _ => panic!("expected AppKit window handle"),
+            };
+            let layer_ptr = layer.as_ptr().as_ptr();
+            let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
+            metal_layer.layer = Some(layer_ptr.cast());
+            surface_desc = surface_desc.with_extension(metal_layer.into());
+            self.metal_layer = Some(layer);
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            let win = match window_handle.as_raw() {
+                RawWindowHandle::Win32(handle) => handle,
+                _ => panic!("expected Win32 window handle"),
+            };
+            let mut win32_layer = dawn_rs::SurfaceSourceWin32::new();
+            win32_layer.hwnd = Some((win.hwnd.get() as *mut std::ffi::c_void).cast());
+            win32_layer.hinstance = win
+                .hinstance
+                .map(|h| (h.get() as *mut std::ffi::c_void).cast());
+            surface_desc = surface_desc.with_extension(win32_layer.into());
+        }
+
+        #[cfg(all(unix, not(target_os = "macos")))]
+        {
+            let raw_window = window_handle.as_raw();
+            let raw_display = display_handle.as_raw();
+            match (raw_display, raw_window) {
+                (RawDisplayHandle::Wayland(disp), RawWindowHandle::Wayland(win)) => {
+                    let mut wayland = dawn_rs::SurfaceSourceWaylandSurface::new();
+                    wayland.display = Some(disp.display.as_ptr().cast());
+                    wayland.surface = Some(win.surface.as_ptr().cast());
+                    surface_desc = surface_desc.with_extension(wayland.into());
+                }
+                (RawDisplayHandle::Xlib(disp), RawWindowHandle::Xlib(win)) => {
+                    let mut xlib = dawn_rs::SurfaceSourceXlibWindow::new();
+                    xlib.display = disp.display.map(|p| p.as_ptr().cast());
+                    xlib.window = Some(win.window);
+                    surface_desc = surface_desc.with_extension(xlib.into());
+                }
+                (RawDisplayHandle::Xcb(disp), RawWindowHandle::Xcb(win)) => {
+                    let mut xcb = dawn_rs::SurfaceSourceXCBWindow::new();
+                    xcb.connection = disp.connection.map(|p| p.as_ptr().cast());
+                    xcb.window = Some(win.window.get());
+                    surface_desc = surface_desc.with_extension(xcb.into());
+                }
+                _ => {
+                    panic!(
+                        "unsupported Linux window/display handle pair: {:?} / {:?}",
+                        raw_window, raw_display
+                    );
+                }
+            }
+        }
+
         let surface = instance.create_surface(&surface_desc);
 
         let adapter = instance.create_adapter_for_rendering();
@@ -301,7 +343,6 @@ impl TriangleApp {
         self.config = Some(config);
         self.vertex_buffer = Some(vertex_buffer);
         self.vertex_buffer_size = vertex_bytes.len() as u64;
-        self.metal_layer = Some(layer);
     }
 
     fn redraw(&mut self) {
