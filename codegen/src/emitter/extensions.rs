@@ -152,7 +152,7 @@ impl ChainedStructStorage {{
                         arms.push(format!(
                             r#"            {enum_name}::{ty}(value) => {{
                 let (mut raw, storage_value) = value.to_ffi();
-                raw.chain.sType = {stype_const} as ffi::{prefix}SType;
+                raw.chain.sType = {stype_const}.into();
                 raw.chain.next = next;
                 storage.push_storage(storage_value);
                 let raw_ptr = storage.push_value_mut(raw);

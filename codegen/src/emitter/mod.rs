@@ -4,9 +4,8 @@ mod core;
 mod enums;
 mod extensions;
 mod functions;
-mod mod_rs;
 mod objects;
 mod render;
 mod structs;
 
-pub use render::{GeneratedFiles, format_rust_source, generate_strings, generate_to_dir};
+pub use render::{GeneratedFiles, format_rust_source, generate_strings};

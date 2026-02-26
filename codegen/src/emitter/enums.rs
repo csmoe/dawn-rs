@@ -30,6 +30,7 @@ pub(crate) fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
     let name = type_name(&e.name);
     let mut variants = Vec::new();
     let mut from_arms = Vec::new();
+    let mut into_arms = Vec::new();
     let ffi_type = ffi_type_name(&e.name, c_prefix);
     let mut first_variant: Option<String> = None;
 
@@ -37,16 +38,18 @@ pub(crate) fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
         let variant = enum_variant_name_camel(&v.name);
         let const_variant = ffi_enum_value_name(&v.name);
         let const_name = ffi_enum_const_name(&ffi_type, &const_variant);
-        variants.push(format!(
-            r#"    {variant} = ffi::{const_name} as u32,"#,
-            variant = variant,
-            const_name = const_name
-        ));
+        variants.push(format!(r#"    {variant},"#, variant = variant));
         from_arms.push(format!(
             r#"            ffi::{const_name} => {name}::{variant},"#,
             const_name = const_name,
             name = name,
             variant = variant
+        ));
+        into_arms.push(format!(
+            r#"            {name}::{variant} => ffi::{const_name},"#,
+            name = name,
+            variant = variant,
+            const_name = const_name
         ));
         if first_variant.is_none() {
             first_variant = Some(variant);
@@ -55,11 +58,11 @@ pub(crate) fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
 
     let variants_block = variants.join("\n");
     let from_arms_block = from_arms.join("\n");
+    let into_arms_block = into_arms.join("\n");
     let fallback_variant = first_variant.unwrap_or_else(|| "Undefined".to_string());
 
     format!(
         r#"#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(u32)]
 pub enum {name} {{
 {variants}
 }}
@@ -75,7 +78,9 @@ impl From<ffi::{ffi_type}> for {name} {{
 
 impl From<{name}> for ffi::{ffi_type} {{
     fn from(value: {name}) -> Self {{
-        value as ffi::{ffi_type}
+        match value {{
+{into_arms}
+        }}
     }}
 }}
 
@@ -84,6 +89,7 @@ impl From<{name}> for ffi::{ffi_type} {{
         variants = variants_block,
         ffi_type = ffi_type,
         from_arms = from_arms_block,
+        into_arms = into_arms_block,
         fallback = fallback_variant
     )
 }

@@ -27,6 +27,7 @@ Commands
 
 Notes
 - Generated `ffi.rs` is split per OS/arch under `src/generated/ffi/`, with `src/generated/ffi.rs` selecting the active target.
+- Generated wrappers (`objects/structs/functions/extensions/constants/callbacks/enums`) are emitted as single-file targets under `src/generated/targets/`, with `src/generated/mod.rs` selecting by OS/arch.
 - `build.rs` only emits link directives; codegen is run explicitly.
 
 ## Examples
