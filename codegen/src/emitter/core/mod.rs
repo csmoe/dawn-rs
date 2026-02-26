@@ -20,13 +20,6 @@ pub(crate) use numbers::*;
 pub(crate) use objects::*;
 pub(crate) use structs::*;
 
-
-
-
-
-
-
-
 pub(crate) fn emit_constant(c: &ConstantModel) -> Option<String> {
     let name = shouty_snake_case_name(&c.name);
     let ty = rust_type_for(&c.def.const_type);
@@ -66,42 +59,7 @@ pub(crate) fn emit_constant(c: &ConstantModel) -> Option<String> {
     ))
 }
 
-
-
-
-
-
-
-
-
-
 // args_usage_list removed: superseded by emit_ffi_arg_prelude.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 pub(crate) fn ffi_fn_name(canonical: &str, c_prefix: &str) -> String {
     format!(
@@ -110,17 +68,3 @@ pub(crate) fn ffi_fn_name(canonical: &str, c_prefix: &str) -> String {
         camel_case_with_acronyms(canonical)
     )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

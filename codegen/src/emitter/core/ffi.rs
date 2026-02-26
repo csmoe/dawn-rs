@@ -378,7 +378,11 @@ pub(crate) fn emit_out_struct_postlude(args: &[RecordMember], index: &TypeIndex)
     lines.join("\n")
 }
 
-pub(crate) fn emit_return_conversion(ret: Option<&ReturnType>, index: &TypeIndex, name: &str) -> String {
+pub(crate) fn emit_return_conversion(
+    ret: Option<&ReturnType>,
+    index: &TypeIndex,
+    name: &str,
+) -> String {
     let Some(ret) = ret else {
         return "        let _ = ();".to_string();
     };

@@ -92,7 +92,9 @@ pub(crate) fn dispatch_render_pass(pass: RenderPassEncoder) -> DispatchRenderPas
     })
 }
 
-pub(crate) fn dispatch_render_bundle_encoder(encoder: RenderBundleEncoder) -> DispatchRenderBundleEncoder {
+pub(crate) fn dispatch_render_bundle_encoder(
+    encoder: RenderBundleEncoder,
+) -> DispatchRenderBundleEncoder {
     DispatchRenderBundleEncoder::custom(DawnRenderBundleEncoder {
         inner: SendSync::new(encoder),
     })
@@ -371,4 +373,3 @@ pub(crate) fn expect_query_set_from_api(query_set: &wgpu::QuerySet) -> QuerySet 
         .inner
         .clone()
 }
-

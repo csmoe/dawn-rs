@@ -95,8 +95,8 @@ impl InstanceInterface for DawnInstance {
                     (RawDisplayHandle::Wayland(display), RawWindowHandle::Wayland(window)) => {
                         let mut desc = SurfaceDescriptor::new();
                         let source = SurfaceSourceWaylandSurface {
-                            display: Some(display.display.cast()),
-                            surface: Some(window.surface.cast()),
+                            display: Some(display.display.as_ptr().cast()),
+                            surface: Some(window.surface.as_ptr().cast()),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.get().create_surface(&desc);
@@ -108,7 +108,7 @@ impl InstanceInterface for DawnInstance {
                     (RawDisplayHandle::Xlib(display), RawWindowHandle::Xlib(window)) => {
                         let mut desc = SurfaceDescriptor::new();
                         let source = SurfaceSourceXlibWindow {
-                            display: Some(display.display.cast()),
+                            display: Some(display.display.unwrap().as_ptr().cast()),
                             window: Some(window.window as u64),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
@@ -121,8 +121,8 @@ impl InstanceInterface for DawnInstance {
                     (RawDisplayHandle::Xcb(display), RawWindowHandle::Xcb(window)) => {
                         let mut desc = SurfaceDescriptor::new();
                         let source = SurfaceSourceXCBWindow {
-                            connection: Some(display.connection.cast()),
-                            window: Some(window.window),
+                            connection: Some(display.connection.unwrap().as_ptr().cast()),
+                            window: Some(window.window.get()),
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.get().create_surface(&desc);

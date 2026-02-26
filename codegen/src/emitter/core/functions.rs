@@ -2,7 +2,12 @@ use crate::api_model::{ApiModel, FunctionModel};
 use crate::emitter::core::*;
 use crate::parser::{RecordMember, ReturnType};
 
-pub(crate) fn emit_function(f: &FunctionModel, model: &ApiModel, index: &TypeIndex, c_prefix: &str) -> String {
+pub(crate) fn emit_function(
+    f: &FunctionModel,
+    model: &ApiModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> String {
     let name = safe_ident(&snake_case_name(&f.name));
     let return_ty = f
         .def

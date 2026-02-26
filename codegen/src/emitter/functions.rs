@@ -1,6 +1,6 @@
 use crate::api_model::ApiModel;
 
-use crate::emitter::core::{emit_function, TypeIndex};
+use crate::emitter::core::{TypeIndex, emit_function};
 
 pub(crate) fn emit(model: &ApiModel, c_prefix: &str) -> String {
     let mut out = String::new();
