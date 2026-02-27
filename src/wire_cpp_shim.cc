@@ -9,6 +9,10 @@
 #include "dawn/wire/WireClient.h"
 #include "dawn/wire/WireServer.h"
 
+// This shim intentionally does not implement any wire protocol encoding/decoding.
+// Dawn's generated wire runtime handles command (de)serialization internally.
+// The shim only bridges serializer callbacks, proc-table setup, and HandleCommands routing.
+
 extern "C" {
 
 struct DawnRsWireSerializerCallbacks {
@@ -94,6 +98,8 @@ struct DawnRsWireServer {
 // dawnProcSetProcs stores a pointer, so the table must outlive the call site.
 static DawnProcTable gWireClientProcs = {};
 static bool gWireClientProcsInitialized = false;
+
+#include "wire_client_proc_table_autogen.inc"
 
 }  // namespace
 
@@ -200,11 +206,57 @@ bool dawn_rs_wire_server_inject_instance(DawnRsWireServer* server,
     return server->wire->InjectInstance(reinterpret_cast<WGPUInstance>(instance), h);
 }
 
+bool dawn_rs_wire_server_inject_surface(DawnRsWireServer* server,
+                                        void* surface,
+                                        DawnRsWireHandle handle,
+                                        DawnRsWireHandle instance_handle) {
+    if (!server || !surface) {
+        return false;
+    }
+    dawn::wire::Handle h = {};
+    h.id = handle.id;
+    h.generation = handle.generation;
+    dawn::wire::Handle instance_h = {};
+    instance_h.id = instance_handle.id;
+    instance_h.generation = instance_handle.generation;
+    return server->wire->InjectSurface(reinterpret_cast<WGPUSurface>(surface), h, instance_h);
+}
+
+bool dawn_rs_wire_server_inject_texture(DawnRsWireServer* server,
+                                        void* texture,
+                                        DawnRsWireHandle handle,
+                                        DawnRsWireHandle device_handle) {
+    if (!server || !texture) {
+        return false;
+    }
+    dawn::wire::Handle h = {};
+    h.id = handle.id;
+    h.generation = handle.generation;
+    dawn::wire::Handle device_h = {};
+    device_h.id = device_handle.id;
+    device_h.generation = device_handle.generation;
+    return server->wire->InjectTexture(reinterpret_cast<WGPUTexture>(texture), h, device_h);
+}
+
+bool dawn_rs_wire_server_inject_buffer(DawnRsWireServer* server,
+                                       void* buffer,
+                                       DawnRsWireHandle handle,
+                                       DawnRsWireHandle device_handle) {
+    if (!server || !buffer) {
+        return false;
+    }
+    dawn::wire::Handle h = {};
+    h.id = handle.id;
+    h.generation = handle.generation;
+    dawn::wire::Handle device_h = {};
+    device_h.id = device_handle.id;
+    device_h.generation = device_handle.generation;
+    return server->wire->InjectBuffer(reinterpret_cast<WGPUBuffer>(buffer), h, device_h);
+}
+
 void dawn_rs_wire_set_client_procs() {
     if (!gWireClientProcsInitialized) {
-        gWireClientProcs = dawn::wire::client::GetProcs();
-        // Reuse generated wire C API proc-address resolver from dawn/wire/client/webgpu.h.
-        gWireClientProcs.getProcAddress = wgpuDawnWireClientGetProcAddress;
+        gWireClientProcs = DawnRsBuildWireClientProcTableFromCAPI();
         gWireClientProcsInitialized = true;
     }
     dawnProcSetProcs(&gWireClientProcs);

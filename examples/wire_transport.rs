@@ -8,6 +8,7 @@ use std::time::Duration;
 #[derive(Debug)]
 pub enum OutboundPacket {
     Wire(Vec<u8>),
+    AnimationPhase(f32),
     Shutdown,
 }
 
@@ -77,6 +78,7 @@ pub fn start_transport_threads(
     to_writer_rx: mpsc::Receiver<OutboundPacket>,
     mut handle_packet: impl FnMut(&[u8]) -> Result<(), String> + Send + 'static,
     mut after_handle_commands: impl FnMut() + Send + 'static,
+    mut on_animation_phase: impl FnMut(f32) + Send + 'static,
 ) -> (
     JoinHandle<Result<(), String>>,
     JoinHandle<Result<(), String>>,
@@ -99,6 +101,14 @@ pub fn start_transport_threads(
                     let _ = write_message(&mut writer_stream, &IpcMessage::Shutdown);
                     let _ = writer_stream.flush();
                     break;
+                }
+                Ok(OutboundPacket::AnimationPhase(phase)) => {
+                    if writer_stop.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    write_message(&mut writer_stream, &IpcMessage::AnimationPhase { phase })
+                        .map_err(|e| e.to_string())?;
+                    writer_stream.flush().map_err(|e| e.to_string())?;
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => {
                     if writer_stop.load(Ordering::Relaxed) {
@@ -139,6 +149,7 @@ pub fn start_transport_threads(
                     after_handle_commands();
                 }
                 IpcMessage::Shutdown => break,
+                IpcMessage::AnimationPhase { phase } => on_animation_phase(phase),
                 _ => continue,
             }
         }
@@ -169,6 +180,10 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
         IpcMessage::Shutdown => {
             writer.write_all(&[5])?;
         }
+        IpcMessage::AnimationPhase { phase } => {
+            writer.write_all(&[6])?;
+            writer.write_all(&phase.to_le_bytes())?;
+        }
     }
     Ok(())
 }
@@ -189,6 +204,13 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
         3 => Ok(IpcMessage::WireBytes(read_len_prefixed_bytes(reader)?)),
         4 => Ok(IpcMessage::HandleCommands),
         5 => Ok(IpcMessage::Shutdown),
+        6 => {
+            let mut b = [0u8; 4];
+            reader.read_exact(&mut b)?;
+            Ok(IpcMessage::AnimationPhase {
+                phase: f32::from_le_bytes(b),
+            })
+        }
         _ => Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
             "unknown ipc message tag",
@@ -203,6 +225,7 @@ pub enum IpcMessage {
     WireBytes(Vec<u8>),
     HandleCommands,
     Shutdown,
+    AnimationPhase { phase: f32 },
 }
 
 fn write_len_prefixed_bytes<W: Write>(writer: &mut W, bytes: &[u8]) -> std::io::Result<()> {
