@@ -11,6 +11,7 @@ homepage.workspace = true
 dawn-rs = { workspace = true }
 wgpu = { version = "28.0", features = ["custom"] }
 wgt = { package = "wgpu-types", version = "28.0" }
+interprocess = { version = "2.4.0", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5"
@@ -23,3 +24,9 @@ pollster = "0.3"
 
 [features]
 default = []
+wire = ["dawn-rs/wire", "dep:interprocess"]
+
+[[example]]
+name = "rainbow_cat_ipc"
+path = "examples/rainbow_cat_ipc.rs"
+required-features = ["wire"]

@@ -49,6 +49,11 @@ fn main() {
     let dawn_json = dawn_json.expect("--dawn-json is required");
     let api_header = api_header.expect("--api-header is required");
     let out_dir = out_dir.expect("--out-dir is required");
+    if dawn_wire_json.is_some() {
+        eprintln!(
+            "warning: --dawn-wire-json is ignored; dawn-rs no longer generates Rust wire protocol code"
+        );
+    }
     let src_dir = out_dir
         .parent()
         .expect("--out-dir should point inside the src directory");
@@ -80,9 +85,6 @@ fn main() {
 
     write_generated_single_file(&out_dir, target_os, target_arch, &files)
         .expect("write generated single file");
-    if let Some(path) = dawn_wire_json.as_deref() {
-        write_wire_files(&out_dir, &filtered, path).expect("write wire files");
-    }
     write_generated_wrapper(&out_dir).expect("write generated wrapper");
     write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
 }
@@ -275,38 +277,8 @@ pub use {module_name}::*;
         ));
     }
 
-    let wire_types = out_dir.join("wire_types.rs");
-    let wire_client = out_dir.join("wire_client.rs");
-    let wire_server = out_dir.join("wire_server.rs");
-    if wire_types.exists() && wire_client.exists() && wire_server.exists() {
-        out.push_str(
-            r#"#[cfg(feature = "wire")]
-pub mod wire_types;
-#[cfg(feature = "wire")]
-pub mod wire_client;
-#[cfg(feature = "wire")]
-pub mod wire_server;
-
-"#,
-        );
-    }
-
     let out = dawn_codegen::emitter::format_rust_source(&out);
     fs::write(out_dir.join("mod.rs"), out)
-}
-
-fn write_wire_files(
-    out_dir: &Path,
-    api: &dawn_codegen::parser::DawnApi,
-    wire_json_path: &Path,
-) -> std::io::Result<()> {
-    let wire = dawn_codegen::DawnWireJsonParser::parse_file(wire_json_path)
-        .map_err(|e| std::io::Error::other(e.to_string()))?;
-    let generated = dawn_codegen::generate_wire_files(api, &wire);
-    fs::write(out_dir.join("wire_types.rs"), generated.wire_types)?;
-    fs::write(out_dir.join("wire_client.rs"), generated.wire_client)?;
-    fs::write(out_dir.join("wire_server.rs"), generated.wire_server)?;
-    Ok(())
 }
 
 fn build_combined_generated_source(files: &dawn_codegen::GeneratedFiles) -> String {

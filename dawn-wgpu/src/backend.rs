@@ -5,11 +5,28 @@ use crate::mapping::*;
 use crate::types::*;
 use dawn_rs::*;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{Arc, Once};
 use wgpu::custom::*;
+
+#[cfg(feature = "wire")]
+unsafe extern "C" {
+    fn dawn_rs_wire_set_native_procs();
+}
+
+#[cfg(feature = "wire")]
+fn ensure_native_procs() {
+    static INIT: Once = Once::new();
+    INIT.call_once(|| unsafe {
+        dawn_rs_wire_set_native_procs();
+    });
+}
+
+#[cfg(not(feature = "wire"))]
+fn ensure_native_procs() {}
 
 impl InstanceInterface for DawnInstance {
     fn new(_desc: &wgpu::InstanceDescriptor) -> Self {
+        ensure_native_procs();
         let mut desc = InstanceDescriptor::new();
         desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
         let instance = Instance::new(Some(&desc));
@@ -230,8 +247,7 @@ impl AdapterInterface for DawnAdapter {
                 panic!("Uncaptured error {:?}: {}", ty, message);
             })));
         dawn_desc.uncaptured_error_callback_info = Some(error_info);
-        let instance = self.inner.get().get_instance();
-        let future_handle =
+        let _future_handle =
             self.inner
                 .get()
                 .request_device(Some(&dawn_desc), move |status, device, message| {
@@ -246,13 +262,6 @@ impl AdapterInterface for DawnAdapter {
                         panic!("wgpu-compat: request_device failed {}", message);
                     }
                 });
-        let _ = instance.wait_any(
-            Some(&mut [FutureWaitInfo {
-                future: Some(future_handle),
-                completed: None,
-            }]),
-            0,
-        );
         Box::pin(future)
     }
 
