@@ -1,181 +1,34 @@
-use dawn_rs::wire_ipc::{IpcMessage, read_message, write_message};
-use dawn_wgpu::create_instance;
+use dawn_rs::wire_ipc::{self, IpcMessage, OutboundPacket, read_message, write_message};
+use dawn_rs::wire_shim::{WireHelperClient, WireHelperServer, WireInstanceHandle};
+use dawn_rs::{
+    Color, Instance, LoadOp, RenderPassColorAttachment, RenderPassDescriptor,
+    RequestAdapterOptions, RequestAdapterStatus, SurfaceGetCurrentTextureStatus, SurfaceTexture,
+    TextureUsage,
+};
 use interprocess::TryClone;
 use interprocess::local_socket::traits::Stream as _;
-use pollster::block_on;
+#[cfg(target_os = "macos")]
+use raw_window_metal::Layer;
 use std::env;
 use std::error::Error;
 use std::io::Write;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::process::{Child, Command};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use wgpu::SurfaceError;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
+#[cfg(all(unix, not(target_os = "macos")))]
+use winit::raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
+use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::{Window, WindowAttributes, WindowId};
 
 const WIDTH: u32 = 960;
 const HEIGHT: u32 = 540;
-
-const SHADER: &str = r#"
-struct Uniforms {
-    time: f32,
-}
-
-@group(0) @binding(0) var<uniform> u: Uniforms;
-
-@vertex
-fn vs_main(@builtin(vertex_index) vid: u32) -> @builtin(position) vec4<f32> {
-    var p = array<vec2<f32>, 3>(
-        vec2<f32>(-1.0, -1.0),
-        vec2<f32>(3.0, -1.0),
-        vec2<f32>(-1.0, 3.0)
-    );
-    return vec4<f32>(p[vid], 0.0, 1.0);
-}
-
-fn rect(p: vec2<f32>, x0: f32, y0: f32, x1: f32, y1: f32) -> bool {
-    return p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1;
-}
-
-@fragment
-fn fs_main(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
-    // Pixel grid (nearest-neighbor look)
-    let cell = 10.0;
-    let g = floor(pos.xy / vec2<f32>(cell, cell));
-
-    let black = vec3<f32>(0.00, 0.00, 0.00);
-    let yellow = vec3<f32>(1.00, 0.73, 0.02);
-    let red = vec3<f32>(1.00, 0.08, 0.05);
-    let orange = vec3<f32>(1.00, 0.55, 0.02);
-    let rainbow_yellow = vec3<f32>(1.00, 0.95, 0.00);
-    let green = vec3<f32>(0.12, 0.92, 0.18);
-    let blue = vec3<f32>(0.10, 0.58, 1.00);
-    let purple = vec3<f32>(0.46, 0.22, 1.00);
-    let crust = vec3<f32>(0.96, 0.76, 0.62);
-    let jam = vec3<f32>(0.98, 0.66, 0.90);
-    let sprinkle = vec3<f32>(1.00, 0.20, 0.55);
-    let cat = vec3<f32>(0.55, 0.55, 0.57);
-    let blush = vec3<f32>(1.00, 0.66, 0.72);
-    let white = vec3<f32>(1.00, 1.00, 1.00);
-
-    var col = yellow;
-
-    // Layout anchor (close to classic nyan-cat framing)
-    let ox = 54.0;
-    let oy = 16.0;
-    let wave = floor(0.5 + 1.5 * sin(u.time * 5.0 + g.x * 0.2));
-
-    // Rainbow trail
-    if (g.x >= 1.0 && g.x < ox - 2.0) {
-        let ry = g.y - (oy + 2.0) - wave;
-        if (ry >= 0.0 && ry < 18.0) {
-            if (ry < 3.0) {
-                col = red;
-            } else if (ry < 6.0) {
-                col = orange;
-            } else if (ry < 9.0) {
-                col = rainbow_yellow;
-            } else if (ry < 12.0) {
-                col = green;
-            } else if (ry < 15.0) {
-                col = blue;
-            } else {
-                col = purple;
-            }
-        }
-    }
-
-    // Tail (outline then fill)
-    if (rect(g, ox - 8.0, oy + 9.0, ox - 1.0, oy + 14.0)) {
-        col = black;
-    }
-    if (rect(g, ox - 7.0, oy + 10.0, ox - 2.0, oy + 13.0)) {
-        col = cat;
-    }
-
-    // Poptart body
-    if (rect(g, ox, oy, ox + 28.0, oy + 22.0)) {
-        col = black;
-    }
-    if (rect(g, ox + 1.0, oy + 1.0, ox + 27.0, oy + 21.0)) {
-        col = crust;
-    }
-    if (rect(g, ox + 4.0, oy + 3.0, ox + 24.0, oy + 19.0)) {
-        col = jam;
-    }
-
-    // Sprinkles
-    if (
-        rect(g, ox + 6.0, oy + 6.0, ox + 7.0, oy + 7.0) ||
-        rect(g, ox + 10.0, oy + 5.0, ox + 11.0, oy + 6.0) ||
-        rect(g, ox + 16.0, oy + 7.0, ox + 17.0, oy + 8.0) ||
-        rect(g, ox + 21.0, oy + 6.0, ox + 22.0, oy + 7.0) ||
-        rect(g, ox + 12.0, oy + 11.0, ox + 13.0, oy + 12.0) ||
-        rect(g, ox + 8.0, oy + 14.0, ox + 9.0, oy + 15.0) ||
-        rect(g, ox + 18.0, oy + 14.0, ox + 19.0, oy + 15.0)
-    ) {
-        col = sprinkle;
-    }
-
-    // Cat body/head outline
-    if (rect(g, ox + 26.0, oy + 7.0, ox + 43.0, oy + 22.0)) {
-        col = black;
-    }
-    // Ears
-    if (rect(g, ox + 27.0, oy + 4.0, ox + 31.0, oy + 8.0) || rect(g, ox + 37.0, oy + 4.0, ox + 41.0, oy + 8.0)) {
-        col = black;
-    }
-
-    // Cat fill
-    if (rect(g, ox + 27.0, oy + 8.0, ox + 42.0, oy + 21.0)) {
-        col = cat;
-    }
-    if (rect(g, ox + 28.0, oy + 5.0, ox + 30.0, oy + 8.0) || rect(g, ox + 38.0, oy + 5.0, ox + 40.0, oy + 8.0)) {
-        col = cat;
-    }
-
-    // Eyes
-    if (rect(g, ox + 31.0, oy + 11.0, ox + 33.0, oy + 13.0) || rect(g, ox + 37.0, oy + 11.0, ox + 39.0, oy + 13.0)) {
-        col = white;
-    }
-    if (rect(g, ox + 31.0, oy + 12.0, ox + 32.0, oy + 13.0) || rect(g, ox + 37.0, oy + 12.0, ox + 38.0, oy + 13.0)) {
-        col = black;
-    }
-
-    // Mouth
-    if (rect(g, ox + 34.0, oy + 14.0, ox + 36.0, oy + 15.0) ||
-        rect(g, ox + 33.0, oy + 15.0, ox + 34.0, oy + 16.0) ||
-        rect(g, ox + 36.0, oy + 15.0, ox + 37.0, oy + 16.0)) {
-        col = black;
-    }
-
-    // Blush
-    if (rect(g, ox + 29.0, oy + 14.0, ox + 31.0, oy + 16.0) || rect(g, ox + 39.0, oy + 14.0, ox + 41.0, oy + 16.0)) {
-        col = blush;
-    }
-
-    // Legs with tiny stepping animation
-    let step = floor(0.5 + 1.0 * sin(u.time * 7.0));
-    if (rect(g, ox + 29.0, oy + 21.0 + step, ox + 32.0, oy + 23.0 + step) ||
-        rect(g, ox + 35.0, oy + 21.0 - step, ox + 38.0, oy + 23.0 - step) ||
-        rect(g, ox + 40.0, oy + 21.0 + step, ox + 42.0, oy + 23.0 + step) ||
-        rect(g, ox + 25.0, oy + 21.0 - step, ox + 27.0, oy + 23.0 - step)) {
-        col = black;
-    }
-    if (rect(g, ox + 30.0, oy + 21.0 + step, ox + 31.0, oy + 22.0 + step) ||
-        rect(g, ox + 36.0, oy + 21.0 - step, ox + 37.0, oy + 22.0 - step) ||
-        rect(g, ox + 40.0, oy + 21.0 + step, ox + 41.0, oy + 22.0 + step) ||
-        rect(g, ox + 25.0, oy + 21.0 - step, ox + 26.0, oy + 22.0 - step)) {
-        col = cat;
-    }
-
-    return vec4<f32>(col, 1.0);
-}
-"#;
 
 fn main() {
     if let Err(e) = run() {
@@ -187,323 +40,634 @@ fn main() {
 fn run() -> Result<(), Box<dyn Error>> {
     let mut args = env::args().skip(1);
     if let Some(mode) = args.next()
-        && mode == "--ipc-server"
+        && mode == "--gpu-process"
     {
-        let name = args.next().ok_or("missing socket name for --ipc-server")?;
-        return run_server(&name);
+        let socket_name = args.next().ok_or("missing socket name")?;
+        let parent_pid = args.next().and_then(|v| v.parse::<u32>().ok());
+        return run_gpu_process(&socket_name, parent_pid);
     }
-    run_client()
+    run_browser_process()
 }
 
-fn run_client() -> Result<(), Box<dyn Error>> {
+fn run_browser_process() -> Result<(), Box<dyn Error>> {
     let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-    let sock_name = format!("dawn-wgpu-rainbow-window-{stamp}");
-    let mut child = spawn_server(&sock_name)?;
+    let socket_name = format!("dawn-wgpu-rainbow-wire-{stamp}");
+    let reconnect_delay = Duration::from_millis(400);
+    loop {
+        match run_browser_session(&socket_name) {
+            Ok(()) => {
+                eprintln!("browser: gpu process disconnected, restarting session");
+                thread::sleep(reconnect_delay);
+            }
+            Err(err) => {
+                eprintln!("browser: session failed: {err}");
+                thread::sleep(reconnect_delay);
+            }
+        }
+    }
+}
 
-    let mut stream =
-        dawn_rs::wire_ipc::connect_with_retry(&sock_name, 300, Duration::from_millis(10))?;
+fn run_browser_session(socket_name: &str) -> Result<(), Box<dyn Error>> {
+    let mut child = spawn_gpu_process(socket_name)?;
+    let stream = wire_ipc::connect_with_retry(socket_name, 300, Duration::from_millis(10))?;
+    let mut reader_stream = stream.try_clone()?;
+    let mut writer_stream = stream.try_clone()?;
+    let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
+
+    let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
+    let client = Arc::new(Mutex::new(WireHelperClient::new(
+        0,
+        {
+            let to_writer_tx = to_writer_tx.clone();
+            move |bytes: &[u8]| {
+                let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
+            }
+        },
+        |msg: &str| eprintln!("wire client error: {msg}"),
+    )?));
+
+    let reserved_instance = {
+        let mut guard = client.lock().map_err(|_| "wire client lock poisoned")?;
+        guard.reserve_instance()
+    };
+    if reserved_instance.instance.is_null() {
+        return Err("reserve_instance returned null".into());
+    }
+    let reserved_surface = {
+        let mut guard = client.lock().map_err(|_| "wire client lock poisoned")?;
+        guard.reserve_surface(reserved_instance.instance)
+    };
+    if reserved_surface.surface.is_null() {
+        return Err("reserve_surface returned null".into());
+    }
+
+    write_message(
+        &mut writer_stream,
+        &IpcMessage::ReserveInstance {
+            id: reserved_instance.handle.id,
+            generation: reserved_instance.handle.generation,
+        },
+    )?;
+    write_message(
+        &mut writer_stream,
+        &IpcMessage::ReserveSurface {
+            id: reserved_surface.handle.id,
+            generation: reserved_surface.handle.generation,
+            instance_id: reserved_surface.instance_handle.id,
+            instance_generation: reserved_surface.instance_handle.generation,
+        },
+    )?;
+    writer_stream.flush()?;
+    match read_message(&mut reader_stream)? {
+        IpcMessage::ReserveAck { ok } if ok => {}
+        _ => return Err("server rejected wire object injection".into()),
+    }
+    let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
+
+    let stop = Arc::new(AtomicBool::new(false));
+    let client_for_reader = client.clone();
+    let (writer_thread, reader_thread) = wire_ipc::start_wire_threads(
+        stop.clone(),
+        reader_stream,
+        writer_stream,
+        to_writer_rx,
+        32,
+        Duration::from_millis(4),
+        move |frame: &[u8]| {
+            let mut guard = client_for_reader
+                .lock()
+                .map_err(|_| "wire client lock poisoned".to_string())?;
+            if !guard.handle_commands(frame) {
+                return Err("wire client failed to handle commands".to_string());
+            }
+            Ok(())
+        },
+        || {},
+        |_| {},
+    );
+
+    let instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved_instance) };
+    let surface = unsafe { WireHelperClient::reserved_surface_to_surface(reserved_surface) };
+
+    let client_for_flush = client.clone();
+    let mut flush_wire = move || {
+        if let Ok(mut guard) = client_for_flush.lock() {
+            let _ = guard.flush();
+        }
+    };
+
+    let mut adapter_opts = RequestAdapterOptions::new();
+    adapter_opts.compatible_surface = Some(surface.clone());
+    let adapter = request_adapter_sync(&instance, Some(adapter_opts), &mut flush_wire)?;
+    let device = request_device_sync(&instance, &adapter, &mut flush_wire)?;
+    let queue = device.get_queue();
+
+    let mut capabilities = dawn_rs::SurfaceCapabilities::new();
+    let status = surface.get_capabilities(adapter, &mut capabilities);
+    if status != dawn_rs::Status::Success {
+        return Err(format!("get_capabilities failed: {status:?}").into());
+    }
+
+    let format = capabilities
+        .formats
+        .as_ref()
+        .and_then(|f| f.first().copied())
+        .unwrap_or(dawn_rs::TextureFormat::Bgra8Unorm);
+    let present_mode = capabilities
+        .present_modes
+        .as_ref()
+        .and_then(|m| m.first().copied())
+        .unwrap_or(dawn_rs::PresentMode::Fifo);
+    let alpha_mode = capabilities
+        .alpha_modes
+        .as_ref()
+        .and_then(|m| m.first().copied())
+        .unwrap_or(dawn_rs::CompositeAlphaMode::Auto);
+
+    let mut config = dawn_rs::SurfaceConfiguration::new();
+    config.device = Some(device.clone());
+    config.format = Some(format);
+    config.usage = Some(TextureUsage::RENDER_ATTACHMENT);
+    config.width = Some(WIDTH);
+    config.height = Some(HEIGHT);
+    config.present_mode = Some(present_mode);
+    config.alpha_mode = Some(alpha_mode);
+    surface.configure(&config);
+
     let start = Instant::now();
     while child.try_wait()?.is_none() {
         let phase = start.elapsed().as_secs_f32();
-        write_message(&mut stream, &IpcMessage::AnimationPhase { phase })?;
-        stream.flush()?;
+        let mut st = SurfaceTexture::new();
+        surface.get_current_texture(&mut st);
+        match st.status {
+            Some(
+                SurfaceGetCurrentTextureStatus::SuccessOptimal
+                | SurfaceGetCurrentTextureStatus::SuccessSuboptimal,
+            ) => {}
+            Some(
+                SurfaceGetCurrentTextureStatus::Outdated | SurfaceGetCurrentTextureStatus::Lost,
+            ) => {
+                surface.configure(&config);
+                flush_wire();
+                instance.process_events();
+                thread::sleep(Duration::from_millis(8));
+                continue;
+            }
+            _ => {
+                flush_wire();
+                instance.process_events();
+                thread::sleep(Duration::from_millis(8));
+                continue;
+            }
+        }
+
+        let Some(texture) = st.texture else {
+            continue;
+        };
+        let view = texture.create_view(None);
+
+        let mut color_attachment = RenderPassColorAttachment::new();
+        color_attachment.view = Some(view);
+        color_attachment.load_op = Some(LoadOp::Clear);
+        color_attachment.store_op = Some(dawn_rs::StoreOp::Store);
+        let pulse = (phase * 2.0).sin() * 0.5 + 0.5;
+        color_attachment.clear_value = Some(Color {
+            r: Some(0.08 + 0.50 * pulse as f64),
+            g: Some(0.04 + 0.35 * (1.0 - pulse as f64)),
+            b: Some(0.12 + 0.45 * pulse as f64),
+            a: Some(1.0),
+        });
+        let mut pass_desc = RenderPassDescriptor::new();
+        pass_desc.color_attachments = Some(vec![color_attachment]);
+
+        let encoder = device.create_command_encoder(None);
+        let pass = encoder.begin_render_pass(&pass_desc);
+        pass.end();
+        queue.submit(&[encoder.finish(None)]);
+        let _ = surface.present();
+
+        flush_wire();
+        instance.process_events();
         thread::sleep(Duration::from_millis(16));
+    }
+
+    stop.store(true, Ordering::Relaxed);
+    let _ = to_writer_tx.send(OutboundPacket::Shutdown);
+    let _ = writer_thread.join();
+    let _ = reader_thread.join();
+    if let Ok(mut guard) = client.lock() {
+        let _ = guard.flush();
+        guard.disconnect();
+    }
+    if child.try_wait()?.is_none() {
+        let _ = child.kill();
+        let _ = child.wait();
     }
     Ok(())
 }
 
-fn run_server(sock_name: &str) -> Result<(), Box<dyn Error>> {
-    let stream = dawn_rs::wire_ipc::bind_and_accept(sock_name)?;
+fn run_gpu_process(socket_name: &str, parent_pid: Option<u32>) -> Result<(), Box<dyn Error>> {
+    let stream = wire_ipc::bind_and_accept(socket_name)?;
     let mut reader_stream = stream.try_clone()?;
-    let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
+    let writer_stream = stream.try_clone()?;
 
-    let phase = Arc::new(Mutex::new(0.0f32));
-    let running = Arc::new(AtomicBool::new(true));
-    let phase_for_reader = phase.clone();
-    let running_for_reader = running.clone();
-    let reader_thread = thread::spawn(move || -> Result<(), String> {
-        while running_for_reader.load(Ordering::Relaxed) {
-            let message = match read_message(&mut reader_stream) {
-                Ok(message) => message,
-                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                Err(e)
-                    if e.kind() == std::io::ErrorKind::TimedOut
-                        || e.kind() == std::io::ErrorKind::WouldBlock =>
-                {
-                    continue;
-                }
-                Err(e) => return Err(e.to_string()),
-            };
-            match message {
-                IpcMessage::AnimationPhase { phase: value } => {
-                    if let Ok(mut guard) = phase_for_reader.lock() {
-                        *guard = value;
-                    }
-                }
-                IpcMessage::Shutdown => break,
-                _ => {}
-            }
-        }
-        Ok(())
-    });
+    let instance_handle = match read_message(&mut reader_stream)
+        .map_err(|e| format!("gpu read ReserveInstance failed: {e}"))?
+    {
+        IpcMessage::ReserveInstance { id, generation } => WireInstanceHandle { id, generation },
+        _ => return Err("expected ReserveInstance".into()),
+    };
+    let (surface_handle, surface_instance_handle) = match read_message(&mut reader_stream)
+        .map_err(|e| format!("gpu read ReserveSurface failed: {e}"))?
+    {
+        IpcMessage::ReserveSurface {
+            id,
+            generation,
+            instance_id,
+            instance_generation,
+        } => (
+            WireInstanceHandle { id, generation },
+            WireInstanceHandle {
+                id: instance_id,
+                generation: instance_generation,
+            },
+        ),
+        _ => return Err("expected ReserveSurface".into()),
+    };
 
     let event_loop = EventLoop::new()?;
-    let mut app = RainbowCatApp::new(phase.clone());
+    let mut app = GpuProcessApp::new(
+        reader_stream,
+        writer_stream,
+        instance_handle,
+        surface_handle,
+        surface_instance_handle,
+        parent_pid,
+    );
     event_loop.run_app(&mut app)?;
-    running.store(false, Ordering::Relaxed);
-
-    match reader_thread.join() {
-        Ok(Ok(())) => Ok(()),
-        Ok(Err(e)) => Err(e.into()),
-        Err(_) => Err("ipc reader panicked".into()),
-    }
+    Ok(())
 }
 
-struct RainbowCatApp {
-    phase: Arc<Mutex<f32>>,
-    state: Option<State>,
+struct PumpGuard {
+    stop: Arc<AtomicBool>,
+    tx: Option<mpsc::Sender<OutboundPacket>>,
+    writer_thread: Option<thread::JoinHandle<Result<(), String>>>,
+    reader_thread: Option<thread::JoinHandle<Result<(), String>>>,
 }
 
-impl RainbowCatApp {
-    fn new(phase: Arc<Mutex<f32>>) -> Self {
-        Self { phase, state: None }
-    }
-}
-
-impl ApplicationHandler for RainbowCatApp {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = event_loop
-            .create_window(
-                WindowAttributes::default()
-                    .with_title("Rainbow Cat IPC (Server Render)")
-                    .with_inner_size(winit::dpi::PhysicalSize::new(WIDTH, HEIGHT)),
-            )
-            .expect("create window");
-        self.state = Some(State::new(window, self.phase.clone()));
-    }
-
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        let Some(state) = self.state.as_mut() else {
-            return;
-        };
-        match event {
-            WindowEvent::CloseRequested => event_loop.exit(),
-            WindowEvent::Resized(size) => {
-                state.resize(size.width, size.height);
-                state.window.request_redraw();
-            }
-            WindowEvent::RedrawRequested => state.render(),
-            _ => {}
-        }
-    }
-
-    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
-        if let Some(state) = self.state.as_ref() {
-            state.window.request_redraw();
-        }
-    }
-}
-
-struct State {
-    window: Window,
-    surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
-    pipeline: wgpu::RenderPipeline,
-    uniform_buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
-    phase: Arc<Mutex<f32>>,
-}
-
-impl State {
-    fn new(window: Window, phase: Arc<Mutex<f32>>) -> Self {
-        let instance = create_instance(&wgpu::InstanceDescriptor::default());
-        let surface = unsafe {
-            let target =
-                wgpu::SurfaceTargetUnsafe::from_window(&window).expect("create surface target");
-            instance
-                .create_surface_unsafe(target)
-                .expect("create surface")
-        };
-        let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            compatible_surface: Some(&surface),
-            force_fallback_adapter: false,
-        }))
-        .expect("request adapter");
-        let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-            label: Some("rainbow-cat-device"),
-            required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::default(),
-            experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            memory_hints: wgpu::MemoryHints::Performance,
-            trace: wgpu::Trace::Off,
-        }))
-        .expect("request device");
-
-        let caps = surface.get_capabilities(&adapter);
-        let format = caps
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(caps.formats[0]);
-        let size = window.inner_size();
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format,
-            width: size.width.max(1),
-            height: size.height.max(1),
-            present_mode: caps.present_modes[0],
-            desired_maximum_frame_latency: 2,
-            alpha_mode: caps.alpha_modes[0],
-            view_formats: vec![],
-        };
-        surface.configure(&device, &config);
-
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("rainbow-cat-shader"),
-            source: wgpu::ShaderSource::Wgsl(SHADER.into()),
-        });
-
-        let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("rainbow-cat-uniform"),
-            size: 16,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("rainbow-cat-bgl"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("rainbow-cat-bg"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("rainbow-cat-layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            immediate_size: 0,
-        });
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("rainbow-cat-pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-                buffers: &[],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState::default(),
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            multiview_mask: None,
-            cache: None,
-        });
-
+impl PumpGuard {
+    fn new(
+        stop: Arc<AtomicBool>,
+        tx: mpsc::Sender<OutboundPacket>,
+        writer_thread: thread::JoinHandle<Result<(), String>>,
+        reader_thread: thread::JoinHandle<Result<(), String>>,
+    ) -> Self {
         Self {
-            window,
-            surface,
-            device,
-            queue,
-            config,
-            pipeline,
-            uniform_buffer,
-            bind_group,
-            phase,
+            stop,
+            tx: Some(tx),
+            writer_thread: Some(writer_thread),
+            reader_thread: Some(reader_thread),
+        }
+    }
+}
+
+impl Drop for PumpGuard {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(tx) = self.tx.take() {
+            let _ = tx.send(OutboundPacket::Shutdown);
+        }
+        if let Some(handle) = self.writer_thread.take() {
+            let _ = handle.join();
+        }
+        if let Some(handle) = self.reader_thread.take() {
+            let _ = handle.join();
+        }
+    }
+}
+
+struct GpuProcessApp {
+    reader_stream: Option<interprocess::local_socket::Stream>,
+    writer_stream: Option<interprocess::local_socket::Stream>,
+    instance_handle: WireInstanceHandle,
+    surface_handle: WireInstanceHandle,
+    surface_instance_handle: WireInstanceHandle,
+    window: Option<Window>,
+    server: Option<Arc<Mutex<WireHelperServer>>>,
+    _native_instance: Option<Instance>,
+    _native_surface: Option<dawn_rs::Surface>,
+    pump: Option<PumpGuard>,
+    disconnect_rx: Option<mpsc::Receiver<()>>,
+    parent_pid: Option<u32>,
+    #[cfg(target_os = "macos")]
+    metal_layer: Option<Layer>,
+}
+
+impl GpuProcessApp {
+    fn new(
+        reader_stream: interprocess::local_socket::Stream,
+        writer_stream: interprocess::local_socket::Stream,
+        instance_handle: WireInstanceHandle,
+        surface_handle: WireInstanceHandle,
+        surface_instance_handle: WireInstanceHandle,
+        parent_pid: Option<u32>,
+    ) -> Self {
+        Self {
+            reader_stream: Some(reader_stream),
+            writer_stream: Some(writer_stream),
+            instance_handle,
+            surface_handle,
+            surface_instance_handle,
+            window: None,
+            server: None,
+            _native_instance: None,
+            _native_surface: None,
+            pump: None,
+            disconnect_rx: None,
+            parent_pid,
+            #[cfg(target_os = "macos")]
+            metal_layer: None,
         }
     }
 
-    fn resize(&mut self, width: u32, height: u32) {
-        if width == 0 || height == 0 {
+    fn init(&mut self, event_loop: &ActiveEventLoop) -> Result<(), Box<dyn Error>> {
+        let window = event_loop.create_window(
+            WindowAttributes::default()
+                .with_title("Rainbow Cat GPU Process (Wire Surface)")
+                .with_inner_size(winit::dpi::PhysicalSize::new(WIDTH, HEIGHT)),
+        )?;
+
+        let window_handle = window.window_handle().map_err(|_| "window handle")?;
+        #[cfg(all(unix, not(target_os = "macos")))]
+        let display_handle = window.display_handle().map_err(|_| "display handle")?;
+
+        let reader_stream = self.reader_stream.take().ok_or("missing reader stream")?;
+        let mut writer_stream = self.writer_stream.take().ok_or("missing writer stream")?;
+        let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
+
+        let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
+        let server = Arc::new(Mutex::new(WireHelperServer::new_native(
+            0,
+            true,
+            {
+                let to_writer_tx = to_writer_tx.clone();
+                move |bytes: &[u8]| {
+                    let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
+                }
+            },
+            |msg: &str| eprintln!("wire server error: {msg}"),
+        )?));
+
+        let native_instance = Instance::new(None);
+        let mut surface_desc = dawn_rs::SurfaceDescriptor::new();
+
+        #[cfg(target_os = "macos")]
+        {
+            let layer = match window_handle.as_raw() {
+                RawWindowHandle::AppKit(handle) => unsafe { Layer::from_ns_view(handle.ns_view) },
+                _ => return Err("expected AppKit handle".into()),
+            };
+            let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
+            metal_layer.layer = Some(layer.as_ptr().as_ptr().cast());
+            surface_desc = surface_desc.with_extension(metal_layer.into());
+            self.metal_layer = Some(layer);
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            let win = match window_handle.as_raw() {
+                RawWindowHandle::Win32(handle) => handle,
+                _ => return Err("expected Win32 handle".into()),
+            };
+            let mut win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new();
+            win32_layer.hwnd = Some((win.hwnd.get() as *mut std::ffi::c_void).cast());
+            win32_layer.hinstance = win
+                .hinstance
+                .map(|h| (h.get() as *mut std::ffi::c_void).cast());
+            surface_desc = surface_desc.with_extension(win32_layer.into());
+        }
+
+        #[cfg(all(unix, not(target_os = "macos")))]
+        {
+            match (display_handle.as_raw(), window_handle.as_raw()) {
+                (RawDisplayHandle::Wayland(disp), RawWindowHandle::Wayland(win)) => {
+                    let mut wayland = dawn_rs::SurfaceSourceWaylandSurface::new();
+                    wayland.display = Some(disp.display.as_ptr().cast());
+                    wayland.surface = Some(win.surface.as_ptr().cast());
+                    surface_desc = surface_desc.with_extension(wayland.into());
+                }
+                (RawDisplayHandle::Xlib(disp), RawWindowHandle::Xlib(win)) => {
+                    let mut xlib = dawn_rs::SurfaceSourceXlibWindow::new();
+                    xlib.display = disp.display.map(|p| p.as_ptr().cast());
+                    xlib.window = Some(win.window);
+                    surface_desc = surface_desc.with_extension(xlib.into());
+                }
+                (RawDisplayHandle::Xcb(disp), RawWindowHandle::Xcb(win)) => {
+                    let mut xcb = dawn_rs::SurfaceSourceXCBWindow::new();
+                    xcb.connection = disp.connection.map(|p| p.as_ptr().cast());
+                    xcb.window = Some(win.window.get());
+                    surface_desc = surface_desc.with_extension(xcb.into());
+                }
+                _ => return Err("unsupported Linux handle pair".into()),
+            }
+        }
+
+        let native_surface = native_instance.create_surface(&surface_desc);
+
+        let injected_instance = {
+            let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
+            guard.inject_instance(native_instance.as_raw().cast(), self.instance_handle)
+        };
+        let injected_surface = {
+            let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
+            guard.inject_surface(
+                native_surface.as_raw().cast(),
+                self.surface_handle,
+                self.surface_instance_handle,
+            )
+        };
+        let ok = injected_instance && injected_surface;
+        write_message(&mut writer_stream, &IpcMessage::ReserveAck { ok })?;
+        writer_stream.flush()?;
+        if !ok {
+            return Err("failed to inject instance/surface into wire server".into());
+        }
+
+        let stop = Arc::new(AtomicBool::new(false));
+        let server_for_reader = server.clone();
+        let server_for_after = server.clone();
+        let (writer_raw, reader_raw) = wire_ipc::start_wire_threads(
+            stop.clone(),
+            reader_stream,
+            writer_stream,
+            to_writer_rx,
+            32,
+            Duration::from_millis(4),
+            move |frame: &[u8]| {
+                let mut guard = server_for_reader
+                    .lock()
+                    .map_err(|_| "wire server lock poisoned".to_string())?;
+                if !guard.handle_commands(frame) {
+                    return Err("wire server failed to handle commands".to_string());
+                }
+                Ok(())
+            },
+            move || {
+                if let Ok(mut guard) = server_for_after.lock() {
+                    let _ = guard.flush();
+                }
+            },
+            |_| {},
+        );
+        let (disconnect_tx, disconnect_rx) = mpsc::channel::<()>();
+        let writer_thread = thread::spawn(move || match writer_raw.join() {
+            Ok(res) => res,
+            Err(_) => Err("wire writer thread panicked".to_string()),
+        });
+        let reader_thread = thread::spawn(move || {
+            let res = match reader_raw.join() {
+                Ok(res) => res,
+                Err(_) => Err("wire reader thread panicked".to_string()),
+            };
+            let _ = disconnect_tx.send(());
+            res
+        });
+
+        self.window = Some(window);
+        self.server = Some(server);
+        self._native_instance = Some(native_instance);
+        self._native_surface = Some(native_surface);
+        self.disconnect_rx = Some(disconnect_rx);
+        self.pump = Some(PumpGuard::new(
+            stop,
+            to_writer_tx,
+            writer_thread,
+            reader_thread,
+        ));
+        Ok(())
+    }
+}
+
+impl ApplicationHandler for GpuProcessApp {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_none()
+            && let Err(err) = self.init(event_loop)
+        {
+            eprintln!("gpu process init failed: {err}");
+            event_loop.exit();
+        }
+    }
+
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+        if window.id() != id {
             return;
         }
-        self.config.width = width;
-        self.config.height = height;
-        self.surface.configure(&self.device, &self.config);
+        if let WindowEvent::CloseRequested = event {
+            event_loop.exit();
+        }
     }
 
-    fn render(&mut self) {
-        let phase = self.phase.lock().map(|v| *v).unwrap_or_default();
-        let mut uniform = [0u8; 16];
-        uniform[..4].copy_from_slice(&phase.to_le_bytes());
-        self.queue.write_buffer(&self.uniform_buffer, 0, &uniform);
-
-        let frame = match self.surface.get_current_texture() {
-            Ok(frame) => frame,
-            Err(SurfaceError::Timeout) => return,
-            Err(SurfaceError::Outdated | SurfaceError::Lost) => {
-                let size = self.window.inner_size();
-                self.resize(size.width, size.height);
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        #[cfg(unix)]
+        if let Some(parent_pid) = self.parent_pid {
+            let current_ppid = unsafe { libc::getppid() } as u32;
+            if current_ppid != parent_pid {
+                event_loop.exit();
                 return;
             }
-            Err(err) => panic!("surface error: {err:?}"),
-        };
-
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("rainbow-cat-encoder"),
-            });
-        {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("rainbow-cat-pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-                multiview_mask: None,
-            });
-            pass.set_pipeline(&self.pipeline);
-            pass.set_bind_group(0, &self.bind_group, &[]);
-            pass.draw(0..3, 0..1);
         }
-        self.queue.submit(Some(encoder.finish()));
-        frame.present();
+        if let Some(rx) = self.disconnect_rx.as_ref()
+            && rx.try_recv().is_ok()
+        {
+            event_loop.exit();
+            return;
+        }
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
     }
 }
 
-fn spawn_server(sock_name: &str) -> Result<Child, Box<dyn Error>> {
+fn request_adapter_sync(
+    instance: &Instance,
+    options: Option<RequestAdapterOptions>,
+    mut flush_wire: impl FnMut(),
+) -> Result<dawn_rs::Adapter, String> {
+    let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Adapter, String>>();
+    let _future = instance.request_adapter(options.as_ref(), move |status, adapter, message| {
+        if status != RequestAdapterStatus::Success {
+            let _ = tx.send(Err(format!("{status:?}: {message}")));
+            return;
+        }
+        match adapter {
+            Some(adapter) => {
+                let _ = tx.send(Ok(adapter));
+            }
+            None => {
+                let _ = tx.send(Err("request_adapter returned None".to_string()));
+            }
+        }
+    });
+
+    loop {
+        match rx.try_recv() {
+            Ok(result) => return result,
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                flush_wire();
+                instance.process_events();
+            }
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                return Err("request_adapter callback disconnected".to_string());
+            }
+        }
+    }
+}
+
+fn request_device_sync(
+    instance: &Instance,
+    adapter: &dawn_rs::Adapter,
+    mut flush_wire: impl FnMut(),
+) -> Result<dawn_rs::Device, String> {
+    let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Device, String>>();
+    let _future = adapter.request_device(None, move |status, device, message| {
+        if status != dawn_rs::RequestDeviceStatus::Success {
+            let _ = tx.send(Err(format!("{status:?}: {message}")));
+            return;
+        }
+        match device {
+            Some(device) => {
+                let _ = tx.send(Ok(device));
+            }
+            None => {
+                let _ = tx.send(Err("request_device returned None".to_string()));
+            }
+        }
+    });
+
+    loop {
+        match rx.try_recv() {
+            Ok(result) => return result,
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                flush_wire();
+                instance.process_events();
+            }
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                return Err("request_device callback disconnected".to_string());
+            }
+        }
+    }
+}
+
+fn spawn_gpu_process(socket_name: &str) -> Result<Child, Box<dyn Error>> {
     let current = env::current_exe()?;
-    let child = Command::new(current)
-        .arg("--ipc-server")
-        .arg(sock_name)
-        .spawn()?;
-    Ok(child)
+    let mut cmd = Command::new(current);
+    cmd.arg("--gpu-process")
+        .arg(socket_name)
+        .arg(std::process::id().to_string());
+    #[cfg(unix)]
+    cmd.arg0("rainbow_cat_gpu_child");
+    Ok(cmd.spawn()?)
 }

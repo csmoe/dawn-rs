@@ -20,6 +20,14 @@ pub struct ReservedWireInstance {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ReservedWireSurface {
+    pub surface: *mut c_void,
+    pub instance_handle: WireInstanceHandle,
+    pub handle: WireInstanceHandle,
+}
+
+#[repr(C)]
 struct DawnRsWireSerializerCallbacks {
     userdata: *mut c_void,
     on_flush: Option<extern "C" fn(*mut c_void, *const u8, usize)>,
@@ -52,6 +60,10 @@ unsafe extern "C" {
     fn dawn_rs_wire_client_reserve_instance(
         client: *mut DawnRsWireClientOpaque,
     ) -> ReservedWireInstance;
+    fn dawn_rs_wire_client_reserve_surface(
+        client: *mut DawnRsWireClientOpaque,
+        instance: *mut c_void,
+    ) -> ReservedWireSurface;
 
     fn dawn_rs_wire_server_create_native(
         callbacks: *const DawnRsWireSerializerCallbacks,
@@ -260,8 +272,16 @@ impl WireHelperClient {
         unsafe { dawn_rs_wire_client_reserve_instance(self.raw) }
     }
 
+    pub fn reserve_surface(&mut self, instance: *mut c_void) -> ReservedWireSurface {
+        unsafe { dawn_rs_wire_client_reserve_surface(self.raw, instance) }
+    }
+
     pub unsafe fn reserved_instance_to_instance(reserved: ReservedWireInstance) -> crate::Instance {
         unsafe { crate::Instance::from_raw(reserved.instance.cast()) }
+    }
+
+    pub unsafe fn reserved_surface_to_surface(reserved: ReservedWireSurface) -> crate::Surface {
+        unsafe { crate::Surface::from_raw(reserved.surface.cast()) }
     }
 }
 
