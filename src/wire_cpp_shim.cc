@@ -32,6 +32,12 @@ struct DawnRsWireReservedInstance {
     DawnRsWireHandle handle;
 };
 
+struct DawnRsWireReservedSurface {
+    void* surface;
+    DawnRsWireHandle instance_handle;
+    DawnRsWireHandle handle;
+};
+
 }  // extern "C"
 
 namespace {
@@ -152,6 +158,23 @@ DawnRsWireReservedInstance dawn_rs_wire_client_reserve_instance(DawnRsWireClient
     }
     dawn::wire::ReservedInstance reserved = client->wire->ReserveInstance(nullptr);
     out.instance = reserved.instance;
+    out.handle.id = reserved.handle.id;
+    out.handle.generation = reserved.handle.generation;
+    return out;
+}
+
+DawnRsWireReservedSurface dawn_rs_wire_client_reserve_surface(DawnRsWireClient* client,
+                                                              void* instance) {
+    DawnRsWireReservedSurface out = {};
+    if (!client || !instance) {
+        return out;
+    }
+    WGPUSurfaceCapabilities caps = {};
+    dawn::wire::ReservedSurface reserved =
+        client->wire->ReserveSurface(reinterpret_cast<WGPUInstance>(instance), &caps);
+    out.surface = reserved.surface;
+    out.instance_handle.id = reserved.instanceHandle.id;
+    out.instance_handle.generation = reserved.instanceHandle.generation;
     out.handle.id = reserved.handle.id;
     out.handle.generation = reserved.handle.generation;
     return out;

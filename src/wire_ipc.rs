@@ -16,11 +16,47 @@ pub enum OutboundPacket {
 
 #[derive(Debug)]
 pub enum IpcMessage {
-    ReserveInstance { id: u32, generation: u32 },
-    ReserveAck { ok: bool },
+    ReserveInstance {
+        id: u32,
+        generation: u32,
+    },
+    ReserveSurface {
+        id: u32,
+        generation: u32,
+        instance_id: u32,
+        instance_generation: u32,
+    },
+    ReserveAck {
+        ok: bool,
+    },
     WireBytes(Vec<u8>),
     HandleCommands,
-    AnimationPhase { phase: f32 },
+    AnimationPhase {
+        phase: f32,
+    },
+    FrameRgba {
+        width: u32,
+        height: u32,
+        data: Vec<u8>,
+    },
+    FrameShm {
+        width: u32,
+        height: u32,
+        len: u32,
+        seq: u64,
+    },
+    FrameRequest {
+        seq: u64,
+        width: u32,
+        height: u32,
+        phase: f32,
+    },
+    FrameReady {
+        seq: u64,
+        width: u32,
+        height: u32,
+        len: u32,
+    },
     Shutdown,
 }
 
@@ -186,6 +222,18 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             writer.write_all(&id.to_le_bytes())?;
             writer.write_all(&generation.to_le_bytes())?;
         }
+        IpcMessage::ReserveSurface {
+            id,
+            generation,
+            instance_id,
+            instance_generation,
+        } => {
+            writer.write_all(&[11])?;
+            writer.write_all(&id.to_le_bytes())?;
+            writer.write_all(&generation.to_le_bytes())?;
+            writer.write_all(&instance_id.to_le_bytes())?;
+            writer.write_all(&instance_generation.to_le_bytes())?;
+        }
         IpcMessage::ReserveAck { ok } => {
             writer.write_all(&[2])?;
             writer.write_all(&[*ok as u8])?;
@@ -200,6 +248,52 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             writer.write_all(&[6])?;
             writer.write_all(&phase.to_le_bytes())?;
         }
+        IpcMessage::FrameRgba {
+            width,
+            height,
+            data,
+        } => {
+            writer.write_all(&[7])?;
+            writer.write_all(&width.to_le_bytes())?;
+            writer.write_all(&height.to_le_bytes())?;
+            write_len_prefixed_bytes(writer, data)?;
+        }
+        IpcMessage::FrameShm {
+            width,
+            height,
+            len,
+            seq,
+        } => {
+            writer.write_all(&[8])?;
+            writer.write_all(&width.to_le_bytes())?;
+            writer.write_all(&height.to_le_bytes())?;
+            writer.write_all(&len.to_le_bytes())?;
+            writer.write_all(&seq.to_le_bytes())?;
+        }
+        IpcMessage::FrameRequest {
+            seq,
+            width,
+            height,
+            phase,
+        } => {
+            writer.write_all(&[9])?;
+            writer.write_all(&seq.to_le_bytes())?;
+            writer.write_all(&width.to_le_bytes())?;
+            writer.write_all(&height.to_le_bytes())?;
+            writer.write_all(&phase.to_le_bytes())?;
+        }
+        IpcMessage::FrameReady {
+            seq,
+            width,
+            height,
+            len,
+        } => {
+            writer.write_all(&[10])?;
+            writer.write_all(&seq.to_le_bytes())?;
+            writer.write_all(&width.to_le_bytes())?;
+            writer.write_all(&height.to_le_bytes())?;
+            writer.write_all(&len.to_le_bytes())?;
+        }
     }
     Ok(())
 }
@@ -213,6 +307,18 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
             let generation = read_u32(reader)?;
             Ok(IpcMessage::ReserveInstance { id, generation })
         }
+        11 => {
+            let id = read_u32(reader)?;
+            let generation = read_u32(reader)?;
+            let instance_id = read_u32(reader)?;
+            let instance_generation = read_u32(reader)?;
+            Ok(IpcMessage::ReserveSurface {
+                id,
+                generation,
+                instance_id,
+                instance_generation,
+            })
+        }
         2 => {
             let ok = read_u8(reader)? != 0;
             Ok(IpcMessage::ReserveAck { ok })
@@ -225,6 +331,63 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
             reader.read_exact(&mut b)?;
             Ok(IpcMessage::AnimationPhase {
                 phase: f32::from_le_bytes(b),
+            })
+        }
+        7 => {
+            let width = read_u32(reader)?;
+            let height = read_u32(reader)?;
+            let data = read_len_prefixed_bytes(reader)?;
+            let expected = width as usize * height as usize * 4;
+            if data.len() != expected {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "frame rgba size mismatch",
+                ));
+            }
+            Ok(IpcMessage::FrameRgba {
+                width,
+                height,
+                data,
+            })
+        }
+        8 => {
+            let width = read_u32(reader)?;
+            let height = read_u32(reader)?;
+            let len = read_u32(reader)?;
+            let mut seq_bytes = [0u8; 8];
+            reader.read_exact(&mut seq_bytes)?;
+            Ok(IpcMessage::FrameShm {
+                width,
+                height,
+                len,
+                seq: u64::from_le_bytes(seq_bytes),
+            })
+        }
+        9 => {
+            let mut seq_bytes = [0u8; 8];
+            reader.read_exact(&mut seq_bytes)?;
+            let width = read_u32(reader)?;
+            let height = read_u32(reader)?;
+            let mut phase_bytes = [0u8; 4];
+            reader.read_exact(&mut phase_bytes)?;
+            Ok(IpcMessage::FrameRequest {
+                seq: u64::from_le_bytes(seq_bytes),
+                width,
+                height,
+                phase: f32::from_le_bytes(phase_bytes),
+            })
+        }
+        10 => {
+            let mut seq_bytes = [0u8; 8];
+            reader.read_exact(&mut seq_bytes)?;
+            let width = read_u32(reader)?;
+            let height = read_u32(reader)?;
+            let len = read_u32(reader)?;
+            Ok(IpcMessage::FrameReady {
+                seq: u64::from_le_bytes(seq_bytes),
+                width,
+                height,
+                len,
             })
         }
         _ => Err(std::io::Error::new(
