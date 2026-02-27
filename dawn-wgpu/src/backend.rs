@@ -5,7 +5,7 @@ use crate::mapping::*;
 use crate::types::*;
 use dawn_rs::*;
 use std::pin::Pin;
-use std::sync::{Arc, Once};
+use std::sync::Arc;
 use wgpu::custom::*;
 
 #[cfg(feature = "wire")]
@@ -15,7 +15,7 @@ unsafe extern "C" {
 
 #[cfg(feature = "wire")]
 fn ensure_native_procs() {
-    static INIT: Once = Once::new();
+    static INIT: std::sync::Once = std::sync::Once::new();
     INIT.call_once(|| unsafe {
         dawn_rs_wire_set_native_procs();
     });
