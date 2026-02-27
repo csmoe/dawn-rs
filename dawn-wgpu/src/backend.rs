@@ -30,9 +30,7 @@ impl InstanceInterface for DawnInstance {
         let mut desc = InstanceDescriptor::new();
         desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
         let instance = Instance::new(Some(&desc));
-        Self {
-            inner: SendSync::new(instance),
-        }
+        Self::from_instance(instance)
     }
 
     unsafe fn create_surface(

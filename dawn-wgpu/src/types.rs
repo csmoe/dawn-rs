@@ -35,9 +35,40 @@ impl<T: fmt::Debug + Send> fmt::Debug for SendSync<T> {
     }
 }
 
-#[derive(Debug, Clone)]
 pub(crate) struct DawnInstance {
     pub(crate) inner: SendSync<Instance>,
+    #[cfg(feature = "wire")]
+    pub(crate) wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
+}
+
+impl DawnInstance {
+    pub(crate) fn from_instance(instance: Instance) -> Self {
+        Self {
+            inner: SendSync::new(instance),
+            #[cfg(feature = "wire")]
+            wire_handle: None,
+        }
+    }
+}
+
+impl Clone for DawnInstance {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            #[cfg(feature = "wire")]
+            wire_handle: self.wire_handle.clone(),
+        }
+    }
+}
+
+impl fmt::Debug for DawnInstance {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut dbg = f.debug_struct("DawnInstance");
+        dbg.field("inner", &self.inner);
+        #[cfg(feature = "wire")]
+        dbg.field("wire_handle", &self.wire_handle.is_some());
+        dbg.finish()
+    }
 }
 
 #[derive(Debug, Clone)]

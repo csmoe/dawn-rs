@@ -128,9 +128,12 @@ pub fn start_wire_threads(
             if pending.is_empty() {
                 return Ok(());
             }
+            let total_len: usize = pending.iter().map(Vec::len).sum();
+            let mut merged = Vec::with_capacity(total_len);
             for frame in pending.drain(..) {
-                handle_frame(&frame)?;
+                merged.extend_from_slice(&frame);
             }
+            handle_frame(&merged)?;
             after_handle_commands();
             Ok(())
         };

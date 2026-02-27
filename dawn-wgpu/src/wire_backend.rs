@@ -1,7 +1,7 @@
 use crate::Compat;
-use dawn_rs::Instance;
+use dawn_rs::{Instance, Surface};
 use dawn_rs::wire_ipc;
-use dawn_rs::wire_shim::WireHelperClient;
+use dawn_rs::wire_shim::{WireHelperClient, WireInstanceHandle};
 use interprocess::TryClone;
 use interprocess::local_socket::Stream;
 use interprocess::local_socket::traits::Stream as _;
@@ -39,36 +39,54 @@ impl From<std::io::Error> for WireBackendError {
     }
 }
 
-pub struct IpcWireBackend {
+#[derive(Debug, Clone, Copy)]
+pub struct WireInitOptions {
+    pub reserve_surface: bool,
+    pub connect_attempts: usize,
+    pub connect_delay: Duration,
+}
+
+impl Default for WireInitOptions {
+    fn default() -> Self {
+        Self {
+            reserve_surface: false,
+            connect_attempts: 1,
+            connect_delay: Duration::from_millis(0),
+        }
+    }
+}
+
+pub trait WireTransport: Send + Sync + 'static {
+    fn connect(name: &str, attempts: usize, delay: Duration) -> Result<Stream, WireBackendError>;
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct IpcWireTransport;
+
+impl WireTransport for IpcWireTransport {
+    fn connect(name: &str, attempts: usize, delay: Duration) -> Result<Stream, WireBackendError> {
+        Ok(wire_ipc::connect_with_retry(name, attempts, delay)?)
+    }
+}
+
+pub struct WireClientBackend<T: WireTransport = IpcWireTransport> {
     client: Arc<Mutex<WireHelperClient>>,
-    instance: Instance,
+    instance: Option<Instance>,
+    surface: Option<Surface>,
     stop: Arc<AtomicBool>,
     tx: Option<mpsc::SyncSender<wire_ipc::OutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
     reader_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
-    flush_thread: Option<JoinHandle<()>>,
+    _transport: std::marker::PhantomData<T>,
 }
 
-impl IpcWireBackend {
-    pub fn connect_name(name: &str) -> Result<Self, WireBackendError> {
-        let stream = wire_ipc::connect_with_retry(name, 1, Duration::from_millis(0))?;
-        Self::from_stream(stream)
-    }
-
-    pub fn connect_name_with_retry(
-        name: &str,
-        attempts: usize,
-        delay: Duration,
+impl<T: WireTransport> WireClientBackend<T> {
+    pub fn from_stream_with_options(
+        stream: Stream,
+        opts: WireInitOptions,
     ) -> Result<Self, WireBackendError> {
-        let stream = wire_ipc::connect_with_retry(name, attempts, delay)?;
-        Self::from_stream(stream)
-    }
-
-    pub fn from_stream(stream: Stream) -> Result<Self, WireBackendError> {
         let mut reader_stream = stream.try_clone()?;
         let mut writer_stream = stream.try_clone()?;
-        let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
-        let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
 
         let (to_writer_tx, to_writer_rx) = mpsc::sync_channel::<wire_ipc::OutboundPacket>(1024);
         let client = Arc::new(Mutex::new(
@@ -85,25 +103,51 @@ impl IpcWireBackend {
             .map_err(WireBackendError::Wire)?,
         ));
 
-        let reserved = {
+        let reserved_instance = {
             let mut guard = client
                 .lock()
                 .map_err(|_| WireBackendError::LockPoisoned("wire client"))?;
             guard.reserve_instance()
         };
-        if reserved.instance.is_null() {
+        if reserved_instance.instance.is_null() {
             return Err(WireBackendError::Protocol(
                 "wire reserve_instance returned null instance",
             ));
         }
-
         wire_ipc::write_message(
             &mut writer_stream,
             &wire_ipc::IpcMessage::ReserveInstance {
-                id: reserved.handle.id,
-                generation: reserved.handle.generation,
+                id: reserved_instance.handle.id,
+                generation: reserved_instance.handle.generation,
             },
         )?;
+
+        let reserved_surface = if opts.reserve_surface {
+            let reserved = {
+                let mut guard = client
+                    .lock()
+                    .map_err(|_| WireBackendError::LockPoisoned("wire client"))?;
+                guard.reserve_surface(reserved_instance.instance)
+            };
+            if reserved.surface.is_null() {
+                return Err(WireBackendError::Protocol(
+                    "wire reserve_surface returned null surface",
+                ));
+            }
+            wire_ipc::write_message(
+                &mut writer_stream,
+                &wire_ipc::IpcMessage::ReserveSurface {
+                    id: reserved.handle.id,
+                    generation: reserved.handle.generation,
+                    instance_id: reserved.instance_handle.id,
+                    instance_generation: reserved.instance_handle.generation,
+                },
+            )?;
+            Some(reserved)
+        } else {
+            None
+        };
+
         writer_stream.flush()?;
         match wire_ipc::read_message(&mut reader_stream)? {
             wire_ipc::IpcMessage::ReserveAck { ok } if ok => {}
@@ -114,6 +158,7 @@ impl IpcWireBackend {
             }
             _ => return Err(WireBackendError::Protocol("unexpected reserve ack message")),
         }
+        let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
 
         let stop = Arc::new(AtomicBool::new(false));
         let client_for_reader = client.clone();
@@ -138,66 +183,95 @@ impl IpcWireBackend {
         );
 
         let writer_thread = thread::spawn(move || -> Result<(), WireBackendError> {
-            writer_raw
+            let res = writer_raw
                 .join()
                 .map_err(|_| WireBackendError::Protocol("wire writer thread panicked"))?
-                .map_err(WireBackendError::Wire)
+                .map_err(WireBackendError::Wire);
+            if let Err(err) = &res {
+                eprintln!("wire client writer thread ended with error: {err}");
+            } else {
+                eprintln!("wire client writer thread exited");
+            }
+            res
         });
         let reader_thread = thread::spawn(move || -> Result<(), WireBackendError> {
-            reader_raw
+            let res = reader_raw
                 .join()
                 .map_err(|_| WireBackendError::Protocol("wire reader thread panicked"))?
-                .map_err(WireBackendError::Wire)
+                .map_err(WireBackendError::Wire);
+            if let Err(err) = &res {
+                eprintln!("wire client reader thread ended with error: {err}");
+            } else {
+                eprintln!("wire client reader thread exited");
+            }
+            res
         });
 
-        let instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved) };
-        let client_for_flush = client.clone();
-        let instance_for_flush = instance.clone();
-        let flush_stop = stop.clone();
-        let flush_thread = thread::spawn(move || {
-            while !flush_stop.load(Ordering::Relaxed) {
-                if let Ok(mut guard) = client_for_flush.lock() {
-                    let _ = guard.flush();
-                }
-                instance_for_flush.process_events();
-                thread::sleep(Duration::from_millis(1));
-            }
-        });
+        let instance =
+            unsafe { WireHelperClient::reserved_instance_to_instance(reserved_instance) };
+        let surface = reserved_surface
+            .map(|reserved| unsafe { WireHelperClient::reserved_surface_to_surface(reserved) });
 
         Ok(Self {
             client,
-            instance,
+            instance: Some(instance),
+            surface,
             stop,
             tx: Some(to_writer_tx),
             writer_thread: Some(writer_thread),
             reader_thread: Some(reader_thread),
-            flush_thread: Some(flush_thread),
+            _transport: std::marker::PhantomData,
         })
     }
 
+    pub fn connect_name_with_options(
+        name: &str,
+        opts: WireInitOptions,
+    ) -> Result<Self, WireBackendError> {
+        let stream = T::connect(name, opts.connect_attempts, opts.connect_delay)?;
+        Self::from_stream_with_options(stream, opts)
+    }
+
+    pub fn connect_name(name: &str) -> Result<Self, WireBackendError> {
+        Self::connect_name_with_options(name, WireInitOptions::default())
+    }
+
     pub fn dawn_instance(&self) -> Instance {
-        self.instance.clone()
+        self.instance
+            .as_ref()
+            .expect("wire backend instance already dropped")
+            .clone()
+    }
+
+    pub fn dawn_surface(&self) -> Option<Surface> {
+        self.surface.clone()
     }
 
     pub fn wgpu_instance(&self) -> wgpu::Instance {
-        Compat::from(self.instance.clone()).into()
+        Compat::from(self.dawn_instance()).into()
+    }
+
+    pub fn pump(&self) {
+        if let Ok(mut guard) = self.client.lock() {
+            let _ = guard.flush();
+        }
+        if let Some(instance) = self.instance.as_ref() {
+            instance.process_events();
+        }
     }
 }
 
-impl From<&IpcWireBackend> for wgpu::Instance {
-    fn from(value: &IpcWireBackend) -> Self {
+impl<T: WireTransport> From<&WireClientBackend<T>> for wgpu::Instance {
+    fn from(value: &WireClientBackend<T>) -> Self {
         value.wgpu_instance()
     }
 }
 
-impl Drop for IpcWireBackend {
+impl<T: WireTransport> Drop for WireClientBackend<T> {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
         if let Some(tx) = self.tx.take() {
             let _ = tx.send(wire_ipc::OutboundPacket::Shutdown);
-        }
-        if let Some(handle) = self.flush_thread.take() {
-            let _ = handle.join();
         }
         if let Some(handle) = self.writer_thread.take() {
             let _ = handle.join();
@@ -205,9 +279,62 @@ impl Drop for IpcWireBackend {
         if let Some(handle) = self.reader_thread.take() {
             let _ = handle.join();
         }
+        // Ensure object releases happen before wire client disconnect.
+        let _ = self.surface.take();
+        let _ = self.instance.take();
         if let Ok(mut guard) = self.client.lock() {
             let _ = guard.flush();
             guard.disconnect();
+        }
+    }
+}
+
+pub type IpcWireBackend = WireClientBackend<IpcWireTransport>;
+
+pub struct WireBackendHandle {
+    backend: Mutex<Option<IpcWireBackend>>,
+}
+
+impl WireBackendHandle {
+    fn new(backend: IpcWireBackend) -> Self {
+        Self {
+            backend: Mutex::new(Some(backend)),
+        }
+    }
+}
+
+impl fmt::Debug for WireBackendHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("WireBackendHandle").finish_non_exhaustive()
+    }
+}
+
+impl Drop for WireBackendHandle {
+    fn drop(&mut self) {
+        if let Ok(mut guard) = self.backend.lock() {
+            let _ = guard.take();
+        }
+    }
+}
+
+impl IpcWireBackend {
+    pub fn into_instance_and_handle(self) -> (Instance, Arc<WireBackendHandle>) {
+        let instance = self.dawn_instance();
+        (instance, Arc::new(WireBackendHandle::new(self)))
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct WireHandle {
+    pub id: u32,
+    pub generation: u32,
+}
+
+impl From<WireInstanceHandle> for WireHandle {
+    fn from(value: WireInstanceHandle) -> Self {
+        Self {
+            id: value.id,
+            generation: value.generation,
         }
     }
 }
