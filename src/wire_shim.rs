@@ -106,8 +106,8 @@ unsafe extern "C" {
 
 struct CallbackState {
     closed: AtomicBool,
-    on_flush: Box<dyn FnMut(&[u8]) + Send + 'static>,
-    on_error: Box<dyn FnMut(&str) + Send + 'static>,
+    on_flush: Mutex<Box<dyn FnMut(&[u8]) + Send + 'static>>,
+    on_error: Mutex<Box<dyn FnMut(&str) + Send + 'static>>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -187,31 +187,38 @@ impl Drop for ProcTableLease {
 }
 
 extern "C" fn on_flush_trampoline(userdata: *mut c_void, data: *const u8, size: usize) {
-    if userdata.is_null() || data.is_null() {
+    if userdata.is_null() {
         return;
     }
-    let state = unsafe { &mut *(userdata as *mut CallbackState) };
+    if size == 0 || data.is_null() || size > (64 * 1024 * 1024) {
+        return;
+    }
+    let state = unsafe { &*(userdata as *const CallbackState) };
     if state.closed.load(Ordering::Relaxed) {
         return;
     }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
-    if bytes.is_empty() {
-        return;
+    if let Ok(mut cb) = state.on_flush.lock() {
+        (cb)(bytes);
     }
-    (state.on_flush)(bytes);
 }
 
 extern "C" fn on_error_trampoline(userdata: *mut c_void, data: *const u8, size: usize) {
-    if userdata.is_null() || data.is_null() {
+    if userdata.is_null() {
         return;
     }
-    let state = unsafe { &mut *(userdata as *mut CallbackState) };
+    if size == 0 || data.is_null() || size > (64 * 1024) {
+        return;
+    }
+    let state = unsafe { &*(userdata as *const CallbackState) };
     if state.closed.load(Ordering::Relaxed) {
         return;
     }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
     if let Ok(msg) = std::str::from_utf8(bytes) {
-        (state.on_error)(msg);
+        if let Ok(mut cb) = state.on_error.lock() {
+            (cb)(msg);
+        }
     }
 }
 
@@ -232,8 +239,8 @@ impl WireHelperClient {
         let proc_table = ProcTableLease::acquire(ProcTableMode::WireClient)?;
         let state = Box::new(CallbackState {
             closed: AtomicBool::new(false),
-            on_flush: Box::new(on_flush),
-            on_error: Box::new(on_error),
+            on_flush: Mutex::new(Box::new(on_flush)),
+            on_error: Mutex::new(Box::new(on_error)),
         });
         let state_ptr = Box::into_raw(state);
         let callbacks = DawnRsWireSerializerCallbacks {
@@ -317,8 +324,8 @@ impl WireHelperServer {
         let proc_table = ProcTableLease::acquire(ProcTableMode::Native)?;
         let state = Box::new(CallbackState {
             closed: AtomicBool::new(false),
-            on_flush: Box::new(on_flush),
-            on_error: Box::new(on_error),
+            on_flush: Mutex::new(Box::new(on_flush)),
+            on_error: Mutex::new(Box::new(on_error)),
         });
         let state_ptr = Box::into_raw(state);
         let callbacks = DawnRsWireSerializerCallbacks {

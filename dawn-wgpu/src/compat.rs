@@ -48,9 +48,7 @@ impl<'a> CompatTexture<'a> {
 
 impl From<Compat<Instance>> for wgpu::Instance {
     fn from(value: Compat<Instance>) -> Self {
-        wgpu::Instance::from_custom(DawnInstance {
-            inner: SendSync::new(value.0),
-        })
+        wgpu::Instance::from_custom(DawnInstance::from_instance(value.0))
     }
 }
 

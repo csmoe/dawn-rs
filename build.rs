@@ -11,6 +11,7 @@ fn main() {
         return;
     };
     let wire_enabled = env::var_os("CARGO_FEATURE_WIRE").is_some();
+    let dawn_source_root = resolve_dawn_source_root(&dawn_root);
     let lib_dirs = resolve_dawn_lib_dirs(&dawn_root);
     if lib_dirs.is_empty() {
         println!(
@@ -50,7 +51,14 @@ fn main() {
                     e
                 );
             }
-            build_wire_cpp_shim(&dawn_root, &gen_include, &out_dir);
+            if let Some(source_root) = dawn_source_root.as_ref() {
+                build_wire_cpp_shim(source_root, &gen_include, &out_dir);
+            } else {
+                println!(
+                    "cargo:warning=Failed to resolve Dawn source root from DAWN_ROOT={} (wire shim disabled)",
+                    dawn_root.display()
+                );
+            }
         } else {
             println!(
                 "cargo:warning=Missing Dawn generated headers for wire shim under {}",
@@ -89,8 +97,12 @@ fn resolve_dawn_root() -> Option<PathBuf> {
 fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
     let mut dirs = Vec::new();
     for dir in [
+        dawn_root.to_path_buf(),
         dawn_root.join("lib"),
         dawn_root.join("lib64"),
+        dawn_root.join("src/dawn"),
+        dawn_root.join("src/dawn/native"),
+        dawn_root.join("src/dawn/wire"),
         dawn_root.join("out/cmake-install-static/lib"),
         dawn_root.join("out/cmake-install-static/src/dawn"),
         dawn_root.join("out/cmake-install-static/src/dawn/native"),
@@ -111,6 +123,45 @@ fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
         }
     }
     dirs
+}
+
+fn resolve_dawn_source_root(dawn_root: &Path) -> Option<PathBuf> {
+    if has_dawn_public_headers(dawn_root) {
+        return Some(dawn_root.to_path_buf());
+    }
+
+    let cache = dawn_root.join("CMakeCache.txt");
+    if let Ok(content) = fs::read_to_string(&cache) {
+        for line in content.lines() {
+            if let Some(value) = line.strip_prefix("Dawn_SOURCE_DIR:STATIC=") {
+                let path = PathBuf::from(value.trim());
+                if has_dawn_public_headers(&path) {
+                    return Some(path);
+                }
+            }
+            if let Some(value) = line.strip_prefix("CMAKE_HOME_DIRECTORY:INTERNAL=") {
+                let path = PathBuf::from(value.trim());
+                if has_dawn_public_headers(&path) {
+                    return Some(path);
+                }
+            }
+        }
+    }
+
+    if dawn_root.ends_with("out/Release") || dawn_root.ends_with("out/Debug") {
+        if let Some(parent) = dawn_root.parent().and_then(|p| p.parent()) {
+            if has_dawn_public_headers(parent) {
+                return Some(parent.to_path_buf());
+            }
+        }
+    }
+
+    None
+}
+
+fn has_dawn_public_headers(path: &Path) -> bool {
+    path.join("include/webgpu/webgpu.h").exists()
+        && path.join("include/dawn/native/DawnNative.h").exists()
 }
 
 fn has_static_lib(lib_dirs: &[PathBuf], name: &str) -> bool {
@@ -183,6 +234,10 @@ fn generate_wire_client_proc_table_inc(
 }
 
 fn resolve_dawn_gen_include_dir(dawn_root: &Path) -> Option<PathBuf> {
+    let direct = dawn_root.join("gen/include");
+    if direct.exists() {
+        return Some(direct);
+    }
     let release = dawn_root.join("out/Release/gen/include");
     if release.exists() {
         return Some(release);
