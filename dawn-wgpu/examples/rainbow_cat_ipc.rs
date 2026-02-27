@@ -1,12 +1,11 @@
+use dawn_rs::wire_ipc::{IpcMessage, read_message, write_message};
 use dawn_wgpu::create_instance;
 use interprocess::TryClone;
-use interprocess::local_socket::{
-    GenericFilePath, GenericNamespaced, ListenerOptions, Stream, prelude::*,
-};
+use interprocess::local_socket::traits::Stream as _;
 use pollster::block_on;
 use std::env;
 use std::error::Error;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::process::{Child, Command};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -201,8 +200,8 @@ fn run_client() -> Result<(), Box<dyn Error>> {
     let sock_name = format!("dawn-wgpu-rainbow-window-{stamp}");
     let mut child = spawn_server(&sock_name)?;
 
-    let name = to_ipc_name(&sock_name)?;
-    let mut stream = connect_with_retry(name)?;
+    let mut stream =
+        dawn_rs::wire_ipc::connect_with_retry(&sock_name, 300, Duration::from_millis(10))?;
     let start = Instant::now();
     while child.try_wait()?.is_none() {
         let phase = start.elapsed().as_secs_f32();
@@ -214,12 +213,7 @@ fn run_client() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_server(sock_name: &str) -> Result<(), Box<dyn Error>> {
-    let name = to_ipc_name(sock_name)?;
-    let listener = ListenerOptions::new()
-        .name(name)
-        .reclaim_name(true)
-        .create_sync()?;
-    let stream = listener.accept()?;
+    let stream = dawn_rs::wire_ipc::bind_and_accept(sock_name)?;
     let mut reader_stream = stream.try_clone()?;
     let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
 
@@ -247,6 +241,7 @@ fn run_server(sock_name: &str) -> Result<(), Box<dyn Error>> {
                     }
                 }
                 IpcMessage::Shutdown => break,
+                _ => {}
             }
         }
         Ok(())
@@ -511,60 +506,4 @@ fn spawn_server(sock_name: &str) -> Result<Child, Box<dyn Error>> {
         .arg(sock_name)
         .spawn()?;
     Ok(child)
-}
-
-fn connect_with_retry(
-    name: interprocess::local_socket::Name<'static>,
-) -> Result<Stream, Box<dyn Error>> {
-    for _ in 0..300 {
-        match Stream::connect(name.clone()) {
-            Ok(stream) => return Ok(stream),
-            Err(_) => thread::sleep(Duration::from_millis(10)),
-        }
-    }
-    Err("failed to connect ipc server".into())
-}
-
-fn to_ipc_name(name: &str) -> Result<interprocess::local_socket::Name<'static>, Box<dyn Error>> {
-    if GenericNamespaced::is_supported() {
-        Ok(name.to_string().to_ns_name::<GenericNamespaced>()?)
-    } else {
-        Ok(format!("/tmp/{name}.sock").to_fs_name::<GenericFilePath>()?)
-    }
-}
-
-#[derive(Debug)]
-enum IpcMessage {
-    AnimationPhase { phase: f32 },
-    Shutdown,
-}
-
-fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io::Result<()> {
-    match message {
-        IpcMessage::AnimationPhase { phase } => {
-            writer.write_all(&[1])?;
-            writer.write_all(&phase.to_le_bytes())?;
-        }
-        IpcMessage::Shutdown => writer.write_all(&[2])?,
-    }
-    Ok(())
-}
-
-fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
-    let mut tag = [0u8; 1];
-    reader.read_exact(&mut tag)?;
-    match tag[0] {
-        1 => {
-            let mut b = [0u8; 4];
-            reader.read_exact(&mut b)?;
-            Ok(IpcMessage::AnimationPhase {
-                phase: f32::from_le_bytes(b),
-            })
-        }
-        2 => Ok(IpcMessage::Shutdown),
-        _ => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "unknown ipc message",
-        )),
-    }
 }

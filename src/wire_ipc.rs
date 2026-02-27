@@ -1,4 +1,6 @@
-use interprocess::local_socket::Stream;
+use interprocess::local_socket::{
+    GenericFilePath, GenericNamespaced, ListenerOptions, Name, Stream, prelude::*,
+};
 use std::io::{Read, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
@@ -12,71 +14,24 @@ pub enum OutboundPacket {
     Shutdown,
 }
 
-pub struct PumpGuard {
-    stop: Arc<AtomicBool>,
-    tx: Option<mpsc::Sender<OutboundPacket>>,
-    writer_thread: Option<JoinHandle<Result<(), String>>>,
-    reader_thread: Option<JoinHandle<Result<(), String>>>,
+#[derive(Debug)]
+pub enum IpcMessage {
+    ReserveInstance { id: u32, generation: u32 },
+    ReserveAck { ok: bool },
+    WireBytes(Vec<u8>),
+    HandleCommands,
+    AnimationPhase { phase: f32 },
+    Shutdown,
 }
 
-impl PumpGuard {
-    pub fn new(
-        stop: Arc<AtomicBool>,
-        tx: mpsc::Sender<OutboundPacket>,
-        writer_thread: JoinHandle<Result<(), String>>,
-        reader_thread: JoinHandle<Result<(), String>>,
-    ) -> Self {
-        Self {
-            stop,
-            tx: Some(tx),
-            writer_thread: Some(writer_thread),
-            reader_thread: Some(reader_thread),
-        }
-    }
-
-    pub fn shutdown_and_join(mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-        if let Some(tx) = self.tx.take() {
-            let _ = tx.send(OutboundPacket::Shutdown);
-        }
-        if let Some(writer_thread) = self.writer_thread.take() {
-            match writer_thread.join() {
-                Ok(Err(e)) => eprintln!("wire writer thread error: {e}"),
-                Err(_) => eprintln!("wire writer thread panic"),
-                Ok(Ok(())) => {}
-            }
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            match reader_thread.join() {
-                Ok(Err(e)) => eprintln!("wire reader thread error: {e}"),
-                Err(_) => eprintln!("wire reader thread panic"),
-                Ok(Ok(())) => {}
-            }
-        }
-    }
-}
-
-impl Drop for PumpGuard {
-    fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
-        if let Some(tx) = self.tx.take() {
-            let _ = tx.send(OutboundPacket::Shutdown);
-        }
-        if let Some(writer_thread) = self.writer_thread.take() {
-            let _ = writer_thread.join();
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            let _ = reader_thread.join();
-        }
-    }
-}
-
-pub fn start_transport_threads(
+pub fn start_wire_threads(
     stop: Arc<AtomicBool>,
     mut reader_stream: Stream,
     mut writer_stream: Stream,
-    to_writer_rx: mpsc::Receiver<OutboundPacket>,
-    mut handle_packet: impl FnMut(&[u8]) -> Result<(), String> + Send + 'static,
+    outbound_rx: mpsc::Receiver<OutboundPacket>,
+    max_batch_packets: usize,
+    flush_interval: Duration,
+    mut handle_frame: impl FnMut(&[u8]) -> Result<(), String> + Send + 'static,
     mut after_handle_commands: impl FnMut() + Send + 'static,
     mut on_animation_phase: impl FnMut(f32) + Send + 'static,
 ) -> (
@@ -85,37 +40,46 @@ pub fn start_transport_threads(
 ) {
     let writer_stop = stop.clone();
     let writer_thread = thread::spawn(move || -> Result<(), String> {
+        let mut batch: Vec<Vec<u8>> = Vec::new();
+
         loop {
-            match to_writer_rx.recv_timeout(Duration::from_millis(100)) {
+            match outbound_rx.recv_timeout(flush_interval) {
                 Ok(OutboundPacket::Wire(packet)) => {
                     if writer_stop.load(Ordering::Relaxed) {
+                        flush_batch(&mut writer_stream, &mut batch)?;
                         break;
                     }
-                    write_message(&mut writer_stream, &IpcMessage::WireBytes(packet))
-                        .map_err(|e| e.to_string())?;
-                    write_message(&mut writer_stream, &IpcMessage::HandleCommands)
-                        .map_err(|e| e.to_string())?;
-                    writer_stream.flush().map_err(|e| e.to_string())?;
+                    batch.push(packet);
+                    if batch.len() >= max_batch_packets.max(1) {
+                        flush_batch(&mut writer_stream, &mut batch)?;
+                    }
                 }
                 Ok(OutboundPacket::Shutdown) => {
+                    flush_batch(&mut writer_stream, &mut batch)?;
                     let _ = write_message(&mut writer_stream, &IpcMessage::Shutdown);
                     let _ = writer_stream.flush();
                     break;
                 }
                 Ok(OutboundPacket::AnimationPhase(phase)) => {
                     if writer_stop.load(Ordering::Relaxed) {
+                        flush_batch(&mut writer_stream, &mut batch)?;
                         break;
                     }
+                    flush_batch(&mut writer_stream, &mut batch)?;
                     write_message(&mut writer_stream, &IpcMessage::AnimationPhase { phase })
                         .map_err(|e| e.to_string())?;
                     writer_stream.flush().map_err(|e| e.to_string())?;
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => {
+                    flush_batch(&mut writer_stream, &mut batch)?;
                     if writer_stop.load(Ordering::Relaxed) {
                         break;
                     }
                 }
-                Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                Err(mpsc::RecvTimeoutError::Disconnected) => {
+                    flush_batch(&mut writer_stream, &mut batch)?;
+                    break;
+                }
             }
         }
         Ok(())
@@ -124,10 +88,24 @@ pub fn start_transport_threads(
     let reader_stop = stop;
     let reader_thread = thread::spawn(move || -> Result<(), String> {
         let mut pending = Vec::<Vec<u8>>::new();
+        let mut consume_pending = |pending: &mut Vec<Vec<u8>>| -> Result<(), String> {
+            if pending.is_empty() {
+                return Ok(());
+            }
+            for frame in pending.drain(..) {
+                handle_frame(&frame)?;
+            }
+            after_handle_commands();
+            Ok(())
+        };
+
         while !reader_stop.load(Ordering::Relaxed) {
             let message = match read_message(&mut reader_stream) {
                 Ok(message) => message,
-                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
+                    consume_pending(&mut pending)?;
+                    break;
+                }
                 Err(e)
                     if e.kind() == std::io::ErrorKind::TimedOut
                         || e.kind() == std::io::ErrorKind::WouldBlock =>
@@ -136,27 +114,69 @@ pub fn start_transport_threads(
                 }
                 Err(e) => return Err(e.to_string()),
             };
+
             match message {
-                // Opaque Dawn wire bytes from peer Flush.
                 IpcMessage::WireBytes(bytes) => pending.push(bytes),
-                IpcMessage::HandleCommands => {
-                    if pending.is_empty() {
-                        continue;
-                    }
-                    for frame in pending.drain(..) {
-                        handle_packet(&frame)?;
-                    }
-                    after_handle_commands();
-                }
-                IpcMessage::Shutdown => break,
+                IpcMessage::HandleCommands => consume_pending(&mut pending)?,
                 IpcMessage::AnimationPhase { phase } => on_animation_phase(phase),
-                _ => continue,
+                IpcMessage::Shutdown => {
+                    consume_pending(&mut pending)?;
+                    break;
+                }
+                _ => {}
             }
         }
         Ok(())
     });
 
     (writer_thread, reader_thread)
+}
+
+pub fn to_ipc_name(name: &str) -> std::io::Result<Name<'static>> {
+    if GenericNamespaced::is_supported() {
+        name.to_string()
+            .to_ns_name::<GenericNamespaced>()
+            .map_err(std::io::Error::other)
+    } else {
+        format!("/tmp/{name}.sock")
+            .to_fs_name::<GenericFilePath>()
+            .map_err(std::io::Error::other)
+    }
+}
+
+pub fn connect_with_retry(name: &str, attempts: usize, delay: Duration) -> std::io::Result<Stream> {
+    let ipc_name = to_ipc_name(name)?;
+    let mut last_err: Option<std::io::Error> = None;
+    for _ in 0..attempts.max(1) {
+        match Stream::connect(ipc_name.clone()) {
+            Ok(stream) => return Ok(stream),
+            Err(e) => {
+                last_err = Some(e);
+                std::thread::sleep(delay);
+            }
+        }
+    }
+    Err(last_err.unwrap_or_else(|| std::io::Error::other("failed to connect ipc socket")))
+}
+
+pub fn bind_and_accept(name: &str) -> std::io::Result<Stream> {
+    let listener = ListenerOptions::new()
+        .name(to_ipc_name(name)?)
+        .reclaim_name(true)
+        .create_sync()?;
+    listener.accept()
+}
+
+fn flush_batch<W: Write>(writer: &mut W, batch: &mut Vec<Vec<u8>>) -> Result<(), String> {
+    if batch.is_empty() {
+        return Ok(());
+    }
+    for packet in batch.drain(..) {
+        write_message(writer, &IpcMessage::WireBytes(packet)).map_err(|e| e.to_string())?;
+    }
+    write_message(writer, &IpcMessage::HandleCommands).map_err(|e| e.to_string())?;
+    writer.flush().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io::Result<()> {
@@ -174,12 +194,8 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             writer.write_all(&[3])?;
             write_len_prefixed_bytes(writer, bytes)?;
         }
-        IpcMessage::HandleCommands => {
-            writer.write_all(&[4])?;
-        }
-        IpcMessage::Shutdown => {
-            writer.write_all(&[5])?;
-        }
+        IpcMessage::HandleCommands => writer.write_all(&[4])?,
+        IpcMessage::Shutdown => writer.write_all(&[5])?,
         IpcMessage::AnimationPhase { phase } => {
             writer.write_all(&[6])?;
             writer.write_all(&phase.to_le_bytes())?;
@@ -216,16 +232,6 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
             "unknown ipc message tag",
         )),
     }
-}
-
-#[derive(Debug)]
-pub enum IpcMessage {
-    ReserveInstance { id: u32, generation: u32 },
-    ReserveAck { ok: bool },
-    WireBytes(Vec<u8>),
-    HandleCommands,
-    Shutdown,
-    AnimationPhase { phase: f32 },
 }
 
 fn write_len_prefixed_bytes<W: Write>(writer: &mut W, bytes: &[u8]) -> std::io::Result<()> {
