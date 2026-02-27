@@ -1,5 +1,5 @@
+use dawn_rs::wire_ipc::{self, IpcMessage, OutboundPacket, read_message, write_message};
 use dawn_rs::wire_shim::{WireHelperClient, WireHelperServer, WireInstanceHandle};
-mod wire_transport;
 use dawn_rs::{
     BufferDescriptor, BufferUsage, Color, Device, Extent3D, FragmentState, Instance, LoadOp,
     MapAsyncStatus, MapMode, MultisampleState, PipelineLayoutDescriptor, PrimitiveState,
@@ -9,9 +9,7 @@ use dawn_rs::{
     TextureFormat, TextureUsage, VertexState,
 };
 use interprocess::TryClone;
-use interprocess::local_socket::{
-    GenericFilePath, GenericNamespaced, ListenerOptions, Stream, prelude::*,
-};
+use interprocess::local_socket::traits::Stream as _;
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
 use std::env;
@@ -29,9 +27,6 @@ use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::raw_window_handle::{HasDisplayHandle, RawDisplayHandle};
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::{Window, WindowAttributes, WindowId};
-use wire_transport::{
-    IpcMessage, OutboundPacket, PumpGuard, read_message, start_transport_threads, write_message,
-};
 
 const SHADER: &str = r#"
 @vertex
@@ -59,6 +54,57 @@ fn main() {
 
 struct ChildGuard {
     child: Option<Child>,
+}
+
+struct PumpGuard {
+    stop: Arc<std::sync::atomic::AtomicBool>,
+    tx: Option<mpsc::Sender<OutboundPacket>>,
+    writer_thread: Option<thread::JoinHandle<Result<(), String>>>,
+    reader_thread: Option<thread::JoinHandle<Result<(), String>>>,
+}
+
+impl PumpGuard {
+    fn new(
+        stop: Arc<std::sync::atomic::AtomicBool>,
+        tx: mpsc::Sender<OutboundPacket>,
+        writer_thread: thread::JoinHandle<Result<(), String>>,
+        reader_thread: thread::JoinHandle<Result<(), String>>,
+    ) -> Self {
+        Self {
+            stop,
+            tx: Some(tx),
+            writer_thread: Some(writer_thread),
+            reader_thread: Some(reader_thread),
+        }
+    }
+
+    fn shutdown_and_join(mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        if let Some(tx) = self.tx.take() {
+            let _ = tx.send(OutboundPacket::Shutdown);
+        }
+        if let Some(writer_thread) = self.writer_thread.take() {
+            let _ = writer_thread.join();
+        }
+        if let Some(reader_thread) = self.reader_thread.take() {
+            let _ = reader_thread.join();
+        }
+    }
+}
+
+impl Drop for PumpGuard {
+    fn drop(&mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        if let Some(tx) = self.tx.take() {
+            let _ = tx.send(OutboundPacket::Shutdown);
+        }
+        if let Some(writer_thread) = self.writer_thread.take() {
+            let _ = writer_thread.join();
+        }
+        if let Some(reader_thread) = self.reader_thread.take() {
+            let _ = reader_thread.join();
+        }
+    }
 }
 
 impl ChildGuard {
@@ -125,8 +171,7 @@ fn run_client() -> Result<(), Box<dyn Error>> {
         .spawn()?;
     let mut child = ChildGuard::new(child);
 
-    let name = to_ipc_name(&sock_name)?;
-    let stream = connect_with_retry(name)?;
+    let stream = wire_ipc::connect_with_retry(&sock_name, 300, Duration::from_millis(10))?;
     let mut reader_stream = stream.try_clone()?;
     let mut writer_stream = stream.try_clone()?;
     let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
@@ -178,11 +223,13 @@ fn run_client() -> Result<(), Box<dyn Error>> {
 
     let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let client_for_reader = client.clone();
-    let (writer_thread, reader_thread) = start_transport_threads(
+    let (writer_thread, reader_thread) = wire_ipc::start_wire_threads(
         stop.clone(),
         reader_stream,
         writer_stream,
         to_writer_rx,
+        32,
+        Duration::from_millis(4),
         move |frame: &[u8]| {
             let mut guard = client_for_reader
                 .lock()
@@ -322,13 +369,7 @@ fn client_wire_gpu_call_demo(
 }
 
 fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Error>> {
-    let name = to_ipc_name(sock_name)?;
-    let listener = ListenerOptions::new()
-        .name(name)
-        .reclaim_name(true)
-        .create_sync()?;
-
-    let stream = listener.accept()?;
+    let stream = wire_ipc::bind_and_accept(sock_name)?;
     let mut reader_stream = stream.try_clone()?;
     let mut writer_stream = stream.try_clone()?;
     let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
@@ -378,11 +419,13 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
     let server_handled_frames_for_reader = server_handled_frames.clone();
     let server_handled_bytes_for_reader = server_handled_bytes.clone();
     let animation_phase_for_reader = animation_phase.clone();
-    let (writer_thread, reader_thread) = start_transport_threads(
+    let (writer_thread, reader_thread) = wire_ipc::start_wire_threads(
         stop.clone(),
         reader_stream,
         writer_stream,
         to_writer_rx,
+        32,
+        Duration::from_millis(4),
         move |frame: &[u8]| {
             server_handled_frames_for_reader.fetch_add(1, Ordering::Relaxed);
             server_handled_bytes_for_reader.fetch_add(frame.len() as u64, Ordering::Relaxed);
@@ -418,18 +461,6 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
         server_serialized_bytes.load(Ordering::Relaxed)
     );
     Ok(())
-}
-
-fn connect_with_retry(
-    name: interprocess::local_socket::Name<'static>,
-) -> Result<Stream, Box<dyn Error>> {
-    for _ in 0..300 {
-        match Stream::connect(name.clone()) {
-            Ok(stream) => return Ok(stream),
-            Err(_) => thread::sleep(Duration::from_millis(10)),
-        }
-    }
-    Err("failed to connect to ipc server".into())
 }
 
 fn request_adapter_sync(
@@ -955,15 +986,6 @@ fn create_pipeline(
     desc.multisample = Some(MultisampleState::new());
 
     device.create_render_pipeline(&desc)
-}
-
-fn to_ipc_name(name: &str) -> Result<interprocess::local_socket::Name<'static>, Box<dyn Error>> {
-    if GenericNamespaced::is_supported() {
-        Ok(name.to_string().to_ns_name::<GenericNamespaced>()?)
-    } else {
-        let path = format!("/tmp/{name}.sock");
-        Ok(path.to_fs_name::<GenericFilePath>()?)
-    }
 }
 
 fn align_up(value: u32, align: u32) -> u32 {

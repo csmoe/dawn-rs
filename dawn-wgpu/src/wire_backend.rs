@@ -1,11 +1,12 @@
 use crate::Compat;
 use dawn_rs::Instance;
+use dawn_rs::wire_ipc;
 use dawn_rs::wire_shim::WireHelperClient;
 use interprocess::TryClone;
 use interprocess::local_socket::Stream;
-use interprocess::local_socket::{GenericFilePath, GenericNamespaced, prelude::*};
+use interprocess::local_socket::traits::Stream as _;
 use std::fmt;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread::{self, JoinHandle};
@@ -38,26 +39,11 @@ impl From<std::io::Error> for WireBackendError {
     }
 }
 
-#[derive(Debug)]
-enum OutboundPacket {
-    Wire(Vec<u8>),
-    Shutdown,
-}
-
-#[derive(Debug)]
-enum IpcMessage {
-    ReserveInstance { id: u32, generation: u32 },
-    ReserveAck { ok: bool },
-    WireBytes(Vec<u8>),
-    HandleCommands,
-    Shutdown,
-}
-
 pub struct IpcWireBackend {
     client: Arc<Mutex<WireHelperClient>>,
     instance: Instance,
     stop: Arc<AtomicBool>,
-    tx: Option<mpsc::Sender<OutboundPacket>>,
+    tx: Option<mpsc::SyncSender<wire_ipc::OutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
     reader_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
     flush_thread: Option<JoinHandle<()>>,
@@ -65,12 +51,7 @@ pub struct IpcWireBackend {
 
 impl IpcWireBackend {
     pub fn connect_name(name: &str) -> Result<Self, WireBackendError> {
-        let ipc_name = if GenericNamespaced::is_supported() {
-            name.to_string().to_ns_name::<GenericNamespaced>()?
-        } else {
-            format!("/tmp/{name}.sock").to_fs_name::<GenericFilePath>()?
-        };
-        let stream = Stream::connect(ipc_name)?;
+        let stream = wire_ipc::connect_with_retry(name, 1, Duration::from_millis(0))?;
         Self::from_stream(stream)
     }
 
@@ -79,24 +60,8 @@ impl IpcWireBackend {
         attempts: usize,
         delay: Duration,
     ) -> Result<Self, WireBackendError> {
-        let ipc_name = if GenericNamespaced::is_supported() {
-            name.to_string().to_ns_name::<GenericNamespaced>()?
-        } else {
-            format!("/tmp/{name}.sock").to_fs_name::<GenericFilePath>()?
-        };
-        let mut last_err: Option<std::io::Error> = None;
-        for _ in 0..attempts.max(1) {
-            match Stream::connect(ipc_name.clone()) {
-                Ok(stream) => return Self::from_stream(stream),
-                Err(e) => {
-                    last_err = Some(e);
-                    thread::sleep(delay);
-                }
-            }
-        }
-        Err(WireBackendError::Io(last_err.unwrap_or_else(|| {
-            std::io::Error::other("failed to connect wire backend")
-        })))
+        let stream = wire_ipc::connect_with_retry(name, attempts, delay)?;
+        Self::from_stream(stream)
     }
 
     pub fn from_stream(stream: Stream) -> Result<Self, WireBackendError> {
@@ -105,14 +70,14 @@ impl IpcWireBackend {
         let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
         let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
 
-        let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
+        let (to_writer_tx, to_writer_rx) = mpsc::sync_channel::<wire_ipc::OutboundPacket>(1024);
         let client = Arc::new(Mutex::new(
             WireHelperClient::new(
                 0,
                 {
                     let to_writer_tx = to_writer_tx.clone();
                     move |bytes: &[u8]| {
-                        let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
+                        let _ = to_writer_tx.send(wire_ipc::OutboundPacket::Wire(bytes.to_vec()));
                     }
                 },
                 |msg: &str| eprintln!("wire backend client error: {msg}"),
@@ -132,17 +97,17 @@ impl IpcWireBackend {
             ));
         }
 
-        write_message(
+        wire_ipc::write_message(
             &mut writer_stream,
-            &IpcMessage::ReserveInstance {
+            &wire_ipc::IpcMessage::ReserveInstance {
                 id: reserved.handle.id,
                 generation: reserved.handle.generation,
             },
         )?;
         writer_stream.flush()?;
-        match read_message(&mut reader_stream)? {
-            IpcMessage::ReserveAck { ok } if ok => {}
-            IpcMessage::ReserveAck { ok: false } => {
+        match wire_ipc::read_message(&mut reader_stream)? {
+            wire_ipc::IpcMessage::ReserveAck { ok } if ok => {}
+            wire_ipc::IpcMessage::ReserveAck { ok: false } => {
                 return Err(WireBackendError::Protocol(
                     "server rejected wire handle injection",
                 ));
@@ -152,71 +117,37 @@ impl IpcWireBackend {
 
         let stop = Arc::new(AtomicBool::new(false));
         let client_for_reader = client.clone();
-        let writer_stop = stop.clone();
-        let writer_thread = thread::spawn(move || -> Result<(), WireBackendError> {
-            loop {
-                match to_writer_rx.recv_timeout(Duration::from_millis(100)) {
-                    Ok(OutboundPacket::Wire(packet)) => {
-                        if writer_stop.load(Ordering::Relaxed) {
-                            break;
-                        }
-                        write_message(&mut writer_stream, &IpcMessage::WireBytes(packet))?;
-                        write_message(&mut writer_stream, &IpcMessage::HandleCommands)?;
-                        writer_stream.flush()?;
-                    }
-                    Ok(OutboundPacket::Shutdown) => {
-                        let _ = write_message(&mut writer_stream, &IpcMessage::Shutdown);
-                        let _ = writer_stream.flush();
-                        break;
-                    }
-                    Err(mpsc::RecvTimeoutError::Timeout) => {
-                        if writer_stop.load(Ordering::Relaxed) {
-                            break;
-                        }
-                    }
-                    Err(mpsc::RecvTimeoutError::Disconnected) => break,
+        let (writer_raw, reader_raw) = wire_ipc::start_wire_threads(
+            stop.clone(),
+            reader_stream,
+            writer_stream,
+            to_writer_rx,
+            32,
+            Duration::from_millis(4),
+            move |frame: &[u8]| {
+                let mut guard = client_for_reader
+                    .lock()
+                    .map_err(|_| "wire client lock poisoned".to_string())?;
+                if !guard.handle_commands(frame) {
+                    return Err("wire client HandleCommands failed".to_string());
                 }
-            }
-            Ok(())
-        });
+                Ok(())
+            },
+            || {},
+            |_| {},
+        );
 
-        let reader_stop = stop.clone();
+        let writer_thread = thread::spawn(move || -> Result<(), WireBackendError> {
+            writer_raw
+                .join()
+                .map_err(|_| WireBackendError::Protocol("wire writer thread panicked"))?
+                .map_err(WireBackendError::Wire)
+        });
         let reader_thread = thread::spawn(move || -> Result<(), WireBackendError> {
-            let mut pending = Vec::<Vec<u8>>::new();
-            while !reader_stop.load(Ordering::Relaxed) {
-                let message = match read_message(&mut reader_stream) {
-                    Ok(message) => message,
-                    Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
-                    Err(e)
-                        if e.kind() == std::io::ErrorKind::TimedOut
-                            || e.kind() == std::io::ErrorKind::WouldBlock =>
-                    {
-                        continue;
-                    }
-                    Err(e) => return Err(WireBackendError::Io(e)),
-                };
-                match message {
-                    IpcMessage::WireBytes(bytes) => pending.push(bytes),
-                    IpcMessage::HandleCommands => {
-                        if pending.is_empty() {
-                            continue;
-                        }
-                        let mut guard = client_for_reader
-                            .lock()
-                            .map_err(|_| WireBackendError::LockPoisoned("wire client"))?;
-                        for frame in pending.drain(..) {
-                            if !guard.handle_commands(&frame) {
-                                return Err(WireBackendError::Protocol(
-                                    "wire client HandleCommands failed",
-                                ));
-                            }
-                        }
-                    }
-                    IpcMessage::Shutdown => break,
-                    _ => {}
-                }
-            }
-            Ok(())
+            reader_raw
+                .join()
+                .map_err(|_| WireBackendError::Protocol("wire reader thread panicked"))?
+                .map_err(WireBackendError::Wire)
         });
 
         let instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved) };
@@ -263,7 +194,7 @@ impl Drop for IpcWireBackend {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Relaxed);
         if let Some(tx) = self.tx.take() {
-            let _ = tx.send(OutboundPacket::Shutdown);
+            let _ = tx.send(wire_ipc::OutboundPacket::Shutdown);
         }
         if let Some(handle) = self.flush_thread.take() {
             let _ = handle.join();
@@ -279,80 +210,4 @@ impl Drop for IpcWireBackend {
             guard.disconnect();
         }
     }
-}
-
-fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io::Result<()> {
-    match message {
-        IpcMessage::ReserveInstance { id, generation } => {
-            writer.write_all(&[1])?;
-            writer.write_all(&id.to_le_bytes())?;
-            writer.write_all(&generation.to_le_bytes())?;
-        }
-        IpcMessage::ReserveAck { ok } => {
-            writer.write_all(&[2])?;
-            writer.write_all(&[*ok as u8])?;
-        }
-        IpcMessage::WireBytes(bytes) => {
-            writer.write_all(&[3])?;
-            write_len_prefixed_bytes(writer, bytes)?;
-        }
-        IpcMessage::HandleCommands => writer.write_all(&[4])?,
-        IpcMessage::Shutdown => writer.write_all(&[5])?,
-    }
-    Ok(())
-}
-
-fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
-    let mut tag = [0u8; 1];
-    reader.read_exact(&mut tag)?;
-    match tag[0] {
-        1 => {
-            let id = read_u32(reader)?;
-            let generation = read_u32(reader)?;
-            Ok(IpcMessage::ReserveInstance { id, generation })
-        }
-        2 => {
-            let ok = read_u8(reader)? != 0;
-            Ok(IpcMessage::ReserveAck { ok })
-        }
-        3 => Ok(IpcMessage::WireBytes(read_len_prefixed_bytes(reader)?)),
-        4 => Ok(IpcMessage::HandleCommands),
-        5 => Ok(IpcMessage::Shutdown),
-        _ => Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "unknown ipc message tag",
-        )),
-    }
-}
-
-fn write_len_prefixed_bytes<W: Write>(writer: &mut W, bytes: &[u8]) -> std::io::Result<()> {
-    let len = u32::try_from(bytes.len())
-        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidData, "payload too large"))?;
-    writer.write_all(&len.to_le_bytes())?;
-    writer.write_all(bytes)
-}
-
-fn read_len_prefixed_bytes<R: Read>(reader: &mut R) -> std::io::Result<Vec<u8>> {
-    let len = read_u32(reader)? as usize;
-    if len > 64 * 1024 * 1024 {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "wire packet exceeds max size",
-        ));
-    }
-    let mut data = vec![0u8; len];
-    reader.read_exact(&mut data)?;
-    Ok(data)
-}
-
-fn read_u8<R: Read>(reader: &mut R) -> std::io::Result<u8> {
-    let mut b = [0u8; 1];
-    reader.read_exact(&mut b)?;
-    Ok(b[0])
-}
-
-fn read_u32<R: Read>(reader: &mut R) -> std::io::Result<u32> {
-    let mut b = [0u8; 4];
-    reader.read_exact(&mut b)?;
-    Ok(u32::from_le_bytes(b))
 }
