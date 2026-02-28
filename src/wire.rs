@@ -1,8 +1,7 @@
 use crate::wire_ipc::{self, IpcMessage as WireIpcMessage, OutboundPacket as WireOutboundPacket};
 use crate::wire_shim::{
-    NativeProcGuard as WireNativeProcGuard,
-    WireHelperClient as WireClientShim, WireHelperServer as WireServerShim,
-    WireInstanceHandle as WireObjectHandle,
+    NativeProcGuard as WireNativeProcGuard, WireHelperClient as WireClientShim,
+    WireHelperServer as WireServerShim, WireInstanceHandle as WireObjectHandle,
 };
 use crate::{Adapter, Device, Instance, RequestAdapterOptions, RequestAdapterStatus, Surface};
 #[cfg(feature = "wire")]
@@ -19,6 +18,13 @@ use thiserror::Error;
 
 #[cfg(feature = "wire")]
 pub use crate::wire_backend::{WireHandle, WireTextureReservation};
+
+const DEFAULT_WIRE_CHANNEL_CAPACITY: usize = 1024;
+const DEFAULT_WIRE_MAX_BATCH_PACKETS: usize = 32;
+const DEFAULT_WIRE_FLUSH_INTERVAL: Duration = Duration::from_millis(8);
+const DEFAULT_WIRE_MAX_PENDING_PACKETS: usize = 4096;
+const DEFAULT_WIRE_MAX_PENDING_BYTES: usize = 16 * 1024 * 1024;
+const DEFAULT_WIRE_PACKET_POOL_LIMIT: usize = 1024;
 
 pub fn with_native_runtime<R>(f: impl FnOnce() -> R) -> Result<R, WireError> {
     let _guard = WireNativeProcGuard::acquire().map_err(WireError::Wire)?;
@@ -45,6 +51,7 @@ pub struct ClientOptions {
     pub connect_attempts: usize,
     pub connect_delay: Duration,
     pub max_allocation_size: usize,
+    pub transport: TransportOptions,
 }
 
 impl Default for ClientOptions {
@@ -54,6 +61,36 @@ impl Default for ClientOptions {
             connect_attempts: 1,
             connect_delay: Duration::from_millis(0),
             max_allocation_size: 0,
+            transport: TransportOptions::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TransportOptions {
+    /// Bounded queue size used between Dawn wire callbacks and IPC writer.
+    pub channel_capacity: usize,
+    /// Max wire packets coalesced before forcing a flush.
+    pub max_batch_packets: usize,
+    /// Max time window used for packet coalescing once traffic is active.
+    pub flush_interval: Duration,
+    /// Safety cap for buffered inbound packet count before HandleCommands.
+    pub max_pending_packets: usize,
+    /// Safety cap for buffered inbound bytes before HandleCommands.
+    pub max_pending_bytes: usize,
+    /// Max number of recycled packet buffers kept for reuse.
+    pub packet_pool_limit: usize,
+}
+
+impl Default for TransportOptions {
+    fn default() -> Self {
+        Self {
+            channel_capacity: DEFAULT_WIRE_CHANNEL_CAPACITY,
+            max_batch_packets: DEFAULT_WIRE_MAX_BATCH_PACKETS,
+            flush_interval: DEFAULT_WIRE_FLUSH_INTERVAL,
+            max_pending_packets: DEFAULT_WIRE_MAX_PENDING_PACKETS,
+            max_pending_bytes: DEFAULT_WIRE_MAX_PENDING_BYTES,
+            packet_pool_limit: DEFAULT_WIRE_PACKET_POOL_LIMIT,
         }
     }
 }
@@ -63,6 +100,7 @@ pub struct ServerOptions {
     pub expect_surface: bool,
     pub use_spontaneous_callbacks: bool,
     pub max_allocation_size: usize,
+    pub transport: TransportOptions,
 }
 
 impl Default for ServerOptions {
@@ -71,6 +109,7 @@ impl Default for ServerOptions {
             expect_surface: false,
             use_spontaneous_callbacks: true,
             max_allocation_size: 0,
+            transport: TransportOptions::default(),
         }
     }
 }
@@ -115,14 +154,25 @@ impl Client {
         let mut reader_stream = stream.try_clone()?;
         let mut writer_stream = stream.try_clone()?;
 
-        let (to_writer_tx, to_writer_rx) = mpsc::sync_channel::<WireOutboundPacket>(1024);
+        let transport = opts.transport;
+        let packet_pool = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+        let (to_writer_tx, to_writer_rx) =
+            mpsc::sync_channel::<WireOutboundPacket>(transport.channel_capacity.max(1));
         let client = Arc::new(Mutex::new(
             WireClientShim::new(
                 opts.max_allocation_size,
                 {
                     let to_writer_tx = to_writer_tx.clone();
+                    let packet_pool = packet_pool.clone();
                     move |bytes: &[u8]| {
-                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(bytes.to_vec()));
+                        let mut buf = if let Ok(mut pool) = packet_pool.lock() {
+                            pool.pop().unwrap_or_default()
+                        } else {
+                            Vec::new()
+                        };
+                        buf.clear();
+                        buf.extend_from_slice(bytes);
+                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(buf));
                     }
                 },
                 |_msg: &str| {},
@@ -192,8 +242,10 @@ impl Client {
             reader_stream,
             writer_stream,
             to_writer_rx,
-            32,
-            Duration::from_millis(4),
+            transport.max_batch_packets.max(1),
+            transport.flush_interval,
+            transport.max_pending_packets,
+            transport.max_pending_bytes,
             move |frame: &[u8]| {
                 let mut guard = client_for_reader
                     .lock()
@@ -205,6 +257,17 @@ impl Client {
             },
             || {},
             |_| {},
+            {
+                let packet_pool = packet_pool.clone();
+                move |mut packet: Vec<u8>| {
+                    packet.clear();
+                    if let Ok(mut pool) = packet_pool.lock()
+                        && pool.len() < transport.packet_pool_limit
+                    {
+                        pool.push(packet);
+                    }
+                }
+            },
         );
 
         let writer_thread = thread::spawn(move || -> Result<(), WireError> {
@@ -220,8 +283,7 @@ impl Client {
                 .map_err(WireError::Wire)
         });
 
-        let instance =
-            unsafe { WireClientShim::reserved_instance_to_instance(reserved_instance) };
+        let instance = unsafe { WireClientShim::reserved_instance_to_instance(reserved_instance) };
         let surface = reserved_surface
             .map(|reserved| unsafe { WireClientShim::reserved_surface_to_surface(reserved) });
 
@@ -324,7 +386,7 @@ impl Drop for Client {
 pub struct Server {
     server: Arc<Mutex<WireServerShim>>,
     stop: Arc<AtomicBool>,
-    tx: Option<mpsc::Sender<WireOutboundPacket>>,
+    tx: Option<mpsc::SyncSender<WireOutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireError>>>,
     reader_thread: Option<JoinHandle<Result<(), WireError>>>,
 }
@@ -341,7 +403,9 @@ impl Server {
         let mut writer_stream = stream.try_clone()?;
 
         let instance_handle = match wire_ipc::read_message(&mut reader_stream)? {
-            WireIpcMessage::ReserveInstance { id, generation } => WireObjectHandle { id, generation },
+            WireIpcMessage::ReserveInstance { id, generation } => {
+                WireObjectHandle { id, generation }
+            }
             _ => return Err(WireError::Protocol("expected ReserveInstance")),
         };
 
@@ -365,15 +429,26 @@ impl Server {
             None
         };
 
-        let (to_writer_tx, to_writer_rx) = mpsc::channel::<WireOutboundPacket>();
+        let transport = opts.transport;
+        let packet_pool = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+        let (to_writer_tx, to_writer_rx) =
+            mpsc::sync_channel::<WireOutboundPacket>(transport.channel_capacity.max(1));
         let server = Arc::new(Mutex::new(
             WireServerShim::new_native(
                 opts.max_allocation_size,
                 opts.use_spontaneous_callbacks,
                 {
                     let to_writer_tx = to_writer_tx.clone();
+                    let packet_pool = packet_pool.clone();
                     move |bytes: &[u8]| {
-                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(bytes.to_vec()));
+                        let mut buf = if let Ok(mut pool) = packet_pool.lock() {
+                            pool.pop().unwrap_or_default()
+                        } else {
+                            Vec::new()
+                        };
+                        buf.clear();
+                        buf.extend_from_slice(bytes);
+                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(buf));
                     }
                 },
                 |_msg: &str| {},
@@ -419,8 +494,10 @@ impl Server {
             reader_stream,
             writer_stream,
             to_writer_rx,
-            32,
-            Duration::from_millis(4),
+            transport.max_batch_packets.max(1),
+            transport.flush_interval,
+            transport.max_pending_packets,
+            transport.max_pending_bytes,
             move |frame: &[u8]| {
                 let mut guard = server_for_reader
                     .lock()
@@ -436,6 +513,17 @@ impl Server {
                 }
             },
             |_| {},
+            {
+                let packet_pool = packet_pool.clone();
+                move |mut packet: Vec<u8>| {
+                    packet.clear();
+                    if let Ok(mut pool) = packet_pool.lock()
+                        && pool.len() < transport.packet_pool_limit
+                    {
+                        pool.push(packet);
+                    }
+                }
+            },
         );
 
         let writer_thread = thread::spawn(move || -> Result<(), WireError> {

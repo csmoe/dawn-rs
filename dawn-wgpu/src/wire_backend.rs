@@ -72,6 +72,7 @@ impl IpcWireBackend {
                 connect_attempts: opts.connect_attempts,
                 connect_delay: opts.connect_delay,
                 max_allocation_size: 0,
+                transport: dawn_rs::wire::TransportOptions::default(),
             },
         )?;
         Ok(Self { client })
