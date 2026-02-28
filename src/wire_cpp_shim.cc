@@ -38,6 +38,12 @@ struct DawnRsWireReservedSurface {
     DawnRsWireHandle handle;
 };
 
+struct DawnRsWireReservedTexture {
+    void* texture;
+    DawnRsWireHandle handle;
+    DawnRsWireHandle device_handle;
+};
+
 }  // extern "C"
 
 namespace {
@@ -97,6 +103,7 @@ struct DawnRsWireClient {
 struct DawnRsWireServer {
     std::unique_ptr<SerializerBridge> serializer;
     std::unique_ptr<dawn::wire::WireServer> wire;
+    std::vector<WGPUTexture> retained_injected_textures;
 };
 // The wire server lifecycle (construction + Inject* + HandleCommands) is currently exposed
 // through C++ dawn::wire APIs, so we keep this control plane in C++.
@@ -180,6 +187,47 @@ DawnRsWireReservedSurface dawn_rs_wire_client_reserve_surface(DawnRsWireClient* 
     return out;
 }
 
+DawnRsWireHandle dawn_rs_wire_client_get_device_handle(DawnRsWireClient* client, void* device) {
+    DawnRsWireHandle out = {};
+    if (!client || !device) {
+        return out;
+    }
+    dawn::wire::Handle h = client->wire->GetWireHandle(reinterpret_cast<WGPUDevice>(device));
+    out.id = h.id;
+    out.generation = h.generation;
+    return out;
+}
+
+DawnRsWireReservedTexture dawn_rs_wire_client_reserve_bgra8_texture_2d(DawnRsWireClient* client,
+                                                                        void* device,
+                                                                        uint32_t width,
+                                                                        uint32_t height) {
+    DawnRsWireReservedTexture out = {};
+    if (!client || !device || width == 0 || height == 0) {
+        return out;
+    }
+    WGPUExtent3D size = {};
+    size.width = width;
+    size.height = height;
+    size.depthOrArrayLayers = 1;
+    WGPUTextureDescriptor desc = {};
+    desc.dimension = WGPUTextureDimension_2D;
+    desc.format = WGPUTextureFormat_BGRA8Unorm;
+    desc.size = size;
+    desc.mipLevelCount = 1;
+    desc.sampleCount = 1;
+    desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopySrc |
+                 WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
+    dawn::wire::ReservedTexture reserved =
+        client->wire->ReserveTexture(reinterpret_cast<WGPUDevice>(device), &desc);
+    out.texture = reserved.texture;
+    out.handle.id = reserved.handle.id;
+    out.handle.generation = reserved.handle.generation;
+    out.device_handle.id = reserved.deviceHandle.id;
+    out.device_handle.generation = reserved.deviceHandle.generation;
+    return out;
+}
+
 DawnRsWireServer* dawn_rs_wire_server_create_native(const DawnRsWireSerializerCallbacks* callbacks,
                                                     bool use_spontaneous_callbacks) {
     if (!callbacks) {
@@ -197,6 +245,15 @@ DawnRsWireServer* dawn_rs_wire_server_create_native(const DawnRsWireSerializerCa
 }
 
 void dawn_rs_wire_server_destroy(DawnRsWireServer* server) {
+    if (server) {
+        const DawnProcTable& procs = dawn::native::GetProcs();
+        for (WGPUTexture texture : server->retained_injected_textures) {
+            if (texture) {
+                procs.textureRelease(texture);
+            }
+        }
+        server->retained_injected_textures.clear();
+    }
     delete server;
 }
 
@@ -275,6 +332,205 @@ bool dawn_rs_wire_server_inject_buffer(DawnRsWireServer* server,
     device_h.id = device_handle.id;
     device_h.generation = device_handle.generation;
     return server->wire->InjectBuffer(reinterpret_cast<WGPUBuffer>(buffer), h, device_h);
+}
+
+void* dawn_rs_wire_server_get_device(DawnRsWireServer* server, DawnRsWireHandle handle) {
+    if (!server) {
+        return nullptr;
+    }
+    return reinterpret_cast<void*>(server->wire->GetDevice(handle.id, handle.generation));
+}
+
+namespace {
+bool DawnRsInjectImportedSharedTexture(DawnRsWireServer* server,
+                                       WGPUDevice device,
+                                       WGPUSharedTextureMemoryDescriptor* shared_desc,
+                                       uint32_t width,
+                                       uint32_t height,
+                                       DawnRsWireHandle texture_handle,
+                                       DawnRsWireHandle device_handle) {
+    const DawnProcTable& procs = dawn::native::GetProcs();
+    WGPUSharedTextureMemory shared = procs.deviceImportSharedTextureMemory(device, shared_desc);
+    if (!shared) {
+        return false;
+    }
+    WGPUExtent3D size = {};
+    size.width = width;
+    size.height = height;
+    size.depthOrArrayLayers = 1;
+    WGPUTextureDescriptor tex_desc = {};
+    tex_desc.dimension = WGPUTextureDimension_2D;
+    tex_desc.format = WGPUTextureFormat_BGRA8Unorm;
+    tex_desc.size = size;
+    tex_desc.mipLevelCount = 1;
+    tex_desc.sampleCount = 1;
+    tex_desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopySrc |
+                     WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
+    WGPUTexture shared_texture = procs.sharedTextureMemoryCreateTexture(shared, &tex_desc);
+    if (!shared_texture) {
+        procs.sharedTextureMemoryRelease(shared);
+        return false;
+    }
+    WGPUSharedTextureMemoryBeginAccessDescriptor begin_access = {};
+    begin_access.concurrentRead = false;
+    begin_access.initialized = true;
+    if (procs.sharedTextureMemoryBeginAccess(shared, shared_texture, &begin_access) !=
+        WGPUStatus_Success) {
+        procs.textureRelease(shared_texture);
+        procs.sharedTextureMemoryRelease(shared);
+        return false;
+    }
+
+    WGPUTextureDescriptor local_desc = tex_desc;
+    local_desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst |
+                       WGPUTextureUsage_RenderAttachment;
+    WGPUTexture texture = procs.deviceCreateTexture(device, &local_desc);
+    if (!texture) {
+        WGPUSharedTextureMemoryEndAccessState end_access = {};
+        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
+        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+        procs.textureRelease(shared_texture);
+        procs.sharedTextureMemoryRelease(shared);
+        return false;
+    }
+    WGPUCommandEncoder encoder = procs.deviceCreateCommandEncoder(device, nullptr);
+    if (!encoder) {
+        WGPUSharedTextureMemoryEndAccessState end_access = {};
+        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
+        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+        procs.textureRelease(shared_texture);
+        procs.textureRelease(texture);
+        procs.sharedTextureMemoryRelease(shared);
+        return false;
+    }
+    WGPUTexelCopyTextureInfo src = {};
+    src.texture = shared_texture;
+    src.mipLevel = 0;
+    src.origin = {0, 0, 0};
+    src.aspect = WGPUTextureAspect_All;
+    WGPUTexelCopyTextureInfo dst = {};
+    dst.texture = texture;
+    dst.mipLevel = 0;
+    dst.origin = {0, 0, 0};
+    dst.aspect = WGPUTextureAspect_All;
+    procs.commandEncoderCopyTextureToTexture(encoder, &src, &dst, &size);
+    WGPUCommandBuffer command = procs.commandEncoderFinish(encoder, nullptr);
+    procs.commandEncoderRelease(encoder);
+    if (!command) {
+        WGPUSharedTextureMemoryEndAccessState end_access = {};
+        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
+        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+        procs.textureRelease(shared_texture);
+        procs.textureRelease(texture);
+        procs.sharedTextureMemoryRelease(shared);
+        return false;
+    }
+    WGPUQueue queue = procs.deviceGetQueue(device);
+    procs.queueSubmit(queue, 1, &command);
+    procs.commandBufferRelease(command);
+    WGPUSharedTextureMemoryEndAccessState end_access = {};
+    procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
+    procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+    procs.textureRelease(shared_texture);
+    procs.sharedTextureMemoryRelease(shared);
+
+    dawn::wire::Handle tex_h = {};
+    tex_h.id = texture_handle.id;
+    tex_h.generation = texture_handle.generation;
+    dawn::wire::Handle dev_h = {};
+    dev_h.id = device_handle.id;
+    dev_h.generation = device_handle.generation;
+    const bool ok = server->wire->InjectTexture(texture, tex_h, dev_h);
+    if (ok) {
+        server->retained_injected_textures.push_back(texture);
+    } else {
+        procs.textureRelease(texture);
+    }
+    return ok;
+}
+}  // namespace
+
+bool dawn_rs_wire_server_inject_iosurface_texture(DawnRsWireServer* server,
+                                                   void* io_surface,
+                                                   uint32_t width,
+                                                   uint32_t height,
+                                                   DawnRsWireHandle texture_handle,
+                                                   DawnRsWireHandle device_handle) {
+    if (!server || !io_surface || width == 0 || height == 0) {
+        return false;
+    }
+    WGPUDevice device = server->wire->GetDevice(device_handle.id, device_handle.generation);
+    if (!device) {
+        return false;
+    }
+    WGPUSharedTextureMemoryDescriptor shared_desc = {};
+    WGPUSharedTextureMemoryIOSurfaceDescriptor ios_desc = {};
+    ios_desc.chain.sType = WGPUSType_SharedTextureMemoryIOSurfaceDescriptor;
+    ios_desc.ioSurface = io_surface;
+    ios_desc.allowStorageBinding = false;
+    shared_desc.nextInChain = &ios_desc.chain;
+    return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             texture_handle, device_handle);
+}
+
+bool dawn_rs_wire_server_inject_dxgi_texture(DawnRsWireServer* server,
+                                             void* shared_handle,
+                                             bool use_keyed_mutex,
+                                             uint32_t width,
+                                             uint32_t height,
+                                             DawnRsWireHandle texture_handle,
+                                             DawnRsWireHandle device_handle) {
+    if (!server || !shared_handle || width == 0 || height == 0) {
+        return false;
+    }
+    WGPUDevice device = server->wire->GetDevice(device_handle.id, device_handle.generation);
+    if (!device) {
+        return false;
+    }
+    WGPUSharedTextureMemoryDescriptor shared_desc = {};
+    WGPUSharedTextureMemoryDXGISharedHandleDescriptor dxgi_desc = {};
+    dxgi_desc.chain.sType = WGPUSType_SharedTextureMemoryDXGISharedHandleDescriptor;
+    dxgi_desc.handle = shared_handle;
+    dxgi_desc.useKeyedMutex = use_keyed_mutex;
+    shared_desc.nextInChain = &dxgi_desc.chain;
+    return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             texture_handle, device_handle);
+}
+
+bool dawn_rs_wire_server_inject_dmabuf_texture(DawnRsWireServer* server,
+                                               int fd,
+                                               uint32_t drm_format,
+                                               uint64_t drm_modifier,
+                                               uint32_t stride,
+                                               uint64_t offset,
+                                               uint32_t width,
+                                               uint32_t height,
+                                               DawnRsWireHandle texture_handle,
+                                               DawnRsWireHandle device_handle) {
+    if (!server || fd < 0 || width == 0 || height == 0) {
+        return false;
+    }
+    WGPUDevice device = server->wire->GetDevice(device_handle.id, device_handle.generation);
+    if (!device) {
+        return false;
+    }
+    WGPUSharedTextureMemoryDmaBufPlane plane = {};
+    plane.fd = fd;
+    plane.offset = offset;
+    plane.stride = stride;
+    WGPUSharedTextureMemoryDescriptor shared_desc = {};
+    WGPUSharedTextureMemoryDmaBufDescriptor dma_desc = {};
+    dma_desc.chain.sType = WGPUSType_SharedTextureMemoryDmaBufDescriptor;
+    dma_desc.size.width = width;
+    dma_desc.size.height = height;
+    dma_desc.size.depthOrArrayLayers = 1;
+    dma_desc.drmFormat = drm_format;
+    dma_desc.drmModifier = drm_modifier;
+    dma_desc.planeCount = 1;
+    dma_desc.planes = &plane;
+    shared_desc.nextInChain = &dma_desc.chain;
+    return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             texture_handle, device_handle);
 }
 
 void dawn_rs_wire_set_client_procs() {

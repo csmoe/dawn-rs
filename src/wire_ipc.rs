@@ -29,6 +29,28 @@ pub enum IpcMessage {
     ReserveAck {
         ok: bool,
     },
+    ReserveWireTexture {
+        id: u32,
+        generation: u32,
+        device_id: u32,
+        device_generation: u32,
+        width: u32,
+        height: u32,
+    },
+    ReserveWireTextureAck {
+        ok: bool,
+    },
+    SetDxgiSharedTexture {
+        handle: u64,
+        use_keyed_mutex: bool,
+    },
+    SetDmabufSharedTexture {
+        fd: i32,
+        drm_format: u32,
+        drm_modifier: u64,
+        stride: u32,
+        offset: u64,
+    },
     WireBytes(Vec<u8>),
     HandleCommands,
     AnimationPhase {
@@ -241,6 +263,48 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             writer.write_all(&[2])?;
             writer.write_all(&[*ok as u8])?;
         }
+        IpcMessage::ReserveWireTexture {
+            id,
+            generation,
+            device_id,
+            device_generation,
+            width,
+            height,
+        } => {
+            writer.write_all(&[12])?;
+            writer.write_all(&id.to_le_bytes())?;
+            writer.write_all(&generation.to_le_bytes())?;
+            writer.write_all(&device_id.to_le_bytes())?;
+            writer.write_all(&device_generation.to_le_bytes())?;
+            writer.write_all(&width.to_le_bytes())?;
+            writer.write_all(&height.to_le_bytes())?;
+        }
+        IpcMessage::ReserveWireTextureAck { ok } => {
+            writer.write_all(&[13])?;
+            writer.write_all(&[*ok as u8])?;
+        }
+        IpcMessage::SetDxgiSharedTexture {
+            handle,
+            use_keyed_mutex,
+        } => {
+            writer.write_all(&[14])?;
+            writer.write_all(&handle.to_le_bytes())?;
+            writer.write_all(&[*use_keyed_mutex as u8])?;
+        }
+        IpcMessage::SetDmabufSharedTexture {
+            fd,
+            drm_format,
+            drm_modifier,
+            stride,
+            offset,
+        } => {
+            writer.write_all(&[15])?;
+            writer.write_all(&fd.to_le_bytes())?;
+            writer.write_all(&drm_format.to_le_bytes())?;
+            writer.write_all(&drm_modifier.to_le_bytes())?;
+            writer.write_all(&stride.to_le_bytes())?;
+            writer.write_all(&offset.to_le_bytes())?;
+        }
         IpcMessage::WireBytes(bytes) => {
             writer.write_all(&[3])?;
             write_len_prefixed_bytes(writer, bytes)?;
@@ -325,6 +389,52 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
         2 => {
             let ok = read_u8(reader)? != 0;
             Ok(IpcMessage::ReserveAck { ok })
+        }
+        12 => {
+            let id = read_u32(reader)?;
+            let generation = read_u32(reader)?;
+            let device_id = read_u32(reader)?;
+            let device_generation = read_u32(reader)?;
+            let width = read_u32(reader)?;
+            let height = read_u32(reader)?;
+            Ok(IpcMessage::ReserveWireTexture {
+                id,
+                generation,
+                device_id,
+                device_generation,
+                width,
+                height,
+            })
+        }
+        13 => {
+            let ok = read_u8(reader)? != 0;
+            Ok(IpcMessage::ReserveWireTextureAck { ok })
+        }
+        14 => {
+            let mut handle = [0u8; 8];
+            reader.read_exact(&mut handle)?;
+            let use_keyed_mutex = read_u8(reader)? != 0;
+            Ok(IpcMessage::SetDxgiSharedTexture {
+                handle: u64::from_le_bytes(handle),
+                use_keyed_mutex,
+            })
+        }
+        15 => {
+            let mut fd = [0u8; 4];
+            reader.read_exact(&mut fd)?;
+            let drm_format = read_u32(reader)?;
+            let mut drm_modifier = [0u8; 8];
+            reader.read_exact(&mut drm_modifier)?;
+            let stride = read_u32(reader)?;
+            let mut offset = [0u8; 8];
+            reader.read_exact(&mut offset)?;
+            Ok(IpcMessage::SetDmabufSharedTexture {
+                fd: i32::from_le_bytes(fd),
+                drm_format,
+                drm_modifier: u64::from_le_bytes(drm_modifier),
+                stride,
+                offset: u64::from_le_bytes(offset),
+            })
         }
         3 => Ok(IpcMessage::WireBytes(read_len_prefixed_bytes(reader)?)),
         4 => Ok(IpcMessage::HandleCommands),
