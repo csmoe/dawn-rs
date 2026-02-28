@@ -1,23 +1,14 @@
 use crate::types::*;
 use dawn_rs::*;
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum WgpuCompatError {
+    #[error("wgpu object is not a custom backend")]
     NotCustomBackend,
+    #[error("wgpu custom backend is not dawn-rs")]
     NotDawnBackend,
 }
-
-impl fmt::Display for WgpuCompatError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            WgpuCompatError::NotCustomBackend => write!(f, "wgpu object is not a custom backend"),
-            WgpuCompatError::NotDawnBackend => write!(f, "wgpu custom backend is not dawn-rs"),
-        }
-    }
-}
-
-impl std::error::Error for WgpuCompatError {}
 
 #[derive(Debug, Clone)]
 pub struct Compat<T>(T);

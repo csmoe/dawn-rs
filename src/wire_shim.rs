@@ -7,32 +7,32 @@ use std::sync::{Mutex, OnceLock};
 // - Rust only forwards opaque wire bytes over transport and triggers HandleCommands.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct WireInstanceHandle {
-    pub id: u32,
-    pub generation: u32,
+pub(crate) struct WireInstanceHandle {
+    pub(crate) id: u32,
+    pub(crate) generation: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct ReservedWireInstance {
-    pub instance: *mut c_void,
-    pub handle: WireInstanceHandle,
+pub(crate) struct ReservedWireInstance {
+    pub(crate) instance: *mut c_void,
+    pub(crate) handle: WireInstanceHandle,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct ReservedWireSurface {
-    pub surface: *mut c_void,
-    pub instance_handle: WireInstanceHandle,
-    pub handle: WireInstanceHandle,
+pub(crate) struct ReservedWireSurface {
+    pub(crate) surface: *mut c_void,
+    pub(crate) instance_handle: WireInstanceHandle,
+    pub(crate) handle: WireInstanceHandle,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default)]
-pub struct ReservedWireTexture {
-    pub texture: *mut c_void,
-    pub handle: WireInstanceHandle,
-    pub device_handle: WireInstanceHandle,
+pub(crate) struct ReservedWireTexture {
+    pub(crate) texture: *mut c_void,
+    pub(crate) handle: WireInstanceHandle,
+    pub(crate) device_handle: WireInstanceHandle,
 }
 
 #[repr(C)]
@@ -76,11 +76,13 @@ unsafe extern "C" {
         client: *mut DawnRsWireClientOpaque,
         device: *mut c_void,
     ) -> WireInstanceHandle;
-    fn dawn_rs_wire_client_reserve_bgra8_texture_2d(
+    fn dawn_rs_wire_client_reserve_texture_2d(
         client: *mut DawnRsWireClientOpaque,
         device: *mut c_void,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
     ) -> ReservedWireTexture;
 
     fn dawn_rs_wire_server_create_native(
@@ -126,6 +128,8 @@ unsafe extern "C" {
         io_surface: *mut c_void,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
@@ -135,6 +139,8 @@ unsafe extern "C" {
         use_keyed_mutex: bool,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
@@ -147,6 +153,8 @@ unsafe extern "C" {
         offset: u64,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
@@ -237,6 +245,18 @@ impl Drop for ProcTableLease {
     }
 }
 
+pub(crate) struct NativeProcGuard {
+    _lease: ProcTableLease,
+}
+
+impl NativeProcGuard {
+    pub(crate) fn acquire() -> Result<Self, String> {
+        Ok(Self {
+            _lease: ProcTableLease::acquire(ProcTableMode::Native)?,
+        })
+    }
+}
+
 extern "C" fn on_flush_trampoline(userdata: *mut c_void, data: *const u8, size: usize) {
     if userdata.is_null() {
         return;
@@ -273,7 +293,7 @@ extern "C" fn on_error_trampoline(userdata: *mut c_void, data: *const u8, size: 
     }
 }
 
-pub struct WireHelperClient {
+pub(crate) struct WireHelperClient {
     raw: *mut DawnRsWireClientOpaque,
     state: *mut CallbackState,
     _proc_table: ProcTableLease,
@@ -282,7 +302,11 @@ pub struct WireHelperClient {
 unsafe impl Send for WireHelperClient {}
 
 impl WireHelperClient {
-    pub fn new<F, E>(max_allocation_size: usize, on_flush: F, on_error: E) -> Result<Self, String>
+    pub(crate) fn new<F, E>(
+        max_allocation_size: usize,
+        on_flush: F,
+        on_error: E,
+    ) -> Result<Self, String>
     where
         F: FnMut(&[u8]) + Send + 'static,
         E: FnMut(&str) + Send + 'static,
@@ -314,37 +338,41 @@ impl WireHelperClient {
         })
     }
 
-    pub fn handle_commands(&mut self, data: &[u8]) -> bool {
+    pub(crate) fn handle_commands(&mut self, data: &[u8]) -> bool {
         unsafe { dawn_rs_wire_client_handle_commands(self.raw, data.as_ptr(), data.len()) }
     }
 
-    pub fn flush(&mut self) -> bool {
+    pub(crate) fn flush(&mut self) -> bool {
         unsafe { dawn_rs_wire_client_flush(self.raw) }
     }
 
-    pub fn disconnect(&mut self) {
+    pub(crate) fn disconnect(&mut self) {
         unsafe { dawn_rs_wire_client_disconnect(self.raw) }
     }
 
-    pub fn reserve_instance(&mut self) -> ReservedWireInstance {
+    pub(crate) fn reserve_instance(&mut self) -> ReservedWireInstance {
         unsafe { dawn_rs_wire_client_reserve_instance(self.raw) }
     }
 
-    pub fn reserve_surface(&mut self, instance: *mut c_void) -> ReservedWireSurface {
+    pub(crate) fn reserve_surface(&mut self, instance: *mut c_void) -> ReservedWireSurface {
         unsafe { dawn_rs_wire_client_reserve_surface(self.raw, instance) }
     }
 
-    pub fn get_device_handle(&mut self, device: *mut c_void) -> WireInstanceHandle {
+    pub(crate) fn get_device_handle(&mut self, device: *mut c_void) -> WireInstanceHandle {
         unsafe { dawn_rs_wire_client_get_device_handle(self.raw, device) }
     }
 
-    pub fn reserve_bgra8_texture_2d(
+    pub(crate) fn reserve_texture_2d(
         &mut self,
         device: *mut c_void,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
     ) -> ReservedWireTexture {
-        unsafe { dawn_rs_wire_client_reserve_bgra8_texture_2d(self.raw, device, width, height) }
+        unsafe {
+            dawn_rs_wire_client_reserve_texture_2d(self.raw, device, width, height, format, usage)
+        }
     }
 
     pub unsafe fn reserved_instance_to_instance(reserved: ReservedWireInstance) -> crate::Instance {
@@ -370,7 +398,7 @@ impl Drop for WireHelperClient {
     }
 }
 
-pub struct WireHelperServer {
+pub(crate) struct WireHelperServer {
     raw: *mut DawnRsWireServerOpaque,
     state: *mut CallbackState,
     _proc_table: ProcTableLease,
@@ -379,7 +407,7 @@ pub struct WireHelperServer {
 unsafe impl Send for WireHelperServer {}
 
 impl WireHelperServer {
-    pub fn new_native<F, E>(
+    pub(crate) fn new_native<F, E>(
         max_allocation_size: usize,
         use_spontaneous_callbacks: bool,
         on_flush: F,
@@ -417,19 +445,23 @@ impl WireHelperServer {
         })
     }
 
-    pub fn handle_commands(&mut self, data: &[u8]) -> bool {
+    pub(crate) fn handle_commands(&mut self, data: &[u8]) -> bool {
         unsafe { dawn_rs_wire_server_handle_commands(self.raw, data.as_ptr(), data.len()) }
     }
 
-    pub fn flush(&mut self) -> bool {
+    pub(crate) fn flush(&mut self) -> bool {
         unsafe { dawn_rs_wire_server_flush(self.raw) }
     }
 
-    pub fn inject_instance(&mut self, instance: *mut c_void, handle: WireInstanceHandle) -> bool {
+    pub(crate) fn inject_instance(
+        &mut self,
+        instance: *mut c_void,
+        handle: WireInstanceHandle,
+    ) -> bool {
         unsafe { dawn_rs_wire_server_inject_instance(self.raw, instance, handle) }
     }
 
-    pub fn inject_surface(
+    pub(crate) fn inject_surface(
         &mut self,
         surface: *mut c_void,
         handle: WireInstanceHandle,
@@ -438,7 +470,7 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_surface(self.raw, surface, handle, instance_handle) }
     }
 
-    pub fn inject_texture(
+    pub(crate) fn inject_texture(
         &mut self,
         texture: *mut c_void,
         handle: WireInstanceHandle,
@@ -447,7 +479,7 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_texture(self.raw, texture, handle, device_handle) }
     }
 
-    pub fn inject_buffer(
+    pub(crate) fn inject_buffer(
         &mut self,
         buffer: *mut c_void,
         handle: WireInstanceHandle,
@@ -456,15 +488,17 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_buffer(self.raw, buffer, handle, device_handle) }
     }
 
-    pub fn get_device(&mut self, handle: WireInstanceHandle) -> *mut c_void {
+    pub(crate) fn get_device(&mut self, handle: WireInstanceHandle) -> *mut c_void {
         unsafe { dawn_rs_wire_server_get_device(self.raw, handle) }
     }
 
-    pub fn inject_iosurface_texture(
+    pub(crate) fn inject_iosurface_texture(
         &mut self,
         io_surface: *mut c_void,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool {
@@ -474,18 +508,22 @@ impl WireHelperServer {
                 io_surface,
                 width,
                 height,
+                format,
+                usage,
                 texture_handle,
                 device_handle,
             )
         }
     }
 
-    pub fn inject_dxgi_texture(
+    pub(crate) fn inject_dxgi_texture(
         &mut self,
         shared_handle: *mut c_void,
         use_keyed_mutex: bool,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool {
@@ -496,13 +534,15 @@ impl WireHelperServer {
                 use_keyed_mutex,
                 width,
                 height,
+                format,
+                usage,
                 texture_handle,
                 device_handle,
             )
         }
     }
 
-    pub fn inject_dmabuf_texture(
+    pub(crate) fn inject_dmabuf_texture(
         &mut self,
         fd: i32,
         drm_format: u32,
@@ -511,6 +551,8 @@ impl WireHelperServer {
         offset: u64,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool {
@@ -524,6 +566,8 @@ impl WireHelperServer {
                 offset,
                 width,
                 height,
+                format,
+                usage,
                 texture_handle,
                 device_handle,
             )

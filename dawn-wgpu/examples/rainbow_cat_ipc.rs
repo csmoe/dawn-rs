@@ -1,6 +1,6 @@
-use dawn_rs::wire_backend::{self as wire_backend_ctl, WireTextureReservation};
-use dawn_rs::wire_ipc::{self, OutboundPacket};
-use dawn_rs::wire_shim::{WireHelperServer, WireInstanceHandle};
+use dawn_rs::wire::{
+    Server as WireServer, ServerOptions as WireServerOptions, with_native_runtime,
+};
 use dawn_rs::{
     BackendType, BufferUsage, Color, ColorTargetState, FragmentState, Instance, LoadOp,
     MultisampleState, PipelineLayoutDescriptor, PrimitiveState, RenderPassColorAttachment,
@@ -15,7 +15,6 @@ use dawn_rs::{
     SamplerBindingType, ShaderStage, TextureBindingLayout, TextureSampleType, TextureViewDimension,
 };
 use dawn_wgpu::wire_backend::{IpcWireBackend, WireInitOptions};
-use interprocess::local_socket::traits::Stream as _;
 #[cfg(target_os = "macos")]
 use mach2::bootstrap::{bootstrap_look_up, bootstrap_port, bootstrap_register};
 #[cfg(target_os = "macos")]
@@ -59,7 +58,7 @@ use std::process::{Child, Command};
 #[cfg(target_os = "windows")]
 use std::ptr;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use winit::application::ApplicationHandler;
@@ -1011,31 +1010,13 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
         let stamp = (SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as u64) & 0xffff_ffff;
         format!("dr-isp-{}-{stamp:08x}", std::process::id())
     };
-    let control_socket_name = {
-        let stamp = (SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as u64) & 0xffff_ffff;
-        format!("dr-ctl-{}-{stamp:08x}", std::process::id())
-    };
     let mut child = spawn_gpu_process(
         socket_name,
         mode,
         #[cfg(target_os = "macos")]
         Some(&iosurface_port_service),
-        Some(&control_socket_name),
+        None,
     )?;
-    eprintln!("main: connecting control socket {control_socket_name}");
-    let mut control_stream =
-        wire_ipc::connect_with_retry(&control_socket_name, 300, Duration::from_millis(10))?;
-    eprintln!("main: control socket connected");
-    #[cfg(target_os = "windows")]
-    let win_dxgi_config = read_win_dxgi_shared_texture_config();
-    #[cfg(target_os = "linux")]
-    let linux_dmabuf_config = read_linux_dmabuf_shared_texture_config();
-    #[cfg(not(target_os = "windows"))]
-    if has_win_dxgi_shared_texture_env() {
-        eprintln!(
-            "main: DAWN_WGPU_DXGI_SHARED_TEX_HANDLE is set, but DXGI import path is Windows-only; ignoring"
-        );
-    }
     #[cfg(target_os = "macos")]
     let mut local_mac_iosurface_owner: Option<LocalMacIosurface> = None;
     #[cfg(target_os = "macos")]
@@ -1057,38 +1038,6 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
     eprintln!("main: local IOSurface shared texture prepared for wire Reserve+Inject");
     #[cfg(target_os = "macos")]
     let _keep_local_mac_iosurface_owner_alive = &local_mac_iosurface_owner;
-    #[cfg(target_os = "windows")]
-    let duplicated_dxgi_handle: Option<*mut c_void> = if let Some(cfg) = win_dxgi_config {
-        let handle = duplicate_handle_to_gpu_process(cfg.source_handle_value, child.id())?;
-        eprintln!(
-            "main: duplicated DXGI shared texture handle into gpu process pid={} handle=0x{:x}",
-            child.id(),
-            handle as usize
-        );
-        wire_backend_ctl::send_dxgi_import_config(
-            &mut control_stream,
-            wire_backend_ctl::DxgiImportConfig {
-                shared_handle: handle as usize,
-                use_keyed_mutex: cfg.use_keyed_mutex,
-            },
-        )?;
-        Some(handle)
-    } else {
-        None
-    };
-    #[cfg(target_os = "linux")]
-    if let Some(cfg) = linux_dmabuf_config {
-        wire_backend_ctl::send_dmabuf_import_config(
-            &mut control_stream,
-            wire_backend_ctl::DmabufImportConfig {
-                fd: cfg.fd,
-                drm_format: cfg.drm_format,
-                drm_modifier: cfg.drm_modifier,
-                stride: cfg.stride,
-                offset: cfg.offset,
-            },
-        )?;
-    }
     let wire_backend = IpcWireBackend::connect_name_with_options(
         socket_name,
         WireInitOptions {
@@ -1163,49 +1112,19 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
     #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
     let mut injected_wire_texture_bind_group: Option<dawn_rs::BindGroup> = None;
     #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
-    let should_reserve_shared_wire_texture = {
-        #[cfg(target_os = "macos")]
-        {
-            local_mac_iosurface_owner.is_some()
-        }
-        #[cfg(target_os = "windows")]
-        {
-            duplicated_dxgi_handle.is_some()
-        }
-        #[cfg(target_os = "linux")]
-        {
-            linux_dmabuf_config.is_some()
-        }
-    };
+    let should_reserve_shared_wire_texture = false;
     #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
-    if should_reserve_shared_wire_texture
-        && let Ok(reserved) = wire_backend.reserve_bgra8_texture_2d(&device, WIDTH, HEIGHT)
-    {
-        let reservation = reserved.reservation();
-        wire_backend_ctl::send_texture_reservation(&mut control_stream, reservation)?;
-        eprintln!(
-            "main: sent wire texture reservation tex=({}:{}) dev=({}:{})",
-            reserved.texture_handle.id,
-            reserved.texture_handle.generation,
-            reserved.device_handle.id,
-            reserved.device_handle.generation
-        );
-        let _ = control_stream.set_recv_timeout(Some(Duration::from_millis(100)));
-        let mut acked = false;
-        for _ in 0..50 {
-            match wire_backend_ctl::recv_texture_reservation_ack_nonblocking(&mut control_stream) {
-                Ok(Some(true)) => {
-                    acked = true;
-                    break;
-                }
-                Ok(Some(false)) => break,
-                Ok(None) => {}
-                Err(_) => break,
-            }
-            flush_wire();
-            instance.process_events();
-        }
-        if acked {
+    if should_reserve_shared_wire_texture {
+        if let Ok(reserved) = wire_backend.reserve_texture(
+            &device,
+            WIDTH,
+            HEIGHT,
+            dawn_rs::TextureFormat::Bgra8Unorm,
+            dawn_rs::TextureUsage::TEXTURE_BINDING
+                | dawn_rs::TextureUsage::COPY_SRC
+                | dawn_rs::TextureUsage::COPY_DST
+                | dawn_rs::TextureUsage::RENDER_ATTACHMENT,
+        ) {
             let texture_view = reserved.texture.create_view(None);
             let sampler = device.create_sampler(Some(&dawn_rs::SamplerDescriptor::new()));
             let mut bg_desc = dawn_rs::BindGroupDescriptor::new();
@@ -1218,9 +1137,6 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
             texture_entry.texture_view = Some(texture_view);
             bg_desc.entries = Some(vec![sampler_entry, texture_entry]);
             injected_wire_texture_bind_group = Some(device.create_bind_group(&bg_desc));
-            eprintln!("main: wire texture inject ack received");
-        } else {
-            eprintln!("main: wire texture inject ack timeout");
         }
     }
     let mut vb_desc = dawn_rs::BufferDescriptor::new();
@@ -1332,7 +1248,7 @@ fn run_gpu_process(
     parent_pid: Option<u32>,
     use_angle_swiftshader: bool,
     #[cfg(target_os = "macos")] iosurface_port_service: Option<String>,
-    control_socket_name: Option<String>,
+    _control_socket_name: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     if use_angle_swiftshader {
         // Set before any Dawn/ANGLE initialization in this process.
@@ -1350,11 +1266,6 @@ fn run_gpu_process(
             }
         }
     }
-    let control_stream = if let Some(name) = control_socket_name.as_deref() {
-        Some(wire_ipc::bind_and_accept(name)?)
-    } else {
-        None
-    };
     #[cfg(target_os = "macos")]
     let received_iosurface = if let Some(service_name) = iosurface_port_service.as_deref() {
         match mach_receive_iosurface_port(service_name) {
@@ -1375,19 +1286,10 @@ fn run_gpu_process(
     } else {
         None
     };
-    let (reader_stream, writer_stream, reserved) =
-        wire_backend_ctl::accept_wire_client(socket_name)?;
-
     let event_loop = EventLoop::new()?;
     let mut app = GpuProcessApp::new(
-        reader_stream,
-        writer_stream,
-        reserved.instance,
-        reserved.surface,
-        reserved.surface_instance,
+        socket_name.to_string(),
         parent_pid,
-        use_angle_swiftshader,
-        control_stream,
         #[cfg(target_os = "macos")]
         received_iosurface,
     );
@@ -1396,70 +1298,40 @@ fn run_gpu_process(
 }
 
 struct GpuProcessApp {
-    reader_stream: Option<interprocess::local_socket::Stream>,
-    writer_stream: Option<interprocess::local_socket::Stream>,
-    instance_handle: WireInstanceHandle,
-    surface_handle: WireInstanceHandle,
-    surface_instance_handle: WireInstanceHandle,
+    socket_name: String,
     window: Option<Window>,
-    pump: Option<wire_backend_ctl::WireServerPump>,
-    server: Option<Arc<Mutex<WireHelperServer>>>,
+    wire_server: Option<WireServer>,
     _native_instance: Option<Instance>,
     _native_surface: Option<dawn_rs::Surface>,
-    handle_wire_on_main_thread: bool,
     #[cfg(unix)]
     parent_pid: Option<u32>,
     #[cfg(target_os = "macos")]
     metal_layer: Option<Layer>,
-    control_stream: Option<interprocess::local_socket::Stream>,
-    pending_wire_texture_reservation: Option<WireTextureReservation>,
     #[cfg(target_os = "macos")]
     received_iosurface: Option<CFRetained<IOSurfaceRef>>,
-    #[cfg(target_os = "windows")]
-    dxgi_import: Option<wire_backend_ctl::DxgiImportConfig>,
-    #[cfg(target_os = "linux")]
-    dmabuf_import: Option<wire_backend_ctl::DmabufImportConfig>,
     shared_texture_injected: bool,
 }
 
 impl GpuProcessApp {
     fn new(
-        reader_stream: interprocess::local_socket::Stream,
-        writer_stream: interprocess::local_socket::Stream,
-        instance_handle: WireInstanceHandle,
-        surface_handle: WireInstanceHandle,
-        surface_instance_handle: WireInstanceHandle,
+        socket_name: String,
         parent_pid: Option<u32>,
-        use_angle_swiftshader: bool,
-        control_stream: Option<interprocess::local_socket::Stream>,
         #[cfg(target_os = "macos")] received_iosurface: Option<CFRetained<IOSurfaceRef>>,
     ) -> Self {
         #[cfg(not(unix))]
         let _ = parent_pid;
         Self {
-            reader_stream: Some(reader_stream),
-            writer_stream: Some(writer_stream),
-            instance_handle,
-            surface_handle,
-            surface_instance_handle,
+            socket_name,
             window: None,
-            pump: None,
-            server: None,
+            wire_server: None,
             _native_instance: None,
             _native_surface: None,
-            handle_wire_on_main_thread: use_angle_swiftshader,
             #[cfg(unix)]
             parent_pid,
             #[cfg(target_os = "macos")]
             metal_layer: None,
-            control_stream,
-            pending_wire_texture_reservation: None,
             #[cfg(target_os = "macos")]
             received_iosurface,
-            #[cfg(target_os = "windows")]
-            dxgi_import: None,
-            #[cfg(target_os = "linux")]
-            dmabuf_import: None,
             shared_texture_injected: false,
         }
     }
@@ -1475,23 +1347,6 @@ impl GpuProcessApp {
         #[cfg(all(unix, not(target_os = "macos")))]
         let display_handle = window.display_handle().map_err(|_| "display handle")?;
 
-        let reader_stream = self.reader_stream.take().ok_or("missing reader stream")?;
-        let mut writer_stream = self.writer_stream.take().ok_or("missing writer stream")?;
-
-        let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
-        let server = Arc::new(Mutex::new(WireHelperServer::new_native(
-            0,
-            true,
-            {
-                let to_writer_tx = to_writer_tx.clone();
-                move |bytes: &[u8]| {
-                    let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
-                }
-            },
-            |msg: &str| eprintln!("wire server error: {msg}"),
-        )?));
-
-        let native_instance = Instance::new(None);
         let mut surface_desc = dawn_rs::SurfaceDescriptor::new();
 
         #[cfg(target_os = "macos")]
@@ -1545,55 +1400,35 @@ impl GpuProcessApp {
             }
         }
 
-        let native_surface = native_instance.create_surface(&surface_desc);
-
-        let injected_instance = {
-            let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
-            guard.inject_instance(native_instance.as_raw().cast(), self.instance_handle)
-        };
-        let injected_surface = {
-            let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
-            guard.inject_surface(
-                native_surface.as_raw().cast(),
-                self.surface_handle,
-                self.surface_instance_handle,
-            )
-        };
-        let ok = injected_instance && injected_surface;
-        wire_backend_ctl::send_reserve_ack(&mut writer_stream, ok)?;
-        if !ok {
-            return Err("failed to inject instance/surface into wire server".into());
-        }
-
-        let pump = wire_backend_ctl::WireServerPump::start(
-            reader_stream,
-            writer_stream,
-            to_writer_tx,
-            to_writer_rx,
-            server.clone(),
-            self.handle_wire_on_main_thread,
-        );
+        let (native_instance, native_surface) = with_native_runtime(|| {
+            let native_instance = Instance::new(None);
+            let native_surface = native_instance.create_surface(&surface_desc);
+            (native_instance, native_surface)
+        })?;
+        let wire_server = WireServer::accept_and_inject(
+            &self.socket_name,
+            &native_instance,
+            Some(&native_surface),
+            WireServerOptions {
+                expect_surface: true,
+                use_spontaneous_callbacks: true,
+                max_allocation_size: 0,
+            },
+        )?;
 
         self.window = Some(window);
-        self.server = Some(server);
+        self.wire_server = Some(wire_server);
         self._native_instance = Some(native_instance);
         self._native_surface = Some(native_surface);
-        self.pump = Some(pump);
-        if let Some(stream) = self.control_stream.as_ref() {
-            let _ = stream.set_recv_timeout(Some(Duration::from_millis(1)));
-        }
         Ok(())
     }
 }
 
 impl Drop for GpuProcessApp {
     fn drop(&mut self) {
-        // Join wire threads first, then release native objects while native procs
-        // are still leased by the wire server, and finally drop the server itself.
-        let _ = self.pump.take();
+        let _ = self.wire_server.take();
         let _ = self._native_surface.take();
         let _ = self._native_instance.take();
-        let _ = self.server.take();
     }
 }
 
@@ -1635,125 +1470,12 @@ impl ApplicationHandler for GpuProcessApp {
                 return;
             }
         }
-        if let Some(pump) = self.pump.as_ref() {
-            if self.handle_wire_on_main_thread
-                && let Some(server) = self.server.as_ref()
-                && let Err(err) = pump.process_pending(server)
-            {
-                eprintln!("gpu process failed to handle wire command on main thread: {err}");
-                event_loop.exit();
-                return;
-            }
-            if pump.is_disconnected() {
-                eprintln!("gpu process: wire transport disconnected, exiting");
-                event_loop.exit();
-                return;
-            }
+        if let Some(server) = self.wire_server.as_ref() {
+            server.flush();
         }
-        if let Some(stream) = self.control_stream.as_mut() {
-            #[cfg(target_os = "windows")]
-            if self.dxgi_import.is_none() {
-                match wire_backend_ctl::recv_dxgi_import_config_nonblocking(stream) {
-                    Ok(Some(cfg)) => {
-                        self.dxgi_import = Some(cfg);
-                        eprintln!(
-                            "gpu process: received DXGI import config handle=0x{:x} keyed_mutex={}",
-                            cfg.shared_handle, cfg.use_keyed_mutex
-                        );
-                    }
-                    Ok(None) => {}
-                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
-                }
-            }
-            #[cfg(target_os = "linux")]
-            if self.dmabuf_import.is_none() {
-                match wire_backend_ctl::recv_dmabuf_import_config_nonblocking(stream) {
-                    Ok(Some(cfg)) => {
-                        self.dmabuf_import = Some(cfg);
-                        eprintln!(
-                            "gpu process: received dma-buf import config fd={} drm_format={} modifier={} stride={} offset={}",
-                            cfg.fd, cfg.drm_format, cfg.drm_modifier, cfg.stride, cfg.offset
-                        );
-                    }
-                    Ok(None) => {}
-                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
-                }
-            }
-            if self.pending_wire_texture_reservation.is_none() {
-                match wire_backend_ctl::recv_texture_reservation_nonblocking(stream) {
-                    Ok(Some(reservation)) => {
-                        self.pending_wire_texture_reservation = Some(reservation);
-                        eprintln!(
-                            "gpu process: received wire texture reservation tex=({}:{}) dev=({}:{})",
-                            reservation.texture_handle.id,
-                            reservation.texture_handle.generation,
-                            reservation.device_handle.id,
-                            reservation.device_handle.generation
-                        );
-                    }
-                    Ok(None) => {}
-                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
-                }
-            }
-        }
-
-        if !self.shared_texture_injected
-            && let Some(res) = self.pending_wire_texture_reservation
-            && let Some(server) = self.server.as_ref()
-            && let Ok(mut guard) = server.lock()
-        {
-            let import = {
-                #[cfg(target_os = "macos")]
-                {
-                    self.received_iosurface.as_ref().map(|surface| {
-                        wire_backend_ctl::SharedTextureImportParams::Iosurface(
-                            wire_backend_ctl::InjectIosurfaceParams {
-                                io_surface: CFRetained::as_ptr(surface).cast().as_ptr(),
-                            },
-                        )
-                    })
-                }
-                #[cfg(target_os = "windows")]
-                {
-                    self.dxgi_import.map(|cfg| {
-                        wire_backend_ctl::SharedTextureImportParams::Dxgi(
-                            wire_backend_ctl::InjectDxgiParams {
-                                shared_handle: cfg.shared_handle as *mut c_void,
-                                use_keyed_mutex: cfg.use_keyed_mutex,
-                            },
-                        )
-                    })
-                }
-                #[cfg(target_os = "linux")]
-                {
-                    self.dmabuf_import.map(|cfg| {
-                        wire_backend_ctl::SharedTextureImportParams::Dmabuf(
-                            wire_backend_ctl::InjectDmabufParams {
-                                fd: cfg.fd,
-                                drm_format: cfg.drm_format,
-                                drm_modifier: cfg.drm_modifier,
-                                stride: cfg.stride,
-                                offset: cfg.offset,
-                            },
-                        )
-                    })
-                }
-            };
-
-            if let Some(import) = import {
-                let ok = wire_backend_ctl::inject_reserved_texture(&mut guard, res, import);
-                self.shared_texture_injected = ok;
-                if ok {
-                    eprintln!(
-                        "gpu process: injected shared texture into wire texture tex=({}:{})",
-                        res.texture_handle.id, res.texture_handle.generation
-                    );
-                }
-                if let Some(stream) = self.control_stream.as_mut() {
-                    let _ = wire_backend_ctl::send_texture_reservation_ack(stream, ok);
-                }
-            }
-        }
+        let _ = self.shared_texture_injected;
+        #[cfg(target_os = "macos")]
+        let _ = &self.received_iosurface;
     }
 }
 

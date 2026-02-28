@@ -36,6 +36,8 @@ pub enum IpcMessage {
         device_generation: u32,
         width: u32,
         height: u32,
+        format: u32,
+        usage: u64,
     },
     ReserveWireTextureAck {
         ok: bool,
@@ -270,6 +272,8 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             device_generation,
             width,
             height,
+            format,
+            usage,
         } => {
             writer.write_all(&[12])?;
             writer.write_all(&id.to_le_bytes())?;
@@ -278,6 +282,8 @@ pub fn write_message<W: Write>(writer: &mut W, message: &IpcMessage) -> std::io:
             writer.write_all(&device_generation.to_le_bytes())?;
             writer.write_all(&width.to_le_bytes())?;
             writer.write_all(&height.to_le_bytes())?;
+            writer.write_all(&format.to_le_bytes())?;
+            writer.write_all(&usage.to_le_bytes())?;
         }
         IpcMessage::ReserveWireTextureAck { ok } => {
             writer.write_all(&[13])?;
@@ -397,6 +403,9 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
             let device_generation = read_u32(reader)?;
             let width = read_u32(reader)?;
             let height = read_u32(reader)?;
+            let format = read_u32(reader)?;
+            let mut usage = [0u8; 8];
+            reader.read_exact(&mut usage)?;
             Ok(IpcMessage::ReserveWireTexture {
                 id,
                 generation,
@@ -404,6 +413,8 @@ pub fn read_message<R: Read>(reader: &mut R) -> std::io::Result<IpcMessage> {
                 device_generation,
                 width,
                 height,
+                format,
+                usage: u64::from_le_bytes(usage),
             })
         }
         13 => {
