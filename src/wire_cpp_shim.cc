@@ -198,10 +198,12 @@ DawnRsWireHandle dawn_rs_wire_client_get_device_handle(DawnRsWireClient* client,
     return out;
 }
 
-DawnRsWireReservedTexture dawn_rs_wire_client_reserve_bgra8_texture_2d(DawnRsWireClient* client,
-                                                                        void* device,
-                                                                        uint32_t width,
-                                                                        uint32_t height) {
+DawnRsWireReservedTexture dawn_rs_wire_client_reserve_texture_2d(DawnRsWireClient* client,
+                                                                  void* device,
+                                                                  uint32_t width,
+                                                                  uint32_t height,
+                                                                  uint32_t format,
+                                                                  uint64_t usage) {
     DawnRsWireReservedTexture out = {};
     if (!client || !device || width == 0 || height == 0) {
         return out;
@@ -212,12 +214,11 @@ DawnRsWireReservedTexture dawn_rs_wire_client_reserve_bgra8_texture_2d(DawnRsWir
     size.depthOrArrayLayers = 1;
     WGPUTextureDescriptor desc = {};
     desc.dimension = WGPUTextureDimension_2D;
-    desc.format = WGPUTextureFormat_BGRA8Unorm;
+    desc.format = static_cast<WGPUTextureFormat>(format);
     desc.size = size;
     desc.mipLevelCount = 1;
     desc.sampleCount = 1;
-    desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopySrc |
-                 WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
+    desc.usage = static_cast<WGPUTextureUsage>(usage);
     dawn::wire::ReservedTexture reserved =
         client->wire->ReserveTexture(reinterpret_cast<WGPUDevice>(device), &desc);
     out.texture = reserved.texture;
@@ -347,6 +348,8 @@ bool DawnRsInjectImportedSharedTexture(DawnRsWireServer* server,
                                        WGPUSharedTextureMemoryDescriptor* shared_desc,
                                        uint32_t width,
                                        uint32_t height,
+                                       uint32_t format,
+                                       uint64_t usage,
                                        DawnRsWireHandle texture_handle,
                                        DawnRsWireHandle device_handle) {
     const DawnProcTable& procs = dawn::native::GetProcs();
@@ -360,12 +363,11 @@ bool DawnRsInjectImportedSharedTexture(DawnRsWireServer* server,
     size.depthOrArrayLayers = 1;
     WGPUTextureDescriptor tex_desc = {};
     tex_desc.dimension = WGPUTextureDimension_2D;
-    tex_desc.format = WGPUTextureFormat_BGRA8Unorm;
+    tex_desc.format = static_cast<WGPUTextureFormat>(format);
     tex_desc.size = size;
     tex_desc.mipLevelCount = 1;
     tex_desc.sampleCount = 1;
-    tex_desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopySrc |
-                     WGPUTextureUsage_CopyDst | WGPUTextureUsage_RenderAttachment;
+    tex_desc.usage = static_cast<WGPUTextureUsage>(usage) | WGPUTextureUsage_CopySrc;
     WGPUTexture shared_texture = procs.sharedTextureMemoryCreateTexture(shared, &tex_desc);
     if (!shared_texture) {
         procs.sharedTextureMemoryRelease(shared);
@@ -382,8 +384,7 @@ bool DawnRsInjectImportedSharedTexture(DawnRsWireServer* server,
     }
 
     WGPUTextureDescriptor local_desc = tex_desc;
-    local_desc.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst |
-                       WGPUTextureUsage_RenderAttachment;
+    local_desc.usage = static_cast<WGPUTextureUsage>(usage) | WGPUTextureUsage_CopyDst;
     WGPUTexture texture = procs.deviceCreateTexture(device, &local_desc);
     if (!texture) {
         WGPUSharedTextureMemoryEndAccessState end_access = {};
@@ -454,6 +455,8 @@ bool dawn_rs_wire_server_inject_iosurface_texture(DawnRsWireServer* server,
                                                    void* io_surface,
                                                    uint32_t width,
                                                    uint32_t height,
+                                                   uint32_t format,
+                                                   uint64_t usage,
                                                    DawnRsWireHandle texture_handle,
                                                    DawnRsWireHandle device_handle) {
     if (!server || !io_surface || width == 0 || height == 0) {
@@ -470,6 +473,7 @@ bool dawn_rs_wire_server_inject_iosurface_texture(DawnRsWireServer* server,
     ios_desc.allowStorageBinding = false;
     shared_desc.nextInChain = &ios_desc.chain;
     return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             format, usage,
                                              texture_handle, device_handle);
 }
 
@@ -478,6 +482,8 @@ bool dawn_rs_wire_server_inject_dxgi_texture(DawnRsWireServer* server,
                                              bool use_keyed_mutex,
                                              uint32_t width,
                                              uint32_t height,
+                                             uint32_t format,
+                                             uint64_t usage,
                                              DawnRsWireHandle texture_handle,
                                              DawnRsWireHandle device_handle) {
     if (!server || !shared_handle || width == 0 || height == 0) {
@@ -494,6 +500,7 @@ bool dawn_rs_wire_server_inject_dxgi_texture(DawnRsWireServer* server,
     dxgi_desc.useKeyedMutex = use_keyed_mutex;
     shared_desc.nextInChain = &dxgi_desc.chain;
     return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             format, usage,
                                              texture_handle, device_handle);
 }
 
@@ -505,6 +512,8 @@ bool dawn_rs_wire_server_inject_dmabuf_texture(DawnRsWireServer* server,
                                                uint64_t offset,
                                                uint32_t width,
                                                uint32_t height,
+                                               uint32_t format,
+                                               uint64_t usage,
                                                DawnRsWireHandle texture_handle,
                                                DawnRsWireHandle device_handle) {
     if (!server || fd < 0 || width == 0 || height == 0) {
@@ -530,6 +539,7 @@ bool dawn_rs_wire_server_inject_dmabuf_texture(DawnRsWireServer* server,
     dma_desc.planes = &plane;
     shared_desc.nextInChain = &dma_desc.chain;
     return DawnRsInjectImportedSharedTexture(server, device, &shared_desc, width, height,
+                                             format, usage,
                                              texture_handle, device_handle);
 }
 
