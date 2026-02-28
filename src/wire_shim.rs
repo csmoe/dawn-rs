@@ -28,6 +28,14 @@ pub struct ReservedWireSurface {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ReservedWireTexture {
+    pub texture: *mut c_void,
+    pub handle: WireInstanceHandle,
+    pub device_handle: WireInstanceHandle,
+}
+
+#[repr(C)]
 struct DawnRsWireSerializerCallbacks {
     userdata: *mut c_void,
     on_flush: Option<extern "C" fn(*mut c_void, *const u8, usize)>,
@@ -64,6 +72,16 @@ unsafe extern "C" {
         client: *mut DawnRsWireClientOpaque,
         instance: *mut c_void,
     ) -> ReservedWireSurface;
+    fn dawn_rs_wire_client_get_device_handle(
+        client: *mut DawnRsWireClientOpaque,
+        device: *mut c_void,
+    ) -> WireInstanceHandle;
+    fn dawn_rs_wire_client_reserve_bgra8_texture_2d(
+        client: *mut DawnRsWireClientOpaque,
+        device: *mut c_void,
+        width: u32,
+        height: u32,
+    ) -> ReservedWireTexture;
 
     fn dawn_rs_wire_server_create_native(
         callbacks: *const DawnRsWireSerializerCallbacks,
@@ -97,6 +115,39 @@ unsafe extern "C" {
         server: *mut DawnRsWireServerOpaque,
         buffer: *mut c_void,
         handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool;
+    fn dawn_rs_wire_server_get_device(
+        server: *mut DawnRsWireServerOpaque,
+        handle: WireInstanceHandle,
+    ) -> *mut c_void;
+    fn dawn_rs_wire_server_inject_iosurface_texture(
+        server: *mut DawnRsWireServerOpaque,
+        io_surface: *mut c_void,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool;
+    fn dawn_rs_wire_server_inject_dxgi_texture(
+        server: *mut DawnRsWireServerOpaque,
+        shared_handle: *mut c_void,
+        use_keyed_mutex: bool,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool;
+    fn dawn_rs_wire_server_inject_dmabuf_texture(
+        server: *mut DawnRsWireServerOpaque,
+        fd: i32,
+        drm_format: u32,
+        drm_modifier: u64,
+        stride: u32,
+        offset: u64,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
     fn dawn_rs_wire_set_client_procs();
@@ -283,12 +334,29 @@ impl WireHelperClient {
         unsafe { dawn_rs_wire_client_reserve_surface(self.raw, instance) }
     }
 
+    pub fn get_device_handle(&mut self, device: *mut c_void) -> WireInstanceHandle {
+        unsafe { dawn_rs_wire_client_get_device_handle(self.raw, device) }
+    }
+
+    pub fn reserve_bgra8_texture_2d(
+        &mut self,
+        device: *mut c_void,
+        width: u32,
+        height: u32,
+    ) -> ReservedWireTexture {
+        unsafe { dawn_rs_wire_client_reserve_bgra8_texture_2d(self.raw, device, width, height) }
+    }
+
     pub unsafe fn reserved_instance_to_instance(reserved: ReservedWireInstance) -> crate::Instance {
         unsafe { crate::Instance::from_raw(reserved.instance.cast()) }
     }
 
     pub unsafe fn reserved_surface_to_surface(reserved: ReservedWireSurface) -> crate::Surface {
         unsafe { crate::Surface::from_raw(reserved.surface.cast()) }
+    }
+
+    pub unsafe fn reserved_texture_to_texture(reserved: ReservedWireTexture) -> crate::Texture {
+        unsafe { crate::Texture::from_raw(reserved.texture.cast()) }
     }
 }
 
@@ -386,6 +454,80 @@ impl WireHelperServer {
         device_handle: WireInstanceHandle,
     ) -> bool {
         unsafe { dawn_rs_wire_server_inject_buffer(self.raw, buffer, handle, device_handle) }
+    }
+
+    pub fn get_device(&mut self, handle: WireInstanceHandle) -> *mut c_void {
+        unsafe { dawn_rs_wire_server_get_device(self.raw, handle) }
+    }
+
+    pub fn inject_iosurface_texture(
+        &mut self,
+        io_surface: *mut c_void,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool {
+        unsafe {
+            dawn_rs_wire_server_inject_iosurface_texture(
+                self.raw,
+                io_surface,
+                width,
+                height,
+                texture_handle,
+                device_handle,
+            )
+        }
+    }
+
+    pub fn inject_dxgi_texture(
+        &mut self,
+        shared_handle: *mut c_void,
+        use_keyed_mutex: bool,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool {
+        unsafe {
+            dawn_rs_wire_server_inject_dxgi_texture(
+                self.raw,
+                shared_handle,
+                use_keyed_mutex,
+                width,
+                height,
+                texture_handle,
+                device_handle,
+            )
+        }
+    }
+
+    pub fn inject_dmabuf_texture(
+        &mut self,
+        fd: i32,
+        drm_format: u32,
+        drm_modifier: u64,
+        stride: u32,
+        offset: u64,
+        width: u32,
+        height: u32,
+        texture_handle: WireInstanceHandle,
+        device_handle: WireInstanceHandle,
+    ) -> bool {
+        unsafe {
+            dawn_rs_wire_server_inject_dmabuf_texture(
+                self.raw,
+                fd,
+                drm_format,
+                drm_modifier,
+                stride,
+                offset,
+                width,
+                height,
+                texture_handle,
+                device_handle,
+            )
+        }
     }
 }
 

@@ -1,23 +1,63 @@
-use dawn_rs::wire_ipc::OutboundPacket;
+use dawn_rs::wire_backend::{self as wire_backend_ctl, WireTextureReservation};
+use dawn_rs::wire_ipc::{self, OutboundPacket};
 use dawn_rs::wire_shim::{WireHelperServer, WireInstanceHandle};
-use dawn_wgpu::wire_backend::{IpcWireBackend, WireInitOptions};
-use dawn_wgpu::wire_server;
 use dawn_rs::{
     BackendType, BufferUsage, Color, ColorTargetState, FragmentState, Instance, LoadOp,
     MultisampleState, PipelineLayoutDescriptor, PrimitiveState, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions,
-    RequestAdapterStatus, ShaderModuleDescriptor, ShaderSourceWGSL,
-    SurfaceGetCurrentTextureStatus, SurfaceTexture, TextureFormat, TextureUsage, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    RequestAdapterStatus, ShaderModuleDescriptor, ShaderSourceWGSL, SurfaceGetCurrentTextureStatus,
+    SurfaceTexture, TextureFormat, TextureUsage, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode,
+};
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+use dawn_rs::{
+    BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, SamplerBindingLayout,
+    SamplerBindingType, ShaderStage, TextureBindingLayout, TextureSampleType, TextureViewDimension,
+};
+use dawn_wgpu::wire_backend::{IpcWireBackend, WireInitOptions};
+use interprocess::local_socket::traits::Stream as _;
+#[cfg(target_os = "macos")]
+use mach2::bootstrap::{bootstrap_look_up, bootstrap_port, bootstrap_register};
+#[cfg(target_os = "macos")]
+use mach2::kern_return::KERN_SUCCESS;
+#[cfg(target_os = "macos")]
+use mach2::mach_port::{
+    mach_port_allocate, mach_port_deallocate, mach_port_destroy, mach_port_insert_right,
+};
+#[cfg(target_os = "macos")]
+use mach2::message::{
+    MACH_MSG_PORT_DESCRIPTOR, MACH_MSG_TIMEOUT_NONE, MACH_MSG_TYPE_COPY_SEND,
+    MACH_MSG_TYPE_MAKE_SEND, MACH_MSG_TYPE_MOVE_SEND, MACH_MSGH_BITS, MACH_MSGH_BITS_COMPLEX,
+    MACH_RCV_MSG, MACH_SEND_MSG, mach_msg, mach_msg_body_t, mach_msg_header_t,
+    mach_msg_port_descriptor_t,
+};
+#[cfg(target_os = "macos")]
+use mach2::port::{MACH_PORT_NULL, MACH_PORT_RIGHT_RECEIVE, mach_port_t};
+#[cfg(target_os = "macos")]
+use mach2::traps::mach_task_self;
+#[cfg(target_os = "macos")]
+use objc2_core_foundation::{
+    CFBoolean, CFDictionary, CFMutableDictionary, CFNumber, CFRetained, CFString, CFType,
+};
+#[cfg(target_os = "macos")]
+use objc2_io_surface::{
+    IOSurfaceLockOptions, IOSurfaceRef, kIOSurfaceBytesPerElement, kIOSurfaceHeight,
+    kIOSurfaceIsGlobal, kIOSurfacePixelFormat, kIOSurfaceWidth,
 };
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
 use std::env;
 use std::error::Error;
+#[cfg(target_os = "macos")]
+use std::ffi::CString;
+#[cfg(target_os = "windows")]
+use std::ffi::c_void;
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command};
+#[cfg(target_os = "windows")]
+use std::ptr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
@@ -53,10 +93,493 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
 }
 "#;
 
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+static SHARED_TEXTURE_PREVIEW_SHADER: &str = r#"
+struct VsOut {
+  @builtin(position) pos: vec4<f32>,
+  @location(0) uv: vec2<f32>,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vi: u32) -> VsOut {
+  var pos = array<vec2<f32>, 3>(
+    vec2<f32>(-1.0, -3.0),
+    vec2<f32>(-1.0,  1.0),
+    vec2<f32>( 3.0,  1.0)
+  );
+  var uv = array<vec2<f32>, 3>(
+    vec2<f32>(0.0, 2.0),
+    vec2<f32>(0.0, 0.0),
+    vec2<f32>(2.0, 0.0)
+  );
+  var out: VsOut;
+  out.pos = vec4<f32>(pos[vi], 0.0, 1.0);
+  out.uv = uv[vi];
+  return out;
+}
+
+@group(0) @binding(0) var tex_sampler: sampler;
+@group(0) @binding(1) var tex_src: texture_2d<f32>;
+
+@fragment
+fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
+  return textureSample(tex_src, tex_sampler, in.uv);
+}
+"#;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum GpuMode {
     Native,
     AngleSwiftShader,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[cfg(target_os = "windows")]
+struct WinDxgiSharedTextureConfig {
+    source_handle_value: usize,
+    use_keyed_mutex: bool,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[cfg(target_os = "linux")]
+struct LinuxDmabufSharedTextureConfig {
+    fd: i32,
+    drm_format: u32,
+    drm_modifier: u64,
+    stride: u32,
+    offset: u64,
+}
+
+#[cfg(target_os = "windows")]
+fn read_win_dxgi_shared_texture_config() -> Option<WinDxgiSharedTextureConfig> {
+    let handle_raw = env::var("DAWN_WGPU_DXGI_SHARED_TEX_HANDLE").ok()?;
+    let trimmed = handle_raw.trim();
+    let source_handle_value = if let Some(hex) = trimmed
+        .strip_prefix("0x")
+        .or_else(|| trimmed.strip_prefix("0X"))
+    {
+        usize::from_str_radix(hex, 16).ok()?
+    } else {
+        trimmed.parse::<usize>().ok()?
+    };
+    let use_keyed_mutex = env::var("DAWN_WGPU_DXGI_USE_KEYED_MUTEX")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+        .unwrap_or(false);
+    Some(WinDxgiSharedTextureConfig {
+        source_handle_value,
+        use_keyed_mutex,
+    })
+}
+
+#[cfg(target_os = "linux")]
+fn read_linux_dmabuf_shared_texture_config() -> Option<LinuxDmabufSharedTextureConfig> {
+    let fd = env::var("DAWN_WGPU_DMABUF_FD")
+        .ok()
+        .and_then(|v| v.parse::<i32>().ok())?;
+    let drm_format = env::var("DAWN_WGPU_DMABUF_DRM_FORMAT")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(875_713_112);
+    let drm_modifier = env::var("DAWN_WGPU_DMABUF_MODIFIER")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(0);
+    let stride = env::var("DAWN_WGPU_DMABUF_STRIDE")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(WIDTH * 4);
+    let offset = env::var("DAWN_WGPU_DMABUF_OFFSET")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(0);
+    Some(LinuxDmabufSharedTextureConfig {
+        fd,
+        drm_format,
+        drm_modifier,
+        stride,
+        offset,
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+fn has_win_dxgi_shared_texture_env() -> bool {
+    env::var("DAWN_WGPU_DXGI_SHARED_TEX_HANDLE").is_ok()
+}
+
+#[cfg(target_os = "macos")]
+struct LocalMacIosurface {
+    io_surface: CFRetained<IOSurfaceRef>,
+}
+
+#[cfg(target_os = "macos")]
+fn create_local_iosurface_shared_texture(width: u32, height: u32) -> Option<LocalMacIosurface> {
+    const PIXEL_FORMAT_BGRA: i32 = 0x4247_5241;
+    let width_cf = CFNumber::new_i32(width as i32);
+    let height_cf = CFNumber::new_i32(height as i32);
+    let bpe_cf = CFNumber::new_i32(4);
+    let fmt_cf = CFNumber::new_i32(PIXEL_FORMAT_BGRA);
+    let global_cf = CFBoolean::new(true);
+    let props = CFMutableDictionary::<CFString, CFType>::with_capacity(5);
+    unsafe {
+        props.set(kIOSurfaceWidth, width_cf.as_ref());
+        props.set(kIOSurfaceHeight, height_cf.as_ref());
+        props.set(kIOSurfaceBytesPerElement, bpe_cf.as_ref());
+        props.set(kIOSurfacePixelFormat, fmt_cf.as_ref());
+        props.set(kIOSurfaceIsGlobal, global_cf.as_ref());
+    }
+    let props_ref = unsafe {
+        &*(props.as_ref() as *const CFDictionary<CFString, CFType> as *const CFDictionary)
+    };
+    let io_surface = unsafe { IOSurfaceRef::new(props_ref) }?;
+    draw_quote_and_cat_into_iosurface(&io_surface, width, height);
+    eprintln!(
+        "main: created local IOSurface id={} size={}x{}",
+        io_surface.id(),
+        width,
+        height
+    );
+    Some(LocalMacIosurface { io_surface })
+}
+
+#[cfg(target_os = "macos")]
+fn draw_quote_and_cat_into_iosurface(io_surface: &IOSurfaceRef, width: u32, height: u32) {
+    let lock_ok = unsafe { io_surface.lock(IOSurfaceLockOptions::empty(), std::ptr::null_mut()) }
+        == KERN_SUCCESS;
+    if !lock_ok {
+        eprintln!("main: IOSurface lock failed");
+        return;
+    }
+    let base_ptr = io_surface.base_address().as_ptr();
+    let row_bytes = io_surface.bytes_per_row();
+    if base_ptr.is_null() || row_bytes == 0 {
+        let _ = unsafe { io_surface.unlock(IOSurfaceLockOptions::empty(), std::ptr::null_mut()) };
+        return;
+    }
+    let buf_len = row_bytes.saturating_mul(height as usize);
+    let pixels = unsafe { std::slice::from_raw_parts_mut(base_ptr.cast::<u8>(), buf_len) };
+
+    for y in 0..height as usize {
+        for x in 0..width as usize {
+            let idx = y * row_bytes + x * 4;
+            pixels[idx] = 0x1A;
+            pixels[idx + 1] = 0x10;
+            pixels[idx + 2] = 0x10;
+            pixels[idx + 3] = 0xFF;
+        }
+    }
+
+    let mut put_rect = |x0: i32, y0: i32, x1: i32, y1: i32, bgr: [u8; 3]| {
+        let x0 = x0.clamp(0, width as i32);
+        let y0 = y0.clamp(0, height as i32);
+        let x1 = x1.clamp(0, width as i32);
+        let y1 = y1.clamp(0, height as i32);
+        for y in y0..y1 {
+            for x in x0..x1 {
+                let idx = (y as usize) * row_bytes + (x as usize) * 4;
+                pixels[idx] = bgr[0];
+                pixels[idx + 1] = bgr[1];
+                pixels[idx + 2] = bgr[2];
+                pixels[idx + 3] = 0xFF;
+            }
+        }
+    };
+
+    let rainbow_h = (height as i32 / 14).max(4);
+    let rainbow_y = (height as i32 * 2 / 3).max(40);
+    let stripe_colors = [
+        [0x10, 0x10, 0xEF],
+        [0x10, 0x90, 0xFF],
+        [0x10, 0xE0, 0xF0],
+        [0x20, 0xD0, 0x20],
+        [0xE0, 0x70, 0x20],
+        [0x90, 0x10, 0x90],
+    ];
+    for (i, c) in stripe_colors.iter().enumerate() {
+        put_rect(
+            20,
+            rainbow_y + i as i32 * rainbow_h,
+            width as i32 / 2,
+            rainbow_y + (i as i32 + 1) * rainbow_h,
+            *c,
+        );
+    }
+    let cx = (width as i32 * 2 / 3).max(200);
+    let cy = (height as i32 * 3 / 4).max(180);
+    put_rect(cx - 90, cy - 60, cx + 30, cy + 45, [0xC8, 0xB8, 0xB8]);
+    put_rect(cx - 80, cy - 50, cx + 20, cy + 35, [0xE6, 0xB6, 0xE6]);
+    put_rect(cx + 20, cy - 70, cx + 120, cy + 35, [0x70, 0x70, 0x70]);
+    put_rect(cx + 40, cy - 95, cx + 65, cy - 70, [0x70, 0x70, 0x70]);
+    put_rect(cx + 85, cy - 95, cx + 110, cy - 70, [0x70, 0x70, 0x70]);
+    put_rect(cx + 45, cy - 35, cx + 60, cy - 20, [0xFF, 0xFF, 0xFF]);
+    put_rect(cx + 82, cy - 35, cx + 97, cy - 20, [0xFF, 0xFF, 0xFF]);
+    put_rect(cx + 52, cy - 30, cx + 56, cy - 26, [0x10, 0x10, 0x10]);
+    put_rect(cx + 89, cy - 30, cx + 93, cy - 26, [0x10, 0x10, 0x10]);
+
+    let mut draw_glyph = |ch: char, x: i32, y: i32, scale: i32, bgr: [u8; 3]| {
+        let rows = glyph_5x7(ch);
+        for (ry, mask) in rows.iter().enumerate() {
+            for rx in 0..5 {
+                if (mask >> (4 - rx)) & 1 == 1 {
+                    put_rect(
+                        x + rx * scale,
+                        y + ry as i32 * scale,
+                        x + (rx + 1) * scale,
+                        y + (ry as i32 + 1) * scale,
+                        bgr,
+                    );
+                }
+            }
+        }
+    };
+
+    let quote = "GOD IS LOVE. 1 JOHN 4:8";
+    let scale = 4;
+    let mut px = 24i32;
+    let py = 24i32;
+    for ch in quote.chars() {
+        draw_glyph(ch, px, py, scale, [0xF0, 0xF0, 0xF0]);
+        px += if ch == ' ' { scale * 3 } else { scale * 6 };
+    }
+
+    let _ = unsafe { io_surface.unlock(IOSurfaceLockOptions::empty(), std::ptr::null_mut()) };
+}
+
+#[cfg(target_os = "macos")]
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct MachPortSendMsg {
+    header: mach_msg_header_t,
+    body: mach_msg_body_t,
+    port: mach_msg_port_descriptor_t,
+    payload: u32,
+}
+
+#[cfg(target_os = "macos")]
+fn mach_send_iosurface_port(
+    service_name: &str,
+    io_surface: &IOSurfaceRef,
+) -> Result<(), Box<dyn Error>> {
+    let mut service_port: mach_port_t = MACH_PORT_NULL;
+    let service_cstr = CString::new(service_name)?;
+    let kr = unsafe {
+        bootstrap_look_up(
+            bootstrap_port,
+            service_cstr.as_ptr(),
+            &mut service_port as *mut mach_port_t,
+        )
+    };
+    if kr != KERN_SUCCESS || service_port == MACH_PORT_NULL {
+        return Err(format!("bootstrap_look_up failed for {service_name}: kr={kr}").into());
+    }
+
+    let iosurface_port = io_surface.create_mach_port();
+    if iosurface_port == MACH_PORT_NULL {
+        return Err("IOSurface create_mach_port returned null".into());
+    }
+    let mut msg = MachPortSendMsg::default();
+    msg.header.msgh_bits = MACH_MSGH_BITS_COMPLEX | MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
+    msg.header.msgh_size = std::mem::size_of::<MachPortSendMsg>() as u32;
+    msg.header.msgh_remote_port = service_port;
+    msg.header.msgh_local_port = MACH_PORT_NULL;
+    msg.header.msgh_id = 0x1978;
+    msg.body.msgh_descriptor_count = 1;
+    msg.port.name = iosurface_port;
+    msg.port.disposition = MACH_MSG_TYPE_MOVE_SEND as u8;
+    msg.port.type_ = MACH_MSG_PORT_DESCRIPTOR as u8;
+    msg.payload = io_surface.id();
+
+    let mr = unsafe {
+        mach_msg(
+            &mut msg.header,
+            MACH_SEND_MSG,
+            msg.header.msgh_size,
+            0,
+            MACH_PORT_NULL,
+            MACH_MSG_TIMEOUT_NONE,
+            MACH_PORT_NULL,
+        )
+    };
+    unsafe {
+        let _ = mach_port_deallocate(mach_task_self(), service_port);
+    }
+    if mr != KERN_SUCCESS {
+        return Err(format!("mach_msg send failed: mr={mr}").into());
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn mach_send_iosurface_port_with_retry(
+    service_name: &str,
+    io_surface: &IOSurfaceRef,
+    attempts: usize,
+    delay: Duration,
+) -> Result<(), Box<dyn Error>> {
+    let mut last_err: Option<String> = None;
+    for _ in 0..attempts.max(1) {
+        match mach_send_iosurface_port(service_name, io_surface) {
+            Ok(()) => return Ok(()),
+            Err(err) => {
+                last_err = Some(err.to_string());
+                thread::sleep(delay);
+            }
+        }
+    }
+    Err(last_err
+        .unwrap_or_else(|| "mach_send_iosurface_port failed".to_string())
+        .into())
+}
+
+#[cfg(target_os = "macos")]
+fn mach_receive_iosurface_port(
+    service_name: &str,
+) -> Result<CFRetained<IOSurfaceRef>, Box<dyn Error>> {
+    let mut recv_port: mach_port_t = MACH_PORT_NULL;
+    let kr_alloc = unsafe {
+        mach_port_allocate(
+            mach_task_self(),
+            MACH_PORT_RIGHT_RECEIVE,
+            &mut recv_port as *mut mach_port_t,
+        )
+    };
+    if kr_alloc != KERN_SUCCESS || recv_port == MACH_PORT_NULL {
+        return Err(format!("mach_port_allocate failed: kr={kr_alloc}").into());
+    }
+    let kr_insert = unsafe {
+        mach_port_insert_right(
+            mach_task_self(),
+            recv_port,
+            recv_port,
+            MACH_MSG_TYPE_MAKE_SEND,
+        )
+    };
+    if kr_insert != KERN_SUCCESS {
+        unsafe {
+            let _ = mach_port_destroy(mach_task_self(), recv_port);
+        }
+        return Err(format!("mach_port_insert_right failed: kr={kr_insert}").into());
+    }
+    let c_name = CString::new(service_name)?;
+    let kr_register =
+        unsafe { bootstrap_register(bootstrap_port, c_name.as_ptr() as *mut i8, recv_port) };
+    if kr_register != KERN_SUCCESS {
+        unsafe {
+            let _ = mach_port_destroy(mach_task_self(), recv_port);
+        }
+        return Err(
+            format!("bootstrap_register failed for {service_name}: kr={kr_register}").into(),
+        );
+    }
+
+    let mut recv_buf = [0u8; 1024];
+    let header_ptr = recv_buf.as_mut_ptr().cast::<mach_msg_header_t>();
+    unsafe {
+        (*header_ptr).msgh_local_port = recv_port;
+        (*header_ptr).msgh_size = recv_buf.len() as u32;
+    }
+    let mr = unsafe {
+        mach_msg(
+            header_ptr,
+            MACH_RCV_MSG,
+            0,
+            recv_buf.len() as u32,
+            recv_port,
+            MACH_MSG_TIMEOUT_NONE,
+            MACH_PORT_NULL,
+        )
+    };
+    unsafe {
+        let _ = mach_port_destroy(mach_task_self(), recv_port);
+    }
+    if mr != KERN_SUCCESS {
+        return Err(format!("mach_msg recv failed: mr={mr}").into());
+    }
+    let recv_msg = unsafe { &*(recv_buf.as_ptr().cast::<MachPortSendMsg>()) };
+    let recv_surface_port = recv_msg.port.name;
+    if recv_surface_port == MACH_PORT_NULL {
+        return Err("received null iosurface mach port".into());
+    }
+    let surface = IOSurfaceRef::lookup_from_mach_port(recv_surface_port)
+        .ok_or("IOSurface lookup_from_mach_port failed")?;
+    unsafe {
+        let _ = mach_port_deallocate(mach_task_self(), recv_surface_port);
+    }
+    Ok(surface)
+}
+
+fn glyph_5x7(ch: char) -> [u8; 7] {
+    match ch {
+        'A' => [0x0E, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+        'D' => [0x1E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x1E],
+        'E' => [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F],
+        'G' => [0x0E, 0x11, 0x10, 0x17, 0x11, 0x11, 0x0F],
+        'H' => [0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
+        'I' => [0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x1F],
+        'J' => [0x1F, 0x02, 0x02, 0x02, 0x12, 0x12, 0x0C],
+        'L' => [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F],
+        'N' => [0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11],
+        'O' => [0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E],
+        'S' => [0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E],
+        'V' => [0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04],
+        ' ' => [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+        '.' => [0x00, 0x00, 0x00, 0x00, 0x00, 0x0C, 0x0C],
+        ':' => [0x00, 0x0C, 0x0C, 0x00, 0x0C, 0x0C, 0x00],
+        '-' => [0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00],
+        '1' => [0x04, 0x0C, 0x14, 0x04, 0x04, 0x04, 0x1F],
+        '4' => [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02],
+        '8' => [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E],
+        _ => [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+    }
+}
+
+#[cfg(target_os = "windows")]
+const PROCESS_DUP_HANDLE: u32 = 0x0040;
+#[cfg(target_os = "windows")]
+const DUPLICATE_SAME_ACCESS: u32 = 0x0000_0002;
+
+#[cfg(target_os = "windows")]
+unsafe extern "system" {
+    fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
+    fn GetCurrentProcess() -> *mut c_void;
+    fn DuplicateHandle(
+        source_process_handle: *mut c_void,
+        source_handle: *mut c_void,
+        target_process_handle: *mut c_void,
+        target_handle: *mut *mut c_void,
+        desired_access: u32,
+        inherit_handle: i32,
+        options: u32,
+    ) -> i32;
+    fn CloseHandle(handle: *mut c_void) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+fn duplicate_handle_to_gpu_process(
+    source_handle_value: usize,
+    target_pid: u32,
+) -> Result<*mut c_void, Box<dyn Error>> {
+    let target_process = unsafe { OpenProcess(PROCESS_DUP_HANDLE, 0, target_pid) };
+    if target_process.is_null() {
+        return Err("OpenProcess(PROCESS_DUP_HANDLE) failed".into());
+    }
+    let mut duplicated: *mut c_void = ptr::null_mut();
+    let ok = unsafe {
+        DuplicateHandle(
+            GetCurrentProcess(),
+            source_handle_value as *mut c_void,
+            target_process,
+            &mut duplicated,
+            0,
+            0,
+            DUPLICATE_SAME_ACCESS,
+        )
+    };
+    let _ = unsafe { CloseHandle(target_process) };
+    if ok == 0 || duplicated.is_null() {
+        return Err("DuplicateHandle to gpu process failed".into());
+    }
+    Ok(duplicated)
 }
 
 fn main() {
@@ -73,8 +596,30 @@ fn run() -> Result<(), Box<dyn Error>> {
     {
         let socket_name = args.next().ok_or("missing socket name")?;
         let parent_pid = args.next().and_then(|v| v.parse::<u32>().ok());
-        let use_angle_swiftshader = args.any(|v| v == "--angle-swiftshader");
-        return run_gpu_process(&socket_name, parent_pid, use_angle_swiftshader);
+        let mut use_angle_swiftshader = false;
+        #[cfg(target_os = "macos")]
+        let mut iosurface_port_service: Option<String> = None;
+        let mut control_socket_name: Option<String> = None;
+        while let Some(arg) = args.next() {
+            if arg == "--angle-swiftshader" {
+                use_angle_swiftshader = true;
+            }
+            #[cfg(target_os = "macos")]
+            if arg == "--iosurface-port-service" {
+                iosurface_port_service = args.next();
+            }
+            if arg == "--control-socket" {
+                control_socket_name = args.next();
+            }
+        }
+        return run_gpu_process(
+            &socket_name,
+            parent_pid,
+            use_angle_swiftshader,
+            #[cfg(target_os = "macos")]
+            iosurface_port_service,
+            control_socket_name,
+        );
     }
     run_main_process()
 }
@@ -130,7 +675,9 @@ fn run_main_process() -> Result<(), Box<dyn Error>> {
                                 .into(),
                         );
                     }
-                    eprintln!("main: SwiftShader unsupported in this Dawn build, fallback to Native");
+                    eprintln!(
+                        "main: SwiftShader unsupported in this Dawn build, fallback to Native"
+                    );
                     mode = GpuMode::Native;
                 }
                 thread::sleep(reconnect_delay);
@@ -187,6 +734,64 @@ fn create_nya_pipeline(
     desc.primitive = Some(PrimitiveState::new());
     desc.multisample = Some(MultisampleState::new());
     device.create_render_pipeline(&desc)
+}
+
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+fn create_shared_texture_preview_pipeline(
+    device: &dawn_rs::Device,
+    format: TextureFormat,
+) -> (RenderPipeline, BindGroupLayout) {
+    let mut sampler_entry = BindGroupLayoutEntry::new();
+    sampler_entry.binding = Some(0);
+    sampler_entry.visibility = Some(ShaderStage::FRAGMENT);
+    let mut sampler_layout = SamplerBindingLayout::new();
+    sampler_layout.r#type = Some(SamplerBindingType::Filtering);
+    sampler_entry.sampler = Some(sampler_layout);
+
+    let mut texture_entry = BindGroupLayoutEntry::new();
+    texture_entry.binding = Some(1);
+    texture_entry.visibility = Some(ShaderStage::FRAGMENT);
+    let mut texture_layout = TextureBindingLayout::new();
+    texture_layout.sample_type = Some(TextureSampleType::Float);
+    texture_layout.view_dimension = Some(TextureViewDimension::D2);
+    texture_layout.multisampled = Some(false);
+    texture_entry.texture = Some(texture_layout);
+
+    let mut bgl_desc = BindGroupLayoutDescriptor::new();
+    bgl_desc.entries = Some(vec![sampler_entry, texture_entry]);
+    let bgl = device.create_bind_group_layout(&bgl_desc);
+
+    let mut shader_desc = ShaderModuleDescriptor::new();
+    shader_desc = shader_desc.with_extension(
+        ShaderSourceWGSL {
+            code: Some(SHARED_TEXTURE_PREVIEW_SHADER.to_string()),
+        }
+        .into(),
+    );
+    let shader = device.create_shader_module(&shader_desc);
+
+    let mut vertex = VertexState::new();
+    vertex.module = Some(shader.clone());
+    vertex.entry_point = Some("vs_main".to_string());
+    vertex.buffers = Some(vec![]);
+
+    let mut fragment = FragmentState::new();
+    fragment.module = Some(shader);
+    fragment.entry_point = Some("fs_main".to_string());
+    let mut color_target = ColorTargetState::new();
+    color_target.format = Some(format);
+    fragment.targets = Some(vec![color_target]);
+
+    let mut pl_desc = PipelineLayoutDescriptor::new();
+    pl_desc.bind_group_layouts = Some(vec![bgl.clone()]);
+
+    let mut desc = RenderPipelineDescriptor::new();
+    desc.layout = Some(device.create_pipeline_layout(&pl_desc));
+    desc.vertex = Some(vertex);
+    desc.fragment = Some(fragment);
+    desc.primitive = Some(PrimitiveState::new());
+    desc.multisample = Some(MultisampleState::new());
+    (device.create_render_pipeline(&desc), bgl)
 }
 
 fn push_rect(v: &mut Vec<f32>, x0: f32, y0: f32, x1: f32, y1: f32, color: [f32; 3]) {
@@ -370,11 +975,120 @@ fn build_nya_vertices(phase: f32) -> Vec<f32> {
         [0.10, 0.10, 0.12],
     );
 
+    push_rect(&mut v, -0.98, 0.78, 0.98, 0.96, [0.06, 0.04, 0.04]);
+    push_quote_vertices(
+        &mut v,
+        "GOD IS LOVE. 1 JOHN 4:8",
+        -0.94,
+        0.82,
+        0.016,
+        [0.97, 0.96, 0.92],
+    );
+
     v
 }
 
+fn push_quote_vertices(v: &mut Vec<f32>, text: &str, x: f32, y: f32, scale: f32, color: [f32; 3]) {
+    let mut cursor_x = x;
+    for ch in text.chars() {
+        let rows = glyph_5x7(ch);
+        for (ry, mask) in rows.iter().enumerate() {
+            for rx in 0..5 {
+                if (mask >> (4 - rx)) & 1 == 1 {
+                    let x0 = cursor_x + rx as f32 * scale;
+                    let y0 = y + (6.0 - ry as f32) * scale;
+                    push_rect(v, x0, y0, x0 + scale, y0 + scale, color);
+                }
+            }
+        }
+        cursor_x += if ch == ' ' { scale * 3.0 } else { scale * 6.0 };
+    }
+}
+
 fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Error>> {
-    let mut child = spawn_gpu_process(socket_name, mode)?;
+    #[cfg(target_os = "macos")]
+    let iosurface_port_service = {
+        let stamp = (SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as u64) & 0xffff_ffff;
+        format!("dr-isp-{}-{stamp:08x}", std::process::id())
+    };
+    let control_socket_name = {
+        let stamp = (SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as u64) & 0xffff_ffff;
+        format!("dr-ctl-{}-{stamp:08x}", std::process::id())
+    };
+    let mut child = spawn_gpu_process(
+        socket_name,
+        mode,
+        #[cfg(target_os = "macos")]
+        Some(&iosurface_port_service),
+        Some(&control_socket_name),
+    )?;
+    eprintln!("main: connecting control socket {control_socket_name}");
+    let mut control_stream =
+        wire_ipc::connect_with_retry(&control_socket_name, 300, Duration::from_millis(10))?;
+    eprintln!("main: control socket connected");
+    #[cfg(target_os = "windows")]
+    let win_dxgi_config = read_win_dxgi_shared_texture_config();
+    #[cfg(target_os = "linux")]
+    let linux_dmabuf_config = read_linux_dmabuf_shared_texture_config();
+    #[cfg(not(target_os = "windows"))]
+    if has_win_dxgi_shared_texture_env() {
+        eprintln!(
+            "main: DAWN_WGPU_DXGI_SHARED_TEX_HANDLE is set, but DXGI import path is Windows-only; ignoring"
+        );
+    }
+    #[cfg(target_os = "macos")]
+    let mut local_mac_iosurface_owner: Option<LocalMacIosurface> = None;
+    #[cfg(target_os = "macos")]
+    if let Some(owner) = create_local_iosurface_shared_texture(WIDTH, HEIGHT) {
+        #[cfg(target_os = "macos")]
+        if let Err(err) = mach_send_iosurface_port_with_retry(
+            &iosurface_port_service,
+            owner.io_surface.as_ref(),
+            200,
+            Duration::from_millis(10),
+        ) {
+            eprintln!("main: mach send IOSurface port failed: {err}");
+        } else {
+            eprintln!("main: sent IOSurface mach port to gpu process via {iosurface_port_service}");
+        }
+        local_mac_iosurface_owner = Some(owner);
+    }
+    #[cfg(target_os = "macos")]
+    eprintln!("main: local IOSurface shared texture prepared for wire Reserve+Inject");
+    #[cfg(target_os = "macos")]
+    let _keep_local_mac_iosurface_owner_alive = &local_mac_iosurface_owner;
+    #[cfg(target_os = "windows")]
+    let duplicated_dxgi_handle: Option<*mut c_void> = if let Some(cfg) = win_dxgi_config {
+        let handle = duplicate_handle_to_gpu_process(cfg.source_handle_value, child.id())?;
+        eprintln!(
+            "main: duplicated DXGI shared texture handle into gpu process pid={} handle=0x{:x}",
+            child.id(),
+            handle as usize
+        );
+        wire_backend_ctl::send_dxgi_import_config(
+            &mut control_stream,
+            wire_backend_ctl::DxgiImportConfig {
+                shared_handle: handle as usize,
+                use_keyed_mutex: cfg.use_keyed_mutex,
+            },
+        )?;
+        Some(handle)
+    } else {
+        None
+    };
+    #[cfg(target_os = "linux")]
+    if let Some(cfg) = linux_dmabuf_config {
+        wire_backend_ctl::send_dmabuf_import_config(
+            &mut control_stream,
+            wire_backend_ctl::DmabufImportConfig {
+                fd: cfg.fd,
+                drm_format: cfg.drm_format,
+                drm_modifier: cfg.drm_modifier,
+                stride: cfg.stride,
+                offset: cfg.offset,
+            },
+        )?;
+    }
     let wire_backend = IpcWireBackend::connect_name_with_options(
         socket_name,
         WireInitOptions {
@@ -443,6 +1157,72 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
     surface.configure(&config);
     let shader = create_nya_shader(&device);
     let pipeline = create_nya_pipeline(&device, shader, format);
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    let (shared_preview_pipeline, shared_preview_bgl) =
+        create_shared_texture_preview_pipeline(&device, format);
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    let mut injected_wire_texture_bind_group: Option<dawn_rs::BindGroup> = None;
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    let should_reserve_shared_wire_texture = {
+        #[cfg(target_os = "macos")]
+        {
+            local_mac_iosurface_owner.is_some()
+        }
+        #[cfg(target_os = "windows")]
+        {
+            duplicated_dxgi_handle.is_some()
+        }
+        #[cfg(target_os = "linux")]
+        {
+            linux_dmabuf_config.is_some()
+        }
+    };
+    #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+    if should_reserve_shared_wire_texture
+        && let Ok(reserved) = wire_backend.reserve_bgra8_texture_2d(&device, WIDTH, HEIGHT)
+    {
+        let reservation = reserved.reservation();
+        wire_backend_ctl::send_texture_reservation(&mut control_stream, reservation)?;
+        eprintln!(
+            "main: sent wire texture reservation tex=({}:{}) dev=({}:{})",
+            reserved.texture_handle.id,
+            reserved.texture_handle.generation,
+            reserved.device_handle.id,
+            reserved.device_handle.generation
+        );
+        let _ = control_stream.set_recv_timeout(Some(Duration::from_millis(100)));
+        let mut acked = false;
+        for _ in 0..50 {
+            match wire_backend_ctl::recv_texture_reservation_ack_nonblocking(&mut control_stream) {
+                Ok(Some(true)) => {
+                    acked = true;
+                    break;
+                }
+                Ok(Some(false)) => break,
+                Ok(None) => {}
+                Err(_) => break,
+            }
+            flush_wire();
+            instance.process_events();
+        }
+        if acked {
+            let texture_view = reserved.texture.create_view(None);
+            let sampler = device.create_sampler(Some(&dawn_rs::SamplerDescriptor::new()));
+            let mut bg_desc = dawn_rs::BindGroupDescriptor::new();
+            bg_desc.layout = Some(shared_preview_bgl.clone());
+            let mut sampler_entry = dawn_rs::BindGroupEntry::new();
+            sampler_entry.binding = Some(0);
+            sampler_entry.sampler = Some(sampler);
+            let mut texture_entry = dawn_rs::BindGroupEntry::new();
+            texture_entry.binding = Some(1);
+            texture_entry.texture_view = Some(texture_view);
+            bg_desc.entries = Some(vec![sampler_entry, texture_entry]);
+            injected_wire_texture_bind_group = Some(device.create_bind_group(&bg_desc));
+            eprintln!("main: wire texture inject ack received");
+        } else {
+            eprintln!("main: wire texture inject ack timeout");
+        }
+    }
     let mut vb_desc = dawn_rs::BufferDescriptor::new();
     vb_desc.size = Some(MAX_VERTEX_BYTES);
     vb_desc.usage = Some(BufferUsage::VERTEX | BufferUsage::COPY_DST);
@@ -456,9 +1236,7 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
         if let Some(status) = child.try_wait()? {
             break status;
         }
-        if mode == GpuMode::AngleSwiftShader
-            && spirv_writer_missing.load(Ordering::Relaxed)
-        {
+        if mode == GpuMode::AngleSwiftShader && spirv_writer_missing.load(Ordering::Relaxed) {
             return Err("TINT_BUILD_SPV_WRITER is not defined".into());
         }
 
@@ -521,6 +1299,14 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
         pass.set_pipeline(pipeline.clone());
         pass.set_vertex_buffer(0, Some(vertex_buffer.clone()), 0, vertex_bytes.len() as u64);
         pass.draw((vertices.len() / 5) as u32, 1, 0, 0);
+        #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+        if let Some(bg) = injected_wire_texture_bind_group.as_ref() {
+            pass.set_scissor_rect(16, 16, WIDTH.saturating_sub(32), HEIGHT / 3);
+            pass.set_pipeline(shared_preview_pipeline.clone());
+            pass.set_bind_group(0, Some(bg.clone()), &[]);
+            pass.draw(3, 1, 0, 0);
+            pass.set_scissor_rect(0, 0, WIDTH, HEIGHT);
+        }
         pass.end();
         queue.submit(&[encoder.finish(None)]);
         let _ = surface.present();
@@ -545,6 +1331,8 @@ fn run_gpu_process(
     socket_name: &str,
     parent_pid: Option<u32>,
     use_angle_swiftshader: bool,
+    #[cfg(target_os = "macos")] iosurface_port_service: Option<String>,
+    control_socket_name: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
     if use_angle_swiftshader {
         // Set before any Dawn/ANGLE initialization in this process.
@@ -562,7 +1350,33 @@ fn run_gpu_process(
             }
         }
     }
-    let (reader_stream, writer_stream, reserved) = wire_server::accept_wire_client(socket_name)?;
+    let control_stream = if let Some(name) = control_socket_name.as_deref() {
+        Some(wire_ipc::bind_and_accept(name)?)
+    } else {
+        None
+    };
+    #[cfg(target_os = "macos")]
+    let received_iosurface = if let Some(service_name) = iosurface_port_service.as_deref() {
+        match mach_receive_iosurface_port(service_name) {
+            Ok(surface) => {
+                eprintln!(
+                    "gpu process: received IOSurface mach port id={} ({}x{})",
+                    surface.id(),
+                    surface.width(),
+                    surface.height()
+                );
+                Some(surface)
+            }
+            Err(err) => {
+                eprintln!("gpu process: failed to receive IOSurface mach port: {err}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+    let (reader_stream, writer_stream, reserved) =
+        wire_backend_ctl::accept_wire_client(socket_name)?;
 
     let event_loop = EventLoop::new()?;
     let mut app = GpuProcessApp::new(
@@ -573,6 +1387,9 @@ fn run_gpu_process(
         reserved.surface_instance,
         parent_pid,
         use_angle_swiftshader,
+        control_stream,
+        #[cfg(target_os = "macos")]
+        received_iosurface,
     );
     event_loop.run_app(&mut app)?;
     Ok(())
@@ -585,14 +1402,24 @@ struct GpuProcessApp {
     surface_handle: WireInstanceHandle,
     surface_instance_handle: WireInstanceHandle,
     window: Option<Window>,
-    pump: Option<wire_server::WireServerPump>,
+    pump: Option<wire_backend_ctl::WireServerPump>,
     server: Option<Arc<Mutex<WireHelperServer>>>,
     _native_instance: Option<Instance>,
     _native_surface: Option<dawn_rs::Surface>,
     handle_wire_on_main_thread: bool,
+    #[cfg(unix)]
     parent_pid: Option<u32>,
     #[cfg(target_os = "macos")]
     metal_layer: Option<Layer>,
+    control_stream: Option<interprocess::local_socket::Stream>,
+    pending_wire_texture_reservation: Option<WireTextureReservation>,
+    #[cfg(target_os = "macos")]
+    received_iosurface: Option<CFRetained<IOSurfaceRef>>,
+    #[cfg(target_os = "windows")]
+    dxgi_import: Option<wire_backend_ctl::DxgiImportConfig>,
+    #[cfg(target_os = "linux")]
+    dmabuf_import: Option<wire_backend_ctl::DmabufImportConfig>,
+    shared_texture_injected: bool,
 }
 
 impl GpuProcessApp {
@@ -604,7 +1431,11 @@ impl GpuProcessApp {
         surface_instance_handle: WireInstanceHandle,
         parent_pid: Option<u32>,
         use_angle_swiftshader: bool,
+        control_stream: Option<interprocess::local_socket::Stream>,
+        #[cfg(target_os = "macos")] received_iosurface: Option<CFRetained<IOSurfaceRef>>,
     ) -> Self {
+        #[cfg(not(unix))]
+        let _ = parent_pid;
         Self {
             reader_stream: Some(reader_stream),
             writer_stream: Some(writer_stream),
@@ -617,9 +1448,19 @@ impl GpuProcessApp {
             _native_instance: None,
             _native_surface: None,
             handle_wire_on_main_thread: use_angle_swiftshader,
+            #[cfg(unix)]
             parent_pid,
             #[cfg(target_os = "macos")]
             metal_layer: None,
+            control_stream,
+            pending_wire_texture_reservation: None,
+            #[cfg(target_os = "macos")]
+            received_iosurface,
+            #[cfg(target_os = "windows")]
+            dxgi_import: None,
+            #[cfg(target_os = "linux")]
+            dmabuf_import: None,
+            shared_texture_injected: false,
         }
     }
 
@@ -719,12 +1560,12 @@ impl GpuProcessApp {
             )
         };
         let ok = injected_instance && injected_surface;
-        wire_server::send_reserve_ack(&mut writer_stream, ok)?;
+        wire_backend_ctl::send_reserve_ack(&mut writer_stream, ok)?;
         if !ok {
             return Err("failed to inject instance/surface into wire server".into());
         }
 
-        let pump = wire_server::WireServerPump::start(
+        let pump = wire_backend_ctl::WireServerPump::start(
             reader_stream,
             writer_stream,
             to_writer_tx,
@@ -738,6 +1579,9 @@ impl GpuProcessApp {
         self._native_instance = Some(native_instance);
         self._native_surface = Some(native_surface);
         self.pump = Some(pump);
+        if let Some(stream) = self.control_stream.as_ref() {
+            let _ = stream.set_recv_timeout(Some(Duration::from_millis(1)));
+        }
         Ok(())
     }
 }
@@ -804,6 +1648,110 @@ impl ApplicationHandler for GpuProcessApp {
                 eprintln!("gpu process: wire transport disconnected, exiting");
                 event_loop.exit();
                 return;
+            }
+        }
+        if let Some(stream) = self.control_stream.as_mut() {
+            #[cfg(target_os = "windows")]
+            if self.dxgi_import.is_none() {
+                match wire_backend_ctl::recv_dxgi_import_config_nonblocking(stream) {
+                    Ok(Some(cfg)) => {
+                        self.dxgi_import = Some(cfg);
+                        eprintln!(
+                            "gpu process: received DXGI import config handle=0x{:x} keyed_mutex={}",
+                            cfg.shared_handle, cfg.use_keyed_mutex
+                        );
+                    }
+                    Ok(None) => {}
+                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
+                }
+            }
+            #[cfg(target_os = "linux")]
+            if self.dmabuf_import.is_none() {
+                match wire_backend_ctl::recv_dmabuf_import_config_nonblocking(stream) {
+                    Ok(Some(cfg)) => {
+                        self.dmabuf_import = Some(cfg);
+                        eprintln!(
+                            "gpu process: received dma-buf import config fd={} drm_format={} modifier={} stride={} offset={}",
+                            cfg.fd, cfg.drm_format, cfg.drm_modifier, cfg.stride, cfg.offset
+                        );
+                    }
+                    Ok(None) => {}
+                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
+                }
+            }
+            if self.pending_wire_texture_reservation.is_none() {
+                match wire_backend_ctl::recv_texture_reservation_nonblocking(stream) {
+                    Ok(Some(reservation)) => {
+                        self.pending_wire_texture_reservation = Some(reservation);
+                        eprintln!(
+                            "gpu process: received wire texture reservation tex=({}:{}) dev=({}:{})",
+                            reservation.texture_handle.id,
+                            reservation.texture_handle.generation,
+                            reservation.device_handle.id,
+                            reservation.device_handle.generation
+                        );
+                    }
+                    Ok(None) => {}
+                    Err(e) => eprintln!("gpu process: control stream read error: {e}"),
+                }
+            }
+        }
+
+        if !self.shared_texture_injected
+            && let Some(res) = self.pending_wire_texture_reservation
+            && let Some(server) = self.server.as_ref()
+            && let Ok(mut guard) = server.lock()
+        {
+            let import = {
+                #[cfg(target_os = "macos")]
+                {
+                    self.received_iosurface.as_ref().map(|surface| {
+                        wire_backend_ctl::SharedTextureImportParams::Iosurface(
+                            wire_backend_ctl::InjectIosurfaceParams {
+                                io_surface: CFRetained::as_ptr(surface).cast().as_ptr(),
+                            },
+                        )
+                    })
+                }
+                #[cfg(target_os = "windows")]
+                {
+                    self.dxgi_import.map(|cfg| {
+                        wire_backend_ctl::SharedTextureImportParams::Dxgi(
+                            wire_backend_ctl::InjectDxgiParams {
+                                shared_handle: cfg.shared_handle as *mut c_void,
+                                use_keyed_mutex: cfg.use_keyed_mutex,
+                            },
+                        )
+                    })
+                }
+                #[cfg(target_os = "linux")]
+                {
+                    self.dmabuf_import.map(|cfg| {
+                        wire_backend_ctl::SharedTextureImportParams::Dmabuf(
+                            wire_backend_ctl::InjectDmabufParams {
+                                fd: cfg.fd,
+                                drm_format: cfg.drm_format,
+                                drm_modifier: cfg.drm_modifier,
+                                stride: cfg.stride,
+                                offset: cfg.offset,
+                            },
+                        )
+                    })
+                }
+            };
+
+            if let Some(import) = import {
+                let ok = wire_backend_ctl::inject_reserved_texture(&mut guard, res, import);
+                self.shared_texture_injected = ok;
+                if ok {
+                    eprintln!(
+                        "gpu process: injected shared texture into wire texture tex=({}:{})",
+                        res.texture_handle.id, res.texture_handle.generation
+                    );
+                }
+                if let Some(stream) = self.control_stream.as_mut() {
+                    let _ = wire_backend_ctl::send_texture_reservation_ack(stream, ok);
+                }
             }
         }
     }
@@ -928,6 +1876,13 @@ fn request_device_sync(
     let spirv_writer_missing = Arc::new(AtomicBool::new(false));
     let spirv_writer_missing_cb = spirv_writer_missing.clone();
     let mut device_desc = dawn_rs::DeviceDescriptor::new();
+    #[cfg(target_os = "macos")]
+    {
+        device_desc.required_features = Some(vec![
+            dawn_rs::FeatureName::SharedTextureMemoryIOSurface,
+            dawn_rs::FeatureName::SharedFenceMTLSharedEvent,
+        ]);
+    }
     let uncaptured = dawn_rs::UncapturedErrorCallbackInfo::new();
     *uncaptured.callback.borrow_mut() = Some(Box::new(move |_devices, error_type, message| {
         eprintln!("main: uncaptured device error type={error_type:?} message={message}");
@@ -965,7 +1920,12 @@ fn request_device_sync(
     }
 }
 
-fn spawn_gpu_process(socket_name: &str, mode: GpuMode) -> Result<Child, Box<dyn Error>> {
+fn spawn_gpu_process(
+    socket_name: &str,
+    mode: GpuMode,
+    #[cfg(target_os = "macos")] iosurface_port_service: Option<&str>,
+    control_socket_name: Option<&str>,
+) -> Result<Child, Box<dyn Error>> {
     let current = env::current_exe()?;
     let mut cmd = Command::new(current);
     eprintln!("main: spawning gpu_process with mode={mode:?}");
@@ -994,6 +1954,13 @@ fn spawn_gpu_process(socket_name: &str, mode: GpuMode) -> Result<Child, Box<dyn 
     cmd.arg("--gpu-process")
         .arg(socket_name)
         .arg(std::process::id().to_string());
+    #[cfg(target_os = "macos")]
+    if let Some(service_name) = iosurface_port_service {
+        cmd.arg("--iosurface-port-service").arg(service_name);
+    }
+    if let Some(control_name) = control_socket_name {
+        cmd.arg("--control-socket").arg(control_name);
+    }
     if mode == GpuMode::AngleSwiftShader {
         cmd.arg("--angle-swiftshader");
     }
