@@ -122,6 +122,7 @@ fn run_client() -> Result<(), Box<dyn Error>> {
             connect_attempts: 300,
             connect_delay: Duration::from_millis(10),
             max_allocation_size: 0,
+            transport: dawn_rs::wire::TransportOptions::default(),
         },
     )?;
     let wire_instance = wire_client.instance();
@@ -235,6 +236,7 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
             expect_surface: false,
             use_spontaneous_callbacks: true,
             max_allocation_size: 0,
+            transport: dawn_rs::wire::TransportOptions::default(),
         },
     )?;
     render_triangle_window(width, height)?;

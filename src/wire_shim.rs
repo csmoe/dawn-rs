@@ -72,6 +72,7 @@ unsafe extern "C" {
         client: *mut DawnRsWireClientOpaque,
         instance: *mut c_void,
     ) -> ReservedWireSurface;
+    #[allow(dead_code)]
     fn dawn_rs_wire_client_get_device_handle(
         client: *mut DawnRsWireClientOpaque,
         device: *mut c_void,
@@ -107,22 +108,26 @@ unsafe extern "C" {
         handle: WireInstanceHandle,
         instance_handle: WireInstanceHandle,
     ) -> bool;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_inject_texture(
         server: *mut DawnRsWireServerOpaque,
         texture: *mut c_void,
         handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_inject_buffer(
         server: *mut DawnRsWireServerOpaque,
         buffer: *mut c_void,
         handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_get_device(
         server: *mut DawnRsWireServerOpaque,
         handle: WireInstanceHandle,
     ) -> *mut c_void;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_inject_iosurface_texture(
         server: *mut DawnRsWireServerOpaque,
         io_surface: *mut c_void,
@@ -133,6 +138,7 @@ unsafe extern "C" {
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_inject_dxgi_texture(
         server: *mut DawnRsWireServerOpaque,
         shared_handle: *mut c_void,
@@ -144,6 +150,7 @@ unsafe extern "C" {
         texture_handle: WireInstanceHandle,
         device_handle: WireInstanceHandle,
     ) -> bool;
+    #[allow(dead_code)]
     fn dawn_rs_wire_server_inject_dmabuf_texture(
         server: *mut DawnRsWireServerOpaque,
         fd: i32,
@@ -358,6 +365,7 @@ impl WireHelperClient {
         unsafe { dawn_rs_wire_client_reserve_surface(self.raw, instance) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_device_handle(&mut self, device: *mut c_void) -> WireInstanceHandle {
         unsafe { dawn_rs_wire_client_get_device_handle(self.raw, device) }
     }
@@ -470,6 +478,7 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_surface(self.raw, surface, handle, instance_handle) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inject_texture(
         &mut self,
         texture: *mut c_void,
@@ -479,6 +488,7 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_texture(self.raw, texture, handle, device_handle) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inject_buffer(
         &mut self,
         buffer: *mut c_void,
@@ -488,10 +498,12 @@ impl WireHelperServer {
         unsafe { dawn_rs_wire_server_inject_buffer(self.raw, buffer, handle, device_handle) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn get_device(&mut self, handle: WireInstanceHandle) -> *mut c_void {
         unsafe { dawn_rs_wire_server_get_device(self.raw, handle) }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inject_iosurface_texture(
         &mut self,
         io_surface: *mut c_void,
@@ -516,6 +528,7 @@ impl WireHelperServer {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inject_dxgi_texture(
         &mut self,
         shared_handle: *mut c_void,
@@ -542,6 +555,7 @@ impl WireHelperServer {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn inject_dmabuf_texture(
         &mut self,
         fd: i32,
