@@ -1,7 +1,8 @@
 use crate::Compat;
-use dawn_rs::{Instance, Surface};
+use dawn_rs::wire_backend::{WireHandle, WireTextureReservation};
 use dawn_rs::wire_ipc;
-use dawn_rs::wire_shim::{WireHelperClient, WireInstanceHandle};
+use dawn_rs::wire_shim::WireHelperClient;
+use dawn_rs::{Instance, Surface};
 use interprocess::TryClone;
 use interprocess::local_socket::Stream;
 use interprocess::local_socket::traits::Stream as _;
@@ -78,6 +79,26 @@ pub struct WireClientBackend<T: WireTransport = IpcWireTransport> {
     writer_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
     reader_thread: Option<JoinHandle<Result<(), WireBackendError>>>,
     _transport: std::marker::PhantomData<T>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReservedWireTexture {
+    pub texture: dawn_rs::Texture,
+    pub texture_handle: WireHandle,
+    pub device_handle: WireHandle,
+    pub width: u32,
+    pub height: u32,
+}
+
+impl ReservedWireTexture {
+    pub fn reservation(&self) -> WireTextureReservation {
+        WireTextureReservation {
+            texture_handle: self.texture_handle,
+            device_handle: self.device_handle,
+            width: self.width,
+            height: self.height,
+        }
+    }
 }
 
 impl<T: WireTransport> WireClientBackend<T> {
@@ -259,6 +280,33 @@ impl<T: WireTransport> WireClientBackend<T> {
             instance.process_events();
         }
     }
+
+    pub fn reserve_bgra8_texture_2d(
+        &self,
+        device: &dawn_rs::Device,
+        width: u32,
+        height: u32,
+    ) -> Result<ReservedWireTexture, WireBackendError> {
+        let mut guard = self
+            .client
+            .lock()
+            .map_err(|_| WireBackendError::LockPoisoned("wire client"))?;
+        let reserved = guard.reserve_bgra8_texture_2d(device.as_raw().cast(), width, height);
+        if reserved.texture.is_null() {
+            return Err(WireBackendError::Protocol(
+                "wire reserve_bgra8_texture_2d returned null texture",
+            ));
+        }
+        let texture =
+            unsafe { dawn_rs::wire_shim::WireHelperClient::reserved_texture_to_texture(reserved) };
+        Ok(ReservedWireTexture {
+            texture,
+            texture_handle: reserved.handle.into(),
+            device_handle: reserved.device_handle.into(),
+            width,
+            height,
+        })
+    }
 }
 
 impl<T: WireTransport> From<&WireClientBackend<T>> for wgpu::Instance {
@@ -321,20 +369,5 @@ impl IpcWireBackend {
     pub fn into_instance_and_handle(self) -> (Instance, Arc<WireBackendHandle>) {
         let instance = self.dawn_instance();
         (instance, Arc::new(WireBackendHandle::new(self)))
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct WireHandle {
-    pub id: u32,
-    pub generation: u32,
-}
-
-impl From<WireInstanceHandle> for WireHandle {
-    fn from(value: WireInstanceHandle) -> Self {
-        Self {
-            id: value.id,
-            generation: value.generation,
-        }
     }
 }

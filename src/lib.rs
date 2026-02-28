@@ -9,6 +9,8 @@ mod generated;
 pub use generated::*;
 
 #[cfg(feature = "wire")]
+pub mod wire_backend;
+#[cfg(feature = "wire")]
 pub mod wire_ipc;
 #[cfg(feature = "wire")]
 pub mod wire_shim;
