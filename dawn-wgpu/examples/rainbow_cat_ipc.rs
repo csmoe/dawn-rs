@@ -36,12 +36,12 @@ use mach2::port::{MACH_PORT_NULL, MACH_PORT_RIGHT_RECEIVE, mach_port_t};
 use mach2::traps::mach_task_self;
 #[cfg(target_os = "macos")]
 use objc2_core_foundation::{
-    CFBoolean, CFDictionary, CFMutableDictionary, CFNumber, CFRetained, CFString, CFType,
+    CFDictionary, CFMutableDictionary, CFNumber, CFRetained, CFString, CFType,
 };
 #[cfg(target_os = "macos")]
 use objc2_io_surface::{
     IOSurfaceLockOptions, IOSurfaceRef, kIOSurfaceBytesPerElement, kIOSurfaceHeight,
-    kIOSurfaceIsGlobal, kIOSurfacePixelFormat, kIOSurfaceWidth,
+    kIOSurfacePixelFormat, kIOSurfaceWidth,
 };
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
@@ -57,8 +57,8 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 #[cfg(target_os = "windows")]
 use std::ptr;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use winit::application::ApplicationHandler;
@@ -129,81 +129,7 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum GpuMode {
     Native,
-    AngleSwiftShader,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[cfg(target_os = "windows")]
-struct WinDxgiSharedTextureConfig {
-    source_handle_value: usize,
-    use_keyed_mutex: bool,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[cfg(target_os = "linux")]
-struct LinuxDmabufSharedTextureConfig {
-    fd: i32,
-    drm_format: u32,
-    drm_modifier: u64,
-    stride: u32,
-    offset: u64,
-}
-
-#[cfg(target_os = "windows")]
-fn read_win_dxgi_shared_texture_config() -> Option<WinDxgiSharedTextureConfig> {
-    let handle_raw = env::var("DAWN_WGPU_DXGI_SHARED_TEX_HANDLE").ok()?;
-    let trimmed = handle_raw.trim();
-    let source_handle_value = if let Some(hex) = trimmed
-        .strip_prefix("0x")
-        .or_else(|| trimmed.strip_prefix("0X"))
-    {
-        usize::from_str_radix(hex, 16).ok()?
-    } else {
-        trimmed.parse::<usize>().ok()?
-    };
-    let use_keyed_mutex = env::var("DAWN_WGPU_DXGI_USE_KEYED_MUTEX")
-        .ok()
-        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-        .unwrap_or(false);
-    Some(WinDxgiSharedTextureConfig {
-        source_handle_value,
-        use_keyed_mutex,
-    })
-}
-
-#[cfg(target_os = "linux")]
-fn read_linux_dmabuf_shared_texture_config() -> Option<LinuxDmabufSharedTextureConfig> {
-    let fd = env::var("DAWN_WGPU_DMABUF_FD")
-        .ok()
-        .and_then(|v| v.parse::<i32>().ok())?;
-    let drm_format = env::var("DAWN_WGPU_DMABUF_DRM_FORMAT")
-        .ok()
-        .and_then(|v| v.parse::<u32>().ok())
-        .unwrap_or(875_713_112);
-    let drm_modifier = env::var("DAWN_WGPU_DMABUF_MODIFIER")
-        .ok()
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(0);
-    let stride = env::var("DAWN_WGPU_DMABUF_STRIDE")
-        .ok()
-        .and_then(|v| v.parse::<u32>().ok())
-        .unwrap_or(WIDTH * 4);
-    let offset = env::var("DAWN_WGPU_DMABUF_OFFSET")
-        .ok()
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(0);
-    Some(LinuxDmabufSharedTextureConfig {
-        fd,
-        drm_format,
-        drm_modifier,
-        stride,
-        offset,
-    })
-}
-
-#[cfg(not(target_os = "windows"))]
-fn has_win_dxgi_shared_texture_env() -> bool {
-    env::var("DAWN_WGPU_DXGI_SHARED_TEX_HANDLE").is_ok()
+    SwiftShaderVk,
 }
 
 #[cfg(target_os = "macos")]
@@ -218,14 +144,12 @@ fn create_local_iosurface_shared_texture(width: u32, height: u32) -> Option<Loca
     let height_cf = CFNumber::new_i32(height as i32);
     let bpe_cf = CFNumber::new_i32(4);
     let fmt_cf = CFNumber::new_i32(PIXEL_FORMAT_BGRA);
-    let global_cf = CFBoolean::new(true);
-    let props = CFMutableDictionary::<CFString, CFType>::with_capacity(5);
+    let props = CFMutableDictionary::<CFString, CFType>::with_capacity(4);
     unsafe {
         props.set(kIOSurfaceWidth, width_cf.as_ref());
         props.set(kIOSurfaceHeight, height_cf.as_ref());
         props.set(kIOSurfaceBytesPerElement, bpe_cf.as_ref());
         props.set(kIOSurfacePixelFormat, fmt_cf.as_ref());
-        props.set(kIOSurfaceIsGlobal, global_cf.as_ref());
     }
     let props_ref = unsafe {
         &*(props.as_ref() as *const CFDictionary<CFString, CFType> as *const CFDictionary)
@@ -595,13 +519,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     {
         let socket_name = args.next().ok_or("missing socket name")?;
         let parent_pid = args.next().and_then(|v| v.parse::<u32>().ok());
-        let mut use_angle_swiftshader = false;
+        let mut use_swiftshader_vk = false;
         #[cfg(target_os = "macos")]
         let mut iosurface_port_service: Option<String> = None;
         let mut control_socket_name: Option<String> = None;
         while let Some(arg) = args.next() {
-            if arg == "--angle-swiftshader" {
-                use_angle_swiftshader = true;
+            if arg == "--swiftshader-vk" || arg == "--angle-swiftshader" {
+                use_swiftshader_vk = true;
             }
             #[cfg(target_os = "macos")]
             if arg == "--iosurface-port-service" {
@@ -614,7 +538,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         return run_gpu_process(
             &socket_name,
             parent_pid,
-            use_angle_swiftshader,
+            use_swiftshader_vk,
             #[cfg(target_os = "macos")]
             iosurface_port_service,
             control_socket_name,
@@ -626,16 +550,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 fn run_main_process() -> Result<(), Box<dyn Error>> {
     let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
     let reconnect_delay = Duration::from_millis(400);
-    let force_swiftshader = env::var("DAWN_WGPU_FORCE_SWIFTSHADER")
-        .ok()
-        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
-        .unwrap_or(false);
-    let mut mode = if force_swiftshader {
-        eprintln!("main: DAWN_WGPU_FORCE_SWIFTSHADER=1, start with SwiftShader");
-        GpuMode::AngleSwiftShader
-    } else {
-        GpuMode::Native
-    };
+    let mut mode = GpuMode::Native;
     let mut native_unstable_disconnects = 0u32;
     let mut session_id: u64 = 0;
     loop {
@@ -653,10 +568,10 @@ fn run_main_process() -> Result<(), Box<dyn Error>> {
                     }
                     if native_unstable_disconnects >= 2 {
                         eprintln!(
-                            "main: native mode unstable ({} fast disconnects), fallback to ANGLE SwiftShader",
+                            "main: native mode unstable ({} fast disconnects), fallback to SwiftShader(Vulkan)",
                             native_unstable_disconnects
                         );
-                        mode = GpuMode::AngleSwiftShader;
+                        mode = GpuMode::SwiftShaderVk;
                     }
                 }
                 thread::sleep(reconnect_delay);
@@ -665,18 +580,17 @@ fn run_main_process() -> Result<(), Box<dyn Error>> {
                 eprintln!("main: session failed: {err}");
                 let err_text = err.to_string();
                 if mode == GpuMode::Native {
-                    eprintln!("main: fallback to ANGLE SwiftShader on next restart");
-                    mode = GpuMode::AngleSwiftShader;
+                    eprintln!("main: fallback to SwiftShader(Vulkan) on next restart");
+                    mode = GpuMode::SwiftShaderVk;
                 } else if err_text.contains("TINT_BUILD_SPV_WRITER") {
-                    if force_swiftshader {
-                        return Err(
-                            "SwiftShader forced, but Dawn build lacks TINT SPIR-V writer support"
-                                .into(),
-                        );
-                    }
                     eprintln!(
                         "main: SwiftShader unsupported in this Dawn build, fallback to Native"
                     );
+                    mode = GpuMode::Native;
+                } else if err_text.contains("No supported adapters")
+                    || err_text.contains("no suitable adapter")
+                {
+                    eprintln!("main: SwiftShader(Vulkan) adapter unavailable, fallback to Native");
                     mode = GpuMode::Native;
                 }
                 thread::sleep(reconnect_delay);
@@ -1005,6 +919,10 @@ fn push_quote_vertices(v: &mut Vec<f32>, text: &str, x: f32, y: f32, scale: f32,
 }
 
 fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Error>> {
+    let perf_log = env::var("DAWN_WGPU_PERF_LOG")
+        .ok()
+        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+        .unwrap_or(false);
     #[cfg(target_os = "macos")]
     let iosurface_port_service = {
         let stamp = (SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as u64) & 0xffff_ffff;
@@ -1147,15 +1065,19 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
         .ok_or("create vertex buffer failed")?;
 
     let start = Instant::now();
+    let mut perf_window_start = Instant::now();
+    let mut perf_window_frames: u64 = 0;
+    let mut perf_window_frame_time_sum = Duration::ZERO;
     let child_exit_status = loop {
         let _keep_wire_backend_alive = &wire_backend;
         if let Some(status) = child.try_wait()? {
             break status;
         }
-        if mode == GpuMode::AngleSwiftShader && spirv_writer_missing.load(Ordering::Relaxed) {
+        if mode == GpuMode::SwiftShaderVk && spirv_writer_missing.load(Ordering::Relaxed) {
             return Err("TINT_BUILD_SPV_WRITER is not defined".into());
         }
 
+        let frame_begin = Instant::now();
         let mut st = SurfaceTexture::new();
         surface.get_current_texture(&mut st);
         match st.status {
@@ -1226,6 +1148,23 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
         pass.end();
         queue.submit(&[encoder.finish(None)]);
         let _ = surface.present();
+        if perf_log {
+            perf_window_frames = perf_window_frames.saturating_add(1);
+            perf_window_frame_time_sum += frame_begin.elapsed();
+            let elapsed = perf_window_start.elapsed();
+            if elapsed >= Duration::from_secs(1) {
+                let fps = perf_window_frames as f64 / elapsed.as_secs_f64();
+                let avg_ms = if perf_window_frames > 0 {
+                    (perf_window_frame_time_sum.as_secs_f64() * 1000.0) / perf_window_frames as f64
+                } else {
+                    0.0
+                };
+                eprintln!("perf: fps={fps:.1} avg_frame_ms={avg_ms:.2} mode={mode:?}");
+                perf_window_start = Instant::now();
+                perf_window_frames = 0;
+                perf_window_frame_time_sum = Duration::ZERO;
+            }
+        }
 
         flush_wire();
         instance.process_events();
@@ -1246,15 +1185,11 @@ fn run_main_session(socket_name: &str, mode: GpuMode) -> Result<(), Box<dyn Erro
 fn run_gpu_process(
     socket_name: &str,
     parent_pid: Option<u32>,
-    use_angle_swiftshader: bool,
+    use_swiftshader_vk: bool,
     #[cfg(target_os = "macos")] iosurface_port_service: Option<String>,
     _control_socket_name: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
-    if use_angle_swiftshader {
-        // Set before any Dawn/ANGLE initialization in this process.
-        unsafe {
-            env::set_var("ANGLE_DEFAULT_PLATFORM", "swiftshader");
-        }
+    if use_swiftshader_vk {
         if let Ok(current_exe) = env::current_exe() {
             let mut icd: PathBuf = current_exe;
             icd.set_file_name("vk_swiftshader_icd.json");
@@ -1413,6 +1348,7 @@ impl GpuProcessApp {
                 expect_surface: true,
                 use_spontaneous_callbacks: true,
                 max_allocation_size: 0,
+                transport: dawn_rs::wire::TransportOptions::default(),
             },
         )?;
 
@@ -1532,44 +1468,17 @@ fn request_adapter_with_fallback(
             metal.backend_type = Some(BackendType::Metal);
             attempts.push(("metal(surface)", metal));
         }
-        GpuMode::AngleSwiftShader => {
-            let mut gles_surface = RequestAdapterOptions::new();
-            gles_surface.compatible_surface = Some(surface.clone());
-            gles_surface.backend_type = Some(BackendType::OpenGLes);
-            attempts.push(("opengles(surface)", gles_surface));
-
-            let mut gles = RequestAdapterOptions::new();
-            gles.backend_type = Some(BackendType::OpenGLes);
-            attempts.push(("opengles(no-surface)", gles));
-
+        GpuMode::SwiftShaderVk => {
             let mut vk_surface = RequestAdapterOptions::new();
             vk_surface.compatible_surface = Some(surface.clone());
             vk_surface.backend_type = Some(BackendType::Vulkan);
+            vk_surface.force_fallback_adapter = Some(true);
             attempts.push(("vulkan(surface)", vk_surface));
 
             let mut vk = RequestAdapterOptions::new();
             vk.backend_type = Some(BackendType::Vulkan);
+            vk.force_fallback_adapter = Some(true);
             attempts.push(("vulkan(no-surface)", vk));
-
-            let mut gl_surface = RequestAdapterOptions::new();
-            gl_surface.compatible_surface = Some(surface.clone());
-            gl_surface.backend_type = Some(BackendType::OpenGL);
-            attempts.push(("opengl(surface)", gl_surface));
-
-            let mut gl = RequestAdapterOptions::new();
-            gl.backend_type = Some(BackendType::OpenGL);
-            attempts.push(("opengl(no-surface)", gl));
-
-            // Recovery path: if software backends are unavailable for this surface/platform,
-            // fall back to the native-compatible adapter so the session can recover.
-            let mut auto = RequestAdapterOptions::new();
-            auto.compatible_surface = Some(surface.clone());
-            attempts.push(("auto(surface,recover)", auto));
-
-            let mut metal = RequestAdapterOptions::new();
-            metal.compatible_surface = Some(surface.clone());
-            metal.backend_type = Some(BackendType::Metal);
-            attempts.push(("metal(surface,recover)", metal));
         }
     }
 
@@ -1650,27 +1559,20 @@ fn spawn_gpu_process(
 ) -> Result<Child, Box<dyn Error>> {
     let current = env::current_exe()?;
     let mut cmd = Command::new(current);
+    if let Ok(exe) = env::current_exe()
+        && let Some(exe_dir) = exe.parent()
+    {
+        cmd.current_dir(exe_dir);
+    }
     eprintln!("main: spawning gpu_process with mode={mode:?}");
-    if mode == GpuMode::AngleSwiftShader {
-        if let Ok(exe) = env::current_exe()
-            && let Some(exe_dir) = exe.parent()
-        {
-            let icd = exe_dir.join("vk_swiftshader_icd.json");
-            if icd.is_file() {
-                cmd.env("VK_ICD_FILENAMES", &icd);
-                cmd.env("VK_DRIVER_FILES", &icd);
-            }
-            #[cfg(target_os = "macos")]
-            {
-                let mut paths = vec![exe_dir.to_string_lossy().into_owned()];
-                if let Some(existing) = env::var_os("DYLD_LIBRARY_PATH") {
-                    let existing = existing.to_string_lossy();
-                    if !existing.is_empty() {
-                        paths.push(existing.into_owned());
-                    }
-                }
-                cmd.env("DYLD_LIBRARY_PATH", paths.join(":"));
-            }
+    if mode == GpuMode::SwiftShaderVk
+        && let Ok(exe) = env::current_exe()
+        && let Some(exe_dir) = exe.parent()
+    {
+        let icd = exe_dir.join("vk_swiftshader_icd.json");
+        if icd.is_file() {
+            cmd.env("VK_ICD_FILENAMES", &icd);
+            cmd.env("VK_DRIVER_FILES", &icd);
         }
     }
     cmd.arg("--gpu-process")
@@ -1683,8 +1585,8 @@ fn spawn_gpu_process(
     if let Some(control_name) = control_socket_name {
         cmd.arg("--control-socket").arg(control_name);
     }
-    if mode == GpuMode::AngleSwiftShader {
-        cmd.arg("--angle-swiftshader");
+    if mode == GpuMode::SwiftShaderVk {
+        cmd.arg("--swiftshader-vk");
     }
     #[cfg(unix)]
     cmd.arg0("rainbow_cat_gpu_child");
