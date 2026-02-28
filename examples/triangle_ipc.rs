@@ -1,5 +1,5 @@
-use dawn_rs::wire_ipc::{self, IpcMessage, OutboundPacket, read_message, write_message};
-use dawn_rs::wire_shim::{WireHelperClient, WireHelperServer, WireInstanceHandle};
+use dawn_rs::wire::{Client as WireClient, ClientOptions as WireClientOptions};
+use dawn_rs::wire::{Server as WireServer, ServerOptions as WireServerOptions};
 use dawn_rs::{
     BufferDescriptor, BufferUsage, Color, Device, Extent3D, FragmentState, Instance, LoadOp,
     MapAsyncStatus, MapMode, MultisampleState, PipelineLayoutDescriptor, PrimitiveState,
@@ -8,16 +8,11 @@ use dawn_rs::{
     TexelCopyBufferLayout, TexelCopyTextureInfo, TextureDescriptor, TextureDimension,
     TextureFormat, TextureUsage, VertexState,
 };
-use interprocess::TryClone;
-use interprocess::local_socket::traits::Stream as _;
 #[cfg(target_os = "macos")]
 use raw_window_metal::Layer;
 use std::env;
 use std::error::Error;
-use std::io::Write;
 use std::process::{Child, Command};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use winit::application::ApplicationHandler;
@@ -54,57 +49,6 @@ fn main() {
 
 struct ChildGuard {
     child: Option<Child>,
-}
-
-struct PumpGuard {
-    stop: Arc<std::sync::atomic::AtomicBool>,
-    tx: Option<mpsc::Sender<OutboundPacket>>,
-    writer_thread: Option<thread::JoinHandle<Result<(), String>>>,
-    reader_thread: Option<thread::JoinHandle<Result<(), String>>>,
-}
-
-impl PumpGuard {
-    fn new(
-        stop: Arc<std::sync::atomic::AtomicBool>,
-        tx: mpsc::Sender<OutboundPacket>,
-        writer_thread: thread::JoinHandle<Result<(), String>>,
-        reader_thread: thread::JoinHandle<Result<(), String>>,
-    ) -> Self {
-        Self {
-            stop,
-            tx: Some(tx),
-            writer_thread: Some(writer_thread),
-            reader_thread: Some(reader_thread),
-        }
-    }
-
-    fn shutdown_and_join(mut self) {
-        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
-        if let Some(tx) = self.tx.take() {
-            let _ = tx.send(OutboundPacket::Shutdown);
-        }
-        if let Some(writer_thread) = self.writer_thread.take() {
-            let _ = writer_thread.join();
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            let _ = reader_thread.join();
-        }
-    }
-}
-
-impl Drop for PumpGuard {
-    fn drop(&mut self) {
-        self.stop.store(true, std::sync::atomic::Ordering::Relaxed);
-        if let Some(tx) = self.tx.take() {
-            let _ = tx.send(OutboundPacket::Shutdown);
-        }
-        if let Some(writer_thread) = self.writer_thread.take() {
-            let _ = writer_thread.join();
-        }
-        if let Some(reader_thread) = self.reader_thread.take() {
-            let _ = reader_thread.join();
-        }
-    }
 }
 
 impl ChildGuard {
@@ -171,87 +115,17 @@ fn run_client() -> Result<(), Box<dyn Error>> {
         .spawn()?;
     let mut child = ChildGuard::new(child);
 
-    let stream = wire_ipc::connect_with_retry(&sock_name, 300, Duration::from_millis(10))?;
-    let mut reader_stream = stream.try_clone()?;
-    let mut writer_stream = stream.try_clone()?;
-    let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
-    let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
-
-    let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
-    let client_serialized_frames = Arc::new(AtomicU64::new(0));
-    let client_serialized_bytes = Arc::new(AtomicU64::new(0));
-    let client = Arc::new(Mutex::new(WireHelperClient::new(
-        0,
-        {
-            let to_writer_tx = to_writer_tx.clone();
-            let client_serialized_frames = client_serialized_frames.clone();
-            let client_serialized_bytes = client_serialized_bytes.clone();
-            move |bytes: &[u8]| {
-                client_serialized_frames.fetch_add(1, Ordering::Relaxed);
-                client_serialized_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
-                let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
-            }
-        },
-        |msg: &str| eprintln!("wire client error: {msg}"),
-    )?));
-
-    let reserved = {
-        let mut guard = client.lock().map_err(|_| "wire client lock poisoned")?;
-        guard.reserve_instance()
-    };
-    if reserved.instance.is_null() {
-        return Err("wire client reserve_instance returned null instance".into());
-    }
-
-    write_message(
-        &mut writer_stream,
-        &IpcMessage::ReserveInstance {
-            id: reserved.handle.id,
-            generation: reserved.handle.generation,
+    let wire_client = WireClient::connect(
+        &sock_name,
+        WireClientOptions {
+            reserve_surface: false,
+            connect_attempts: 300,
+            connect_delay: Duration::from_millis(10),
+            max_allocation_size: 0,
         },
     )?;
-    writer_stream.flush()?;
-
-    match read_message(&mut reader_stream)? {
-        IpcMessage::ReserveAck { ok } => {
-            if !ok {
-                return Err("server rejected wire instance injection".into());
-            }
-        }
-        _ => return Err("unexpected IPC message during wire handshake".into()),
-    }
-
-    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
-    let client_for_reader = client.clone();
-    let (writer_thread, reader_thread) = wire_ipc::start_wire_threads(
-        stop.clone(),
-        reader_stream,
-        writer_stream,
-        to_writer_rx,
-        32,
-        Duration::from_millis(4),
-        move |frame: &[u8]| {
-            let mut guard = client_for_reader
-                .lock()
-                .map_err(|_| "wire client lock poisoned".to_string())?;
-            if !guard.handle_commands(frame) {
-                return Err("wire client failed to handle commands".to_string());
-            }
-            Ok(())
-        },
-        || {},
-        |_| {},
-    );
-    let wire_instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved) };
-    let client_for_flush = client.clone();
-    let mut flush_wire = move || {
-        if let Ok(mut guard) = client_for_flush.lock() {
-            let _ = guard.flush();
-        }
-    };
-
-    let animation_tx = to_writer_tx.clone();
-    let pump = PumpGuard::new(stop, to_writer_tx, writer_thread, reader_thread);
+    let wire_instance = wire_client.instance();
+    let mut flush_wire = || wire_client.pump();
 
     client_wire_gpu_call_demo(&wire_instance, &mut flush_wire)?;
     let (checksum, nonzero_pixels) =
@@ -265,28 +139,11 @@ fn run_client() -> Result<(), Box<dyn Error>> {
         if child.try_wait_exited()? {
             break;
         }
-        let t = animation_start.elapsed().as_secs_f32();
-        if animation_tx
-            .send(OutboundPacket::AnimationPhase(t))
-            .is_err()
-        {
-            break;
-        }
+        let _t = animation_start.elapsed().as_secs_f32();
         thread::sleep(Duration::from_millis(16));
     }
 
-    {
-        let mut guard = client.lock().map_err(|_| "wire client lock poisoned")?;
-        let _ = guard.flush();
-        guard.disconnect();
-    }
-    drop(stream);
-    pump.shutdown_and_join();
-    println!(
-        "wire client stats: serialized_frames={}, serialized_bytes={}",
-        client_serialized_frames.load(Ordering::Relaxed),
-        client_serialized_bytes.load(Ordering::Relaxed)
-    );
+    drop(wire_client);
     child.wait_success()?;
     Ok(())
 }
@@ -369,97 +226,18 @@ fn client_wire_gpu_call_demo(
 }
 
 fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Error>> {
-    let stream = wire_ipc::bind_and_accept(sock_name)?;
-    let mut reader_stream = stream.try_clone()?;
-    let mut writer_stream = stream.try_clone()?;
-    let _ = reader_stream.set_recv_timeout(Some(Duration::from_millis(200)));
-    let _ = writer_stream.set_send_timeout(Some(Duration::from_millis(200)));
-
-    let (to_writer_tx, to_writer_rx) = mpsc::channel::<OutboundPacket>();
-    let server_serialized_frames = Arc::new(AtomicU64::new(0));
-    let server_serialized_bytes = Arc::new(AtomicU64::new(0));
-    let server = Arc::new(Mutex::new(WireHelperServer::new_native(
-        0,
-        true,
-        {
-            let to_writer_tx = to_writer_tx.clone();
-            let server_serialized_frames = server_serialized_frames.clone();
-            let server_serialized_bytes = server_serialized_bytes.clone();
-            move |bytes: &[u8]| {
-                server_serialized_frames.fetch_add(1, Ordering::Relaxed);
-                server_serialized_bytes.fetch_add(bytes.len() as u64, Ordering::Relaxed);
-                let _ = to_writer_tx.send(OutboundPacket::Wire(bytes.to_vec()));
-            }
-        },
-        |msg: &str| eprintln!("wire server error: {msg}"),
-    )?));
-
     let native_instance = Instance::new(None);
-    let animation_phase = Arc::new(Mutex::new(0.0f32));
-
-    let handle = match read_message(&mut reader_stream)? {
-        IpcMessage::ReserveInstance { id, generation } => WireInstanceHandle { id, generation },
-        _ => return Err("unexpected IPC message during reserve instance".into()),
-    };
-    let injected = {
-        let mut guard = server.lock().map_err(|_| "wire server lock poisoned")?;
-        guard.inject_instance(native_instance.as_raw().cast(), handle)
-    };
-    write_message(&mut writer_stream, &IpcMessage::ReserveAck { ok: injected })?;
-    writer_stream.flush()?;
-    if !injected {
-        return Err("failed to inject native instance into wire server".into());
-    }
-
-    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
-    let server_for_reader = server.clone();
-    let server_for_after = server.clone();
-    let server_handled_frames = Arc::new(AtomicU64::new(0));
-    let server_handled_bytes = Arc::new(AtomicU64::new(0));
-    let server_handled_frames_for_reader = server_handled_frames.clone();
-    let server_handled_bytes_for_reader = server_handled_bytes.clone();
-    let animation_phase_for_reader = animation_phase.clone();
-    let (writer_thread, reader_thread) = wire_ipc::start_wire_threads(
-        stop.clone(),
-        reader_stream,
-        writer_stream,
-        to_writer_rx,
-        32,
-        Duration::from_millis(4),
-        move |frame: &[u8]| {
-            server_handled_frames_for_reader.fetch_add(1, Ordering::Relaxed);
-            server_handled_bytes_for_reader.fetch_add(frame.len() as u64, Ordering::Relaxed);
-            let mut guard = server_for_reader
-                .lock()
-                .map_err(|_| "wire server lock poisoned".to_string())?;
-            if !guard.handle_commands(frame) {
-                return Err("wire server failed to handle commands".to_string());
-            }
-            Ok(())
+    let _wire_server = WireServer::accept_and_inject(
+        sock_name,
+        &native_instance,
+        None,
+        WireServerOptions {
+            expect_surface: false,
+            use_spontaneous_callbacks: true,
+            max_allocation_size: 0,
         },
-        move || {
-            if let Ok(mut guard) = server_for_after.lock() {
-                let _ = guard.flush();
-            }
-        },
-        move |phase: f32| {
-            if let Ok(mut value) = animation_phase_for_reader.lock() {
-                *value = phase;
-            }
-        },
-    );
-
-    let pump = PumpGuard::new(stop, to_writer_tx, writer_thread, reader_thread);
-    render_triangle_window(width, height, animation_phase)?;
-    drop(stream);
-    pump.shutdown_and_join();
-    println!(
-        "wire server stats: handled_frames={}, handled_bytes={}, serialized_frames={}, serialized_bytes={}",
-        server_handled_frames.load(Ordering::Relaxed),
-        server_handled_bytes.load(Ordering::Relaxed),
-        server_serialized_frames.load(Ordering::Relaxed),
-        server_serialized_bytes.load(Ordering::Relaxed)
-    );
+    )?;
+    render_triangle_window(width, height)?;
     Ok(())
 }
 
@@ -660,13 +438,9 @@ fn render_triangle_rgba_with_instance(
     Ok((checksum, nonzero_pixels))
 }
 
-fn render_triangle_window(
-    width: u32,
-    height: u32,
-    animation_phase: Arc<Mutex<f32>>,
-) -> Result<(), Box<dyn Error>> {
+fn render_triangle_window(width: u32, height: u32) -> Result<(), Box<dyn Error>> {
     let event_loop = EventLoop::new()?;
-    let mut app = IpcTriangleWindowApp::new(width, height, animation_phase);
+    let mut app = IpcTriangleWindowApp::new(width, height);
     event_loop.run_app(&mut app)?;
     Ok(())
 }
@@ -684,11 +458,11 @@ struct IpcTriangleWindowApp {
     #[cfg(target_os = "macos")]
     metal_layer: Option<Layer>,
     last_redraw: Instant,
-    animation_phase: Arc<Mutex<f32>>,
+    anim_start: Instant,
 }
 
 impl IpcTriangleWindowApp {
-    fn new(width: u32, height: u32, animation_phase: Arc<Mutex<f32>>) -> Self {
+    fn new(width: u32, height: u32) -> Self {
         Self {
             width,
             height,
@@ -702,7 +476,7 @@ impl IpcTriangleWindowApp {
             #[cfg(target_os = "macos")]
             metal_layer: None,
             last_redraw: Instant::now(),
-            animation_phase,
+            anim_start: Instant::now(),
         }
     }
 
@@ -874,7 +648,7 @@ impl IpcTriangleWindowApp {
         color_attachment.view = Some(view);
         color_attachment.load_op = Some(LoadOp::Clear);
         color_attachment.store_op = Some(StoreOp::Store);
-        let phase = self.animation_phase.lock().map(|v| *v).unwrap_or_default();
+        let phase = self.anim_start.elapsed().as_secs_f32();
         let pulse = (phase * 2.0).sin() * 0.5 + 0.5;
         color_attachment.clear_value = Some(Color {
             r: Some(0.05 + 0.25 * pulse as f64),
