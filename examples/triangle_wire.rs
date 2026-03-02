@@ -42,7 +42,7 @@ fn fs_main() -> @location(0) vec4<f32> {
 
 fn main() {
     if let Err(e) = run() {
-        eprintln!("triangle-ipc error: {e}");
+        eprintln!("triangle-wire error: {e}");
         std::process::exit(1);
     }
 }
@@ -227,10 +227,8 @@ fn client_wire_gpu_call_demo(
 }
 
 fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Error>> {
-    let native_instance = Instance::new(None);
-    let _wire_server = WireServer::accept_and_inject(
+    let _wire_server = WireServer::accept_and_inject_native(
         sock_name,
-        &native_instance,
         None,
         WireServerOptions {
             expect_surface: false,

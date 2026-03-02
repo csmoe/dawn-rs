@@ -1,6 +1,4 @@
-use dawn_rs::wire::{
-    Server as WireServer, ServerOptions as WireServerOptions, with_native_runtime,
-};
+use dawn_rs::wire::{Server as WireServer, ServerOptions as WireServerOptions};
 use dawn_rs::{
     BackendType, BufferUsage, Color, ColorTargetState, FragmentState, Instance, LoadOp,
     MultisampleState, PipelineLayoutDescriptor, PrimitiveState, RenderPassColorAttachment,
@@ -1236,8 +1234,6 @@ struct GpuProcessApp {
     socket_name: String,
     window: Option<Window>,
     wire_server: Option<WireServer>,
-    _native_instance: Option<Instance>,
-    _native_surface: Option<dawn_rs::Surface>,
     #[cfg(unix)]
     parent_pid: Option<u32>,
     #[cfg(target_os = "macos")]
@@ -1259,8 +1255,6 @@ impl GpuProcessApp {
             socket_name,
             window: None,
             wire_server: None,
-            _native_instance: None,
-            _native_surface: None,
             #[cfg(unix)]
             parent_pid,
             #[cfg(target_os = "macos")]
@@ -1335,15 +1329,9 @@ impl GpuProcessApp {
             }
         }
 
-        let (native_instance, native_surface) = with_native_runtime(|| {
-            let native_instance = Instance::new(None);
-            let native_surface = native_instance.create_surface(&surface_desc);
-            (native_instance, native_surface)
-        })?;
-        let wire_server = WireServer::accept_and_inject(
+        let wire_server = WireServer::accept_and_inject_native(
             &self.socket_name,
-            &native_instance,
-            Some(&native_surface),
+            Some(&surface_desc),
             WireServerOptions {
                 expect_surface: true,
                 use_spontaneous_callbacks: true,
@@ -1354,8 +1342,6 @@ impl GpuProcessApp {
 
         self.window = Some(window);
         self.wire_server = Some(wire_server);
-        self._native_instance = Some(native_instance);
-        self._native_surface = Some(native_surface);
         Ok(())
     }
 }
@@ -1363,8 +1349,6 @@ impl GpuProcessApp {
 impl Drop for GpuProcessApp {
     fn drop(&mut self) {
         let _ = self.wire_server.take();
-        let _ = self._native_surface.take();
-        let _ = self._native_instance.take();
     }
 }
 
