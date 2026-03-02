@@ -87,6 +87,8 @@ fn main() {
     {
         println!("cargo:rustc-link-lib=onecore_apiset");
         println!("cargo:rustc-link-lib=dxguid");
+        //println!("cargo::rustc-link-arg=/nodefaultlib:msvcrt");
+        //println!("cargo::rustc-link-arg=/defaultlib:msvcrtd");
     }
 }
 
@@ -256,7 +258,8 @@ fn build_wire_cpp_shim(dawn_root: &Path, gen_include_dir: &Path, out_dir: &Path)
     build.include(dawn_root.join("include"));
     build.include(gen_include_dir);
     build.include(out_dir);
-    build.flag_if_supported("-std=c++20");
+    build.debug(true);
+    build.std("c++20");
     // Match Dawn's own toolchain settings to avoid ABI/RTTI mismatches.
     build.flag_if_supported("-fno-rtti");
     build.flag_if_supported("-fno-exceptions");
