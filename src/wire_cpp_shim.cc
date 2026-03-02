@@ -101,9 +101,15 @@ struct DawnRsWireClient {
 };
 
 struct DawnRsWireServer {
+    struct RetainedInjectedSharedTexture {
+        WGPUSharedTextureMemory shared = nullptr;
+        WGPUTexture texture = nullptr;
+        bool access_begun = false;
+    };
     std::unique_ptr<SerializerBridge> serializer;
     std::unique_ptr<dawn::wire::WireServer> wire;
     std::vector<WGPUTexture> retained_injected_textures;
+    std::vector<RetainedInjectedSharedTexture> retained_shared_textures;
 };
 // The wire server lifecycle (construction + Inject* + HandleCommands) is currently exposed
 // through C++ dawn::wire APIs, so we keep this control plane in C++.
@@ -248,6 +254,20 @@ DawnRsWireServer* dawn_rs_wire_server_create_native(const DawnRsWireSerializerCa
 void dawn_rs_wire_server_destroy(DawnRsWireServer* server) {
     if (server) {
         const DawnProcTable& procs = dawn::native::GetProcs();
+        for (auto& retained : server->retained_shared_textures) {
+            if (retained.shared && retained.texture && retained.access_begun) {
+                WGPUSharedTextureMemoryEndAccessState end_access = {};
+                procs.sharedTextureMemoryEndAccess(retained.shared, retained.texture, &end_access);
+                procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+            }
+            if (retained.texture) {
+                procs.textureRelease(retained.texture);
+            }
+            if (retained.shared) {
+                procs.sharedTextureMemoryRelease(retained.shared);
+            }
+        }
+        server->retained_shared_textures.clear();
         for (WGPUTexture texture : server->retained_injected_textures) {
             if (texture) {
                 procs.textureRelease(texture);
@@ -383,69 +403,25 @@ bool DawnRsInjectImportedSharedTexture(DawnRsWireServer* server,
         return false;
     }
 
-    WGPUTextureDescriptor local_desc = tex_desc;
-    local_desc.usage = static_cast<WGPUTextureUsage>(usage) | WGPUTextureUsage_CopyDst;
-    WGPUTexture texture = procs.deviceCreateTexture(device, &local_desc);
-    if (!texture) {
-        WGPUSharedTextureMemoryEndAccessState end_access = {};
-        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
-        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
-        procs.textureRelease(shared_texture);
-        procs.sharedTextureMemoryRelease(shared);
-        return false;
-    }
-    WGPUCommandEncoder encoder = procs.deviceCreateCommandEncoder(device, nullptr);
-    if (!encoder) {
-        WGPUSharedTextureMemoryEndAccessState end_access = {};
-        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
-        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
-        procs.textureRelease(shared_texture);
-        procs.textureRelease(texture);
-        procs.sharedTextureMemoryRelease(shared);
-        return false;
-    }
-    WGPUTexelCopyTextureInfo src = {};
-    src.texture = shared_texture;
-    src.mipLevel = 0;
-    src.origin = {0, 0, 0};
-    src.aspect = WGPUTextureAspect_All;
-    WGPUTexelCopyTextureInfo dst = {};
-    dst.texture = texture;
-    dst.mipLevel = 0;
-    dst.origin = {0, 0, 0};
-    dst.aspect = WGPUTextureAspect_All;
-    procs.commandEncoderCopyTextureToTexture(encoder, &src, &dst, &size);
-    WGPUCommandBuffer command = procs.commandEncoderFinish(encoder, nullptr);
-    procs.commandEncoderRelease(encoder);
-    if (!command) {
-        WGPUSharedTextureMemoryEndAccessState end_access = {};
-        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
-        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
-        procs.textureRelease(shared_texture);
-        procs.textureRelease(texture);
-        procs.sharedTextureMemoryRelease(shared);
-        return false;
-    }
-    WGPUQueue queue = procs.deviceGetQueue(device);
-    procs.queueSubmit(queue, 1, &command);
-    procs.commandBufferRelease(command);
-    WGPUSharedTextureMemoryEndAccessState end_access = {};
-    procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
-    procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
-    procs.textureRelease(shared_texture);
-    procs.sharedTextureMemoryRelease(shared);
-
     dawn::wire::Handle tex_h = {};
     tex_h.id = texture_handle.id;
     tex_h.generation = texture_handle.generation;
     dawn::wire::Handle dev_h = {};
     dev_h.id = device_handle.id;
     dev_h.generation = device_handle.generation;
-    const bool ok = server->wire->InjectTexture(texture, tex_h, dev_h);
+    const bool ok = server->wire->InjectTexture(shared_texture, tex_h, dev_h);
     if (ok) {
-        server->retained_injected_textures.push_back(texture);
+        DawnRsWireServer::RetainedInjectedSharedTexture retained = {};
+        retained.shared = shared;
+        retained.texture = shared_texture;
+        retained.access_begun = true;
+        server->retained_shared_textures.push_back(retained);
     } else {
-        procs.textureRelease(texture);
+        WGPUSharedTextureMemoryEndAccessState end_access = {};
+        procs.sharedTextureMemoryEndAccess(shared, shared_texture, &end_access);
+        procs.sharedTextureMemoryEndAccessStateFreeMembers(end_access);
+        procs.textureRelease(shared_texture);
+        procs.sharedTextureMemoryRelease(shared);
     }
     return ok;
 }

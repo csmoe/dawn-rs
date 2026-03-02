@@ -9,6 +9,8 @@ use crate::{Texture, TextureFormat, TextureUsage};
 use interprocess::TryClone;
 use interprocess::local_socket::Stream;
 use interprocess::local_socket::traits::Stream as _;
+#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+use std::ffi::c_void;
 use std::io::Write as _;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
@@ -572,6 +574,113 @@ impl Server {
     pub fn flush(&self) {
         if let Ok(mut guard) = self.server.lock() {
             let _ = guard.flush();
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    pub fn inject_iosurface_texture(
+        &self,
+        io_surface: *mut c_void,
+        reservation: WireTextureReservation,
+    ) -> Result<(), WireError> {
+        let mut guard = self
+            .server
+            .lock()
+            .map_err(|_| WireError::LockPoisoned("wire server"))?;
+        let ok = guard.inject_iosurface_texture(
+            io_surface,
+            reservation.width(),
+            reservation.height(),
+            reservation.format_raw(),
+            reservation.usage_bits(),
+            WireObjectHandle {
+                id: reservation.texture_handle().id(),
+                generation: reservation.texture_handle().generation(),
+            },
+            WireObjectHandle {
+                id: reservation.device_handle().id(),
+                generation: reservation.device_handle().generation(),
+            },
+        );
+        if ok {
+            Ok(())
+        } else {
+            Err(WireError::Protocol("failed to inject IOSurface texture"))
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn inject_dxgi_texture(
+        &self,
+        shared_handle: *mut c_void,
+        use_keyed_mutex: bool,
+        reservation: WireTextureReservation,
+    ) -> Result<(), WireError> {
+        let mut guard = self
+            .server
+            .lock()
+            .map_err(|_| WireError::LockPoisoned("wire server"))?;
+        let ok = guard.inject_dxgi_texture(
+            shared_handle,
+            use_keyed_mutex,
+            reservation.width(),
+            reservation.height(),
+            reservation.format_raw(),
+            reservation.usage_bits(),
+            WireObjectHandle {
+                id: reservation.texture_handle().id(),
+                generation: reservation.texture_handle().generation(),
+            },
+            WireObjectHandle {
+                id: reservation.device_handle().id(),
+                generation: reservation.device_handle().generation(),
+            },
+        );
+        if ok {
+            Ok(())
+        } else {
+            Err(WireError::Protocol("failed to inject DXGI shared texture"))
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[allow(clippy::too_many_arguments)]
+    pub fn inject_dmabuf_texture(
+        &self,
+        fd: i32,
+        drm_format: u32,
+        drm_modifier: u64,
+        stride: u32,
+        offset: u64,
+        reservation: WireTextureReservation,
+    ) -> Result<(), WireError> {
+        let mut guard = self
+            .server
+            .lock()
+            .map_err(|_| WireError::LockPoisoned("wire server"))?;
+        let ok = guard.inject_dmabuf_texture(
+            fd,
+            drm_format,
+            drm_modifier,
+            stride,
+            offset,
+            reservation.width(),
+            reservation.height(),
+            reservation.format_raw(),
+            reservation.usage_bits(),
+            WireObjectHandle {
+                id: reservation.texture_handle().id(),
+                generation: reservation.texture_handle().generation(),
+            },
+            WireObjectHandle {
+                id: reservation.device_handle().id(),
+                generation: reservation.device_handle().generation(),
+            },
+        );
+        if ok {
+            Ok(())
+        } else {
+            Err(WireError::Protocol("failed to inject dmabuf texture"))
         }
     }
 }
