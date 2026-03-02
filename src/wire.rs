@@ -26,7 +26,7 @@ const DEFAULT_WIRE_MAX_PENDING_PACKETS: usize = 4096;
 const DEFAULT_WIRE_MAX_PENDING_BYTES: usize = 16 * 1024 * 1024;
 const DEFAULT_WIRE_PACKET_POOL_LIMIT: usize = 1024;
 
-pub fn with_native_runtime<R>(f: impl FnOnce() -> R) -> Result<R, WireError> {
+pub(crate) fn with_native_runtime<R>(f: impl FnOnce() -> R) -> Result<R, WireError> {
     let _guard = WireNativeProcGuard::acquire().map_err(WireError::Wire)?;
     Ok(f())
 }
@@ -385,6 +385,8 @@ impl Drop for Client {
 /// High-level wire server runtime for instance/surface injection and command pumping.
 pub struct Server {
     server: Arc<Mutex<WireServerShim>>,
+    owned_instance: Option<Instance>,
+    owned_surface: Option<Surface>,
     stop: Arc<AtomicBool>,
     tx: Option<mpsc::SyncSender<WireOutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireError>>>,
@@ -392,6 +394,23 @@ pub struct Server {
 }
 
 impl Server {
+    pub fn accept_and_inject_native(
+        socket_name: &str,
+        native_surface_desc: Option<&crate::SurfaceDescriptor>,
+        opts: ServerOptions,
+    ) -> Result<Self, WireError> {
+        let (native_instance, native_surface) = with_native_runtime(|| {
+            let native_instance = Instance::new(None);
+            let native_surface = native_surface_desc.map(|desc| native_instance.create_surface(desc));
+            (native_instance, native_surface)
+        })?;
+        let mut server =
+            Self::accept_and_inject(socket_name, &native_instance, native_surface.as_ref(), opts)?;
+        server.owned_instance = Some(native_instance);
+        server.owned_surface = native_surface;
+        Ok(server)
+    }
+
     pub fn accept_and_inject(
         socket_name: &str,
         native_instance: &Instance,
@@ -541,6 +560,8 @@ impl Server {
 
         Ok(Self {
             server,
+            owned_instance: None,
+            owned_surface: None,
             stop,
             tx: Some(to_writer_tx),
             writer_thread: Some(writer_thread),

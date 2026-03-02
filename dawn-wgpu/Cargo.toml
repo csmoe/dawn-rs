@@ -6,6 +6,8 @@ license.workspace = true
 description = "wgpu compatibility layer for Dawn API"
 repository.workspace = true
 homepage.workspace = true
+authors.workspace = true
+categories.workspace = true
 
 [dependencies]
 dawn-rs = { workspace = true }
@@ -33,6 +35,6 @@ default = []
 wire = ["dawn-rs/wire", "dep:interprocess"]
 
 [[example]]
-name = "rainbow_cat_ipc"
-path = "examples/rainbow_cat_ipc.rs"
+name = "nya-cat-wire"
+path = "examples/nya_cat_wire.rs"
 required-features = ["wire"]
