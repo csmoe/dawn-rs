@@ -33,6 +33,7 @@ libc = "0.2"
 [features]
 default = []
 wire = ["dawn-rs/wire", "dep:interprocess"]
+shared_texture_memory = []
 
 [[example]]
 name = "nya-cat-wire"

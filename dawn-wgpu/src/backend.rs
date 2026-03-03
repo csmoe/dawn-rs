@@ -235,6 +235,22 @@ impl AdapterInterface for DawnAdapter {
         if !desc.required_features.is_empty() {
             dawn_desc.required_features = Some(map_features_to_dawn(desc.required_features));
         }
+        #[cfg(feature = "shared_texture_memory")]
+        if let Some(features) = dawn_desc.required_features.as_mut() {
+            #[cfg(target_os = "windows")]
+            {
+                features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
+            }
+            #[cfg(target_os = "macos")]
+            {
+                features.push(FeatureName::SharedTextureMemoryIOSurface);
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                features.push(FeatureName::SharedTextureMemoryDmaBuf);
+            }
+        }
         if desc.required_limits != wgpu::Limits::default() {
             dawn_desc.required_limits = Some(map_limits_to_dawn(&desc.required_limits));
         }
