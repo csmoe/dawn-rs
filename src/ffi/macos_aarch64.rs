@@ -457,6 +457,10 @@ pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSamplingResourceTa
 pub const WGPUFeatureName_WGPUFeatureName_ChromiumExperimentalSubgroupSizeControl: WGPUFeatureName =
     327739;
 pub const WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax: WGPUFeatureName = 327740;
+pub const WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture: WGPUFeatureName =
+    327741;
+pub const WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture: WGPUFeatureName =
+    327742;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -876,7 +880,6 @@ pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar422Unorm: WGPUT
     327685;
 pub const WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm: WGPUTextureFormat =
     327686;
-pub const WGPUTextureFormat_WGPUTextureFormat_External: WGPUTextureFormat = 327687;
 pub const WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid: WGPUTextureFormat = 327687;
 pub const WGPUTextureFormat_WGPUTextureFormat_Force32: WGPUTextureFormat = 2147483647;
 pub type WGPUTextureFormat = ::std::os::raw::c_uint;
@@ -969,6 +972,10 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupId:
     WGPUWGSLLanguageFeatureName = 6;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet:
     WGPUWGSLLanguageFeatureName = 7;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
+    WGPUWGSLLanguageFeatureName = 8;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1:
+    WGPUWGSLLanguageFeatureName = 9;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented:
     WGPUWGSLLanguageFeatureName = 327680;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental : WGPUWGSLLanguageFeatureName = 327681 ;
@@ -987,8 +994,6 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FragmentDepth:
     WGPUWGSLLanguageFeatureName = 327688;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace:
     WGPUWGSLLanguageFeatureName = 327689;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity:
-    WGPUWGSLLanguageFeatureName = 327690;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView:
     WGPUWGSLLanguageFeatureName = 327691;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParameters:
@@ -3033,12 +3038,11 @@ const _: () = {
 pub struct WGPUSharedTextureMemoryAHardwareBufferDescriptor {
     pub chain: WGPUChainedStruct,
     pub handle: *mut ::std::os::raw::c_void,
-    pub useExternalFormat: WGPUBool,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
     ["Size of WGPUSharedTextureMemoryAHardwareBufferDescriptor"]
-        [::std::mem::size_of::<WGPUSharedTextureMemoryAHardwareBufferDescriptor>() - 32usize];
+        [::std::mem::size_of::<WGPUSharedTextureMemoryAHardwareBufferDescriptor>() - 24usize];
     ["Alignment of WGPUSharedTextureMemoryAHardwareBufferDescriptor"]
         [::std::mem::align_of::<WGPUSharedTextureMemoryAHardwareBufferDescriptor>() - 8usize];
     ["Offset of field: WGPUSharedTextureMemoryAHardwareBufferDescriptor::chain"]
@@ -3047,11 +3051,6 @@ const _: () = {
         WGPUSharedTextureMemoryAHardwareBufferDescriptor,
         handle
     ) - 16usize];
-    ["Offset of field: WGPUSharedTextureMemoryAHardwareBufferDescriptor::useExternalFormat"][::std::mem::offset_of!(
-        WGPUSharedTextureMemoryAHardwareBufferDescriptor,
-        useExternalFormat
-    )
-        - 24usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
