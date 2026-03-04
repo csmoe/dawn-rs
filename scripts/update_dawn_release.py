@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-import io
-import json
 import os
-import platform
-import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
-import urllib.request
-import zipfile
+
+from dawn_release_utils import (
+    detect_platform_hint,
+    download_file,
+    extract_archive,
+    extract_prebuilt_asset,
+    find_first_dir,
+    release_latest,
+    select_prebuilt_asset,
+)
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 VERSION_FILE = os.path.join(REPO_ROOT, "DAWN_VERSION")
@@ -30,40 +33,6 @@ def write_text(path: str, content: str) -> None:
         f.write(content)
 
 
-def http_get_json(url: str) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "dawn-codegen"})
-    with urllib.request.urlopen(req) as resp:
-        return json.load(resp)
-
-
-def download_file(url: str, dest_path: str) -> None:
-    req = urllib.request.Request(url, headers={"User-Agent": "dawn-codegen"})
-    with urllib.request.urlopen(req) as resp:
-        data = resp.read()
-    with open(dest_path, "wb") as f:
-        f.write(data)
-
-
-def extract_archive(archive_path: str, dest_dir: str) -> None:
-    if archive_path.endswith(".zip"):
-        with zipfile.ZipFile(archive_path, "r") as zf:
-            zf.extractall(dest_dir)
-        return
-    if archive_path.endswith(".tar.gz") or archive_path.endswith(".tgz"):
-        with tarfile.open(archive_path, "r:gz") as tf:
-            tf.extractall(dest_dir)
-        return
-    raise RuntimeError(f"Unsupported archive type: {archive_path}")
-
-
-def find_first_dir(root: str) -> str:
-    for entry in os.listdir(root):
-        path = os.path.join(root, entry)
-        if os.path.isdir(path):
-            return path
-    return ""
-
-
 def find_webgpu_header(root: str) -> str:
     for dirpath, _, filenames in os.walk(root):
         for name in filenames:
@@ -72,66 +41,10 @@ def find_webgpu_header(root: str) -> str:
     return ""
 
 
-def score_asset(name: str, platform_hint: str) -> int:
-    n = name.lower()
-    score = 0
-    os_markers = {
-        "linux": (
-            "linux",
-            "ubuntu",
-        ),
-        "macos": ("mac", "macos", "osx", "darwin"),
-        "windows": ("windows", "win", "msvc"),
-    }
-
-    target_markers = os_markers.get(platform_hint, ())
-    if any(marker in n for marker in target_markers):
-        score += 4
-
-    if platform_hint == "linux":
-        if "x86_64" in n or "amd64" in n:
-            score += 2
-        if "aarch64" in n or "arm64" in n:
-            score += 1
-    elif platform_hint == "macos":
-        if "arm64" in n or "aarch64" in n:
-            score += 2
-        if "x86_64" in n or "amd64" in n:
-            score += 1
-    elif platform_hint == "windows":
-        if "x86_64" in n or "amd64" in n:
-            score += 2
-
-    # Penalize assets that look like they target another OS.
-    for os_name, markers in os_markers.items():
-        if os_name == platform_hint:
-            continue
-        if any(marker in n for marker in markers):
-            score -= 3
-            break
-
-    if n.endswith(".tar.gz") or n.endswith(".tgz"):
-        score += 1
-    if n.endswith(".zip"):
-        score += 1
-    return score
-
-
-def detect_platform_hint() -> str:
-    sys_name = platform.system().lower()
-    if "darwin" in sys_name:
-        return "macos"
-    if "windows" in sys_name:
-        return "windows"
-    return "linux"
-
-
 def main() -> int:
     force = "--force" in sys.argv[1:]
     current_version = read_text(VERSION_FILE)
-    release_json = http_get_json(
-        "https://api.github.com/repos/google/dawn/releases/latest"
-    )
+    release_json = release_latest()
     latest_tag = release_json.get("tag_name", "")
     if not latest_tag:
         print("No releases found for google/dawn; exiting.")
@@ -146,30 +59,16 @@ def main() -> int:
         return 1
 
     platform_hint = detect_platform_hint()
-    assets = release_json.get("assets", [])
-    assets = sorted(
-        assets,
-        key=lambda a: score_asset(a.get("name", ""), platform_hint),
-        reverse=True,
-    )
-    prebuilt_url = ""
-    for asset in assets:
-        if score_asset(asset.get("name", ""), platform_hint) > 0:
-            prebuilt_url = asset.get("browser_download_url", "")
-            break
-
-    if not prebuilt_url:
-        print("Missing prebuilt release asset; cannot locate headers.")
-        for asset in assets:
-            name = asset.get("name", "")
-            print(f"  score={score_asset(name, platform_hint):>2}  {name}")
+    try:
+        selected_asset = select_prebuilt_asset(release_json, platform_hint)
+    except RuntimeError as e:
+        print(str(e))
         return 1
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         src_dir = os.path.join(tmp_dir, "src")
         prebuilt_dir = os.path.join(tmp_dir, "prebuilt")
         os.makedirs(src_dir, exist_ok=True)
-        os.makedirs(prebuilt_dir, exist_ok=True)
 
         src_archive = os.path.join(tmp_dir, "dawn-src.tar.gz")
         download_file(tarball_url, src_archive)
@@ -183,10 +82,7 @@ def main() -> int:
             print(f"Missing dawn.json at {dawn_json}")
             return 1
 
-        prebuilt_archive_name = os.path.basename(prebuilt_url)
-        prebuilt_archive = os.path.join(tmp_dir, prebuilt_archive_name)
-        download_file(prebuilt_url, prebuilt_archive)
-        extract_archive(prebuilt_archive, prebuilt_dir)
+        extract_prebuilt_asset(selected_asset, prebuilt_dir)
         api_header = find_webgpu_header(prebuilt_dir)
         if not api_header:
             print("Failed to locate webgpu.h in prebuilt artifact.")
