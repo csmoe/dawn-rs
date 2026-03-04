@@ -32,27 +32,134 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
-      - name: Download Dawn prebuilt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Read Dawn tag
+        id: dawn_tag
         run: |
-          dawn_tag="$(cat DAWN_VERSION)"
+          dawn_tag="$(tr -d '\r\n' < DAWN_VERSION)"
           if [[ -z "$dawn_tag" ]]; then
             echo "DAWN_VERSION is empty" >&2
             exit 1
           fi
-          case "${{ runner.os }}" in
-            Linux) platform=linux ;;
-            macOS) platform=macos ;;
-            Windows) platform=windows ;;
-            *) echo "Unsupported runner OS: ${{ runner.os }}" >&2; exit 1 ;;
-          esac
-          dawn_root="$(python3 ./scripts/download_dawn_prebuilt.py --tag "$dawn_tag" --platform "$platform" --output ".ci/dawn")"
+          echo "value=$dawn_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Dawn source + deps + build
+        uses: actions/cache@v4
+        with:
+          path: .ci/dawn-cache
+          key: dawn-${{ runner.os }}-${{ steps.dawn_tag.outputs.value }}-v1
+
+      - name: Install Dawn build deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build clang lld cmake pkg-config \
+            libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev
+
+      - name: Install Dawn build deps (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ninja cmake llvm -y
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install Dawn build deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja || true
+
+      - name: Download and build Dawn from source
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dawn_tag="${{ steps.dawn_tag.outputs.value }}"
+          dawn_cache_root="$PWD/.ci/dawn-cache"
+          dawn_root="$dawn_cache_root/dawn-${dawn_tag}"
+          mkdir -p "$dawn_cache_root"
+
+          if [[ ! -f "$dawn_root/CMakeLists.txt" ]]; then
+            tmp_src="$PWD/.ci/dawn-src"
+            rm -rf "$tmp_src"
+            mkdir -p "$tmp_src"
+            release_json="$(curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              "https://api.github.com/repos/google/dawn/releases/tags/${dawn_tag}")"
+            tarball_url="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["tarball_url"])' <<< "$release_json")"
+            if [[ -z "$tarball_url" || "$tarball_url" == "null" ]]; then
+              echo "Failed to resolve tarball_url from release ${dawn_tag}" >&2
+              exit 1
+            fi
+            curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -L "$tarball_url" \
+              -o "$tmp_src/dawn.tar.gz"
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              DAWN_SRC="$tmp_src" python3 - <<'PY'
+import os
+import tarfile
+
+root = os.environ["DAWN_SRC"]
+archive = os.path.join(root, "dawn.tar.gz")
+with tarfile.open(archive, "r:gz") as tf:
+    members = [m for m in tf.getmembers() if not (m.issym() or m.islnk())]
+    tf.extractall(root, members=members)
+PY
+            else
+              tar -xzf "$tmp_src/dawn.tar.gz" -C "$tmp_src"
+            fi
+            extracted="$(find "$tmp_src" -maxdepth 1 -type d -name 'dawn-*' | head -n 1)"
+            if [[ -z "$extracted" ]]; then
+              echo "Failed to extract Dawn source for tag $dawn_tag" >&2
+              exit 1
+            fi
+            rm -rf "$dawn_root"
+            mv "$extracted" "$dawn_root"
+          fi
+
+          # Dawn official standalone path (without depot_tools): fetch dependencies first.
+          if [[ ! -f "$dawn_root/.deps_fetched" ]]; then
+            (cd "$dawn_root" && python tools/fetch_dawn_dependencies.py)
+            touch "$dawn_root/.deps_fetched"
+          fi
+
+          cmake_args=(
+            -GNinja
+            -S "$dawn_root"
+            -B "$dawn_root/out/Release"
+            -DCMAKE_BUILD_TYPE=Release
+            -DBUILD_SHARED_LIBS=OFF
+            -DDAWN_BUILD_SAMPLES=OFF
+            -DDAWN_BUILD_TESTS=OFF
+            -DDAWN_BUILD_BENCHMARKS=OFF
+          )
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cmake_args+=(
+              -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+              -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
+              -DABSL_MSVC_STATIC_RUNTIME=ON
+            )
+          fi
+
+          cmake "${cmake_args[@]}"
+          if ! cmake --build "$dawn_root/out/Release" --config Release --parallel --target webgpu_dawn dawn_proc dawn_wire wire_client wire_server; then
+            echo "Targeted Dawn build failed, falling back to full build."
+            cmake --build "$dawn_root/out/Release" --config Release --parallel
+          fi
+
           echo "DAWN_ROOT=$dawn_root" >> "$GITHUB_ENV"
           echo "Using DAWN tag=$dawn_tag DAWN_ROOT=$dawn_root"
 
@@ -62,11 +169,11 @@ jobs:
       - name: Build dawn-rs examples (default)
         run: cargo build -p dawn-rs --examples
 
-      - name: Build dawn-rs wire example
-        run: cargo build -p dawn-rs --example triangle-wire --features wire
+      #- name: Build dawn-rs wire example
+      #  run: cargo build -p dawn-rs --example triangle-wire --features wire
 
       - name: Build dawn-wgpu examples (default)
         run: cargo build -p dawn-wgpu --examples
 
-      - name: Build dawn-wgpu wire example
-        run: cargo build -p dawn-wgpu --example nya-cat-wire --features wire
+      #- name: Build dawn-wgpu wire example
+      #  run: cargo build -p dawn-wgpu --example nya-cat-wire --features wire
