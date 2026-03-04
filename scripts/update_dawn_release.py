@@ -11,7 +11,6 @@ import tempfile
 import urllib.request
 import zipfile
 
-
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 VERSION_FILE = os.path.join(REPO_ROOT, "DAWN_VERSION")
 OUT_DIR = os.path.join(REPO_ROOT, "src", "generated")
@@ -76,21 +75,41 @@ def find_webgpu_header(root: str) -> str:
 def score_asset(name: str, platform_hint: str) -> int:
     n = name.lower()
     score = 0
+    os_markers = {
+        "linux": (
+            "linux",
+            "ubuntu",
+        ),
+        "macos": ("mac", "macos", "osx", "darwin"),
+        "windows": ("windows", "win", "msvc"),
+    }
+
+    target_markers = os_markers.get(platform_hint, ())
+    if any(marker in n for marker in target_markers):
+        score += 4
+
     if platform_hint == "linux":
-        if "linux" in n:
-            score += 4
         if "x86_64" in n or "amd64" in n:
             score += 2
+        if "aarch64" in n or "arm64" in n:
+            score += 1
     elif platform_hint == "macos":
-        if "mac" in n or "macos" in n or "osx" in n:
-            score += 4
         if "arm64" in n or "aarch64" in n:
             score += 2
+        if "x86_64" in n or "amd64" in n:
+            score += 1
     elif platform_hint == "windows":
-        if "windows" in n or "win" in n:
-            score += 4
         if "x86_64" in n or "amd64" in n:
             score += 2
+
+    # Penalize assets that look like they target another OS.
+    for os_name, markers in os_markers.items():
+        if os_name == platform_hint:
+            continue
+        if any(marker in n for marker in markers):
+            score -= 3
+            break
+
     if n.endswith(".tar.gz") or n.endswith(".tgz"):
         score += 1
     if n.endswith(".zip"):
@@ -110,7 +129,9 @@ def detect_platform_hint() -> str:
 def main() -> int:
     force = "--force" in sys.argv[1:]
     current_version = read_text(VERSION_FILE)
-    release_json = http_get_json("https://api.github.com/repos/google/dawn/releases/latest")
+    release_json = http_get_json(
+        "https://api.github.com/repos/google/dawn/releases/latest"
+    )
     latest_tag = release_json.get("tag_name", "")
     if not latest_tag:
         print("No releases found for google/dawn; exiting.")
@@ -139,6 +160,9 @@ def main() -> int:
 
     if not prebuilt_url:
         print("Missing prebuilt release asset; cannot locate headers.")
+        for asset in assets:
+            name = asset.get("name", "")
+            print(f"  score={score_asset(name, platform_hint):>2}  {name}")
         return 1
 
     with tempfile.TemporaryDirectory() as tmp_dir:

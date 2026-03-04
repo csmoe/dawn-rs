@@ -236,7 +236,8 @@ impl AdapterInterface for DawnAdapter {
             dawn_desc.required_features = Some(map_features_to_dawn(desc.required_features));
         }
         #[cfg(feature = "shared_texture_memory")]
-        if let Some(features) = dawn_desc.required_features.as_mut() {
+        {
+            let mut features = vec![];
             #[cfg(target_os = "windows")]
             {
                 features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
@@ -249,6 +250,11 @@ impl AdapterInterface for DawnAdapter {
             #[cfg(target_os = "linux")]
             {
                 features.push(FeatureName::SharedTextureMemoryDmaBuf);
+            }
+            if let Some(features) = dawn_desc.required_features.as_mut() {
+                features.extend(features);
+            } else {
+                dawn_desc.required_features = Some(features);
             }
         }
         if desc.required_limits != wgpu::Limits::default() {
