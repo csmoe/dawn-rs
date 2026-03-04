@@ -11,6 +11,8 @@ mod enums {
         UniformBufferStandardLayout,
         SubgroupId,
         TextureAndSamplerLet,
+        SubgroupUniformity,
+        TextureFormatsTier1,
         ChromiumTestingUnimplemented,
         ChromiumTestingUnsafeExperimental,
         ChromiumTestingExperimental,
@@ -21,7 +23,6 @@ mod enums {
         ChromiumPrint,
         FragmentDepth,
         ImmediateAddressSpace,
-        SubgroupUniformity,
         BufferView,
         FilteringParameters,
         SwizzleAssignment,
@@ -50,6 +51,12 @@ mod enums {
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet => {
                     WGSLLanguageFeatureName::TextureAndSamplerLet
+                }
+                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity => {
+                    WGSLLanguageFeatureName::SubgroupUniformity
+                }
+                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1 => {
+                    WGSLLanguageFeatureName::TextureFormatsTier1
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
                     WGSLLanguageFeatureName::ChromiumTestingUnimplemented
@@ -80,9 +87,6 @@ mod enums {
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace => {
                     WGSLLanguageFeatureName::ImmediateAddressSpace
-                }
-                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity => {
-                    WGSLLanguageFeatureName::SubgroupUniformity
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView => {
                     WGSLLanguageFeatureName::BufferView
@@ -124,6 +128,12 @@ mod enums {
                 WGSLLanguageFeatureName::TextureAndSamplerLet => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet
                 }
+                WGSLLanguageFeatureName::SubgroupUniformity => {
+                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity
+                }
+                WGSLLanguageFeatureName::TextureFormatsTier1 => {
+                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1
+                }
                 WGSLLanguageFeatureName::ChromiumTestingUnimplemented => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
                 }
@@ -153,9 +163,6 @@ mod enums {
                 }
                 WGSLLanguageFeatureName::ImmediateAddressSpace => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace
-                }
-                WGSLLanguageFeatureName::SubgroupUniformity => {
-                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity
                 }
                 WGSLLanguageFeatureName::BufferView => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView
@@ -1180,6 +1187,8 @@ mod enums {
         ChromiumExperimentalSamplingResourceTable,
         ChromiumExperimentalSubgroupSizeControl,
         AtomicVec2UMinMax,
+        Unorm16FormatsForExternalTexture,
+        OpaqueYCbCrAndroidForExternalTexture,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1425,6 +1434,12 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax => {
                     FeatureName::AtomicVec2UMinMax
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture => {
+                    FeatureName::Unorm16FormatsForExternalTexture
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture => {
+                    FeatureName::OpaqueYCbCrAndroidForExternalTexture
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1674,6 +1689,12 @@ mod enums {
                 }
                 FeatureName::AtomicVec2UMinMax => {
                     ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax
+                }
+                FeatureName::Unorm16FormatsForExternalTexture => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture
+                }
+                FeatureName::OpaqueYCbCrAndroidForExternalTexture => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture
                 }
             }
         }
@@ -3610,7 +3631,6 @@ mod enums {
         R8Bg8Biplanar444Unorm,
         R10X6Bg10X6Biplanar422Unorm,
         R10X6Bg10X6Biplanar444Unorm,
-        External,
         OpaqueYCbCrAndroid,
     }
     impl From<ffi::WGPUTextureFormat> for TextureFormat {
@@ -3938,9 +3958,6 @@ mod enums {
                 }
                 ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm => {
                     TextureFormat::R10X6Bg10X6Biplanar444Unorm
-                }
-                ffi::WGPUTextureFormat_WGPUTextureFormat_External => {
-                    TextureFormat::External
                 }
                 ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid => {
                     TextureFormat::OpaqueYCbCrAndroid
@@ -4274,9 +4291,6 @@ mod enums {
                 }
                 TextureFormat::R10X6Bg10X6Biplanar444Unorm => {
                     ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm
-                }
-                TextureFormat::External => {
-                    ffi::WGPUTextureFormat_WGPUTextureFormat_External
                 }
                 TextureFormat::OpaqueYCbCrAndroid => {
                     ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid
@@ -12266,14 +12280,10 @@ mod structs {
     }
     pub struct SharedTextureMemoryAHardwareBufferDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
-        pub use_external_format: Option<bool>,
     }
     impl Default for SharedTextureMemoryAHardwareBufferDescriptor {
         fn default() -> Self {
-            Self {
-                handle: None,
-                use_external_format: None,
-            }
+            Self { handle: None }
         }
     }
     impl SharedTextureMemoryAHardwareBufferDescriptor {
@@ -12293,20 +12303,12 @@ mod structs {
             if let Some(value) = self.handle {
                 raw.handle = value;
             }
-            raw.useExternalFormat = if self.use_external_format.unwrap_or(false) {
-                1
-            } else {
-                0
-            };
             (raw, storage)
         }
         pub(crate) fn from_ffi(
             value: ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
         ) -> Self {
-            Self {
-                handle: Some(value.handle),
-                use_external_format: Some(value.useExternalFormat != 0),
-            }
+            Self { handle: Some(value.handle) }
         }
     }
     pub struct SharedTextureMemoryAHardwareBufferProperties {

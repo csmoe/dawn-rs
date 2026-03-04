@@ -11,6 +11,8 @@ mod enums {
         UniformBufferStandardLayout,
         SubgroupId,
         TextureAndSamplerLet,
+        SubgroupUniformity,
+        TextureFormatsTier1,
         ChromiumTestingUnimplemented,
         ChromiumTestingUnsafeExperimental,
         ChromiumTestingExperimental,
@@ -21,7 +23,6 @@ mod enums {
         ChromiumPrint,
         FragmentDepth,
         ImmediateAddressSpace,
-        SubgroupUniformity,
         BufferView,
         FilteringParameters,
         SwizzleAssignment,
@@ -50,6 +51,12 @@ mod enums {
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet => {
                     WGSLLanguageFeatureName::TextureAndSamplerLet
+                }
+                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity => {
+                    WGSLLanguageFeatureName::SubgroupUniformity
+                }
+                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1 => {
+                    WGSLLanguageFeatureName::TextureFormatsTier1
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
                     WGSLLanguageFeatureName::ChromiumTestingUnimplemented
@@ -80,9 +87,6 @@ mod enums {
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace => {
                     WGSLLanguageFeatureName::ImmediateAddressSpace
-                }
-                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity => {
-                    WGSLLanguageFeatureName::SubgroupUniformity
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView => {
                     WGSLLanguageFeatureName::BufferView
@@ -124,6 +128,12 @@ mod enums {
                 WGSLLanguageFeatureName::TextureAndSamplerLet => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureAndSamplerLet
                 }
+                WGSLLanguageFeatureName::SubgroupUniformity => {
+                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity
+                }
+                WGSLLanguageFeatureName::TextureFormatsTier1 => {
+                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1
+                }
                 WGSLLanguageFeatureName::ChromiumTestingUnimplemented => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
                 }
@@ -153,9 +163,6 @@ mod enums {
                 }
                 WGSLLanguageFeatureName::ImmediateAddressSpace => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ImmediateAddressSpace
-                }
-                WGSLLanguageFeatureName::SubgroupUniformity => {
-                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUniformity
                 }
                 WGSLLanguageFeatureName::BufferView => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_BufferView
@@ -1180,6 +1187,8 @@ mod enums {
         ChromiumExperimentalSamplingResourceTable,
         ChromiumExperimentalSubgroupSizeControl,
         AtomicVec2UMinMax,
+        Unorm16FormatsForExternalTexture,
+        OpaqueYCbCrAndroidForExternalTexture,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1425,6 +1434,12 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax => {
                     FeatureName::AtomicVec2UMinMax
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture => {
+                    FeatureName::Unorm16FormatsForExternalTexture
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture => {
+                    FeatureName::OpaqueYCbCrAndroidForExternalTexture
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1674,6 +1689,12 @@ mod enums {
                 }
                 FeatureName::AtomicVec2UMinMax => {
                     ffi::WGPUFeatureName_WGPUFeatureName_AtomicVec2uMinMax
+                }
+                FeatureName::Unorm16FormatsForExternalTexture => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture
+                }
+                FeatureName::OpaqueYCbCrAndroidForExternalTexture => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture
                 }
             }
         }
@@ -3610,7 +3631,6 @@ mod enums {
         R8Bg8Biplanar444Unorm,
         R10X6Bg10X6Biplanar422Unorm,
         R10X6Bg10X6Biplanar444Unorm,
-        External,
         OpaqueYCbCrAndroid,
     }
     impl From<ffi::WGPUTextureFormat> for TextureFormat {
@@ -3938,9 +3958,6 @@ mod enums {
                 }
                 ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm => {
                     TextureFormat::R10X6Bg10X6Biplanar444Unorm
-                }
-                ffi::WGPUTextureFormat_WGPUTextureFormat_External => {
-                    TextureFormat::External
                 }
                 ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid => {
                     TextureFormat::OpaqueYCbCrAndroid
@@ -4274,9 +4291,6 @@ mod enums {
                 }
                 TextureFormat::R10X6Bg10X6Biplanar444Unorm => {
                     ffi::WGPUTextureFormat_WGPUTextureFormat_R10X6BG10X6Biplanar444Unorm
-                }
-                TextureFormat::External => {
-                    ffi::WGPUTextureFormat_WGPUTextureFormat_External
                 }
                 TextureFormat::OpaqueYCbCrAndroid => {
                     ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid
@@ -4816,36 +4830,6 @@ mod structs {
         let data = view.data.cast::<u8>();
         let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
         String::from_utf8_lossy(slice).into_owned()
-    }
-    pub struct InternalHaveEmdawnwebgpuHeader {
-        pub unused: Option<bool>,
-    }
-    impl Default for InternalHaveEmdawnwebgpuHeader {
-        fn default() -> Self {
-            Self { unused: None }
-        }
-    }
-    impl InternalHaveEmdawnwebgpuHeader {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER = unsafe {
-                std::mem::zeroed()
-            };
-            raw.unused = if self.unused.unwrap_or(false) { 1 } else { 0 };
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER,
-        ) -> Self {
-            Self {
-                unused: Some(value.unused != 0),
-            }
-        }
     }
     pub struct AHardwareBufferProperties {
         pub y_cb_cr_info: Option<YCbCrVkDescriptor>,
@@ -6297,64 +6281,6 @@ mod structs {
                 } else {
                     Some(string_view_to_string(value.label))
                 },
-            }
-        }
-    }
-    pub struct CompatibilityModeLimits {
-        pub max_storage_buffers_in_vertex_stage: Option<u32>,
-        pub max_storage_textures_in_vertex_stage: Option<u32>,
-        pub max_storage_buffers_in_fragment_stage: Option<u32>,
-        pub max_storage_textures_in_fragment_stage: Option<u32>,
-    }
-    impl Default for CompatibilityModeLimits {
-        fn default() -> Self {
-            Self {
-                max_storage_buffers_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_textures_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_buffers_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_textures_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
-            }
-        }
-    }
-    impl CompatibilityModeLimits {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUCompatibilityModeLimits, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUCompatibilityModeLimits = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.max_storage_buffers_in_vertex_stage {
-                raw.maxStorageBuffersInVertexStage = value;
-            }
-            if let Some(value) = self.max_storage_textures_in_vertex_stage {
-                raw.maxStorageTexturesInVertexStage = value;
-            }
-            if let Some(value) = self.max_storage_buffers_in_fragment_stage {
-                raw.maxStorageBuffersInFragmentStage = value;
-            }
-            if let Some(value) = self.max_storage_textures_in_fragment_stage {
-                raw.maxStorageTexturesInFragmentStage = value;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(value: ffi::WGPUCompatibilityModeLimits) -> Self {
-            Self {
-                max_storage_buffers_in_vertex_stage: Some(
-                    value.maxStorageBuffersInVertexStage,
-                ),
-                max_storage_textures_in_vertex_stage: Some(
-                    value.maxStorageTexturesInVertexStage,
-                ),
-                max_storage_buffers_in_fragment_stage: Some(
-                    value.maxStorageBuffersInFragmentStage,
-                ),
-                max_storage_textures_in_fragment_stage: Some(
-                    value.maxStorageTexturesInFragmentStage,
-                ),
             }
         }
     }
@@ -8191,46 +8117,6 @@ mod structs {
                 default_queue: Some(QueueDescriptor::from_ffi(value.defaultQueue)),
                 device_lost_callback_info: None,
                 uncaptured_error_callback_info: None,
-            }
-        }
-    }
-    pub struct EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub selector: Option<String>,
-    }
-    impl Default for EmscriptenSurfaceSourceCanvasHTMLSelector {
-        fn default() -> Self {
-            Self { selector: None }
-        }
-    }
-    impl EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = &self.selector {
-                raw.selector = ffi::WGPUStringView {
-                    data: value.as_ptr().cast(),
-                    length: value.len(),
-                };
-            } else {
-                raw.selector = ffi::WGPUStringView {
-                    data: std::ptr::null(),
-                    length: 0,
-                };
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector,
-        ) -> Self {
-            Self {
-                selector: Some(string_view_to_string(value.selector)),
             }
         }
     }
@@ -12394,14 +12280,10 @@ mod structs {
     }
     pub struct SharedTextureMemoryAHardwareBufferDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
-        pub use_external_format: Option<bool>,
     }
     impl Default for SharedTextureMemoryAHardwareBufferDescriptor {
         fn default() -> Self {
-            Self {
-                handle: None,
-                use_external_format: None,
-            }
+            Self { handle: None }
         }
     }
     impl SharedTextureMemoryAHardwareBufferDescriptor {
@@ -12421,20 +12303,12 @@ mod structs {
             if let Some(value) = self.handle {
                 raw.handle = value;
             }
-            raw.useExternalFormat = if self.use_external_format.unwrap_or(false) {
-                1
-            } else {
-                0
-            };
             (raw, storage)
         }
         pub(crate) fn from_ffi(
             value: ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
         ) -> Self {
-            Self {
-                handle: Some(value.handle),
-                use_external_format: Some(value.useExternalFormat != 0),
-            }
+            Self { handle: Some(value.handle) }
         }
     }
     pub struct SharedTextureMemoryAHardwareBufferProperties {
@@ -14760,44 +14634,6 @@ mod structs {
             }
         }
     }
-    pub struct TextureBindingViewDimensionDescriptor {
-        pub texture_binding_view_dimension: Option<TextureViewDimension>,
-    }
-    impl Default for TextureBindingViewDimensionDescriptor {
-        fn default() -> Self {
-            Self {
-                texture_binding_view_dimension: None,
-            }
-        }
-    }
-    impl TextureBindingViewDimensionDescriptor {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUTextureBindingViewDimensionDescriptor, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUTextureBindingViewDimensionDescriptor = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.texture_binding_view_dimension {
-                raw.textureBindingViewDimension = value.into();
-            } else {
-                raw.textureBindingViewDimension = 0 as ffi::WGPUTextureViewDimension;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUTextureBindingViewDimensionDescriptor,
-        ) -> Self {
-            Self {
-                texture_binding_view_dimension: Some(
-                    value.textureBindingViewDimension.into(),
-                ),
-            }
-        }
-    }
     pub struct TextureComponentSwizzle {
         pub r: Option<ComponentSwizzle>,
         pub g: Option<ComponentSwizzle>,
@@ -16326,14 +16162,8 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum LimitsExtension {
-        CompatibilityModeLimits(CompatibilityModeLimits),
         DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
         DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
-    }
-    impl std::convert::From<CompatibilityModeLimits> for LimitsExtension {
-        fn from(ext: CompatibilityModeLimits) -> Self {
-            LimitsExtension::CompatibilityModeLimits(ext)
-        }
     }
     impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
         fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -16352,14 +16182,6 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
-                LimitsExtension::CompatibilityModeLimits(value) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::CompatibilityModeLimits.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
                 LimitsExtension::DawnHostMappedPointerLimits(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnHostMappedPointerLimits.into();
@@ -17542,9 +17364,6 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum SurfaceDescriptorExtension {
-        EmscriptenSurfaceSourceCanvasHTMLSelector(
-            EmscriptenSurfaceSourceCanvasHTMLSelector,
-        ),
         SurfaceColorManagement(SurfaceColorManagement),
         SurfaceDescriptorFromWindowsUWPSwapChainPanel(
             SurfaceDescriptorFromWindowsUWPSwapChainPanel,
@@ -17559,12 +17378,6 @@ mod extensions {
         SurfaceSourceWaylandSurface(SurfaceSourceWaylandSurface),
         SurfaceSourceWindowsHWND(SurfaceSourceWindowsHWND),
         SurfaceSourceXlibWindow(SurfaceSourceXlibWindow),
-    }
-    impl std::convert::From<EmscriptenSurfaceSourceCanvasHTMLSelector>
-    for SurfaceDescriptorExtension {
-        fn from(ext: EmscriptenSurfaceSourceCanvasHTMLSelector) -> Self {
-            SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(ext)
-        }
     }
     impl std::convert::From<SurfaceColorManagement> for SurfaceDescriptorExtension {
         fn from(ext: SurfaceColorManagement) -> Self {
@@ -17631,17 +17444,6 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
-                SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::EmscriptenSurfaceSourceCanvasHTMLSelector
-                        .into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
                 SurfaceDescriptorExtension::SurfaceColorManagement(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::SurfaceColorManagement.into();
@@ -17776,18 +17578,11 @@ mod extensions {
     #[allow(dead_code)]
     pub enum TextureDescriptorExtension {
         DawnTextureInternalUsageDescriptor(DawnTextureInternalUsageDescriptor),
-        TextureBindingViewDimensionDescriptor(TextureBindingViewDimensionDescriptor),
     }
     impl std::convert::From<DawnTextureInternalUsageDescriptor>
     for TextureDescriptorExtension {
         fn from(ext: DawnTextureInternalUsageDescriptor) -> Self {
             TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(ext)
-        }
-    }
-    impl std::convert::From<TextureBindingViewDimensionDescriptor>
-    for TextureDescriptorExtension {
-        fn from(ext: TextureBindingViewDimensionDescriptor) -> Self {
-            TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(ext)
         }
     }
     impl TextureDescriptorExtension {
@@ -17802,17 +17597,6 @@ mod extensions {
                 ) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnTextureInternalUsageDescriptor.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
-                TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::TextureBindingViewDimensionDescriptor
-                        .into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
