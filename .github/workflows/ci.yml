@@ -86,48 +86,11 @@ jobs:
         run: |
           dawn_tag="${{ steps.dawn_tag.outputs.value }}"
           dawn_cache_root="$PWD/.ci/dawn-cache"
-          dawn_root="$dawn_cache_root/dawn-${dawn_tag}"
           mkdir -p "$dawn_cache_root"
-
+          dawn_root="$(python3 ./scripts/download_dawn_source.py --tag "$dawn_tag" --output "$dawn_cache_root")"
           if [[ ! -f "$dawn_root/CMakeLists.txt" ]]; then
-            tmp_src="$PWD/.ci/dawn-src"
-            rm -rf "$tmp_src"
-            mkdir -p "$tmp_src"
-            release_json="$(curl -fsSL \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              "https://api.github.com/repos/google/dawn/releases/tags/${dawn_tag}")"
-            tarball_url="$(python3 -c 'import json,sys; print(json.loads(sys.stdin.read())["tarball_url"])' <<< "$release_json")"
-            if [[ -z "$tarball_url" || "$tarball_url" == "null" ]]; then
-              echo "Failed to resolve tarball_url from release ${dawn_tag}" >&2
-              exit 1
-            fi
-            curl -fsSL \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              -L "$tarball_url" \
-              -o "$tmp_src/dawn.tar.gz"
-            if [[ "${{ runner.os }}" == "Windows" ]]; then
-              DAWN_SRC="$tmp_src" python3 - <<'PY'
-import os
-import tarfile
-
-root = os.environ["DAWN_SRC"]
-archive = os.path.join(root, "dawn.tar.gz")
-with tarfile.open(archive, "r:gz") as tf:
-    members = [m for m in tf.getmembers() if not (m.issym() or m.islnk())]
-    tf.extractall(root, members=members)
-PY
-            else
-              tar -xzf "$tmp_src/dawn.tar.gz" -C "$tmp_src"
-            fi
-            extracted="$(find "$tmp_src" -maxdepth 1 -type d -name 'dawn-*' | head -n 1)"
-            if [[ -z "$extracted" ]]; then
-              echo "Failed to extract Dawn source for tag $dawn_tag" >&2
-              exit 1
-            fi
-            rm -rf "$dawn_root"
-            mv "$extracted" "$dawn_root"
+            echo "Invalid Dawn source root: $dawn_root" >&2
+            exit 1
           fi
 
           # Dawn official standalone path (without depot_tools): fetch dependencies first.
