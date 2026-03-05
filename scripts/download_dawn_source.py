@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import os
 from pathlib import Path
@@ -12,7 +11,9 @@ from dawn_release_utils import (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Download Dawn source tarball from release")
+    parser = argparse.ArgumentParser(
+        description="Download Dawn source tarball from release"
+    )
     parser.add_argument(
         "--tag",
         default="",
@@ -30,7 +31,9 @@ def main() -> int:
         repo_root = Path(__file__).resolve().parent.parent
         tag = default_tag_from_repo_root(repo_root)
     if not tag:
-        raise RuntimeError("Missing release tag: pass --tag or provide DAWN_VERSION in repo root")
+        raise RuntimeError(
+            "Missing release tag: pass --tag or provide DAWN_VERSION in repo root"
+        )
 
     output = os.path.abspath(args.output)
     normalized_tag = tag[1:] if tag.startswith("v") else tag
