@@ -35,12 +35,8 @@ def main() -> int:
     output = os.path.abspath(args.output)
     normalized_tag = tag[1:] if tag.startswith("v") else tag
     dawn_root = os.path.join(output, f"dawn-{normalized_tag}")
-    legacy_root = os.path.join(output, f"dawn-{tag}")
     if os.path.isfile(os.path.join(dawn_root, "CMakeLists.txt")):
         print(dawn_root)
-        return 0
-    if os.path.isfile(os.path.join(legacy_root, "CMakeLists.txt")):
-        print(legacy_root)
         return 0
 
     release_json = release_by_tag(tag)
@@ -64,9 +60,6 @@ def main() -> int:
     if os.path.isfile(os.path.join(dawn_root, "CMakeLists.txt")):
         print(dawn_root)
         return 0
-    if os.path.isfile(os.path.join(legacy_root, "CMakeLists.txt")):
-        print(legacy_root)
-        return 0
 
     after_dirs = {
         entry
@@ -86,7 +79,7 @@ def main() -> int:
         if not extracted:
             for entry in sorted(after_dirs):
                 path = os.path.join(output, entry)
-                if os.path.isfile(os.path.join(path, "CMakeLists.txt")) and entry != os.path.basename(dawn_root):
+                if os.path.isfile(os.path.join(path, "CMakeLists.txt")):
                     extracted = path
                     break
     if not extracted:
