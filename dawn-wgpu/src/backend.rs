@@ -267,6 +267,13 @@ impl AdapterInterface for DawnAdapter {
                 panic!("Uncaptured error {:?}: {}", ty, message);
             })));
         dawn_desc.uncaptured_error_callback_info = Some(error_info);
+        let lost_info = dawn_rs::DeviceLostCallbackInfo::new();
+        lost_info
+            .callback
+            .replace(Some(Box::new(|_, reason, message| {
+                panic!("Device lost: {reason:?}: {message}");
+            })));
+        dawn_desc.device_lost_callback_info = Some(lost_info);
         let _future_handle =
             self.inner
                 .get()
