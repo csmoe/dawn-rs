@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
 import argparse
 from pathlib import Path
+
 from dawn_release_utils import (
     default_tag_from_repo_root,
     extract_prebuilt_asset,
@@ -10,7 +10,9 @@ from dawn_release_utils import (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Download Dawn prebuilt archive by release tag")
+    parser = argparse.ArgumentParser(
+        description="Download Dawn prebuilt archive by release tag"
+    )
     parser.add_argument(
         "--platform",
         required=True,
@@ -34,13 +36,17 @@ def main() -> int:
         repo_root = Path(__file__).resolve().parent.parent
         tag = default_tag_from_repo_root(repo_root)
     if not tag:
-        raise RuntimeError("Missing release tag: pass --tag or provide DAWN_VERSION in repo root")
+        raise RuntimeError(
+            "Missing release tag: pass --tag or provide DAWN_VERSION in repo root"
+        )
 
     release_json = release_by_tag(tag)
     tag = release_json.get("tag_name", "")
     assets = release_json.get("assets", [])
     if not tag or not assets:
-        raise RuntimeError(f"Failed to query google/dawn release for tag {args.tag or '<DAWN_VERSION>'}")
+        raise RuntimeError(
+            f"Failed to query google/dawn release for tag {args.tag or '<DAWN_VERSION>'}"
+        )
 
     selected = select_prebuilt_asset(release_json, args.platform)
     dawn_root = extract_prebuilt_asset(selected, args.output)
