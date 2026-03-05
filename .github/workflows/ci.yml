@@ -86,6 +86,13 @@ jobs:
         with:
           arch: x64
 
+      - name: Force MSVC linker/toolchain (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $cleanPath = ($env:PATH -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git\\usr\\bin') }) -join ';'
+          "PATH=$cleanPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Install Dawn build deps (macOS)
         if: runner.os == 'macOS'
         run: brew install ninja protobuf || true
