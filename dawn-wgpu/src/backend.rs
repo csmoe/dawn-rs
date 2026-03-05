@@ -241,10 +241,12 @@ impl AdapterInterface for DawnAdapter {
             #[cfg(target_os = "windows")]
             {
                 features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
+                features.push(FeatureName::SharedFenceDXGISharedHandle);
             }
             #[cfg(target_os = "macos")]
             {
                 features.push(FeatureName::SharedTextureMemoryIOSurface);
+                features.push(FeatureName::SharedFenceMTLSharedEvent);
             }
 
             #[cfg(target_os = "linux")]
