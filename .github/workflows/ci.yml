@@ -22,7 +22,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-14
           - windows-latest
 
     steps:
@@ -38,6 +38,8 @@ jobs:
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: v2
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -63,14 +65,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .ci/dawn-cache
-          key: dawn-${{ runner.os }}-${{ steps.dawn_tag.outputs.value }}-v1
+          key: dawn-${{ runner.os }}-${{ steps.dawn_tag.outputs.value }}-v2
 
       - name: Install Dawn build deps (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            ninja-build clang lld cmake pkg-config \
+            ninja-build clang lld pkg-config \
             libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev libxi-dev \
             protobuf-compiler
 
@@ -78,7 +80,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          choco install ninja cmake protoc -y
+          choco install ninja protoc -y
 
       - name: Set up MSVC dev environment (Windows)
         if: runner.os == 'Windows'
