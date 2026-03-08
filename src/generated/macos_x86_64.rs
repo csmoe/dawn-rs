@@ -1189,6 +1189,7 @@ mod enums {
         AtomicVec2UMinMax,
         Unorm16FormatsForExternalTexture,
         OpaqueYCbCrAndroidForExternalTexture,
+        Unorm16Filterable,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1440,6 +1441,9 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture => {
                     FeatureName::OpaqueYCbCrAndroidForExternalTexture
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable => {
+                    FeatureName::Unorm16Filterable
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1695,6 +1699,9 @@ mod enums {
                 }
                 FeatureName::OpaqueYCbCrAndroidForExternalTexture => {
                     ffi::WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture
+                }
+                FeatureName::Unorm16Filterable => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable
                 }
             }
         }

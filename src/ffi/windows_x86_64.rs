@@ -450,6 +450,7 @@ pub const WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture: WGPU
     327741;
 pub const WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture: WGPUFeatureName =
     327742;
+pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 327743;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_int;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
