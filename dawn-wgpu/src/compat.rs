@@ -49,7 +49,7 @@ impl TryFrom<&wgpu::Instance> for Compat<Instance> {
     fn try_from(value: &wgpu::Instance) -> Result<Self, Self::Error> {
         value
             .as_custom::<DawnInstance>()
-            .map(|i| Compat(i.inner.get()))
+            .map(|i| Compat(i.inner.clone()))
             .ok_or(WgpuCompatError::NotDawnBackend)
     }
 }
@@ -57,7 +57,7 @@ impl TryFrom<&wgpu::Instance> for Compat<Instance> {
 impl From<Compat<Adapter>> for wgpu::Adapter {
     fn from(value: Compat<Adapter>) -> Self {
         wgpu::Adapter::from_custom(DawnAdapter {
-            inner: SendSync::new(value.0),
+            inner: value.0,
         })
     }
 }
@@ -68,7 +68,7 @@ impl TryFrom<&wgpu::Adapter> for Compat<Adapter> {
     fn try_from(value: &wgpu::Adapter) -> Result<Self, Self::Error> {
         value
             .as_custom::<DawnAdapter>()
-            .map(|a| Compat(a.inner.get()))
+            .map(|a| Compat(a.inner.clone()))
             .ok_or(WgpuCompatError::NotDawnBackend)
     }
 }
@@ -135,7 +135,7 @@ impl TryFrom<&wgpu::Surface<'_>> for Compat<Surface> {
     fn try_from(value: &wgpu::Surface<'_>) -> Result<Self, Self::Error> {
         value
             .as_custom::<DawnSurface>()
-            .map(|s| Compat(s.inner.get()))
+            .map(|s| Compat(s.inner.clone()))
             .ok_or(WgpuCompatError::NotDawnBackend)
     }
 }
@@ -245,7 +245,7 @@ impl TryFrom<&wgpu::CommandEncoder> for Compat<CommandEncoder> {
     fn try_from(value: &wgpu::CommandEncoder) -> Result<Self, Self::Error> {
         value
             .as_custom::<DawnCommandEncoder>()
-            .map(|e| Compat(e.inner.get()))
+            .map(|e| Compat(e.inner.clone()))
             .ok_or(WgpuCompatError::NotDawnBackend)
     }
 }

@@ -1,28 +1,29 @@
+use futures_util::task::AtomicWaker;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll, Waker};
+use std::sync::Arc;
+use std::task::{Context, Poll};
 
 pub(crate) struct CallbackFuture<T> {
-    pub(crate) shared: Arc<Mutex<CallbackShared<T>>>,
+    pub(crate) receiver: std::sync::mpsc::Receiver<T>,
+    pub(crate) waker: Arc<AtomicWaker>,
 }
 
-pub(crate) struct CallbackShared<T> {
-    pub(crate) result: Option<T>,
-    pub(crate) waker: Option<Waker>,
+pub(crate) struct CallbackCompletion<T> {
+    sender: std::sync::mpsc::Sender<T>,
+    waker: Arc<AtomicWaker>,
 }
 
 impl<T> CallbackFuture<T> {
-    pub(crate) fn new() -> (Self, Arc<Mutex<CallbackShared<T>>>) {
-        let shared = Arc::new(Mutex::new(CallbackShared {
-            result: None,
-            waker: None,
-        }));
+    pub(crate) fn new() -> (Self, CallbackCompletion<T>) {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let waker = Arc::new(AtomicWaker::new());
         (
             Self {
-                shared: shared.clone(),
+                receiver,
+                waker: waker.clone(),
             },
-            shared,
+            CallbackCompletion { sender, waker },
         )
     }
 }
@@ -31,19 +32,18 @@ impl<T> Future for CallbackFuture<T> {
     type Output = T;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut shared = self.shared.lock().expect("wgpu-compat future lock");
-        if let Some(result) = shared.result.take() {
-            return Poll::Ready(result);
+        self.waker.register(cx.waker());
+        match self.receiver.try_recv() {
+            Ok(result) => Poll::Ready(result),
+            Err(std::sync::mpsc::TryRecvError::Empty) => Poll::Pending,
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                panic!("dawn-wgpu callback future channel disconnected")
+            }
         }
-        shared.waker = Some(cx.waker().clone());
-        Poll::Pending
     }
 }
 
-pub(crate) fn complete_shared<T>(shared: &Arc<Mutex<CallbackShared<T>>>, value: T) {
-    let mut shared = shared.lock().expect("wgpu-compat future lock");
-    shared.result = Some(value);
-    if let Some(waker) = shared.waker.take() {
-        waker.wake();
-    }
+pub(crate) fn complete_shared<T>(shared: &CallbackCompletion<T>, value: T) {
+    let _ = shared.sender.send(value);
+    shared.waker.wake();
 }

@@ -1,42 +1,9 @@
 use dawn_rs::*;
 use std::fmt;
-use std::sync::{Arc, Mutex};
-
-#[derive(Clone)]
-pub(crate) struct SendSync<T: Send>(Arc<Mutex<T>>);
-
-impl<T: Send> SendSync<T> {
-    pub(crate) fn new(inner: T) -> Self {
-        Self(Arc::new(Mutex::new(inner)))
-    }
-
-    pub(crate) fn get(&self) -> T
-    where
-        T: Clone,
-    {
-        self.0.lock().expect("send sync wrapper poisoned").clone()
-    }
-
-    pub(crate) fn with<R>(&self, f: impl FnOnce(&T) -> R) -> R {
-        let guard = self.0.lock().expect("send sync wrapper poisoned");
-        f(&*guard)
-    }
-
-    pub(crate) fn with_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
-        let mut guard = self.0.lock().expect("send sync wrapper poisoned");
-        f(&mut *guard)
-    }
-}
-
-impl<T: fmt::Debug + Send> fmt::Debug for SendSync<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let guard = self.0.lock().map_err(|_| fmt::Error)?;
-        f.debug_tuple("SendSync").field(&*guard).finish()
-    }
-}
+use std::sync::Arc;
 
 pub(crate) struct DawnInstance {
-    pub(crate) inner: SendSync<Instance>,
+    pub(crate) inner: Instance,
     #[cfg(feature = "wire")]
     pub(crate) wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
 }
@@ -44,7 +11,7 @@ pub(crate) struct DawnInstance {
 impl DawnInstance {
     pub(crate) fn from_instance(instance: Instance) -> Self {
         Self {
-            inner: SendSync::new(instance),
+            inner: instance,
             #[cfg(feature = "wire")]
             wire_handle: None,
         }
@@ -73,7 +40,7 @@ impl fmt::Debug for DawnInstance {
 
 #[derive(Debug, Clone)]
 pub(crate) struct DawnAdapter {
-    pub(crate) inner: SendSync<Adapter>,
+    pub(crate) inner: Adapter,
 }
 
 #[derive(Debug, Clone)]
@@ -148,18 +115,18 @@ pub(crate) struct DawnComputePipeline {
 
 #[derive(Debug)]
 pub(crate) struct DawnCommandEncoder {
-    pub(crate) inner: SendSync<CommandEncoder>,
+    pub(crate) inner: CommandEncoder,
 }
 
 #[derive(Debug)]
 pub(crate) struct DawnComputePass {
-    pub(crate) inner: SendSync<ComputePassEncoder>,
+    pub(crate) inner: ComputePassEncoder,
     pub(crate) ended: bool,
 }
 
 #[derive(Debug)]
 pub(crate) struct DawnRenderPass {
-    pub(crate) inner: SendSync<RenderPassEncoder>,
+    pub(crate) inner: RenderPassEncoder,
     pub(crate) ended: bool,
 }
 
@@ -170,7 +137,7 @@ pub(crate) struct DawnCommandBuffer {
 
 #[derive(Debug)]
 pub(crate) struct DawnRenderBundleEncoder {
-    pub(crate) inner: SendSync<RenderBundleEncoder>,
+    pub(crate) inner: RenderBundleEncoder,
 }
 
 #[derive(Debug, Clone)]
@@ -204,14 +171,14 @@ impl Drop for MetalLayerHandle {
 
 #[derive(Debug, Clone)]
 pub(crate) struct DawnSurface {
-    pub(crate) inner: SendSync<Surface>,
+    pub(crate) inner: Surface,
     #[cfg(target_os = "macos")]
     pub(crate) metal_layer: Option<Arc<MetalLayerHandle>>,
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct DawnSurfaceOutputDetail {
-    pub(crate) surface: SendSync<Surface>,
+    pub(crate) surface: Surface,
 }
 
 #[derive(Debug)]

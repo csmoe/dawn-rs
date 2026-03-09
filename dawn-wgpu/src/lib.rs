@@ -50,7 +50,7 @@ fn create_wire_instance_with_options(
     let backend = wire_backend::IpcWireBackend::connect_name_with_options(name, opts)?;
     let (instance, handle) = backend.into_instance_and_handle();
     let custom = types::DawnInstance {
-        inner: types::SendSync::new(instance),
+        inner: instance,
         wire_handle: Some(handle),
     };
     Ok(wgpu::Instance::from_custom(custom))

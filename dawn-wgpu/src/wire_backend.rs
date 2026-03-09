@@ -5,7 +5,7 @@ use dawn_rs::wire::{
 };
 use dawn_rs::{Instance, Surface};
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -133,13 +133,13 @@ impl From<&IpcWireBackend> for wgpu::Instance {
 }
 
 pub struct WireBackendHandle {
-    backend: Mutex<Option<IpcWireBackend>>,
+    backend: Option<IpcWireBackend>,
 }
 
 impl WireBackendHandle {
     fn new(backend: IpcWireBackend) -> Self {
         Self {
-            backend: Mutex::new(Some(backend)),
+            backend: Some(backend),
         }
     }
 }
@@ -152,8 +152,6 @@ impl fmt::Debug for WireBackendHandle {
 
 impl Drop for WireBackendHandle {
     fn drop(&mut self) {
-        if let Ok(mut guard) = self.backend.lock() {
-            let _ = guard.take();
-        }
+        let _ = self.backend.take();
     }
 }
