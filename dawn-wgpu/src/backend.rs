@@ -272,8 +272,8 @@ impl AdapterInterface for DawnAdapter {
             {
                 features.push(FeatureName::SharedTextureMemoryDmaBuf);
             }
-            if let Some(features) = dawn_desc.required_features.as_mut() {
-                features.extend(features);
+            if let Some(f) = dawn_desc.required_features.as_mut() {
+                f.extend(features);
             } else {
                 dawn_desc.required_features = Some(features);
             }
