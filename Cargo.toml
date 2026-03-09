@@ -54,6 +54,7 @@ native = []
 emscripten = []
 compat = []
 wire = ["dep:interprocess", "dep:serde", "dep:postcard"]
+dawn-dynamic = []
 
 [[example]]
 name = "adapter-info"

@@ -10,6 +10,7 @@ fn main() {
         println!("cargo:warning=DAWN_ROOT not set; skipping Dawn link directives");
         return;
     };
+    let link_mode = resolve_link_mode();
     let wire_enabled = env::var_os("CARGO_FEATURE_WIRE").is_some();
     let dawn_source_root = resolve_dawn_source_root(&dawn_root);
     let lib_dirs = resolve_dawn_lib_dirs(&dawn_root);
@@ -25,19 +26,19 @@ fn main() {
     }
     if wire_enabled {
         // Link dawn_proc first so WebGPU C symbols resolve to proc-table dispatch stubs.
-        println!("cargo:rustc-link-lib=static=dawn_proc");
-        println!("cargo:rustc-link-lib=static=webgpu_dawn");
-        if has_static_lib(&lib_dirs, "wire_client") {
-            println!("cargo:rustc-link-lib=static=wire_client");
+        emit_link_lib(link_mode, "dawn_proc");
+        emit_link_lib(link_mode, "webgpu_dawn");
+        if has_lib_for_mode(&lib_dirs, "wire_client", link_mode) {
+            emit_link_lib(link_mode, "wire_client");
         }
-        if has_static_lib(&lib_dirs, "wire_server") {
-            println!("cargo:rustc-link-lib=static=wire_server");
+        if has_lib_for_mode(&lib_dirs, "wire_server", link_mode) {
+            emit_link_lib(link_mode, "wire_server");
         }
         // Dawn's default GN/CMake static build usually emits libdawn_wire.a containing both
         // client/server symbols.
-        if has_static_lib(&lib_dirs, "dawn_wire") {
-            println!("cargo:rustc-link-lib=static=dawn_wire");
-        } else if !has_static_lib(&lib_dirs, "wire_server") {
+        if has_lib_for_mode(&lib_dirs, "dawn_wire", link_mode) {
+            emit_link_lib(link_mode, "dawn_wire");
+        } else if !has_lib_for_mode(&lib_dirs, "wire_server", link_mode) {
             println!(
                 "cargo:warning=Missing Dawn wire runtime library (expected dawn_wire or wire_server)"
             );
@@ -66,7 +67,7 @@ fn main() {
             );
         }
     } else {
-        println!("cargo:rustc-link-lib=static=webgpu_dawn");
+        emit_link_lib(link_mode, "webgpu_dawn");
     }
     #[cfg(target_os = "linux")]
     {
@@ -89,6 +90,28 @@ fn main() {
         println!("cargo:rustc-link-lib=dxguid");
         //println!("cargo::rustc-link-arg=/nodefaultlib:msvcrt");
         //println!("cargo::rustc-link-arg=/defaultlib:msvcrtd");
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum LinkMode {
+    Static,
+    Dynamic,
+}
+
+fn resolve_link_mode() -> LinkMode {
+    let dynamic_enabled = env::var_os("CARGO_FEATURE_DAWN_DYNAMIC").is_some();
+    if dynamic_enabled {
+        return LinkMode::Dynamic;
+    }
+    // Default to static; `dawn-dynamic` opt-in switches to dylib linking.
+    LinkMode::Static
+}
+
+fn emit_link_lib(mode: LinkMode, name: &str) {
+    match mode {
+        LinkMode::Static => println!("cargo:rustc-link-lib=static={name}"),
+        LinkMode::Dynamic => println!("cargo:rustc-link-lib=dylib={name}"),
     }
 }
 
@@ -171,6 +194,25 @@ fn has_static_lib(lib_dirs: &[PathBuf], name: &str) -> bool {
         }
     }
     false
+}
+
+fn has_dynamic_lib(lib_dirs: &[PathBuf], name: &str) -> bool {
+    for dir in lib_dirs {
+        let linux = dir.join(format!("lib{name}.so"));
+        let macos = dir.join(format!("lib{name}.dylib"));
+        let windows = dir.join(format!("{name}.dll"));
+        if linux.exists() || macos.exists() || windows.exists() {
+            return true;
+        }
+    }
+    false
+}
+
+fn has_lib_for_mode(lib_dirs: &[PathBuf], name: &str, mode: LinkMode) -> bool {
+    match mode {
+        LinkMode::Static => has_static_lib(lib_dirs, name),
+        LinkMode::Dynamic => has_dynamic_lib(lib_dirs, name) || has_static_lib(lib_dirs, name),
+    }
 }
 
 fn generate_wire_client_proc_table_inc(
