@@ -164,6 +164,25 @@ impl InstanceInterface for DawnInstance {
         if let Some(surface) = options.compatible_surface {
             dawn_options.compatible_surface = Some(expect_surface_from_api(surface).inner.get());
         }
+        #[cfg(feature = "shared_texture_memory")]
+        {
+            #[cfg(target_os = "windows")]
+            {
+                #[cfg(target_vendor = "win7")]
+                {
+                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D11)
+                }
+                #[cfg(not(target_vendor = "win7"))]
+                {
+                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D12)
+                }
+            }
+
+            #[cfg(target_os = "macos")]
+            {
+                dawn_options.backend_type = Some(dawn_rs::BackendType::Metal);
+            }
+        }
         let future_handle = self.inner.get().request_adapter(
             Some(&dawn_options),
             move |status, adapter, _message| {
