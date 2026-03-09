@@ -4,7 +4,7 @@ use wgpu::custom::*;
 
 pub(crate) fn dispatch_adapter(adapter: Adapter) -> DispatchAdapter {
     DispatchAdapter::custom(DawnAdapter {
-        inner: SendSync::new(adapter),
+        inner: adapter,
     })
 }
 
@@ -70,7 +70,7 @@ pub(crate) fn dispatch_compute_pipeline(pipeline: ComputePipeline) -> DispatchCo
 
 pub(crate) fn dispatch_command_encoder(encoder: CommandEncoder) -> DispatchCommandEncoder {
     DispatchCommandEncoder::custom(DawnCommandEncoder {
-        inner: SendSync::new(encoder),
+        inner: encoder,
     })
 }
 
@@ -80,14 +80,14 @@ pub(crate) fn dispatch_command_buffer(buffer: CommandBuffer) -> DispatchCommandB
 
 pub(crate) fn dispatch_compute_pass(pass: ComputePassEncoder) -> DispatchComputePass {
     DispatchComputePass::custom(DawnComputePass {
-        inner: SendSync::new(pass),
+        inner: pass,
         ended: false,
     })
 }
 
 pub(crate) fn dispatch_render_pass(pass: RenderPassEncoder) -> DispatchRenderPass {
     DispatchRenderPass::custom(DawnRenderPass {
-        inner: SendSync::new(pass),
+        inner: pass,
         ended: false,
     })
 }
@@ -96,7 +96,7 @@ pub(crate) fn dispatch_render_bundle_encoder(
     encoder: RenderBundleEncoder,
 ) -> DispatchRenderBundleEncoder {
     DispatchRenderBundleEncoder::custom(DawnRenderBundleEncoder {
-        inner: SendSync::new(encoder),
+        inner: encoder,
     })
 }
 
@@ -106,7 +106,7 @@ pub(crate) fn dispatch_render_bundle(bundle: RenderBundle) -> DispatchRenderBund
 
 pub(crate) fn dispatch_surface_output_detail(surface: Surface) -> DispatchSurfaceOutputDetail {
     DispatchSurfaceOutputDetail::custom(DawnSurfaceOutputDetail {
-        surface: SendSync::new(surface),
+        surface: surface,
     })
 }
 
@@ -134,8 +134,7 @@ pub(crate) fn expect_adapter(adapter: &DispatchAdapter) -> Adapter {
     adapter
         .as_custom::<DawnAdapter>()
         .expect("wgpu-compat: adapter not dawn")
-        .inner
-        .get()
+        .inner.clone()
 }
 
 pub(crate) fn expect_device(device: &DispatchDevice) -> Device {
@@ -260,8 +259,7 @@ pub(crate) fn expect_command_encoder(encoder: &DispatchCommandEncoder) -> Comman
     encoder
         .as_custom::<DawnCommandEncoder>()
         .expect("wgpu-compat: command encoder not dawn")
-        .inner
-        .get()
+        .inner.clone()
 }
 
 pub(crate) fn expect_command_buffer(buffer: &DispatchCommandBuffer) -> CommandBuffer {
@@ -284,8 +282,7 @@ pub(crate) fn expect_surface_output_detail(detail: &DispatchSurfaceOutputDetail)
     detail
         .as_custom::<DawnSurfaceOutputDetail>()
         .expect("wgpu-compat: surface output detail not dawn")
-        .surface
-        .get()
+        .surface.clone()
 }
 
 pub(crate) fn expect_device_from_api(device: &wgpu::Device) -> Device {
