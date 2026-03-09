@@ -14,7 +14,7 @@ categories.workspace = true
 members = ["codegen", "dawn-wgpu"]
 
 [workspace.package]
-version = "0.1.4-dev"
+version = "0.1.5-dev"
 edition = "2024"
 homepage = "https://github.com/csmoe/dawn-rs"
 repository = "https://github.com/csmoe/dawn-rs"
@@ -23,7 +23,7 @@ authors = [ "csmoe csmoe@msn.com" ]
 categories = [ "gui", "rendering", "graphics" ]
 
 [workspace.dependencies]
-dawn-rs = { version = "0.1.4-dev", path = "." }
+dawn-rs = { version = "0.1.5-dev", path = "." }
 thiserror = "2"
 
 [dependencies]
