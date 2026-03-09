@@ -31,7 +31,10 @@ shared_memory = "0.12"
 libc = "0.2"
 
 [features]
-default = []
+default = ["dawn", "native"]
+dawn = ["dawn-rs/dawn"]
+native = ["dawn-rs/native"]
+dawn-dynamic = ["dawn-rs/dawn-dynamic"]
 wire = ["dawn-rs/wire", "dep:interprocess"]
 shared_texture_memory = []
 
