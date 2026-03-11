@@ -451,6 +451,7 @@ pub const WGPUFeatureName_WGPUFeatureName_Unorm16FormatsForExternalTexture: WGPU
 pub const WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture: WGPUFeatureName =
     327742;
 pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 327743;
+pub const WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea: WGPUFeatureName = 327744;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_int;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -650,7 +651,7 @@ pub const WGPUSType_WGPUSType_DawnWGSLBlocklist: WGPUSType = 327703;
 pub const WGPUSType_WGPUSType_DawnDrmFormatCapabilities: WGPUSType = 327704;
 pub const WGPUSType_WGPUSType_ShaderModuleCompilationOptions: WGPUSType = 327705;
 pub const WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn: WGPUSType = 327706;
-pub const WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect: WGPUSType = 327707;
+pub const WGPUSType_WGPUSType_RenderPassRenderAreaRect: WGPUSType = 327707;
 pub const WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor: WGPUSType =
     327708;
 pub const WGPUSType_WGPUSType_SharedTextureMemoryAHardwareBufferDescriptor: WGPUSType = 327709;
@@ -2532,32 +2533,6 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct WGPURenderPassDescriptorExpandResolveRect {
-    pub chain: WGPUChainedStruct,
-    pub x: u32,
-    pub y: u32,
-    pub width: u32,
-    pub height: u32,
-}
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of WGPURenderPassDescriptorExpandResolveRect"]
-        [::std::mem::size_of::<WGPURenderPassDescriptorExpandResolveRect>() - 32usize];
-    ["Alignment of WGPURenderPassDescriptorExpandResolveRect"]
-        [::std::mem::align_of::<WGPURenderPassDescriptorExpandResolveRect>() - 8usize];
-    ["Offset of field: WGPURenderPassDescriptorExpandResolveRect::chain"]
-        [::std::mem::offset_of!(WGPURenderPassDescriptorExpandResolveRect, chain) - 0usize];
-    ["Offset of field: WGPURenderPassDescriptorExpandResolveRect::x"]
-        [::std::mem::offset_of!(WGPURenderPassDescriptorExpandResolveRect, x) - 16usize];
-    ["Offset of field: WGPURenderPassDescriptorExpandResolveRect::y"]
-        [::std::mem::offset_of!(WGPURenderPassDescriptorExpandResolveRect, y) - 20usize];
-    ["Offset of field: WGPURenderPassDescriptorExpandResolveRect::width"]
-        [::std::mem::offset_of!(WGPURenderPassDescriptorExpandResolveRect, width) - 24usize];
-    ["Offset of field: WGPURenderPassDescriptorExpandResolveRect::height"]
-        [::std::mem::offset_of!(WGPURenderPassDescriptorExpandResolveRect, height) - 28usize];
-};
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
 pub struct WGPURenderPassDescriptorResolveRect {
     pub chain: WGPUChainedStruct,
     pub colorOffsetX: u32,
@@ -2754,20 +2729,26 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct WGPUSharedBufferMemoryDescriptor {
-    pub nextInChain: *mut WGPUChainedStruct,
-    pub label: WGPUStringView,
+pub struct WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+    pub chain: WGPUChainedStruct,
+    pub handle: *mut ::std::os::raw::c_void,
+    pub size: u64,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of WGPUSharedBufferMemoryDescriptor"]
-        [::std::mem::size_of::<WGPUSharedBufferMemoryDescriptor>() - 24usize];
-    ["Alignment of WGPUSharedBufferMemoryDescriptor"]
-        [::std::mem::align_of::<WGPUSharedBufferMemoryDescriptor>() - 8usize];
-    ["Offset of field: WGPUSharedBufferMemoryDescriptor::nextInChain"]
-        [::std::mem::offset_of!(WGPUSharedBufferMemoryDescriptor, nextInChain) - 0usize];
-    ["Offset of field: WGPUSharedBufferMemoryDescriptor::label"]
-        [::std::mem::offset_of!(WGPUSharedBufferMemoryDescriptor, label) - 8usize];
+    ["Size of WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor"]
+        [::std::mem::size_of::<WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor>(
+        ) - 32usize];
+    ["Alignment of WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor"]
+        [::std::mem::align_of::<WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor>(
+        ) - 8usize];
+    ["Offset of field: WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor::chain"] [:: std :: mem :: offset_of ! (WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor , chain) - 0usize] ;
+    ["Offset of field: WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor::handle"] [:: std :: mem :: offset_of ! (WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor , handle) - 16usize] ;
+    ["Offset of field: WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor::size"][::std::mem::offset_of!(
+        WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        size
+    )
+        - 24usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4533,6 +4514,26 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPURenderPassRenderAreaRect {
+    pub chain: WGPUChainedStruct,
+    pub origin: WGPUOrigin2D,
+    pub size: WGPUExtent2D,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPURenderPassRenderAreaRect"]
+        [::std::mem::size_of::<WGPURenderPassRenderAreaRect>() - 32usize];
+    ["Alignment of WGPURenderPassRenderAreaRect"]
+        [::std::mem::align_of::<WGPURenderPassRenderAreaRect>() - 8usize];
+    ["Offset of field: WGPURenderPassRenderAreaRect::chain"]
+        [::std::mem::offset_of!(WGPURenderPassRenderAreaRect, chain) - 0usize];
+    ["Offset of field: WGPURenderPassRenderAreaRect::origin"]
+        [::std::mem::offset_of!(WGPURenderPassRenderAreaRect, origin) - 16usize];
+    ["Offset of field: WGPURenderPassRenderAreaRect::size"]
+        [::std::mem::offset_of!(WGPURenderPassRenderAreaRect, size) - 24usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPURenderPassStorageAttachment {
     pub nextInChain: *mut WGPUChainedStruct,
     pub offset: u64,
@@ -4651,6 +4652,23 @@ const _: () = {
         [::std::mem::offset_of!(WGPUShaderModuleDescriptor, nextInChain) - 0usize];
     ["Offset of field: WGPUShaderModuleDescriptor::label"]
         [::std::mem::offset_of!(WGPUShaderModuleDescriptor, label) - 8usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPUSharedBufferMemoryDescriptor {
+    pub nextInChain: *mut WGPUChainedStruct,
+    pub label: WGPUStringView,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUSharedBufferMemoryDescriptor"]
+        [::std::mem::size_of::<WGPUSharedBufferMemoryDescriptor>() - 24usize];
+    ["Alignment of WGPUSharedBufferMemoryDescriptor"]
+        [::std::mem::align_of::<WGPUSharedBufferMemoryDescriptor>() - 8usize];
+    ["Offset of field: WGPUSharedBufferMemoryDescriptor::nextInChain"]
+        [::std::mem::offset_of!(WGPUSharedBufferMemoryDescriptor, nextInChain) - 0usize];
+    ["Offset of field: WGPUSharedBufferMemoryDescriptor::label"]
+        [::std::mem::offset_of!(WGPUSharedBufferMemoryDescriptor, label) - 8usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

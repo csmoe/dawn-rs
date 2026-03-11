@@ -1190,6 +1190,7 @@ mod enums {
         Unorm16FormatsForExternalTexture,
         OpaqueYCbCrAndroidForExternalTexture,
         Unorm16Filterable,
+        RenderPassRenderArea,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1444,6 +1445,9 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable => {
                     FeatureName::Unorm16Filterable
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea => {
+                    FeatureName::RenderPassRenderArea
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1702,6 +1706,9 @@ mod enums {
                 }
                 FeatureName::Unorm16Filterable => {
                     ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable
+                }
+                FeatureName::RenderPassRenderArea => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea
                 }
             }
         }
@@ -2365,7 +2372,7 @@ mod enums {
         DawnDrmFormatCapabilities,
         ShaderModuleCompilationOptions,
         ColorTargetStateExpandResolveTextureDawn,
-        RenderPassDescriptorExpandResolveRect,
+        RenderPassRenderAreaRect,
         SharedTextureMemoryVkDedicatedAllocationDescriptor,
         SharedTextureMemoryAHardwareBufferDescriptor,
         SharedTextureMemoryDmaBufDescriptor,
@@ -2543,8 +2550,8 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn => {
                     SType::ColorTargetStateExpandResolveTextureDawn
                 }
-                ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect => {
-                    SType::RenderPassDescriptorExpandResolveRect
+                ffi::WGPUSType_WGPUSType_RenderPassRenderAreaRect => {
+                    SType::RenderPassRenderAreaRect
                 }
                 ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor => {
                     SType::SharedTextureMemoryVkDedicatedAllocationDescriptor
@@ -2830,8 +2837,8 @@ mod enums {
                 SType::ColorTargetStateExpandResolveTextureDawn => {
                     ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn
                 }
-                SType::RenderPassDescriptorExpandResolveRect => {
-                    ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect
+                SType::RenderPassRenderAreaRect => {
+                    ffi::WGPUSType_WGPUSType_RenderPassRenderAreaRect
                 }
                 SType::SharedTextureMemoryVkDedicatedAllocationDescriptor => {
                     ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor
@@ -10334,58 +10341,6 @@ mod structs {
             }
         }
     }
-    pub struct RenderPassDescriptorExpandResolveRect {
-        pub x: Option<u32>,
-        pub y: Option<u32>,
-        pub width: Option<u32>,
-        pub height: Option<u32>,
-    }
-    impl Default for RenderPassDescriptorExpandResolveRect {
-        fn default() -> Self {
-            Self {
-                x: None,
-                y: None,
-                width: None,
-                height: None,
-            }
-        }
-    }
-    impl RenderPassDescriptorExpandResolveRect {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPURenderPassDescriptorExpandResolveRect, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPURenderPassDescriptorExpandResolveRect = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.x {
-                raw.x = value;
-            }
-            if let Some(value) = self.y {
-                raw.y = value;
-            }
-            if let Some(value) = self.width {
-                raw.width = value;
-            }
-            if let Some(value) = self.height {
-                raw.height = value;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPURenderPassDescriptorExpandResolveRect,
-        ) -> Self {
-            Self {
-                x: Some(value.x),
-                y: Some(value.y),
-                width: Some(value.width),
-                height: Some(value.height),
-            }
-        }
-    }
     pub struct RenderPassDescriptorResolveRect {
         pub color_offset_x: Option<u32>,
         pub color_offset_y: Option<u32>,
@@ -10546,6 +10501,45 @@ mod structs {
                             .collect(),
                     )
                 },
+            }
+        }
+    }
+    pub struct RenderPassRenderAreaRect {
+        pub origin: Option<Origin2D>,
+        pub size: Option<Extent2D>,
+    }
+    impl Default for RenderPassRenderAreaRect {
+        fn default() -> Self {
+            Self { origin: None, size: None }
+        }
+    }
+    impl RenderPassRenderAreaRect {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPURenderPassRenderAreaRect, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPURenderPassRenderAreaRect = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = &self.origin {
+                let (raw_value, storage_value) = value.to_ffi();
+                raw.origin = raw_value;
+                storage.push_storage(storage_value);
+            }
+            if let Some(value) = &self.size {
+                let (raw_value, storage_value) = value.to_ffi();
+                raw.size = raw_value;
+                storage.push_storage(storage_value);
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPURenderPassRenderAreaRect) -> Self {
+            Self {
+                origin: Some(Origin2D::from_ffi(value.origin)),
+                size: Some(Extent2D::from_ffi(value.size)),
             }
         }
     }
@@ -11296,6 +11290,46 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUShaderSourceWGSL) -> Self {
             Self {
                 code: Some(string_view_to_string(value.code)),
+            }
+        }
+    }
+    pub struct SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        pub handle: Option<*mut std::ffi::c_void>,
+        pub size: Option<u64>,
+    }
+    impl Default for SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        fn default() -> Self {
+            Self { handle: None, size: None }
+        }
+    }
+    impl SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (
+            ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+            ChainedStructStorage,
+        ) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.handle {
+                raw.handle = value;
+            }
+            if let Some(value) = self.size {
+                raw.size = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ) -> Self {
+            Self {
+                handle: Some(value.handle),
+                size: Some(value.size),
             }
         }
     }
@@ -16389,21 +16423,15 @@ mod extensions {
     #[allow(dead_code)]
     pub enum RenderPassDescriptorExtension {
         DawnRenderPassSampleCount(DawnRenderPassSampleCount),
-        RenderPassDescriptorExpandResolveRect(RenderPassDescriptorExpandResolveRect),
         RenderPassDescriptorResolveRect(RenderPassDescriptorResolveRect),
         RenderPassMaxDrawCount(RenderPassMaxDrawCount),
         RenderPassPixelLocalStorage(RenderPassPixelLocalStorage),
+        RenderPassRenderAreaRect(RenderPassRenderAreaRect),
     }
     impl std::convert::From<DawnRenderPassSampleCount>
     for RenderPassDescriptorExtension {
         fn from(ext: DawnRenderPassSampleCount) -> Self {
             RenderPassDescriptorExtension::DawnRenderPassSampleCount(ext)
-        }
-    }
-    impl std::convert::From<RenderPassDescriptorExpandResolveRect>
-    for RenderPassDescriptorExtension {
-        fn from(ext: RenderPassDescriptorExpandResolveRect) -> Self {
-            RenderPassDescriptorExtension::RenderPassDescriptorExpandResolveRect(ext)
         }
     }
     impl std::convert::From<RenderPassDescriptorResolveRect>
@@ -16423,6 +16451,11 @@ mod extensions {
             RenderPassDescriptorExtension::RenderPassPixelLocalStorage(ext)
         }
     }
+    impl std::convert::From<RenderPassRenderAreaRect> for RenderPassDescriptorExtension {
+        fn from(ext: RenderPassRenderAreaRect) -> Self {
+            RenderPassDescriptorExtension::RenderPassRenderAreaRect(ext)
+        }
+    }
     impl RenderPassDescriptorExtension {
         pub(crate) fn push_chain(
             &self,
@@ -16433,17 +16466,6 @@ mod extensions {
                 RenderPassDescriptorExtension::DawnRenderPassSampleCount(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnRenderPassSampleCount.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
-                RenderPassDescriptorExtension::RenderPassDescriptorExpandResolveRect(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::RenderPassDescriptorExpandResolveRect
-                        .into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
@@ -16470,6 +16492,14 @@ mod extensions {
                 RenderPassDescriptorExtension::RenderPassPixelLocalStorage(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::RenderPassPixelLocalStorage.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                RenderPassDescriptorExtension::RenderPassRenderAreaRect(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::RenderPassRenderAreaRect.into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
@@ -16706,16 +16736,41 @@ mod extensions {
         }
     }
     #[allow(dead_code)]
-    pub enum SharedBufferMemoryDescriptorExtension {}
+    pub enum SharedBufferMemoryDescriptorExtension {
+        SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+            SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ),
+    }
+    impl std::convert::From<
+        SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+    > for SharedBufferMemoryDescriptorExtension {
+        fn from(
+            ext: SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ) -> Self {
+            SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                ext,
+            )
+        }
+    }
     impl SharedBufferMemoryDescriptorExtension {
         pub(crate) fn push_chain(
             &self,
             storage: &mut ChainedStructStorage,
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
-            let _ = self;
-            let _ = storage;
-            next
+            match self {
+                SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor
+                        .into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+            }
         }
     }
     #[allow(dead_code)]
@@ -17703,16 +17758,12 @@ mod objects {
     #[derive(Debug)]
     pub struct Adapter {
         raw: ffi::WGPUAdapter,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl Adapter {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUAdapter) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUAdapter {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUAdapter {
             self.raw
         }
         pub fn get_instance(&self) -> Instance {
@@ -17826,13 +17877,11 @@ mod objects {
     impl Clone for Adapter {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuAdapterAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for Adapter {}
+    unsafe impl Sync for Adapter {}
     #[derive(Debug)]
     pub struct BindGroup {
         raw: ffi::WGPUBindGroup,
@@ -17841,7 +17890,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUBindGroup) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUBindGroup {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUBindGroup {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -17877,7 +17926,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUBindGroupLayout) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUBindGroupLayout {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUBindGroupLayout {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -17913,7 +17962,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUBuffer) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUBuffer {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUBuffer {
             self.raw
         }
         pub fn map_async(
@@ -18052,7 +18101,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandBuffer) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUCommandBuffer {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUCommandBuffer {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -18083,16 +18132,12 @@ mod objects {
     #[derive(Debug)]
     pub struct CommandEncoder {
         raw: ffi::WGPUCommandEncoder,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl CommandEncoder {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandEncoder) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUCommandEncoder {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUCommandEncoder {
             self.raw
         }
         pub fn finish(
@@ -18337,26 +18382,20 @@ mod objects {
     impl Clone for CommandEncoder {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuCommandEncoderAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for CommandEncoder {}
+    unsafe impl Sync for CommandEncoder {}
     #[derive(Debug)]
     pub struct ComputePassEncoder {
         raw: ffi::WGPUComputePassEncoder,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl ComputePassEncoder {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePassEncoder) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUComputePassEncoder {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUComputePassEncoder {
             self.raw
         }
         pub fn insert_debug_marker(&self, marker_label: String) -> () {
@@ -18495,13 +18534,11 @@ mod objects {
     impl Clone for ComputePassEncoder {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuComputePassEncoderAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for ComputePassEncoder {}
+    unsafe impl Sync for ComputePassEncoder {}
     #[derive(Debug)]
     pub struct ComputePipeline {
         raw: ffi::WGPUComputePipeline,
@@ -18510,7 +18547,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePipeline) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUComputePipeline {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUComputePipeline {
             self.raw
         }
         pub fn get_bind_group_layout(&self, group_index: u32) -> BindGroupLayout {
@@ -18552,7 +18589,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUDevice) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUDevice {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUDevice {
             self.raw
         }
         pub fn create_bind_group(&self, descriptor: &BindGroupDescriptor) -> BindGroup {
@@ -19019,7 +19056,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUExternalTexture) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUExternalTexture {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUExternalTexture {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -19062,16 +19099,12 @@ mod objects {
     #[derive(Debug)]
     pub struct Instance {
         raw: ffi::WGPUInstance,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl Instance {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUInstance) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUInstance {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUInstance {
             self.raw
         }
         pub fn new(descriptor: Option<&InstanceDescriptor>) -> Self {
@@ -19190,13 +19223,11 @@ mod objects {
     impl Clone for Instance {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuInstanceAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for Instance {}
+    unsafe impl Sync for Instance {}
     #[derive(Debug)]
     pub struct PipelineLayout {
         raw: ffi::WGPUPipelineLayout,
@@ -19205,7 +19236,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUPipelineLayout) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUPipelineLayout {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUPipelineLayout {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -19241,7 +19272,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUQuerySet) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUQuerySet {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUQuerySet {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -19289,7 +19320,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUQueue) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUQueue {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUQueue {
             self.raw
         }
         pub fn submit(&self, commands: &[CommandBuffer]) -> () {
@@ -19450,7 +19481,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundle) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPURenderBundle {
+        pub(crate) fn as_raw(&self) -> ffi::WGPURenderBundle {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -19481,16 +19512,12 @@ mod objects {
     #[derive(Debug)]
     pub struct RenderBundleEncoder {
         raw: ffi::WGPURenderBundleEncoder,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl RenderBundleEncoder {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundleEncoder) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPURenderBundleEncoder {
+        pub(crate) fn as_raw(&self) -> ffi::WGPURenderBundleEncoder {
             self.raw
         }
         pub fn set_pipeline(&self, pipeline: RenderPipeline) -> () {
@@ -19709,26 +19736,20 @@ mod objects {
     impl Clone for RenderBundleEncoder {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuRenderBundleEncoderAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for RenderBundleEncoder {}
+    unsafe impl Sync for RenderBundleEncoder {}
     #[derive(Debug)]
     pub struct RenderPassEncoder {
         raw: ffi::WGPURenderPassEncoder,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl RenderPassEncoder {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPassEncoder) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPURenderPassEncoder {
+        pub(crate) fn as_raw(&self) -> ffi::WGPURenderPassEncoder {
             self.raw
         }
         pub fn set_pipeline(&self, pipeline: RenderPipeline) -> () {
@@ -20061,13 +20082,11 @@ mod objects {
     impl Clone for RenderPassEncoder {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuRenderPassEncoderAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for RenderPassEncoder {}
+    unsafe impl Sync for RenderPassEncoder {}
     #[derive(Debug)]
     pub struct RenderPipeline {
         raw: ffi::WGPURenderPipeline,
@@ -20076,7 +20095,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPipeline) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPURenderPipeline {
+        pub(crate) fn as_raw(&self) -> ffi::WGPURenderPipeline {
             self.raw
         }
         pub fn get_bind_group_layout(&self, group_index: u32) -> BindGroupLayout {
@@ -20118,7 +20137,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUResourceTable) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUResourceTable {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUResourceTable {
             self.raw
         }
         pub fn get_size(&self) -> u32 {
@@ -20174,7 +20193,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUSampler) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUSampler {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUSampler {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -20210,7 +20229,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUShaderModule) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUShaderModule {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUShaderModule {
             self.raw
         }
         pub fn get_compilation_info(
@@ -20269,7 +20288,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedBufferMemory) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUSharedBufferMemory {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedBufferMemory {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -20368,7 +20387,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedFence) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUSharedFence {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedFence {
             self.raw
         }
         pub fn export_info(&self, info: &mut SharedFenceExportInfo) -> () {
@@ -20403,7 +20422,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedTextureMemory) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUSharedTextureMemory {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedTextureMemory {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -20497,16 +20516,12 @@ mod objects {
     #[derive(Debug)]
     pub struct Surface {
         raw: ffi::WGPUSurface,
-        _not_sync: std::marker::PhantomData<std::cell::Cell<()>>,
     }
     impl Surface {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUSurface) -> Self {
-            Self {
-                raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUSurface {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUSurface {
             self.raw
         }
         pub fn configure(&self, config: &SurfaceConfiguration) -> () {
@@ -20568,13 +20583,11 @@ mod objects {
     impl Clone for Surface {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuSurfaceAddRef(self.raw) };
-            Self {
-                raw: self.raw,
-                _not_sync: std::marker::PhantomData,
-            }
+            Self { raw: self.raw }
         }
     }
     unsafe impl Send for Surface {}
+    unsafe impl Sync for Surface {}
     #[derive(Debug)]
     pub struct TexelBufferView {
         raw: ffi::WGPUTexelBufferView,
@@ -20583,7 +20596,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUTexelBufferView) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUTexelBufferView {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUTexelBufferView {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
@@ -20619,7 +20632,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUTexture) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUTexture {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUTexture {
             self.raw
         }
         pub fn create_view(
@@ -20742,7 +20755,7 @@ mod objects {
         pub(crate) unsafe fn from_raw(raw: ffi::WGPUTextureView) -> Self {
             Self { raw }
         }
-        pub fn as_raw(&self) -> ffi::WGPUTextureView {
+        pub(crate) fn as_raw(&self) -> ffi::WGPUTextureView {
             self.raw
         }
         pub fn set_label(&self, label: String) -> () {
