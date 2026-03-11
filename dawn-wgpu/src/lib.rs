@@ -8,7 +8,8 @@ mod future;
 mod mapping;
 mod types;
 
-pub use compat::{Compat, CompatTexture, WgpuCompatError};
+pub use compat::{DawnIntoWgpu, DawnTextureIntoWgpu};
+pub use types::*;
 
 #[cfg(feature = "wire")]
 pub mod wire_backend;

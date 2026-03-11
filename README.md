@@ -54,6 +54,7 @@ DAWN_ROOT=/path/to/dawn cargo run -p dawn-wgpu --example nya-cat-wire --features
 Inputs:
 - `--dawn-json`: path to `src/dawn/dawn.json` from Dawn source.
 - `--api-header`: path to `include/webgpu/webgpu.h` from Dawn build/prebuilt artifacts.
+- `--target-os` / `--target-arch` (optional): override output target naming; defaults to current host.
 
 Windows:
 
@@ -74,6 +75,17 @@ cargo run -p dawn-codegen --bin dawn_codegen -- \
   --clang-arg --sysroot="$(xcrun --show-sdk-path --sdk macosx)"
 ```
 
+Explicit target (single OS/arch per invocation):
+
+```bash
+cargo run -p dawn-codegen --bin dawn_codegen -- \
+  --dawn-json <path_to_dawn_json> \
+  --api-header <path_to_webgpu_h> \
+  --out-dir src/generated \
+  --target-os linux \
+  --target-arch x86_64
+```
+
 Notes:
 - Generated bindings are selected per OS/arch in `src/generated/mod.rs`.
 - `build.rs` handles link directives and builds the C++ wire shim.
@@ -90,6 +102,7 @@ python3 scripts/update_dawn_release.py
 Optional:
 - `--force` to regenerate even if `DAWN_VERSION` is already latest.
 - `DAWN_TAGS` env var to override generator tags (default: `dawn,native`).
+- `DAWN_CODEGEN_TARGET_OS` / `DAWN_CODEGEN_TARGET_ARCH` to force which single target file gets regenerated.
 
 ## Upstream References
 

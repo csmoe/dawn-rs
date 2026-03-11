@@ -7,6 +7,8 @@ fn main() {
     let mut dawn_wire_json: Option<PathBuf> = None;
     let mut api_header: Option<PathBuf> = None;
     let mut out_dir: Option<PathBuf> = None;
+    let mut target_os: Option<String> = None;
+    let mut target_arch: Option<String> = None;
     let mut tags: Vec<String> = Vec::new();
     let mut clang_args: Vec<String> = Vec::new();
 
@@ -24,6 +26,12 @@ fn main() {
             }
             "--out-dir" => {
                 out_dir = args.next().map(PathBuf::from);
+            }
+            "--target-os" => {
+                target_os = args.next().map(|v| v.trim().to_string());
+            }
+            "--target-arch" => {
+                target_arch = args.next().map(|v| v.trim().to_string());
             }
             "--tags" => {
                 if let Some(value) = args.next() {
@@ -49,6 +57,9 @@ fn main() {
     let dawn_json = dawn_json.expect("--dawn-json is required");
     let api_header = api_header.expect("--api-header is required");
     let out_dir = out_dir.expect("--out-dir is required");
+    let target_os = target_os.unwrap_or_else(|| env::consts::OS.to_string());
+    let target_arch = target_arch.unwrap_or_else(|| env::consts::ARCH.to_string());
+    validate_target(&target_os, &target_arch);
     if dawn_wire_json.is_some() {
         eprintln!(
             "warning: --dawn-wire-json is ignored; dawn-rs no longer generates Rust wire protocol code"
@@ -71,8 +82,6 @@ fn main() {
     std::fs::create_dir_all(&out_dir).expect("create output dir");
     cleanup_old_layout(&out_dir).expect("cleanup old generated layout");
 
-    let target_os = env::consts::OS;
-    let target_arch = env::consts::ARCH;
     fs::create_dir_all(&ffi_dir).expect("create ffi module dir");
     let ffi_out = ffi_dir.join(format!("{target_os}_{target_arch}.rs"));
 
@@ -83,10 +92,21 @@ fn main() {
         .expect("generate ffi.rs");
     std::fs::write(&ffi_out, ffi_rs).expect("write ffi bindings");
 
-    write_generated_single_file(&out_dir, target_os, target_arch, &files)
+    write_generated_single_file(&out_dir, &target_os, &target_arch, &files)
         .expect("write generated single file");
     write_generated_wrapper(&out_dir).expect("write generated wrapper");
     write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
+}
+
+fn validate_target(target_os: &str, target_arch: &str) {
+    let ok_os = matches!(target_os, "linux" | "macos" | "windows");
+    let ok_arch = matches!(target_arch, "x86_64" | "aarch64");
+    if !ok_os || !ok_arch {
+        eprintln!(
+            "Unsupported target pair: {target_os}_{target_arch}. Expected OS in [linux, macos, windows] and arch in [x86_64, aarch64]."
+        );
+        std::process::exit(2);
+    }
 }
 
 fn default_clang_args(api_header: &Path) -> Vec<String> {

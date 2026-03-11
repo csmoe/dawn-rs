@@ -1,4 +1,4 @@
-use crate::Compat;
+use crate::DawnIntoWgpu;
 use dawn_rs::wire::{
     Client as DawnWireClient, ClientOptions, ReservedTexture as DawnReservedTexture, WireError,
     WireHandle, WireTextureReservation,
@@ -91,7 +91,7 @@ impl IpcWireBackend {
     }
 
     pub fn wgpu_instance(&self) -> wgpu::Instance {
-        Compat::from(self.dawn_instance()).into()
+        DawnIntoWgpu::from(self.dawn_instance()).into()
     }
 
     pub fn pump(&self) {

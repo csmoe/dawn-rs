@@ -104,6 +104,12 @@ def main() -> int:
             "--out-dir",
             OUT_DIR,
         ]
+        target_os = os.environ.get("DAWN_CODEGEN_TARGET_OS", "").strip()
+        target_arch = os.environ.get("DAWN_CODEGEN_TARGET_ARCH", "").strip()
+        if target_os:
+            cmd.extend(["--target-os", target_os])
+        if target_arch:
+            cmd.extend(["--target-arch", target_arch])
         if tags:
             cmd.extend(["--tags", tags])
         subprocess.check_call(cmd, cwd=REPO_ROOT)

@@ -1,5 +1,5 @@
 use dawn_rs::Instance as DawnInstance;
-use dawn_wgpu::Compat;
+use dawn_wgpu::DawnIntoWgpu;
 use pollster::block_on;
 use wgpu::SurfaceError;
 use winit::application::ApplicationHandler;
@@ -53,7 +53,7 @@ struct State {
 impl State {
     fn new(window: Window) -> Self {
         let dawn_instance = DawnInstance::new(None);
-        let instance: wgpu::Instance = Compat::from(dawn_instance).into();
+        let instance: wgpu::Instance = DawnIntoWgpu::from(dawn_instance).into();
 
         let surface = unsafe {
             let target =

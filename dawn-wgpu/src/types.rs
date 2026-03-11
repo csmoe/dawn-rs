@@ -1,8 +1,9 @@
 use dawn_rs::*;
 use std::fmt;
+use std::ops::Deref;
 use std::sync::Arc;
 
-pub(crate) struct DawnInstance {
+pub struct DawnInstance {
     pub(crate) inner: Instance,
     #[cfg(feature = "wire")]
     pub(crate) wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
@@ -39,115 +40,115 @@ impl fmt::Debug for DawnInstance {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnAdapter {
+pub struct DawnAdapter {
     pub(crate) inner: Adapter,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnDevice {
+pub struct DawnDevice {
     pub(crate) inner: Device,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnQueue {
+pub struct DawnQueue {
     pub(crate) inner: Queue,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnShaderModule {
+pub struct DawnShaderModule {
     pub(crate) inner: ShaderModule,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnBindGroupLayout {
+pub struct DawnBindGroupLayout {
     pub(crate) inner: BindGroupLayout,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnBindGroup {
+pub struct DawnBindGroup {
     pub(crate) inner: BindGroup,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnTextureView {
+pub struct DawnTextureView {
     pub(crate) inner: TextureView,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnSampler {
+pub struct DawnSampler {
     pub(crate) inner: Sampler,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnBuffer {
+pub struct DawnBuffer {
     pub(crate) inner: Buffer,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnTexture {
+pub struct DawnTexture {
     pub(crate) inner: Texture,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnExternalTexture {
+pub struct DawnExternalTexture {
     pub(crate) inner: ExternalTexture,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnQuerySet {
+pub struct DawnQuerySet {
     pub(crate) inner: QuerySet,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnPipelineLayout {
+pub struct DawnPipelineLayout {
     pub(crate) inner: PipelineLayout,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnRenderPipeline {
+pub struct DawnRenderPipeline {
     pub(crate) inner: RenderPipeline,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnComputePipeline {
+pub struct DawnComputePipeline {
     pub(crate) inner: ComputePipeline,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnCommandEncoder {
+pub struct DawnCommandEncoder {
     pub(crate) inner: CommandEncoder,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnComputePass {
+pub struct DawnComputePass {
     pub(crate) inner: ComputePassEncoder,
     pub(crate) ended: bool,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnRenderPass {
+pub struct DawnRenderPass {
     pub(crate) inner: RenderPassEncoder,
     pub(crate) ended: bool,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnCommandBuffer {
+pub struct DawnCommandBuffer {
     pub(crate) inner: CommandBuffer,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnRenderBundleEncoder {
+pub struct DawnRenderBundleEncoder {
     pub(crate) inner: RenderBundleEncoder,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnRenderBundle {
+pub struct DawnRenderBundle {
     pub(crate) inner: RenderBundle,
 }
 
 #[cfg(target_os = "macos")]
 #[derive(Debug)]
-pub(crate) struct MetalLayerHandle {
+pub struct MetalLayerHandle {
     pub(crate) ptr: *mut std::ffi::c_void,
 }
 
@@ -170,24 +171,24 @@ impl Drop for MetalLayerHandle {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnSurface {
+pub struct DawnSurface {
     pub(crate) inner: Surface,
     #[cfg(target_os = "macos")]
     pub(crate) metal_layer: Option<Arc<MetalLayerHandle>>,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct DawnSurfaceOutputDetail {
+pub struct DawnSurfaceOutputDetail {
     pub(crate) surface: Surface,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnQueueWriteBuffer {
+pub struct DawnQueueWriteBuffer {
     pub(crate) inner: Vec<u8>,
 }
 
 #[derive(Debug)]
-pub(crate) struct DawnBufferMappedRange {
+pub struct DawnBufferMappedRange {
     pub(crate) data: *mut u8,
     pub(crate) size: usize,
 }
@@ -196,10 +197,46 @@ unsafe impl Send for DawnBufferMappedRange {}
 unsafe impl Sync for DawnBufferMappedRange {}
 
 #[derive(Debug)]
-pub(crate) struct DawnPipelineCache;
+pub struct DawnPipelineCache;
 
 #[derive(Debug)]
-pub(crate) struct DawnBlas;
+pub struct DawnBlas;
 
 #[derive(Debug)]
-pub(crate) struct DawnTlas;
+pub struct DawnTlas;
+
+macro_rules! impl_deref_to_inner {
+    ($name:ident, $target:ty) => {
+        impl Deref for $name {
+            type Target = $target;
+
+            fn deref(&self) -> &Self::Target {
+                &self.inner
+            }
+        }
+    };
+}
+
+impl_deref_to_inner!(DawnInstance, Instance);
+impl_deref_to_inner!(DawnAdapter, Adapter);
+impl_deref_to_inner!(DawnDevice, Device);
+impl_deref_to_inner!(DawnQueue, Queue);
+impl_deref_to_inner!(DawnShaderModule, ShaderModule);
+impl_deref_to_inner!(DawnBindGroupLayout, BindGroupLayout);
+impl_deref_to_inner!(DawnBindGroup, BindGroup);
+impl_deref_to_inner!(DawnTextureView, TextureView);
+impl_deref_to_inner!(DawnSampler, Sampler);
+impl_deref_to_inner!(DawnBuffer, Buffer);
+impl_deref_to_inner!(DawnTexture, Texture);
+impl_deref_to_inner!(DawnExternalTexture, ExternalTexture);
+impl_deref_to_inner!(DawnQuerySet, QuerySet);
+impl_deref_to_inner!(DawnPipelineLayout, PipelineLayout);
+impl_deref_to_inner!(DawnRenderPipeline, RenderPipeline);
+impl_deref_to_inner!(DawnComputePipeline, ComputePipeline);
+impl_deref_to_inner!(DawnCommandEncoder, CommandEncoder);
+impl_deref_to_inner!(DawnComputePass, ComputePassEncoder);
+impl_deref_to_inner!(DawnRenderPass, RenderPassEncoder);
+impl_deref_to_inner!(DawnCommandBuffer, CommandBuffer);
+impl_deref_to_inner!(DawnRenderBundleEncoder, RenderBundleEncoder);
+impl_deref_to_inner!(DawnRenderBundle, RenderBundle);
+impl_deref_to_inner!(DawnSurface, Surface);
