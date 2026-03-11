@@ -1190,6 +1190,7 @@ mod enums {
         Unorm16FormatsForExternalTexture,
         OpaqueYCbCrAndroidForExternalTexture,
         Unorm16Filterable,
+        RenderPassRenderArea,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1444,6 +1445,9 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable => {
                     FeatureName::Unorm16Filterable
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea => {
+                    FeatureName::RenderPassRenderArea
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1702,6 +1706,9 @@ mod enums {
                 }
                 FeatureName::Unorm16Filterable => {
                     ffi::WGPUFeatureName_WGPUFeatureName_Unorm16Filterable
+                }
+                FeatureName::RenderPassRenderArea => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea
                 }
             }
         }
@@ -2365,7 +2372,7 @@ mod enums {
         DawnDrmFormatCapabilities,
         ShaderModuleCompilationOptions,
         ColorTargetStateExpandResolveTextureDawn,
-        RenderPassDescriptorExpandResolveRect,
+        RenderPassRenderAreaRect,
         SharedTextureMemoryVkDedicatedAllocationDescriptor,
         SharedTextureMemoryAHardwareBufferDescriptor,
         SharedTextureMemoryDmaBufDescriptor,
@@ -2543,8 +2550,8 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn => {
                     SType::ColorTargetStateExpandResolveTextureDawn
                 }
-                ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect => {
-                    SType::RenderPassDescriptorExpandResolveRect
+                ffi::WGPUSType_WGPUSType_RenderPassRenderAreaRect => {
+                    SType::RenderPassRenderAreaRect
                 }
                 ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor => {
                     SType::SharedTextureMemoryVkDedicatedAllocationDescriptor
@@ -2830,8 +2837,8 @@ mod enums {
                 SType::ColorTargetStateExpandResolveTextureDawn => {
                     ffi::WGPUSType_WGPUSType_ColorTargetStateExpandResolveTextureDawn
                 }
-                SType::RenderPassDescriptorExpandResolveRect => {
-                    ffi::WGPUSType_WGPUSType_RenderPassDescriptorExpandResolveRect
+                SType::RenderPassRenderAreaRect => {
+                    ffi::WGPUSType_WGPUSType_RenderPassRenderAreaRect
                 }
                 SType::SharedTextureMemoryVkDedicatedAllocationDescriptor => {
                     ffi::WGPUSType_WGPUSType_SharedTextureMemoryVkDedicatedAllocationDescriptor
@@ -4838,36 +4845,6 @@ mod structs {
         let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
         String::from_utf8_lossy(slice).into_owned()
     }
-    pub struct InternalHaveEmdawnwebgpuHeader {
-        pub unused: Option<bool>,
-    }
-    impl Default for InternalHaveEmdawnwebgpuHeader {
-        fn default() -> Self {
-            Self { unused: None }
-        }
-    }
-    impl InternalHaveEmdawnwebgpuHeader {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER = unsafe {
-                std::mem::zeroed()
-            };
-            raw.unused = if self.unused.unwrap_or(false) { 1 } else { 0 };
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER,
-        ) -> Self {
-            Self {
-                unused: Some(value.unused != 0),
-            }
-        }
-    }
     pub struct AHardwareBufferProperties {
         pub y_cb_cr_info: Option<YCbCrVkDescriptor>,
     }
@@ -6318,64 +6295,6 @@ mod structs {
                 } else {
                     Some(string_view_to_string(value.label))
                 },
-            }
-        }
-    }
-    pub struct CompatibilityModeLimits {
-        pub max_storage_buffers_in_vertex_stage: Option<u32>,
-        pub max_storage_textures_in_vertex_stage: Option<u32>,
-        pub max_storage_buffers_in_fragment_stage: Option<u32>,
-        pub max_storage_textures_in_fragment_stage: Option<u32>,
-    }
-    impl Default for CompatibilityModeLimits {
-        fn default() -> Self {
-            Self {
-                max_storage_buffers_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_textures_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_buffers_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
-                max_storage_textures_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
-            }
-        }
-    }
-    impl CompatibilityModeLimits {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUCompatibilityModeLimits, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUCompatibilityModeLimits = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.max_storage_buffers_in_vertex_stage {
-                raw.maxStorageBuffersInVertexStage = value;
-            }
-            if let Some(value) = self.max_storage_textures_in_vertex_stage {
-                raw.maxStorageTexturesInVertexStage = value;
-            }
-            if let Some(value) = self.max_storage_buffers_in_fragment_stage {
-                raw.maxStorageBuffersInFragmentStage = value;
-            }
-            if let Some(value) = self.max_storage_textures_in_fragment_stage {
-                raw.maxStorageTexturesInFragmentStage = value;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(value: ffi::WGPUCompatibilityModeLimits) -> Self {
-            Self {
-                max_storage_buffers_in_vertex_stage: Some(
-                    value.maxStorageBuffersInVertexStage,
-                ),
-                max_storage_textures_in_vertex_stage: Some(
-                    value.maxStorageTexturesInVertexStage,
-                ),
-                max_storage_buffers_in_fragment_stage: Some(
-                    value.maxStorageBuffersInFragmentStage,
-                ),
-                max_storage_textures_in_fragment_stage: Some(
-                    value.maxStorageTexturesInFragmentStage,
-                ),
             }
         }
     }
@@ -8212,46 +8131,6 @@ mod structs {
                 default_queue: Some(QueueDescriptor::from_ffi(value.defaultQueue)),
                 device_lost_callback_info: None,
                 uncaptured_error_callback_info: None,
-            }
-        }
-    }
-    pub struct EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub selector: Option<String>,
-    }
-    impl Default for EmscriptenSurfaceSourceCanvasHTMLSelector {
-        fn default() -> Self {
-            Self { selector: None }
-        }
-    }
-    impl EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = &self.selector {
-                raw.selector = ffi::WGPUStringView {
-                    data: value.as_ptr().cast(),
-                    length: value.len(),
-                };
-            } else {
-                raw.selector = ffi::WGPUStringView {
-                    data: std::ptr::null(),
-                    length: 0,
-                };
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector,
-        ) -> Self {
-            Self {
-                selector: Some(string_view_to_string(value.selector)),
             }
         }
     }
@@ -10462,58 +10341,6 @@ mod structs {
             }
         }
     }
-    pub struct RenderPassDescriptorExpandResolveRect {
-        pub x: Option<u32>,
-        pub y: Option<u32>,
-        pub width: Option<u32>,
-        pub height: Option<u32>,
-    }
-    impl Default for RenderPassDescriptorExpandResolveRect {
-        fn default() -> Self {
-            Self {
-                x: None,
-                y: None,
-                width: None,
-                height: None,
-            }
-        }
-    }
-    impl RenderPassDescriptorExpandResolveRect {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPURenderPassDescriptorExpandResolveRect, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPURenderPassDescriptorExpandResolveRect = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.x {
-                raw.x = value;
-            }
-            if let Some(value) = self.y {
-                raw.y = value;
-            }
-            if let Some(value) = self.width {
-                raw.width = value;
-            }
-            if let Some(value) = self.height {
-                raw.height = value;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPURenderPassDescriptorExpandResolveRect,
-        ) -> Self {
-            Self {
-                x: Some(value.x),
-                y: Some(value.y),
-                width: Some(value.width),
-                height: Some(value.height),
-            }
-        }
-    }
     pub struct RenderPassDescriptorResolveRect {
         pub color_offset_x: Option<u32>,
         pub color_offset_y: Option<u32>,
@@ -10674,6 +10501,45 @@ mod structs {
                             .collect(),
                     )
                 },
+            }
+        }
+    }
+    pub struct RenderPassRenderAreaRect {
+        pub origin: Option<Origin2D>,
+        pub size: Option<Extent2D>,
+    }
+    impl Default for RenderPassRenderAreaRect {
+        fn default() -> Self {
+            Self { origin: None, size: None }
+        }
+    }
+    impl RenderPassRenderAreaRect {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPURenderPassRenderAreaRect, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPURenderPassRenderAreaRect = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = &self.origin {
+                let (raw_value, storage_value) = value.to_ffi();
+                raw.origin = raw_value;
+                storage.push_storage(storage_value);
+            }
+            if let Some(value) = &self.size {
+                let (raw_value, storage_value) = value.to_ffi();
+                raw.size = raw_value;
+                storage.push_storage(storage_value);
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPURenderPassRenderAreaRect) -> Self {
+            Self {
+                origin: Some(Origin2D::from_ffi(value.origin)),
+                size: Some(Extent2D::from_ffi(value.size)),
             }
         }
     }
@@ -11424,6 +11290,46 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUShaderSourceWGSL) -> Self {
             Self {
                 code: Some(string_view_to_string(value.code)),
+            }
+        }
+    }
+    pub struct SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        pub handle: Option<*mut std::ffi::c_void>,
+        pub size: Option<u64>,
+    }
+    impl Default for SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        fn default() -> Self {
+            Self { handle: None, size: None }
+        }
+    }
+    impl SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (
+            ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+            ChainedStructStorage,
+        ) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.handle {
+                raw.handle = value;
+            }
+            if let Some(value) = self.size {
+                raw.size = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ) -> Self {
+            Self {
+                handle: Some(value.handle),
+                size: Some(value.size),
             }
         }
     }
@@ -14769,44 +14675,6 @@ mod structs {
             }
         }
     }
-    pub struct TextureBindingViewDimensionDescriptor {
-        pub texture_binding_view_dimension: Option<TextureViewDimension>,
-    }
-    impl Default for TextureBindingViewDimensionDescriptor {
-        fn default() -> Self {
-            Self {
-                texture_binding_view_dimension: None,
-            }
-        }
-    }
-    impl TextureBindingViewDimensionDescriptor {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUTextureBindingViewDimensionDescriptor, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUTextureBindingViewDimensionDescriptor = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = self.texture_binding_view_dimension {
-                raw.textureBindingViewDimension = value.into();
-            } else {
-                raw.textureBindingViewDimension = 0 as ffi::WGPUTextureViewDimension;
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUTextureBindingViewDimensionDescriptor,
-        ) -> Self {
-            Self {
-                texture_binding_view_dimension: Some(
-                    value.textureBindingViewDimension.into(),
-                ),
-            }
-        }
-    }
     pub struct TextureComponentSwizzle {
         pub r: Option<ComponentSwizzle>,
         pub g: Option<ComponentSwizzle>,
@@ -16335,14 +16203,8 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum LimitsExtension {
-        CompatibilityModeLimits(CompatibilityModeLimits),
         DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
         DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
-    }
-    impl std::convert::From<CompatibilityModeLimits> for LimitsExtension {
-        fn from(ext: CompatibilityModeLimits) -> Self {
-            LimitsExtension::CompatibilityModeLimits(ext)
-        }
     }
     impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
         fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -16361,14 +16223,6 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
-                LimitsExtension::CompatibilityModeLimits(value) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::CompatibilityModeLimits.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
                 LimitsExtension::DawnHostMappedPointerLimits(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnHostMappedPointerLimits.into();
@@ -16569,21 +16423,15 @@ mod extensions {
     #[allow(dead_code)]
     pub enum RenderPassDescriptorExtension {
         DawnRenderPassSampleCount(DawnRenderPassSampleCount),
-        RenderPassDescriptorExpandResolveRect(RenderPassDescriptorExpandResolveRect),
         RenderPassDescriptorResolveRect(RenderPassDescriptorResolveRect),
         RenderPassMaxDrawCount(RenderPassMaxDrawCount),
         RenderPassPixelLocalStorage(RenderPassPixelLocalStorage),
+        RenderPassRenderAreaRect(RenderPassRenderAreaRect),
     }
     impl std::convert::From<DawnRenderPassSampleCount>
     for RenderPassDescriptorExtension {
         fn from(ext: DawnRenderPassSampleCount) -> Self {
             RenderPassDescriptorExtension::DawnRenderPassSampleCount(ext)
-        }
-    }
-    impl std::convert::From<RenderPassDescriptorExpandResolveRect>
-    for RenderPassDescriptorExtension {
-        fn from(ext: RenderPassDescriptorExpandResolveRect) -> Self {
-            RenderPassDescriptorExtension::RenderPassDescriptorExpandResolveRect(ext)
         }
     }
     impl std::convert::From<RenderPassDescriptorResolveRect>
@@ -16603,6 +16451,11 @@ mod extensions {
             RenderPassDescriptorExtension::RenderPassPixelLocalStorage(ext)
         }
     }
+    impl std::convert::From<RenderPassRenderAreaRect> for RenderPassDescriptorExtension {
+        fn from(ext: RenderPassRenderAreaRect) -> Self {
+            RenderPassDescriptorExtension::RenderPassRenderAreaRect(ext)
+        }
+    }
     impl RenderPassDescriptorExtension {
         pub(crate) fn push_chain(
             &self,
@@ -16613,17 +16466,6 @@ mod extensions {
                 RenderPassDescriptorExtension::DawnRenderPassSampleCount(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnRenderPassSampleCount.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
-                RenderPassDescriptorExtension::RenderPassDescriptorExpandResolveRect(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::RenderPassDescriptorExpandResolveRect
-                        .into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
@@ -16650,6 +16492,14 @@ mod extensions {
                 RenderPassDescriptorExtension::RenderPassPixelLocalStorage(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::RenderPassPixelLocalStorage.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                RenderPassDescriptorExtension::RenderPassRenderAreaRect(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::RenderPassRenderAreaRect.into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
@@ -16886,16 +16736,41 @@ mod extensions {
         }
     }
     #[allow(dead_code)]
-    pub enum SharedBufferMemoryDescriptorExtension {}
+    pub enum SharedBufferMemoryDescriptorExtension {
+        SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+            SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ),
+    }
+    impl std::convert::From<
+        SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+    > for SharedBufferMemoryDescriptorExtension {
+        fn from(
+            ext: SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ) -> Self {
+            SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                ext,
+            )
+        }
+    }
     impl SharedBufferMemoryDescriptorExtension {
         pub(crate) fn push_chain(
             &self,
             storage: &mut ChainedStructStorage,
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
-            let _ = self;
-            let _ = storage;
-            next
+            match self {
+                SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor
+                        .into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+            }
         }
     }
     #[allow(dead_code)]
@@ -17551,9 +17426,6 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum SurfaceDescriptorExtension {
-        EmscriptenSurfaceSourceCanvasHTMLSelector(
-            EmscriptenSurfaceSourceCanvasHTMLSelector,
-        ),
         SurfaceColorManagement(SurfaceColorManagement),
         SurfaceDescriptorFromWindowsUWPSwapChainPanel(
             SurfaceDescriptorFromWindowsUWPSwapChainPanel,
@@ -17568,12 +17440,6 @@ mod extensions {
         SurfaceSourceWaylandSurface(SurfaceSourceWaylandSurface),
         SurfaceSourceWindowsHWND(SurfaceSourceWindowsHWND),
         SurfaceSourceXlibWindow(SurfaceSourceXlibWindow),
-    }
-    impl std::convert::From<EmscriptenSurfaceSourceCanvasHTMLSelector>
-    for SurfaceDescriptorExtension {
-        fn from(ext: EmscriptenSurfaceSourceCanvasHTMLSelector) -> Self {
-            SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(ext)
-        }
     }
     impl std::convert::From<SurfaceColorManagement> for SurfaceDescriptorExtension {
         fn from(ext: SurfaceColorManagement) -> Self {
@@ -17640,17 +17506,6 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
-                SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::EmscriptenSurfaceSourceCanvasHTMLSelector
-                        .into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
                 SurfaceDescriptorExtension::SurfaceColorManagement(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::SurfaceColorManagement.into();
@@ -17785,18 +17640,11 @@ mod extensions {
     #[allow(dead_code)]
     pub enum TextureDescriptorExtension {
         DawnTextureInternalUsageDescriptor(DawnTextureInternalUsageDescriptor),
-        TextureBindingViewDimensionDescriptor(TextureBindingViewDimensionDescriptor),
     }
     impl std::convert::From<DawnTextureInternalUsageDescriptor>
     for TextureDescriptorExtension {
         fn from(ext: DawnTextureInternalUsageDescriptor) -> Self {
             TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(ext)
-        }
-    }
-    impl std::convert::From<TextureBindingViewDimensionDescriptor>
-    for TextureDescriptorExtension {
-        fn from(ext: TextureBindingViewDimensionDescriptor) -> Self {
-            TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(ext)
         }
     }
     impl TextureDescriptorExtension {
@@ -17811,17 +17659,6 @@ mod extensions {
                 ) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnTextureInternalUsageDescriptor.into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
-                TextureDescriptorExtension::TextureBindingViewDimensionDescriptor(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::TextureBindingViewDimensionDescriptor
-                        .into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
