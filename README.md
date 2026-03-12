@@ -1,62 +1,66 @@
 # dawn-rs
 
-Rust bindings and thin wrappers for Dawn WebGPU.
+Rust bindings for Dawn WebGPU, plus `dawn-wgpu` compatibility wrappers for `wgpu`.
 
-## Status
+## Project Layout
 
-Active development. **Not approved for production use.**
+- `dawn-rs` (`src/`): generated + thin handwritten bindings over Dawn C API.
+- `dawn-wgpu` (`dawn-wgpu/`): `wgpu` custom backend compatibility layer.
+- `codegen/`: generator for Rust bindings from `dawn.json` + `webgpu.h`.
 
-## Prerequisites
+## Requirements
 
-1. Rust toolchain (`cargo` + stable toolchain).
-2. A built Dawn tree.
-3. `DAWN_ROOT` pointing to either:
-   - the Dawn source root with build output directory that contains static libs (for example `dawn/out/Release`).
+- Rust stable toolchain.
+- `DAWN_ROOT` pointing to a Dawn build/prebuilt root that contains dawn binaries and headers.
 
-Build Dawn first by following the official guide:
-- [Dawn build instructions](https://dawn.googlesource.com/dawn/+/HEAD/docs/building.md)
+Example:
 
-Windows note:
-- Rust defaults to static CRT in many setups. If needed, build Dawn with `/MT`:
-  - `cmake -GNinja -B out/Release -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DABSL_MSVC_STATIC_RUNTIME=ON`
-- If you build Dawn with GN instead of CMake, use a static non-component build as well:
-  - `gn gen out/Release --args="is_debug=false is_component_build=false is_clang=true target_cpu=\"x64\""`
-  - `ninja -C out/Release`
+```bash
+DAWN_ROOT=/path/to/dawn cargo check
+```
+
+## Link Modes
+
+- Default: static Dawn linkage.
+- Optional dynamic linkage: enable `dawn-dynamic` feature where needed.
 
 ## Quick Start
 
-Run the native adapter example:
+`dawn-rs` adapter info:
 
 ```bash
 DAWN_ROOT=/path/to/dawn cargo run --example adapter-info
 ```
 
-Run the native triangle example:
+`dawn-rs` triangle:
 
 ```bash
 DAWN_ROOT=/path/to/dawn cargo run --example triangle
 ```
 
-Run wire triangle example (`dawn-rs`):
+`dawn-wgpu` triangle:
+
+```bash
+DAWN_ROOT=/path/to/dawn cargo run -p dawn-wgpu --example triangle
+```
+
+Wire examples:
 
 ```bash
 DAWN_ROOT=/path/to/dawn cargo run --example triangle-wire --features wire
-```
-
-Run wire nya-cat example (`dawn-wgpu`):
-
-```bash
 DAWN_ROOT=/path/to/dawn cargo run -p dawn-wgpu --example nya-cat-wire --features wire
 ```
 
 ## Code Generation
 
 Inputs:
-- `--dawn-json`: path to `src/dawn/dawn.json` from Dawn source.
-- `--api-header`: path to `include/webgpu/webgpu.h` from Dawn build/prebuilt artifacts.
-- `--target-os` / `--target-arch` (optional): override output target naming; defaults to current host.
 
-Windows:
+- `--dawn-json`: Dawn schema file (`src/dawn/dawn.json` from Dawn source).
+- `--api-header`: `include/webgpu/webgpu.h` from Dawn build/prebuilt.
+- `--out-dir`: usually `src/generated`.
+- `--target-os` / `--target-arch` (optional): override target file naming.
+
+Host-target generation:
 
 ```bash
 cargo run -p dawn-codegen --bin dawn_codegen -- \
@@ -65,17 +69,7 @@ cargo run -p dawn-codegen --bin dawn_codegen -- \
   --out-dir src/generated
 ```
 
-macOS:
-
-```bash
-cargo run -p dawn-codegen --bin dawn_codegen -- \
-  --dawn-json <path_to_dawn_json> \
-  --api-header <path_to_webgpu_h> \
-  --out-dir src/generated \
-  --clang-arg --sysroot="$(xcrun --show-sdk-path --sdk macosx)"
-```
-
-Explicit target (single OS/arch per invocation):
+Explicit single-target generation:
 
 ```bash
 cargo run -p dawn-codegen --bin dawn_codegen -- \
@@ -87,29 +81,31 @@ cargo run -p dawn-codegen --bin dawn_codegen -- \
 ```
 
 Notes:
-- Generated bindings are selected per OS/arch in `src/generated/mod.rs`.
-- `build.rs` handles link directives and builds the C++ wire shim.
-- Codegen is explicit; it does not run automatically during normal `cargo build`.
 
-## Update Dawn API Snapshot
+- One invocation updates one OS/arch generated file.
+- Dispatch modules live in `src/generated/mod.rs` and `src/ffi/mod.rs`.
+- Codegen is explicit and **not** run automatically by `cargo build`.
 
-Use the helper script to fetch the latest Dawn release and regenerate bindings:
+## Update Dawn Snapshot
+
+Regenerate against latest Dawn release:
 
 ```bash
 python3 scripts/update_dawn_release.py
 ```
 
 Optional:
-- `--force` to regenerate even if `DAWN_VERSION` is already latest.
-- `DAWN_TAGS` env var to override generator tags (default: `dawn,native`).
-- `DAWN_CODEGEN_TARGET_OS` / `DAWN_CODEGEN_TARGET_ARCH` to force which single target file gets regenerated.
+
+- `--force`: regenerate even if `DAWN_VERSION` is already current.
+- `DAWN_TAGS`: override generator tags (default `dawn,native`).
+- `DAWN_CODEGEN_TARGET_OS` / `DAWN_CODEGEN_TARGET_ARCH`: pin single target output.
 
 ## Upstream References
 
-- Dawn API schema: [dawn.json](https://dawn.googlesource.com/dawn/+/HEAD/src/dawn/dawn.json)
-- Generator notes: [docs/dawn/codegen.md](https://dawn.googlesource.com/dawn/+/HEAD/docs/dawn/codegen.md)
-- C++ wrapper template: [generator/templates/api_cpp.h](https://dawn.googlesource.com/dawn/+/HEAD/generator/templates/api_cpp.h)
+- Dawn schema: [dawn.json](https://github.com/google/dawn/blob/main/src/dawn/dawn.json)
+- Dawn codegen docs: [docs/dawn/codegen.md](https://github.com/google/dawn/blob/main/docs/dawn/codegen.md)
+- Dawn C++ API template: [generator/templates/api_cpp.h](https://github.com/google/dawn/blob/main/generator/templates/api_cpp.h)
 
 ## License
 
-BSD 3-Clause "New" or "Revised" License. See [LICENSE](LICENSE).
+BSD 3-Clause. See `LICENSE`.
