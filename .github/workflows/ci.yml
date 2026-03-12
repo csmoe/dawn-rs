@@ -75,6 +75,18 @@ jobs:
           $cleanPath = ($env:PATH -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git\\usr\\bin') }) -join ';'
           "PATH=$cleanPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Export MSVC tools for Cargo/cc crate (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "CC=cl.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CXX=cl.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "AR=lib.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=link.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          where cl
+          where link
+          where lib
+
       - name: Download Dawn prebuilt release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
