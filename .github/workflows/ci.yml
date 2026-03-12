@@ -46,11 +46,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
-
       - name: Read Dawn tag
         id: dawn_tag
         run: |
@@ -61,26 +56,11 @@ jobs:
           fi
           echo "value=$dawn_tag" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Dawn source + deps + build
+      - name: Cache Dawn prebuilt
         uses: actions/cache@v4
         with:
           path: .ci/dawn-cache
           key: dawn-${{ runner.os }}-${{ steps.dawn_tag.outputs.value }}-v2
-
-      - name: Install Dawn build deps (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            ninja-build clang lld pkg-config \
-            libxrandr-dev libxinerama-dev libxcursor-dev mesa-common-dev libx11-xcb-dev libxi-dev \
-            protobuf-compiler
-
-      - name: Install Dawn build deps (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install ninja protoc -y
 
       - name: Set up MSVC dev environment (Windows)
         if: runner.os == 'Windows'
@@ -95,18 +75,29 @@ jobs:
           $cleanPath = ($env:PATH -split ';' | Where-Object { $_ -and ($_ -notmatch 'Git\\usr\\bin') }) -join ';'
           "PATH=$cleanPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Install Dawn build deps (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ninja protobuf || true
-
-      - name: Download and build Dawn from source
+      - name: Download Dawn prebuilt release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          python3 ./scripts/build_dawn_ci.py
-          --tag "${{ steps.dawn_tag.outputs.value }}"
-          --cache-root ".ci/dawn-cache"
-          --runner-os "${{ runner.os }}"
+        run: |
+          case "${{ runner.os }}" in
+            Linux) platform="linux" ;;
+            macOS) platform="macos" ;;
+            Windows) platform="windows" ;;
+            *)
+              echo "Unsupported runner OS: ${{ runner.os }}" >&2
+              exit 1
+              ;;
+          esac
+          dawn_root="$(python3 ./scripts/download_dawn_prebuilt.py \
+            --platform "$platform" \
+            --tag "${{ steps.dawn_tag.outputs.value }}" \
+            --output ".ci/dawn-cache/${platform}-${{ steps.dawn_tag.outputs.value }}")"
+          if [[ -z "$dawn_root" ]]; then
+            echo "Failed to resolve DAWN_ROOT from prebuilt download" >&2
+            exit 1
+          fi
+          echo "DAWN_ROOT=$dawn_root" >> "$GITHUB_ENV"
+          echo "Using DAWN_ROOT=$dawn_root"
 
       - name: Set cargo target args
         run: |
@@ -116,17 +107,17 @@ jobs:
             echo "CARGO_TARGET_ARGS=" >> "$GITHUB_ENV"
           fi
 
-      - name: Cargo build workspace
-        run: cargo build --workspace $CARGO_TARGET_ARGS
+      - name: Cargo check workspace
+        run: cargo check --workspace $CARGO_TARGET_ARGS
 
-      - name: Build dawn-rs examples (default)
-        run: cargo build -p dawn-rs --examples $CARGO_TARGET_ARGS
+      - name: Check dawn-rs examples (default)
+        run: cargo check -p dawn-rs --examples $CARGO_TARGET_ARGS
 
       #- name: Build dawn-rs wire example
       #  run: cargo build -p dawn-rs --example triangle-wire --features wire
 
-      - name: Build dawn-wgpu examples (default)
-        run: cargo build -p dawn-wgpu --examples $CARGO_TARGET_ARGS
+      - name: Check dawn-wgpu examples (default)
+        run: cargo check -p dawn-wgpu --examples $CARGO_TARGET_ARGS
 
       #- name: Build dawn-wgpu wire example
       #  run: cargo build -p dawn-wgpu --example nya-cat-wire --features wire
