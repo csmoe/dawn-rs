@@ -92,9 +92,7 @@ impl InstanceInterface for DawnInstance {
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.clone().create_surface(&desc);
-                        let dawn_surface = DawnSurface {
-                            inner: surface,
-                        };
+                        let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     _ => panic!("wgpu-compat: unsupported raw window handle on Windows"),
@@ -115,9 +113,7 @@ impl InstanceInterface for DawnInstance {
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.clone().create_surface(&desc);
-                        let dawn_surface = DawnSurface {
-                            inner: surface,
-                        };
+                        let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xlib(display), RawWindowHandle::Xlib(window)) => {
@@ -128,9 +124,7 @@ impl InstanceInterface for DawnInstance {
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.clone().create_surface(&desc);
-                        let dawn_surface = DawnSurface {
-                            inner: surface,
-                        };
+                        let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xcb(display), RawWindowHandle::Xcb(window)) => {
@@ -141,9 +135,7 @@ impl InstanceInterface for DawnInstance {
                         };
                         desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
                         let surface = self.inner.clone().create_surface(&desc);
-                        let dawn_surface = DawnSurface {
-                            inner: surface,
-                        };
+                        let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     _ => panic!("wgpu-compat: unsupported raw window handle on unix"),
@@ -251,12 +243,16 @@ impl AdapterInterface for DawnAdapter {
         let (future, shared) = CallbackFuture::new();
         let mut dawn_desc = DeviceDescriptor::new();
         dawn_desc.label = label_to_string(desc.label);
+        let mut features = vec![
+            FeatureName::DawnInternalUsages,
+            FeatureName::ImplicitDeviceSynchronization,
+        ];
         if !desc.required_features.is_empty() {
-            dawn_desc.required_features = Some(map_features_to_dawn(desc.required_features));
+            features.extend(map_features_to_dawn(desc.required_features));
         }
+
         #[cfg(feature = "shared_texture_memory")]
         {
-            let mut features = vec![];
             #[cfg(target_os = "windows")]
             {
                 features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
@@ -272,12 +268,8 @@ impl AdapterInterface for DawnAdapter {
             {
                 features.push(FeatureName::SharedTextureMemoryDmaBuf);
             }
-            if let Some(f) = dawn_desc.required_features.as_mut() {
-                f.extend(features);
-            } else {
-                dawn_desc.required_features = Some(features);
-            }
         }
+        dawn_desc.required_features = Some(features);
         if desc.required_limits != wgpu::Limits::default() {
             dawn_desc.required_limits = Some(map_limits_to_dawn(&desc.required_limits));
         }
@@ -296,7 +288,8 @@ impl AdapterInterface for DawnAdapter {
             })));
         dawn_desc.device_lost_callback_info = Some(lost_info);
         let _future_handle =
-            self.inner.clone()
+            self.inner
+                .clone()
                 .request_device(Some(&dawn_desc), move |status, device, message| {
                     if status == RequestDeviceStatus::Success {
                         let device = device.expect("wgpu-compat: missing device");
@@ -373,18 +366,12 @@ impl AdapterInterface for DawnAdapter {
 impl DeviceInterface for DawnDevice {
     fn features(&self) -> wgpu::Features {
         let adapter = self.inner.get_adapter();
-        DawnAdapter {
-            inner: adapter,
-        }
-        .features()
+        DawnAdapter { inner: adapter }.features()
     }
 
     fn limits(&self) -> wgpu::Limits {
         let adapter = self.inner.get_adapter();
-        DawnAdapter {
-            inner: adapter,
-        }
-        .limits()
+        DawnAdapter { inner: adapter }.limits()
     }
 
     fn create_shader_module(
@@ -845,7 +832,8 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_buffer_info(source);
         let dest = map_texel_copy_texture_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.clone()
+        self.inner
+            .clone()
             .copy_buffer_to_texture(&source, &dest, &size);
     }
 
@@ -858,7 +846,8 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_texture_info(source);
         let dest = map_texel_copy_buffer_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.clone()
+        self.inner
+            .clone()
             .copy_texture_to_buffer(&source, &dest, &size);
     }
 
@@ -871,7 +860,8 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         let source = map_texel_copy_texture_info(source);
         let dest = map_texel_copy_texture_info(destination);
         let size = map_extent_3d(copy_size);
-        self.inner.clone()
+        self.inner
+            .clone()
             .copy_texture_to_texture(&source, &dest, &size);
     }
 
@@ -908,7 +898,8 @@ impl CommandEncoderInterface for DawnCommandEncoder {
         size: Option<wgpu::BufferAddress>,
     ) {
         let buffer = expect_buffer(buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .clear_buffer(buffer, offset, size.unwrap_or(WHOLE_SIZE));
     }
 
@@ -1037,7 +1028,8 @@ impl ComputePassInterface for DawnComputePass {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .dispatch_workgroups_indirect(buffer, indirect_offset);
     }
 
@@ -1083,7 +1075,8 @@ impl RenderPassInterface for DawnRenderPass {
     ) {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
-        self.inner.clone()
+        self.inner
+            .clone()
             .set_index_buffer(buffer, map_index_format(index_format), offset, size);
     }
 
@@ -1096,7 +1089,8 @@ impl RenderPassInterface for DawnRenderPass {
     ) {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
-        self.inner.clone()
+        self.inner
+            .clone()
             .set_vertex_buffer(slot, Some(buffer), offset, size);
     }
 
@@ -1126,7 +1120,8 @@ impl RenderPassInterface for DawnRenderPass {
         min_depth: f32,
         max_depth: f32,
     ) {
-        self.inner.clone()
+        self.inner
+            .clone()
             .set_viewport(x, y, width, height, min_depth, max_depth);
     }
 
@@ -1177,7 +1172,8 @@ impl RenderPassInterface for DawnRenderPass {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .draw_indexed_indirect(buffer, indirect_offset);
     }
 
@@ -1196,7 +1192,8 @@ impl RenderPassInterface for DawnRenderPass {
         count: u32,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .multi_draw_indirect(buffer, indirect_offset, count, None, 0);
     }
 
@@ -1207,7 +1204,8 @@ impl RenderPassInterface for DawnRenderPass {
         count: u32,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .multi_draw_indexed_indirect(buffer, indirect_offset, count, None, 0);
     }
 
@@ -1337,7 +1335,8 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
     ) {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
-        self.inner.clone()
+        self.inner
+            .clone()
             .set_index_buffer(buffer, map_index_format(index_format), offset, size);
     }
 
@@ -1350,7 +1349,8 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
     ) {
         let buffer = expect_buffer(buffer);
         let size = size.map(|v| v.get()).unwrap_or(WHOLE_SIZE);
-        self.inner.clone()
+        self.inner
+            .clone()
             .set_vertex_buffer(slot, Some(buffer), offset, size);
     }
 
@@ -1401,7 +1401,8 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
         indirect_offset: wgpu::BufferAddress,
     ) {
         let buffer = expect_buffer(indirect_buffer);
-        self.inner.clone()
+        self.inner
+            .clone()
             .draw_indexed_indirect(buffer, indirect_offset);
     }
 
