@@ -6,6 +6,8 @@ description = "Code generator for Dawn WebGPU API"
 documentation = "https://docs.rs/dawn-codegen"
 license.workspace = true
 homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
