@@ -2343,7 +2343,7 @@ mod enums {
         RequestAdapterWebXROptions,
         TextureComponentSwizzleDescriptor,
         CompatibilityModeLimits,
-        TextureBindingViewDimensionDescriptor,
+        TextureBindingViewDimension,
         EmscriptenSurfaceSourceCanvasHTMLSelector,
         SurfaceDescriptorFromWindowsCoreWindow,
         ExternalTextureBindingEntry,
@@ -2465,8 +2465,8 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_CompatibilityModeLimits => {
                     SType::CompatibilityModeLimits
                 }
-                ffi::WGPUSType_WGPUSType_TextureBindingViewDimensionDescriptor => {
-                    SType::TextureBindingViewDimensionDescriptor
+                ffi::WGPUSType_WGPUSType_TextureBindingViewDimension => {
+                    SType::TextureBindingViewDimension
                 }
                 ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector => {
                     SType::EmscriptenSurfaceSourceCanvasHTMLSelector
@@ -2752,8 +2752,8 @@ mod enums {
                 SType::CompatibilityModeLimits => {
                     ffi::WGPUSType_WGPUSType_CompatibilityModeLimits
                 }
-                SType::TextureBindingViewDimensionDescriptor => {
-                    ffi::WGPUSType_WGPUSType_TextureBindingViewDimensionDescriptor
+                SType::TextureBindingViewDimension => {
+                    ffi::WGPUSType_WGPUSType_TextureBindingViewDimension
                 }
                 SType::EmscriptenSurfaceSourceCanvasHTMLSelector => {
                     ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector
@@ -6295,6 +6295,64 @@ mod structs {
                 } else {
                     Some(string_view_to_string(value.label))
                 },
+            }
+        }
+    }
+    pub struct CompatibilityModeLimits {
+        pub max_storage_buffers_in_vertex_stage: Option<u32>,
+        pub max_storage_textures_in_vertex_stage: Option<u32>,
+        pub max_storage_buffers_in_fragment_stage: Option<u32>,
+        pub max_storage_textures_in_fragment_stage: Option<u32>,
+    }
+    impl Default for CompatibilityModeLimits {
+        fn default() -> Self {
+            Self {
+                max_storage_buffers_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_textures_in_vertex_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_buffers_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
+                max_storage_textures_in_fragment_stage: Some(LIMIT_U32_UNDEFINED),
+            }
+        }
+    }
+    impl CompatibilityModeLimits {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUCompatibilityModeLimits, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUCompatibilityModeLimits = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.max_storage_buffers_in_vertex_stage {
+                raw.maxStorageBuffersInVertexStage = value;
+            }
+            if let Some(value) = self.max_storage_textures_in_vertex_stage {
+                raw.maxStorageTexturesInVertexStage = value;
+            }
+            if let Some(value) = self.max_storage_buffers_in_fragment_stage {
+                raw.maxStorageBuffersInFragmentStage = value;
+            }
+            if let Some(value) = self.max_storage_textures_in_fragment_stage {
+                raw.maxStorageTexturesInFragmentStage = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPUCompatibilityModeLimits) -> Self {
+            Self {
+                max_storage_buffers_in_vertex_stage: Some(
+                    value.maxStorageBuffersInVertexStage,
+                ),
+                max_storage_textures_in_vertex_stage: Some(
+                    value.maxStorageTexturesInVertexStage,
+                ),
+                max_storage_buffers_in_fragment_stage: Some(
+                    value.maxStorageBuffersInFragmentStage,
+                ),
+                max_storage_textures_in_fragment_stage: Some(
+                    value.maxStorageTexturesInFragmentStage,
+                ),
             }
         }
     }
@@ -14675,6 +14733,42 @@ mod structs {
             }
         }
     }
+    pub struct TextureBindingViewDimension {
+        pub texture_binding_view_dimension: Option<TextureViewDimension>,
+    }
+    impl Default for TextureBindingViewDimension {
+        fn default() -> Self {
+            Self {
+                texture_binding_view_dimension: None,
+            }
+        }
+    }
+    impl TextureBindingViewDimension {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUTextureBindingViewDimension, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUTextureBindingViewDimension = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.texture_binding_view_dimension {
+                raw.textureBindingViewDimension = value.into();
+            } else {
+                raw.textureBindingViewDimension = 0 as ffi::WGPUTextureViewDimension;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPUTextureBindingViewDimension) -> Self {
+            Self {
+                texture_binding_view_dimension: Some(
+                    value.textureBindingViewDimension.into(),
+                ),
+            }
+        }
+    }
     pub struct TextureComponentSwizzle {
         pub r: Option<ComponentSwizzle>,
         pub g: Option<ComponentSwizzle>,
@@ -16203,8 +16297,14 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum LimitsExtension {
+        CompatibilityModeLimits(CompatibilityModeLimits),
         DawnHostMappedPointerLimits(DawnHostMappedPointerLimits),
         DawnTexelCopyBufferRowAlignmentLimits(DawnTexelCopyBufferRowAlignmentLimits),
+    }
+    impl std::convert::From<CompatibilityModeLimits> for LimitsExtension {
+        fn from(ext: CompatibilityModeLimits) -> Self {
+            LimitsExtension::CompatibilityModeLimits(ext)
+        }
     }
     impl std::convert::From<DawnHostMappedPointerLimits> for LimitsExtension {
         fn from(ext: DawnHostMappedPointerLimits) -> Self {
@@ -16223,6 +16323,14 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
+                LimitsExtension::CompatibilityModeLimits(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::CompatibilityModeLimits.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
                 LimitsExtension::DawnHostMappedPointerLimits(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnHostMappedPointerLimits.into();
@@ -17640,11 +17748,17 @@ mod extensions {
     #[allow(dead_code)]
     pub enum TextureDescriptorExtension {
         DawnTextureInternalUsageDescriptor(DawnTextureInternalUsageDescriptor),
+        TextureBindingViewDimension(TextureBindingViewDimension),
     }
     impl std::convert::From<DawnTextureInternalUsageDescriptor>
     for TextureDescriptorExtension {
         fn from(ext: DawnTextureInternalUsageDescriptor) -> Self {
             TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(ext)
+        }
+    }
+    impl std::convert::From<TextureBindingViewDimension> for TextureDescriptorExtension {
+        fn from(ext: TextureBindingViewDimension) -> Self {
+            TextureDescriptorExtension::TextureBindingViewDimension(ext)
         }
     }
     impl TextureDescriptorExtension {
@@ -17659,6 +17773,14 @@ mod extensions {
                 ) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnTextureInternalUsageDescriptor.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                TextureDescriptorExtension::TextureBindingViewDimension(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::TextureBindingViewDimension.into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);

@@ -632,8 +632,8 @@ pub const WGPUSType_WGPUSType_SurfaceSourceXCBWindow: WGPUSType = 9;
 pub const WGPUSType_WGPUSType_SurfaceColorManagement: WGPUSType = 10;
 pub const WGPUSType_WGPUSType_RequestAdapterWebXROptions: WGPUSType = 11;
 pub const WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor: WGPUSType = 12;
-pub const WGPUSType_WGPUSType_CompatibilityModeLimits: WGPUSType = 131072;
-pub const WGPUSType_WGPUSType_TextureBindingViewDimensionDescriptor: WGPUSType = 131073;
+pub const WGPUSType_WGPUSType_CompatibilityModeLimits: WGPUSType = 15;
+pub const WGPUSType_WGPUSType_TextureBindingViewDimension: WGPUSType = 16;
 pub const WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector: WGPUSType = 262144;
 pub const WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow: WGPUSType = 327680;
 pub const WGPUSType_WGPUSType_ExternalTextureBindingEntry: WGPUSType = 327681;
@@ -3814,23 +3814,22 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct WGPUTextureBindingViewDimensionDescriptor {
+pub struct WGPUTextureBindingViewDimension {
     pub chain: WGPUChainedStruct,
     pub textureBindingViewDimension: WGPUTextureViewDimension,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of WGPUTextureBindingViewDimensionDescriptor"]
-        [::std::mem::size_of::<WGPUTextureBindingViewDimensionDescriptor>() - 24usize];
-    ["Alignment of WGPUTextureBindingViewDimensionDescriptor"]
-        [::std::mem::align_of::<WGPUTextureBindingViewDimensionDescriptor>() - 8usize];
-    ["Offset of field: WGPUTextureBindingViewDimensionDescriptor::chain"]
-        [::std::mem::offset_of!(WGPUTextureBindingViewDimensionDescriptor, chain) - 0usize];
-    ["Offset of field: WGPUTextureBindingViewDimensionDescriptor::textureBindingViewDimension"][::std::mem::offset_of!(
-        WGPUTextureBindingViewDimensionDescriptor,
+    ["Size of WGPUTextureBindingViewDimension"]
+        [::std::mem::size_of::<WGPUTextureBindingViewDimension>() - 24usize];
+    ["Alignment of WGPUTextureBindingViewDimension"]
+        [::std::mem::align_of::<WGPUTextureBindingViewDimension>() - 8usize];
+    ["Offset of field: WGPUTextureBindingViewDimension::chain"]
+        [::std::mem::offset_of!(WGPUTextureBindingViewDimension, chain) - 0usize];
+    ["Offset of field: WGPUTextureBindingViewDimension::textureBindingViewDimension"][::std::mem::offset_of!(
+        WGPUTextureBindingViewDimension,
         textureBindingViewDimension
-    )
-        - 16usize];
+    ) - 16usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
