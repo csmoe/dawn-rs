@@ -6,6 +6,7 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=DAWN_ROOT");
     println!("cargo:rerun-if-changed=src/wire_cpp_shim.cc");
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let Some(dawn_root) = resolve_dawn_root() else {
         println!("cargo:warning=DAWN_ROOT not set; skipping Dawn link directives");
         return;
@@ -67,14 +68,15 @@ fn main() {
             );
         }
     } else {
-        emit_link_lib(link_mode, "webgpu_dawn");
+        if link_mode == LinkMode::Dynamic && target_os == "windows" {
+            emit_link_lib(link_mode, "webgpu_dawn.dll");
+        } else {
+            emit_link_lib(link_mode, "webgpu_dawn");
+        }
     }
-    #[cfg(target_os = "linux")]
-    {
+    if target_os == "linux" {
         println!("cargo:rustc-link-lib=stdc++");
-    }
-    #[cfg(target_os = "macos")]
-    {
+    } else if target_os == "macos" {
         println!("cargo:rustc-link-lib=c++");
         println!("cargo:rustc-link-lib=c++abi");
         println!("cargo:rustc-link-lib=framework=Metal");
@@ -83,9 +85,7 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=IOKit");
         println!("cargo:rustc-link-lib=framework=Foundation");
         println!("cargo:rustc-link-lib=framework=Cocoa");
-    }
-    #[cfg(target_os = "windows")]
-    {
+    } else if target_os == "windows" {
         println!("cargo:rustc-link-lib=onecore_apiset");
         println!("cargo:rustc-link-lib=dxguid");
         //println!("cargo::rustc-link-arg=/nodefaultlib:msvcrt");
