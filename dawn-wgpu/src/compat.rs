@@ -44,7 +44,7 @@ impl From<DawnIntoWgpu<Adapter>> for wgpu::Adapter {
 
 impl From<DawnIntoWgpu<Device>> for wgpu::Device {
     fn from(value: DawnIntoWgpu<Device>) -> Self {
-        wgpu::Device::from_custom(DawnDevice { inner: value.0 })
+        wgpu::Device::from_custom(DawnDevice::new(value.0))
     }
 }
 

@@ -5,7 +5,7 @@ use crate::mapping::*;
 use crate::types::*;
 use dawn_rs::*;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use wgpu::custom::*;
 
 #[cfg(feature = "wire")]
@@ -273,18 +273,47 @@ impl AdapterInterface for DawnAdapter {
         if desc.required_limits != wgpu::Limits::default() {
             dawn_desc.required_limits = Some(map_limits_to_dawn(&desc.required_limits));
         }
+        let uncaptured_error_handler: Arc<Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>> =
+            Arc::new(Mutex::new(None));
+        let device_lost_callback: Arc<Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>> =
+            Arc::new(Mutex::new(None));
+
+        let error_handler_state = Arc::clone(&uncaptured_error_handler);
         let error_info = dawn_rs::UncapturedErrorCallbackInfo::new();
         error_info
             .callback
-            .replace(Some(Box::new(|_devices, ty, message| {
-                panic!("Uncaptured error {:?}: {}", ty, message);
+            .replace(Some(Box::new(move |_devices, ty, message| {
+                if ty == ErrorType::NoError {
+                    return;
+                }
+                let handler = error_handler_state
+                    .lock()
+                    .expect("wgpu-compat: uncaptured error handler mutex poisoned")
+                    .clone();
+                if let Some(handler) = handler {
+                    handler(map_uncaptured_error(ty, message));
+                }
             })));
         dawn_desc.uncaptured_error_callback_info = Some(error_info);
+
+        let lost_callback_state = Arc::clone(&device_lost_callback);
         let lost_info = dawn_rs::DeviceLostCallbackInfo::new();
         lost_info
             .callback
-            .replace(Some(Box::new(|_, reason, message| {
-                panic!("Device lost: {reason:?}: {message}");
+            .replace(Some(Box::new(move |_, reason, message| {
+                let callback = lost_callback_state
+                    .lock()
+                    .expect("wgpu-compat: device lost callback mutex poisoned")
+                    .take();
+                if let Some(callback) = callback {
+                    callback(
+                        match reason {
+                            DeviceLostReason::Destroyed => wgpu::DeviceLostReason::Destroyed,
+                            _ => wgpu::DeviceLostReason::Unknown,
+                        },
+                        message,
+                    );
+                }
             })));
         dawn_desc.device_lost_callback_info = Some(lost_info);
         let _future_handle =
@@ -296,7 +325,14 @@ impl AdapterInterface for DawnAdapter {
                         let queue = device.get_queue();
                         complete_shared(
                             &shared,
-                            Ok((dispatch_device(device), dispatch_queue(queue))),
+                            Ok((
+                                dispatch_device_with_callback_state(
+                                    device,
+                                    Arc::clone(&device_lost_callback),
+                                    Arc::clone(&uncaptured_error_handler),
+                                ),
+                                dispatch_queue(queue),
+                            )),
                         );
                     } else {
                         panic!("wgpu-compat: request_device failed {}", message);
@@ -523,10 +559,19 @@ impl DeviceInterface for DawnDevice {
         dispatch_render_bundle_encoder(encoder)
     }
 
-    fn set_device_lost_callback(&self, _device_lost_callback: wgpu::custom::BoxDeviceLostCallback) {
+    fn set_device_lost_callback(&self, device_lost_callback: wgpu::custom::BoxDeviceLostCallback) {
+        self.device_lost_callback
+            .lock()
+            .expect("wgpu-compat: device lost callback mutex poisoned")
+            .replace(device_lost_callback);
     }
 
-    fn on_uncaptured_error(&self, _handler: Arc<dyn wgpu::UncapturedErrorHandler>) {}
+    fn on_uncaptured_error(&self, handler: Arc<dyn wgpu::UncapturedErrorHandler>) {
+        self.uncaptured_error_handler
+            .lock()
+            .expect("wgpu-compat: uncaptured error handler mutex poisoned")
+            .replace(handler);
+    }
 
     fn push_error_scope(&self, filter: wgpu::ErrorFilter) -> u32 {
         let filter = match filter {

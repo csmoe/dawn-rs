@@ -9,7 +9,23 @@ pub(crate) fn dispatch_adapter(adapter: Adapter) -> DispatchAdapter {
 }
 
 pub(crate) fn dispatch_device(device: Device) -> DispatchDevice {
-    DispatchDevice::custom(DawnDevice { inner: device })
+    DispatchDevice::custom(DawnDevice::new(device))
+}
+
+pub(crate) fn dispatch_device_with_callback_state(
+    device: Device,
+    device_lost_callback: std::sync::Arc<
+        std::sync::Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>,
+    >,
+    uncaptured_error_handler: std::sync::Arc<
+        std::sync::Mutex<Option<std::sync::Arc<dyn wgpu::UncapturedErrorHandler>>>,
+    >,
+) -> DispatchDevice {
+    DispatchDevice::custom(DawnDevice::with_callback_state(
+        device,
+        device_lost_callback,
+        uncaptured_error_handler,
+    ))
 }
 
 pub(crate) fn dispatch_queue(queue: Queue) -> DispatchQueue {

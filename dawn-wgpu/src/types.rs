@@ -44,9 +44,43 @@ pub struct DawnAdapter {
     pub(crate) inner: Adapter,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct DawnDevice {
     pub(crate) inner: Device,
+    pub(crate) device_lost_callback:
+        Arc<std::sync::Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>>,
+    pub(crate) uncaptured_error_handler:
+        Arc<std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>>,
+}
+
+impl DawnDevice {
+    pub(crate) fn new(device: Device) -> Self {
+        Self {
+            inner: device,
+            device_lost_callback: Arc::new(std::sync::Mutex::new(None)),
+            uncaptured_error_handler: Arc::new(std::sync::Mutex::new(None)),
+        }
+    }
+
+    pub(crate) fn with_callback_state(
+        device: Device,
+        device_lost_callback: Arc<std::sync::Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>>,
+        uncaptured_error_handler: Arc<std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>>,
+    ) -> Self {
+        Self {
+            inner: device,
+            device_lost_callback,
+            uncaptured_error_handler,
+        }
+    }
+}
+
+impl fmt::Debug for DawnDevice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DawnDevice")
+            .field("inner", &self.inner)
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone)]
