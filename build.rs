@@ -68,11 +68,7 @@ fn main() {
             );
         }
     } else {
-        if link_mode == LinkMode::Dynamic && target_os == "windows" {
-            emit_link_lib(link_mode, "webgpu_dawn.dll");
-        } else {
-            emit_link_lib(link_mode, "webgpu_dawn");
-        }
+        emit_link_lib(link_mode, "webgpu_dawn");
     }
     if target_os == "linux" {
         println!("cargo:rustc-link-lib=stdc++");
