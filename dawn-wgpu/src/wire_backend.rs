@@ -150,8 +150,4 @@ impl fmt::Debug for WireBackendHandle {
     }
 }
 
-impl Drop for WireBackendHandle {
-    fn drop(&mut self) {
-        let _ = self.backend.take();
-    }
-}
+
