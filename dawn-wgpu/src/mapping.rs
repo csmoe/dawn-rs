@@ -1256,44 +1256,44 @@ pub(crate) fn map_surface_configuration(
 }
 
 pub(crate) fn map_surface_capabilities(caps: SurfaceCapabilities) -> wgpu::SurfaceCapabilities {
+    let formats = caps
+        .formats
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(map_texture_format_to_wgpu)
+        .collect();
+    let present_modes = caps
+        .present_modes
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|m| match m {
+            PresentMode::Fifo => wgpu::PresentMode::Fifo,
+            PresentMode::Mailbox => wgpu::PresentMode::Mailbox,
+            PresentMode::Immediate => wgpu::PresentMode::Immediate,
+            PresentMode::FifoRelaxed => wgpu::PresentMode::AutoVsync,
+            _ => wgpu::PresentMode::Fifo,
+        })
+        .collect();
+    let alpha_modes = caps
+        .alpha_modes
+        .clone()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|m| match m {
+            CompositeAlphaMode::Auto => wgpu::CompositeAlphaMode::Auto,
+            CompositeAlphaMode::Opaque => wgpu::CompositeAlphaMode::Opaque,
+            CompositeAlphaMode::Premultiplied => wgpu::CompositeAlphaMode::PreMultiplied,
+            CompositeAlphaMode::Unpremultiplied => wgpu::CompositeAlphaMode::PostMultiplied,
+            CompositeAlphaMode::Inherit => wgpu::CompositeAlphaMode::Inherit,
+            _ => wgpu::CompositeAlphaMode::Auto,
+        })
+        .collect();
     wgpu::SurfaceCapabilities {
-        formats: caps
-            .formats
-            .clone()
-            .unwrap_or_default()
-            .iter()
-            .copied()
-            .map(map_texture_format_to_wgpu)
-            .collect(),
-        present_modes: caps
-            .present_modes
-            .clone()
-            .unwrap_or_default()
-            .iter()
-            .copied()
-            .map(|m| match m {
-                PresentMode::Fifo => wgpu::PresentMode::Fifo,
-                PresentMode::Mailbox => wgpu::PresentMode::Mailbox,
-                PresentMode::Immediate => wgpu::PresentMode::Immediate,
-                PresentMode::FifoRelaxed => wgpu::PresentMode::AutoVsync,
-                _ => wgpu::PresentMode::Fifo,
-            })
-            .collect(),
-        alpha_modes: caps
-            .alpha_modes
-            .clone()
-            .unwrap_or_default()
-            .iter()
-            .copied()
-            .map(|m| match m {
-                CompositeAlphaMode::Auto => wgpu::CompositeAlphaMode::Auto,
-                CompositeAlphaMode::Opaque => wgpu::CompositeAlphaMode::Opaque,
-                CompositeAlphaMode::Premultiplied => wgpu::CompositeAlphaMode::PreMultiplied,
-                CompositeAlphaMode::Unpremultiplied => wgpu::CompositeAlphaMode::PostMultiplied,
-                CompositeAlphaMode::Inherit => wgpu::CompositeAlphaMode::Inherit,
-                _ => wgpu::CompositeAlphaMode::Auto,
-            })
-            .collect(),
+        formats,
+        present_modes,
+        alpha_modes,
         usages: map_texture_usage_to_wgpu(caps.usages.unwrap_or(TextureUsage::RENDER_ATTACHMENT)),
     }
 }
@@ -1333,14 +1333,20 @@ pub(crate) fn map_uncaptured_error(error_type: ErrorType, message: String) -> wg
         ErrorType::OutOfMemory => wgpu::Error::OutOfMemory {
             source: Box::new(DawnError(message)),
         },
-        ErrorType::Validation => wgpu::Error::Validation {
-            source: Box::new(DawnError(message.clone())),
-            description: message,
-        },
-        ErrorType::Internal | ErrorType::Unknown => wgpu::Error::Internal {
-            source: Box::new(DawnError(message.clone())),
-            description: message,
-        },
+        ErrorType::Validation => {
+            let description = message.clone();
+            wgpu::Error::Validation {
+                source: Box::new(DawnError(message)),
+                description,
+            }
+        }
+        ErrorType::Internal | ErrorType::Unknown => {
+            let description = message.clone();
+            wgpu::Error::Internal {
+                source: Box::new(DawnError(message)),
+                description,
+            }
+        }
         ErrorType::NoError => wgpu::Error::Internal {
             source: Box::new(DawnError("no error".to_string())),
             description: "no error".to_string(),

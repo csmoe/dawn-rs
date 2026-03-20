@@ -8,6 +8,24 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use wgpu::custom::*;
 
+/// Reinterpret a `&[u8]` as `&[c_void]` for passing to Dawn C APIs.
+///
+/// # Safety
+/// This is safe because `c_void` has size 1 and no alignment requirements beyond 1,
+/// so a byte slice can always be viewed as a `c_void` slice of the same length.
+fn as_c_void_slice(data: &[u8]) -> &[std::ffi::c_void] {
+    unsafe { std::slice::from_raw_parts(data.as_ptr().cast::<std::ffi::c_void>(), data.len()) }
+}
+
+/// Reinterpret a `&[u32]` as `&[c_void]` for passing to Dawn C APIs.
+///
+/// # Safety
+/// The resulting slice length is `data.len() * size_of::<u32>()` bytes.
+fn u32_as_c_void_slice(data: &[u32]) -> &[std::ffi::c_void] {
+    let byte_len = data.len() * std::mem::size_of::<u32>();
+    unsafe { std::slice::from_raw_parts(data.as_ptr().cast::<std::ffi::c_void>(), byte_len) }
+}
+
 #[cfg(feature = "wire")]
 unsafe extern "C" {
     fn dawn_rs_wire_set_native_procs();
@@ -229,9 +247,7 @@ impl InstanceInterface for DawnInstance {
         &self,
         _backends: wgpu::Backends,
     ) -> Pin<Box<dyn wgpu::custom::EnumerateAdapterFuture>> {
-        let (future, shared) = CallbackFuture::new();
-        complete_shared(&shared, Vec::new());
-        Box::pin(future)
+        Box::pin(std::future::ready(Vec::new()))
     }
 }
 
@@ -634,9 +650,7 @@ impl DeviceInterface for DawnDevice {
 impl QueueInterface for DawnQueue {
     fn write_buffer(&self, buffer: &DispatchBuffer, offset: wgpu::BufferAddress, data: &[u8]) {
         let buffer = expect_buffer(buffer);
-        let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data.len()) };
-        self.inner.write_buffer(buffer, offset, data_slice);
+        self.inner.write_buffer(buffer, offset, as_c_void_slice(data));
     }
 
     fn create_staging_buffer(&self, size: wgpu::BufferSize) -> Option<DispatchQueueWriteBuffer> {
@@ -662,9 +676,7 @@ impl QueueInterface for DawnQueue {
         let staging = staging_buffer
             .as_custom::<DawnQueueWriteBuffer>()
             .expect("wgpu-compat: queue write buffer not dawn");
-        let data_ptr = staging.inner.as_ptr().cast::<std::ffi::c_void>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, staging.inner.len()) };
-        self.inner.write_buffer(buffer, offset, data_slice);
+        self.inner.write_buffer(buffer, offset, as_c_void_slice(&staging.inner));
     }
 
     fn write_texture(
@@ -682,10 +694,8 @@ impl QueueInterface for DawnQueue {
         let destination = map_texel_copy_texture_info(texture);
         let data_layout = map_texel_copy_buffer_layout(data_layout);
         let write_size = map_extent_3d(size);
-        let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data.len()) };
         self.inner
-            .write_texture(&destination, data_slice, &data_layout, &write_size);
+            .write_texture(&destination, as_c_void_slice(data), &data_layout, &write_size);
     }
 
     #[cfg(web)]
@@ -1028,10 +1038,7 @@ impl ComputePassInterface for DawnComputePass {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
-        let data_len = data.len() * std::mem::size_of::<u32>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.clone().set_immediates(offset, data_slice);
+        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
@@ -1141,10 +1148,7 @@ impl RenderPassInterface for DawnRenderPass {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
-        let data_len = data.len() * std::mem::size_of::<u32>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.clone().set_immediates(offset, data_slice);
+        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn set_blend_constant(&mut self, color: wgpu::Color) {
@@ -1401,10 +1405,7 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
-        let data_len = data.len() * std::mem::size_of::<u32>();
-        let data_slice = unsafe { std::slice::from_raw_parts(data_ptr, data_len) };
-        self.inner.clone().set_immediates(offset, data_slice);
+        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn draw(&mut self, vertices: std::ops::Range<u32>, instances: std::ops::Range<u32>) {

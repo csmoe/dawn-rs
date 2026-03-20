@@ -2,11 +2,31 @@ use crate::types::*;
 use dawn_rs::*;
 use wgpu::custom::*;
 
-pub(crate) fn dispatch_adapter(adapter: Adapter) -> DispatchAdapter {
-    DispatchAdapter::custom(DawnAdapter {
-        inner: adapter,
-    })
+macro_rules! impl_dispatch {
+    ($fn_name:ident, $dawn_type:ty, $wrapper:ident, $dispatch_type:ident) => {
+        pub(crate) fn $fn_name(inner: $dawn_type) -> $dispatch_type {
+            $dispatch_type::custom($wrapper { inner })
+        }
+    };
 }
+
+impl_dispatch!(dispatch_adapter, Adapter, DawnAdapter, DispatchAdapter);
+impl_dispatch!(dispatch_queue, Queue, DawnQueue, DispatchQueue);
+impl_dispatch!(dispatch_shader_module, ShaderModule, DawnShaderModule, DispatchShaderModule);
+impl_dispatch!(dispatch_bind_group_layout, BindGroupLayout, DawnBindGroupLayout, DispatchBindGroupLayout);
+impl_dispatch!(dispatch_bind_group, BindGroup, DawnBindGroup, DispatchBindGroup);
+impl_dispatch!(dispatch_texture_view, TextureView, DawnTextureView, DispatchTextureView);
+impl_dispatch!(dispatch_sampler, Sampler, DawnSampler, DispatchSampler);
+impl_dispatch!(dispatch_buffer, Buffer, DawnBuffer, DispatchBuffer);
+impl_dispatch!(dispatch_texture, Texture, DawnTexture, DispatchTexture);
+impl_dispatch!(dispatch_external_texture, ExternalTexture, DawnExternalTexture, DispatchExternalTexture);
+impl_dispatch!(dispatch_query_set, QuerySet, DawnQuerySet, DispatchQuerySet);
+impl_dispatch!(dispatch_pipeline_layout, PipelineLayout, DawnPipelineLayout, DispatchPipelineLayout);
+impl_dispatch!(dispatch_render_pipeline, RenderPipeline, DawnRenderPipeline, DispatchRenderPipeline);
+impl_dispatch!(dispatch_compute_pipeline, ComputePipeline, DawnComputePipeline, DispatchComputePipeline);
+impl_dispatch!(dispatch_command_encoder, CommandEncoder, DawnCommandEncoder, DispatchCommandEncoder);
+impl_dispatch!(dispatch_command_buffer, CommandBuffer, DawnCommandBuffer, DispatchCommandBuffer);
+impl_dispatch!(dispatch_render_bundle, RenderBundle, DawnRenderBundle, DispatchRenderBundle);
 
 pub(crate) fn dispatch_device(device: Device) -> DispatchDevice {
     DispatchDevice::custom(DawnDevice::new(device))
@@ -28,70 +48,8 @@ pub(crate) fn dispatch_device_with_callback_state(
     ))
 }
 
-pub(crate) fn dispatch_queue(queue: Queue) -> DispatchQueue {
-    DispatchQueue::custom(DawnQueue { inner: queue })
-}
-
 pub(crate) fn dispatch_surface(surface: DawnSurface) -> DispatchSurface {
     DispatchSurface::custom(surface)
-}
-
-pub(crate) fn dispatch_shader_module(module: ShaderModule) -> DispatchShaderModule {
-    DispatchShaderModule::custom(DawnShaderModule { inner: module })
-}
-
-pub(crate) fn dispatch_bind_group_layout(layout: BindGroupLayout) -> DispatchBindGroupLayout {
-    DispatchBindGroupLayout::custom(DawnBindGroupLayout { inner: layout })
-}
-
-pub(crate) fn dispatch_bind_group(group: BindGroup) -> DispatchBindGroup {
-    DispatchBindGroup::custom(DawnBindGroup { inner: group })
-}
-
-pub(crate) fn dispatch_texture_view(view: TextureView) -> DispatchTextureView {
-    DispatchTextureView::custom(DawnTextureView { inner: view })
-}
-
-pub(crate) fn dispatch_sampler(sampler: Sampler) -> DispatchSampler {
-    DispatchSampler::custom(DawnSampler { inner: sampler })
-}
-
-pub(crate) fn dispatch_buffer(buffer: Buffer) -> DispatchBuffer {
-    DispatchBuffer::custom(DawnBuffer { inner: buffer })
-}
-
-pub(crate) fn dispatch_texture(texture: Texture) -> DispatchTexture {
-    DispatchTexture::custom(DawnTexture { inner: texture })
-}
-
-pub(crate) fn dispatch_external_texture(texture: ExternalTexture) -> DispatchExternalTexture {
-    DispatchExternalTexture::custom(DawnExternalTexture { inner: texture })
-}
-
-pub(crate) fn dispatch_query_set(query_set: QuerySet) -> DispatchQuerySet {
-    DispatchQuerySet::custom(DawnQuerySet { inner: query_set })
-}
-
-pub(crate) fn dispatch_pipeline_layout(layout: PipelineLayout) -> DispatchPipelineLayout {
-    DispatchPipelineLayout::custom(DawnPipelineLayout { inner: layout })
-}
-
-pub(crate) fn dispatch_render_pipeline(pipeline: RenderPipeline) -> DispatchRenderPipeline {
-    DispatchRenderPipeline::custom(DawnRenderPipeline { inner: pipeline })
-}
-
-pub(crate) fn dispatch_compute_pipeline(pipeline: ComputePipeline) -> DispatchComputePipeline {
-    DispatchComputePipeline::custom(DawnComputePipeline { inner: pipeline })
-}
-
-pub(crate) fn dispatch_command_encoder(encoder: CommandEncoder) -> DispatchCommandEncoder {
-    DispatchCommandEncoder::custom(DawnCommandEncoder {
-        inner: encoder,
-    })
-}
-
-pub(crate) fn dispatch_command_buffer(buffer: CommandBuffer) -> DispatchCommandBuffer {
-    DispatchCommandBuffer::custom(DawnCommandBuffer { inner: buffer })
 }
 
 pub(crate) fn dispatch_compute_pass(pass: ComputePassEncoder) -> DispatchComputePass {
@@ -116,14 +74,8 @@ pub(crate) fn dispatch_render_bundle_encoder(
     })
 }
 
-pub(crate) fn dispatch_render_bundle(bundle: RenderBundle) -> DispatchRenderBundle {
-    DispatchRenderBundle::custom(DawnRenderBundle { inner: bundle })
-}
-
 pub(crate) fn dispatch_surface_output_detail(surface: Surface) -> DispatchSurfaceOutputDetail {
-    DispatchSurfaceOutputDetail::custom(DawnSurfaceOutputDetail {
-        surface: surface,
-    })
+    DispatchSurfaceOutputDetail::custom(DawnSurfaceOutputDetail { surface })
 }
 
 pub(crate) fn dispatch_queue_write_buffer(data: Vec<u8>) -> DispatchQueueWriteBuffer {
@@ -146,151 +98,40 @@ pub(crate) fn dispatch_tlas() -> DispatchTlas {
     DispatchTlas::custom(DawnTlas)
 }
 
-pub(crate) fn expect_adapter(adapter: &DispatchAdapter) -> Adapter {
-    adapter
-        .as_custom::<DawnAdapter>()
-        .expect("wgpu-compat: adapter not dawn")
-        .inner.clone()
+macro_rules! impl_expect {
+    ($fn_name:ident, $dispatch_type:ty, $wrapper:ident, $inner_type:ty, $msg:literal) => {
+        pub(crate) fn $fn_name(v: &$dispatch_type) -> $inner_type {
+            v.as_custom::<$wrapper>()
+                .expect($msg)
+                .inner
+                .clone()
+        }
+    };
 }
 
-pub(crate) fn expect_device(device: &DispatchDevice) -> Device {
-    device
-        .as_custom::<DawnDevice>()
-        .expect("wgpu-compat: device not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_queue(queue: &DispatchQueue) -> Queue {
-    queue
-        .as_custom::<DawnQueue>()
-        .expect("wgpu-compat: queue not dawn")
-        .inner
-        .clone()
-}
+impl_expect!(expect_adapter, DispatchAdapter, DawnAdapter, Adapter, "wgpu-compat: adapter not dawn");
+impl_expect!(expect_device, DispatchDevice, DawnDevice, Device, "wgpu-compat: device not dawn");
+impl_expect!(expect_queue, DispatchQueue, DawnQueue, Queue, "wgpu-compat: queue not dawn");
+impl_expect!(expect_shader_module, DispatchShaderModule, DawnShaderModule, ShaderModule, "wgpu-compat: shader module not dawn");
+impl_expect!(expect_bind_group_layout, DispatchBindGroupLayout, DawnBindGroupLayout, BindGroupLayout, "wgpu-compat: bind group layout not dawn");
+impl_expect!(expect_bind_group, DispatchBindGroup, DawnBindGroup, BindGroup, "wgpu-compat: bind group not dawn");
+impl_expect!(expect_texture_view, DispatchTextureView, DawnTextureView, TextureView, "wgpu-compat: texture view not dawn");
+impl_expect!(expect_sampler, DispatchSampler, DawnSampler, Sampler, "wgpu-compat: sampler not dawn");
+impl_expect!(expect_buffer, DispatchBuffer, DawnBuffer, Buffer, "wgpu-compat: buffer not dawn");
+impl_expect!(expect_texture, DispatchTexture, DawnTexture, Texture, "wgpu-compat: texture not dawn");
+impl_expect!(expect_external_texture, DispatchExternalTexture, DawnExternalTexture, ExternalTexture, "wgpu-compat: external texture not dawn");
+impl_expect!(expect_query_set, DispatchQuerySet, DawnQuerySet, QuerySet, "wgpu-compat: query set not dawn");
+impl_expect!(expect_pipeline_layout, DispatchPipelineLayout, DawnPipelineLayout, PipelineLayout, "wgpu-compat: pipeline layout not dawn");
+impl_expect!(expect_render_pipeline, DispatchRenderPipeline, DawnRenderPipeline, RenderPipeline, "wgpu-compat: render pipeline not dawn");
+impl_expect!(expect_compute_pipeline, DispatchComputePipeline, DawnComputePipeline, ComputePipeline, "wgpu-compat: compute pipeline not dawn");
+impl_expect!(expect_command_encoder, DispatchCommandEncoder, DawnCommandEncoder, CommandEncoder, "wgpu-compat: command encoder not dawn");
+impl_expect!(expect_command_buffer, DispatchCommandBuffer, DawnCommandBuffer, CommandBuffer, "wgpu-compat: command buffer not dawn");
+impl_expect!(expect_render_bundle, DispatchRenderBundle, DawnRenderBundle, RenderBundle, "wgpu-compat: render bundle not dawn");
 
 pub(crate) fn expect_surface(surface: &DispatchSurface) -> DawnSurface {
     surface
         .as_custom::<DawnSurface>()
         .expect("wgpu-compat: surface not dawn")
-        .clone()
-}
-
-pub(crate) fn expect_shader_module(module: &DispatchShaderModule) -> ShaderModule {
-    module
-        .as_custom::<DawnShaderModule>()
-        .expect("wgpu-compat: shader module not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_bind_group_layout(layout: &DispatchBindGroupLayout) -> BindGroupLayout {
-    layout
-        .as_custom::<DawnBindGroupLayout>()
-        .expect("wgpu-compat: bind group layout not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_bind_group(group: &DispatchBindGroup) -> BindGroup {
-    group
-        .as_custom::<DawnBindGroup>()
-        .expect("wgpu-compat: bind group not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_texture_view(view: &DispatchTextureView) -> TextureView {
-    view.as_custom::<DawnTextureView>()
-        .expect("wgpu-compat: texture view not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_sampler(sampler: &DispatchSampler) -> Sampler {
-    sampler
-        .as_custom::<DawnSampler>()
-        .expect("wgpu-compat: sampler not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_buffer(buffer: &DispatchBuffer) -> Buffer {
-    buffer
-        .as_custom::<DawnBuffer>()
-        .expect("wgpu-compat: buffer not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_texture(texture: &DispatchTexture) -> Texture {
-    texture
-        .as_custom::<DawnTexture>()
-        .expect("wgpu-compat: texture not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_external_texture(texture: &DispatchExternalTexture) -> ExternalTexture {
-    texture
-        .as_custom::<DawnExternalTexture>()
-        .expect("wgpu-compat: external texture not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_query_set(query_set: &DispatchQuerySet) -> QuerySet {
-    query_set
-        .as_custom::<DawnQuerySet>()
-        .expect("wgpu-compat: query set not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_pipeline_layout(layout: &DispatchPipelineLayout) -> PipelineLayout {
-    layout
-        .as_custom::<DawnPipelineLayout>()
-        .expect("wgpu-compat: pipeline layout not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_render_pipeline(pipeline: &DispatchRenderPipeline) -> RenderPipeline {
-    pipeline
-        .as_custom::<DawnRenderPipeline>()
-        .expect("wgpu-compat: render pipeline not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_compute_pipeline(pipeline: &DispatchComputePipeline) -> ComputePipeline {
-    pipeline
-        .as_custom::<DawnComputePipeline>()
-        .expect("wgpu-compat: compute pipeline not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_command_encoder(encoder: &DispatchCommandEncoder) -> CommandEncoder {
-    encoder
-        .as_custom::<DawnCommandEncoder>()
-        .expect("wgpu-compat: command encoder not dawn")
-        .inner.clone()
-}
-
-pub(crate) fn expect_command_buffer(buffer: &DispatchCommandBuffer) -> CommandBuffer {
-    buffer
-        .as_custom::<DawnCommandBuffer>()
-        .expect("wgpu-compat: command buffer not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_render_bundle(bundle: &DispatchRenderBundle) -> RenderBundle {
-    bundle
-        .as_custom::<DawnRenderBundle>()
-        .expect("wgpu-compat: render bundle not dawn")
-        .inner
         .clone()
 }
 
@@ -301,88 +142,31 @@ pub(crate) fn expect_surface_output_detail(detail: &DispatchSurfaceOutputDetail)
         .surface.clone()
 }
 
-pub(crate) fn expect_device_from_api(device: &wgpu::Device) -> Device {
-    device
-        .as_custom::<DawnDevice>()
-        .expect("wgpu-compat: device not dawn")
-        .inner
-        .clone()
+macro_rules! impl_expect_from_api {
+    ($fn_name:ident, $api_type:ty, $wrapper:ident, $inner_type:ty, $msg:literal) => {
+        pub(crate) fn $fn_name(v: &$api_type) -> $inner_type {
+            v.as_custom::<$wrapper>()
+                .expect($msg)
+                .inner
+                .clone()
+        }
+    };
 }
+
+impl_expect_from_api!(expect_device_from_api, wgpu::Device, DawnDevice, Device, "wgpu-compat: device not dawn");
+impl_expect_from_api!(expect_buffer_from_api, wgpu::Buffer, DawnBuffer, Buffer, "wgpu-compat: buffer not dawn");
+impl_expect_from_api!(expect_texture_from_api, wgpu::Texture, DawnTexture, Texture, "wgpu-compat: texture not dawn");
+impl_expect_from_api!(expect_texture_view_from_api, wgpu::TextureView, DawnTextureView, TextureView, "wgpu-compat: texture view not dawn");
+impl_expect_from_api!(expect_sampler_from_api, wgpu::Sampler, DawnSampler, Sampler, "wgpu-compat: sampler not dawn");
+impl_expect_from_api!(expect_bind_group_layout_from_api, wgpu::BindGroupLayout, DawnBindGroupLayout, BindGroupLayout, "wgpu-compat: bind group layout not dawn");
+impl_expect_from_api!(expect_pipeline_layout_from_api, wgpu::PipelineLayout, DawnPipelineLayout, PipelineLayout, "wgpu-compat: pipeline layout not dawn");
+impl_expect_from_api!(expect_shader_module_from_api, wgpu::ShaderModule, DawnShaderModule, ShaderModule, "wgpu-compat: shader module not dawn");
+impl_expect_from_api!(expect_bind_group_from_api, wgpu::BindGroup, DawnBindGroup, BindGroup, "wgpu-compat: bind group not dawn");
+impl_expect_from_api!(expect_query_set_from_api, wgpu::QuerySet, DawnQuerySet, QuerySet, "wgpu-compat: query set not dawn");
 
 pub(crate) fn expect_surface_from_api(surface: &wgpu::Surface) -> DawnSurface {
     surface
         .as_custom::<DawnSurface>()
         .expect("wgpu-compat: surface not dawn")
-        .clone()
-}
-
-pub(crate) fn expect_buffer_from_api(buffer: &wgpu::Buffer) -> Buffer {
-    buffer
-        .as_custom::<DawnBuffer>()
-        .expect("wgpu-compat: buffer not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_texture_from_api(texture: &wgpu::Texture) -> Texture {
-    texture
-        .as_custom::<DawnTexture>()
-        .expect("wgpu-compat: texture not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_texture_view_from_api(view: &wgpu::TextureView) -> TextureView {
-    view.as_custom::<DawnTextureView>()
-        .expect("wgpu-compat: texture view not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_sampler_from_api(sampler: &wgpu::Sampler) -> Sampler {
-    sampler
-        .as_custom::<DawnSampler>()
-        .expect("wgpu-compat: sampler not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_bind_group_layout_from_api(layout: &wgpu::BindGroupLayout) -> BindGroupLayout {
-    layout
-        .as_custom::<DawnBindGroupLayout>()
-        .expect("wgpu-compat: bind group layout not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_pipeline_layout_from_api(layout: &wgpu::PipelineLayout) -> PipelineLayout {
-    layout
-        .as_custom::<DawnPipelineLayout>()
-        .expect("wgpu-compat: pipeline layout not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_shader_module_from_api(module: &wgpu::ShaderModule) -> ShaderModule {
-    module
-        .as_custom::<DawnShaderModule>()
-        .expect("wgpu-compat: shader module not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_bind_group_from_api(group: &wgpu::BindGroup) -> BindGroup {
-    group
-        .as_custom::<DawnBindGroup>()
-        .expect("wgpu-compat: bind group not dawn")
-        .inner
-        .clone()
-}
-
-pub(crate) fn expect_query_set_from_api(query_set: &wgpu::QuerySet) -> QuerySet {
-    query_set
-        .as_custom::<DawnQuerySet>()
-        .expect("wgpu-compat: query set not dawn")
-        .inner
         .clone()
 }
