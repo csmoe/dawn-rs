@@ -2342,12 +2342,12 @@ mod enums {
         SurfaceColorManagement,
         RequestAdapterWebXROptions,
         TextureComponentSwizzleDescriptor,
+        ExternalTextureBindingLayout,
+        ExternalTextureBindingEntry,
         CompatibilityModeLimits,
         TextureBindingViewDimension,
         EmscriptenSurfaceSourceCanvasHTMLSelector,
         SurfaceDescriptorFromWindowsCoreWindow,
-        ExternalTextureBindingEntry,
-        ExternalTextureBindingLayout,
         SurfaceDescriptorFromWindowsUWPSwapChainPanel,
         DawnTextureInternalUsageDescriptor,
         DawnEncoderInternalUsageDescriptor,
@@ -2462,6 +2462,12 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor => {
                     SType::TextureComponentSwizzleDescriptor
                 }
+                ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout => {
+                    SType::ExternalTextureBindingLayout
+                }
+                ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry => {
+                    SType::ExternalTextureBindingEntry
+                }
                 ffi::WGPUSType_WGPUSType_CompatibilityModeLimits => {
                     SType::CompatibilityModeLimits
                 }
@@ -2473,12 +2479,6 @@ mod enums {
                 }
                 ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow => {
                     SType::SurfaceDescriptorFromWindowsCoreWindow
-                }
-                ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry => {
-                    SType::ExternalTextureBindingEntry
-                }
-                ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout => {
-                    SType::ExternalTextureBindingLayout
                 }
                 ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
                     SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel
@@ -2749,6 +2749,12 @@ mod enums {
                 SType::TextureComponentSwizzleDescriptor => {
                     ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor
                 }
+                SType::ExternalTextureBindingLayout => {
+                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout
+                }
+                SType::ExternalTextureBindingEntry => {
+                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry
+                }
                 SType::CompatibilityModeLimits => {
                     ffi::WGPUSType_WGPUSType_CompatibilityModeLimits
                 }
@@ -2760,12 +2766,6 @@ mod enums {
                 }
                 SType::SurfaceDescriptorFromWindowsCoreWindow => {
                     ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow
-                }
-                SType::ExternalTextureBindingEntry => {
-                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry
-                }
-                SType::ExternalTextureBindingLayout => {
-                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout
                 }
                 SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
                     ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel
