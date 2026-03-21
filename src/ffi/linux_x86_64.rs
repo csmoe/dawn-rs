@@ -64,6 +64,12 @@ pub struct WGPUCommandEncoderImpl {
 pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUComputePassEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPUComputePassEncoder = *mut WGPUComputePassEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePipelineImpl {
     _unused: [u8; 0],
 }
@@ -110,6 +116,18 @@ pub struct WGPURenderBundleImpl {
     _unused: [u8; 0],
 }
 pub type WGPURenderBundle = *mut WGPURenderBundleImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPURenderBundleEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPURenderBundleEncoder = *mut WGPURenderBundleEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPURenderPassEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPURenderPassEncoder = *mut WGPURenderPassEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WGPURenderPipelineImpl {
@@ -176,24 +194,6 @@ pub struct WGPUTextureViewImpl {
     _unused: [u8; 0],
 }
 pub type WGPUTextureView = *mut WGPUTextureViewImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUComputePassEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPUComputePassEncoder = *mut WGPUComputePassEncoderImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPURenderBundleEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPURenderBundleEncoder = *mut WGPURenderBundleEncoderImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPURenderPassEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPURenderPassEncoder = *mut WGPURenderPassEncoderImpl;
 pub const WGPUAdapterType_WGPUAdapterType_DiscreteGPU: WGPUAdapterType = 1;
 pub const WGPUAdapterType_WGPUAdapterType_IntegratedGPU: WGPUAdapterType = 2;
 pub const WGPUAdapterType_WGPUAdapterType_CPU: WGPUAdapterType = 3;
@@ -630,12 +630,12 @@ pub const WGPUSType_WGPUSType_SurfaceSourceXCBWindow: WGPUSType = 9;
 pub const WGPUSType_WGPUSType_SurfaceColorManagement: WGPUSType = 10;
 pub const WGPUSType_WGPUSType_RequestAdapterWebXROptions: WGPUSType = 11;
 pub const WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor: WGPUSType = 12;
+pub const WGPUSType_WGPUSType_ExternalTextureBindingLayout: WGPUSType = 13;
+pub const WGPUSType_WGPUSType_ExternalTextureBindingEntry: WGPUSType = 14;
 pub const WGPUSType_WGPUSType_CompatibilityModeLimits: WGPUSType = 15;
 pub const WGPUSType_WGPUSType_TextureBindingViewDimension: WGPUSType = 16;
 pub const WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector: WGPUSType = 262144;
 pub const WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow: WGPUSType = 327680;
-pub const WGPUSType_WGPUSType_ExternalTextureBindingEntry: WGPUSType = 327681;
-pub const WGPUSType_WGPUSType_ExternalTextureBindingLayout: WGPUSType = 327682;
 pub const WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel: WGPUSType = 327683;
 pub const WGPUSType_WGPUSType_DawnTextureInternalUsageDescriptor: WGPUSType = 327684;
 pub const WGPUSType_WGPUSType_DawnEncoderInternalUsageDescriptor: WGPUSType = 327685;
