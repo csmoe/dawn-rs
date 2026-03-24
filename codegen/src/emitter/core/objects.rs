@@ -10,14 +10,18 @@ pub(crate) fn emit_object(
 ) -> String {
     let name = type_name(&o.name);
     let mut methods = Vec::new();
-    let send_sync_impl = format!(
-        r#"unsafe impl Send for {name} {{}}
+    let send_sync_impl = if matches!(name.as_str(), "Instance" | "Adapter") {
+        String::new()
+    } else {
+        format!(
+            r#"unsafe impl Send for {name} {{}}
 
 unsafe impl Sync for {name} {{}}
 
 "#,
-        name = name
-    );
+            name = name
+        )
+    };
 
     if let Some(func) = constructor {
         let signature = fn_signature_params(&func.def.args, model, None);
