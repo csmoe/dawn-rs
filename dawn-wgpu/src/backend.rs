@@ -47,9 +47,12 @@ impl InstanceInterface for DawnInstance {
         ensure_native_procs();
         Self::from_factory(
             move || {
-            let mut desc = InstanceDescriptor::new();
-            desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
-            Instance::new(Some(&desc))
+                let mut desc = InstanceDescriptor::new();
+                desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
+                let mut limits = InstanceLimits::new();
+                limits.timed_wait_any_max_count = Some(64);
+                desc.required_limits = Some(limits);
+                Instance::new(Some(&desc))
             },
             #[cfg(feature = "wire")]
             None,
@@ -85,7 +88,8 @@ impl InstanceInterface for DawnInstance {
                 use wgpu::rwh::RawWindowHandle;
                 match raw_window_handle {
                     RawWindowHandle::AppKit(handle) => {
-                        let layer = unsafe { raw_window_metal::Layer::from_ns_view(handle.ns_view) };
+                        let layer =
+                            unsafe { raw_window_metal::Layer::from_ns_view(handle.ns_view) };
                         let layer_ptr = layer.into_raw();
                         let layer_addr = layer_ptr.as_ptr() as usize;
                         let surface = self.with_instance(move |state| {
@@ -224,41 +228,41 @@ impl InstanceInterface for DawnInstance {
         let worker = Arc::clone(&self.inner);
         let future_handle = self.with_instance(move |state| {
             state.instance.clone().request_adapter(
-            Some(&dawn_options),
-            move |status, adapter, _message| {
-                if status == RequestAdapterStatus::Success {
-                    let adapter = adapter.expect("wgpu-compat: missing adapter");
-                    complete_shared(
-                        &shared,
-                        Ok(dispatch_adapter(DawnAdapter::from_adapter(
-                            Arc::clone(&worker),
-                            adapter,
-                        ))),
-                    );
-                } else {
-                    complete_shared(
-                        &shared,
-                        Err(wgpu::RequestAdapterError::NotFound {
-                            active_backends: wgpu::Backends::empty(),
-                            requested_backends: wgpu::Backends::empty(),
-                            supported_backends: wgpu::Backends::empty(),
-                            no_fallback_backends: wgpu::Backends::empty(),
-                            no_adapter_backends: wgpu::Backends::empty(),
-                            incompatible_surface_backends: wgpu::Backends::empty(),
-                        }),
-                    );
-                }
-            },
-        )
+                Some(&dawn_options),
+                move |status, adapter, _message| {
+                    if status == RequestAdapterStatus::Success {
+                        let adapter = adapter.expect("wgpu-compat: missing adapter");
+                        complete_shared(
+                            &shared,
+                            Ok(dispatch_adapter(DawnAdapter::from_adapter(
+                                Arc::clone(&worker),
+                                adapter,
+                            ))),
+                        );
+                    } else {
+                        complete_shared(
+                            &shared,
+                            Err(wgpu::RequestAdapterError::NotFound {
+                                active_backends: wgpu::Backends::empty(),
+                                requested_backends: wgpu::Backends::empty(),
+                                supported_backends: wgpu::Backends::empty(),
+                                no_fallback_backends: wgpu::Backends::empty(),
+                                no_adapter_backends: wgpu::Backends::empty(),
+                                incompatible_surface_backends: wgpu::Backends::empty(),
+                            }),
+                        );
+                    }
+                },
+            )
         });
         let _ = self.with_instance(move |state| {
             state.instance.clone().wait_any(
-            Some(&mut [FutureWaitInfo {
-                future: Some(future_handle),
-                completed: None,
-            }]),
-            0,
-        )
+                Some(&mut [FutureWaitInfo {
+                    future: Some(future_handle),
+                    completed: None,
+                }]),
+                0,
+            )
         });
         Box::pin(future)
     }
@@ -384,7 +388,9 @@ impl AdapterInterface for DawnAdapter {
                 })));
             desc.device_lost_callback_info = Some(lost_info);
 
-            adapter.clone().request_device(Some(&desc), move |status, device, message| {
+            adapter
+                .clone()
+                .request_device(Some(&desc), move |status, device, message| {
                     if status == RequestDeviceStatus::Success {
                         let device = device.expect("wgpu-compat: missing device");
                         let queue = device.get_queue();
@@ -724,7 +730,8 @@ impl DeviceInterface for DawnDevice {
 impl QueueInterface for DawnQueue {
     fn write_buffer(&self, buffer: &DispatchBuffer, offset: wgpu::BufferAddress, data: &[u8]) {
         let buffer = expect_buffer(buffer);
-        self.inner.write_buffer(buffer, offset, as_c_void_slice(data));
+        self.inner
+            .write_buffer(buffer, offset, as_c_void_slice(data));
     }
 
     fn create_staging_buffer(&self, size: wgpu::BufferSize) -> Option<DispatchQueueWriteBuffer> {
@@ -750,7 +757,8 @@ impl QueueInterface for DawnQueue {
         let staging = staging_buffer
             .as_custom::<DawnQueueWriteBuffer>()
             .expect("wgpu-compat: queue write buffer not dawn");
-        self.inner.write_buffer(buffer, offset, as_c_void_slice(&staging.inner));
+        self.inner
+            .write_buffer(buffer, offset, as_c_void_slice(&staging.inner));
     }
 
     fn write_texture(
@@ -768,8 +776,12 @@ impl QueueInterface for DawnQueue {
         let destination = map_texel_copy_texture_info(texture);
         let data_layout = map_texel_copy_buffer_layout(data_layout);
         let write_size = map_extent_3d(size);
-        self.inner
-            .write_texture(&destination, as_c_void_slice(data), &data_layout, &write_size);
+        self.inner.write_texture(
+            &destination,
+            as_c_void_slice(data),
+            &data_layout,
+            &write_size,
+        );
     }
 
     #[cfg(web)]
@@ -1112,7 +1124,9 @@ impl ComputePassInterface for DawnComputePass {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
+        self.inner
+            .clone()
+            .set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn insert_debug_marker(&mut self, label: &str) {
@@ -1222,7 +1236,9 @@ impl RenderPassInterface for DawnRenderPass {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
+        self.inner
+            .clone()
+            .set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn set_blend_constant(&mut self, color: wgpu::Color) {
@@ -1479,7 +1495,9 @@ impl RenderBundleEncoderInterface for DawnRenderBundleEncoder {
 
     fn set_immediates(&mut self, offset: u32, data: &[u8]) {
         let data = bytes_to_u32(data);
-        self.inner.clone().set_immediates(offset, u32_as_c_void_slice(&data));
+        self.inner
+            .clone()
+            .set_immediates(offset, u32_as_c_void_slice(&data));
     }
 
     fn draw(&mut self, vertices: std::ops::Range<u32>, instances: std::ops::Range<u32>) {
