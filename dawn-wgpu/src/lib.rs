@@ -50,9 +50,6 @@ fn create_wire_instance_with_options(
 ) -> Result<wgpu::Instance, wire_backend::WireBackendError> {
     let backend = wire_backend::IpcWireBackend::connect_name_with_options(name, opts)?;
     let (instance, handle) = backend.into_instance_and_handle();
-    let custom = types::DawnInstance {
-        inner: instance,
-        wire_handle: Some(handle),
-    };
+    let custom = types::DawnInstance::from_factory(move || instance, Some(handle));
     Ok(wgpu::Instance::from_custom(custom))
 }

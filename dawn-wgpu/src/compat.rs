@@ -28,20 +28,6 @@ impl<'a> DawnTextureIntoWgpu<'a> {
     }
 }
 
-impl From<DawnIntoWgpu<Instance>> for wgpu::Instance {
-    fn from(value: DawnIntoWgpu<Instance>) -> Self {
-        wgpu::Instance::from_custom(DawnInstance::from_instance(value.0))
-    }
-}
-
-impl From<DawnIntoWgpu<Adapter>> for wgpu::Adapter {
-    fn from(value: DawnIntoWgpu<Adapter>) -> Self {
-        wgpu::Adapter::from_custom(DawnAdapter {
-            inner: value.0,
-        })
-    }
-}
-
 impl From<DawnIntoWgpu<Device>> for wgpu::Device {
     fn from(value: DawnIntoWgpu<Device>) -> Self {
         wgpu::Device::from_custom(DawnDevice::new(value.0))
