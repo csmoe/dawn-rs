@@ -289,9 +289,9 @@ pub(crate) fn emit_ffi_arg_prelude(
             if arg.optional {
                 if arg.annotation.is_const_ptr() || arg.annotation.is_mut_ptr() {
                     let (ptr_ctor, null_ptr) = if arg.annotation.is_mut_ptr() {
-                        ("std::ptr::addr_of_mut!", "std::ptr::null_mut()")
+                        ("std::ptr::from_mut", "std::ptr::null_mut()")
                     } else {
-                        ("std::ptr::addr_of!", "std::ptr::null()")
+                        ("std::ptr::from_ref", "std::ptr::null()")
                     };
                     prelude.push(format!(
                         r#"        let mut {name}_storage = ChainedStructStorage::new();

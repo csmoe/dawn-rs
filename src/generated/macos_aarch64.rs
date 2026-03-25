@@ -18024,7 +18024,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -18061,7 +18061,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -18377,7 +18377,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -18402,7 +18402,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -18884,7 +18884,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -19043,7 +19043,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -19373,7 +19373,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -19440,7 +19440,7 @@ mod objects {
                 options_storage = storage;
                 options_ffi = Some(raw);
                 if let Some(raw_ref) = options_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!("internal error: options_ffi missing after assignment")
                 }
@@ -19960,7 +19960,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -20597,7 +20597,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -20739,7 +20739,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -20940,7 +20940,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -20963,7 +20963,7 @@ mod objects {
                 descriptor_storage = storage;
                 descriptor_ffi = Some(raw);
                 if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::addr_of!(raw_ref)
+                    std::ptr::from_ref(raw_ref)
                 } else {
                     unreachable!(
                         "internal error: descriptor_ffi missing after assignment",
@@ -21575,7 +21575,7 @@ mod functions {
             descriptor_storage = storage;
             descriptor_ffi = Some(raw);
             if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                std::ptr::addr_of!(raw_ref)
+                std::ptr::from_ref(raw_ref)
             } else {
                 unreachable!("internal error: descriptor_ffi missing after assignment")
             }
