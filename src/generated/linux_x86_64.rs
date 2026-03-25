@@ -17928,10 +17928,18 @@ mod objects {
             ) + Send + 'static,
         ) -> Future {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUDeviceDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -17957,10 +17965,18 @@ mod objects {
         }
         pub fn create_device(&self, descriptor: Option<&DeviceDescriptor>) -> Device {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUDeviceDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -18002,8 +18018,6 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for Adapter {}
-    unsafe impl Sync for Adapter {}
     #[derive(Debug)]
     pub struct BindGroup {
         raw: ffi::WGPUBindGroup,
@@ -18267,10 +18281,18 @@ mod objects {
             descriptor: Option<&CommandBufferDescriptor>,
         ) -> CommandBuffer {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUCommandBufferDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -18284,10 +18306,18 @@ mod objects {
             descriptor: Option<&ComputePassDescriptor>,
         ) -> ComputePassEncoder {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUComputePassDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -18758,10 +18788,18 @@ mod objects {
             descriptor: Option<&CommandEncoderDescriptor>,
         ) -> CommandEncoder {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUCommandEncoderDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -18909,10 +18947,18 @@ mod objects {
         }
         pub fn create_sampler(&self, descriptor: Option<&SamplerDescriptor>) -> Sampler {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUSamplerDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -19231,10 +19277,18 @@ mod objects {
         }
         pub fn new(descriptor: Option<&InstanceDescriptor>) -> Self {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUInstanceDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -19290,10 +19344,16 @@ mod objects {
             ) + Send + 'static,
         ) -> Future {
             let mut options_storage = ChainedStructStorage::new();
+            let mut options_ffi: Option<ffi::WGPURequestAdapterOptions> = None;
             let options_ptr = if let Some(value) = &options {
-                let (options_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 options_storage = storage;
-                std::ptr::addr_of!(options_ffi)
+                options_ffi = Some(raw);
+                if let Some(raw_ref) = options_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!("internal error: options_ffi missing after assignment")
+                }
             } else {
                 std::ptr::null()
             };
@@ -19348,8 +19408,6 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for Instance {}
-    unsafe impl Sync for Instance {}
     #[derive(Debug)]
     pub struct PipelineLayout {
         raw: ffi::WGPUPipelineLayout,
@@ -19806,10 +19864,18 @@ mod objects {
             descriptor: Option<&RenderBundleDescriptor>,
         ) -> RenderBundle {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPURenderBundleDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -20435,10 +20501,18 @@ mod objects {
         }
         pub fn create_buffer(&self, descriptor: Option<&BufferDescriptor>) -> Buffer {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUBufferDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -20512,6 +20586,14 @@ mod objects {
         pub(crate) fn as_raw(&self) -> ffi::WGPUSharedFence {
             self.raw
         }
+        pub fn set_label(&self, label: String) -> () {
+            let label_ffi = ffi::WGPUStringView {
+                data: label.as_ptr().cast(),
+                length: label.len(),
+            };
+            unsafe { ffi::wgpuSharedFenceSetLabel(self.raw, label_ffi) };
+            ()
+        }
         pub fn export_info(&self, info: &mut SharedFenceExportInfo) -> () {
             let (mut info_ffi, _info_storage) = info.to_ffi();
             let info_ptr = std::ptr::addr_of_mut!(info_ffi);
@@ -20569,10 +20651,18 @@ mod objects {
         }
         pub fn create_texture(&self, descriptor: Option<&TextureDescriptor>) -> Texture {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUTextureDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -20762,10 +20852,18 @@ mod objects {
             descriptor: Option<&TextureViewDescriptor>,
         ) -> TextureView {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUTextureViewDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -20777,10 +20875,18 @@ mod objects {
             descriptor: Option<&TextureViewDescriptor>,
         ) -> TextureView {
             let mut descriptor_storage = ChainedStructStorage::new();
+            let mut descriptor_ffi: Option<ffi::WGPUTextureViewDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
-                let (descriptor_ffi, storage) = value.to_ffi();
+                let (raw, storage) = value.to_ffi();
                 descriptor_storage = storage;
-                std::ptr::addr_of!(descriptor_ffi)
+                descriptor_ffi = Some(raw);
+                if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                    std::ptr::from_ref(raw_ref)
+                } else {
+                    unreachable!(
+                        "internal error: descriptor_ffi missing after assignment",
+                    )
+                }
             } else {
                 std::ptr::null()
             };
@@ -21381,10 +21487,16 @@ mod functions {
     use crate::ffi;
     pub fn create_instance(descriptor: Option<&InstanceDescriptor>) -> Instance {
         let mut descriptor_storage = ChainedStructStorage::new();
+        let mut descriptor_ffi: Option<ffi::WGPUInstanceDescriptor> = None;
         let descriptor_ptr = if let Some(value) = &descriptor {
-            let (descriptor_ffi, storage) = value.to_ffi();
+            let (raw, storage) = value.to_ffi();
             descriptor_storage = storage;
-            std::ptr::addr_of!(descriptor_ffi)
+            descriptor_ffi = Some(raw);
+            if let Some(raw_ref) = descriptor_ffi.as_ref() {
+                std::ptr::from_ref(raw_ref)
+            } else {
+                unreachable!("internal error: descriptor_ffi missing after assignment")
+            }
         } else {
             std::ptr::null()
         };
