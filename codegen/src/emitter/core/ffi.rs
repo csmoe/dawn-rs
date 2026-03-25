@@ -295,15 +295,25 @@ pub(crate) fn emit_ffi_arg_prelude(
                     };
                     prelude.push(format!(
                         r#"        let mut {name}_storage = ChainedStructStorage::new();
+        let mut {name}_ffi: Option<ffi::{ffi_ty}> = None;
         let {name}_ptr = if let Some(value) = &{name} {{
-            let ({name}_ffi, storage) = value.to_ffi();
+            let (raw, storage) = value.to_ffi();
             {name}_storage = storage;
-            {ptr_ctor}({name}_ffi)
+            {name}_ffi = Some(raw);
+            if let Some(raw_ref) = {name}_ffi.as_{opt_ref}() {{
+                {ptr_ctor}(raw_ref)
+            }} else {{
+                unreachable!("internal error: {name}_ffi missing after assignment")
+            }}
         }} else {{
             {null_ptr}
         }};"#,
-                        name = name,
-                        ptr_ctor = ptr_ctor,
+                        ffi_ty = ffi_type_name(&arg.member_type, c_prefix),
+                        opt_ref = if arg.annotation.is_mut_ptr() {
+                            "mut"
+                        } else {
+                            "ref"
+                        },
                         null_ptr = null_ptr
                     ));
                     ffi_args.push(format!("{name}_ptr", name = name));
