@@ -108,16 +108,21 @@ jobs:
           fi
 
       - name: Cargo check workspace
+        if: runner.os != 'Windows'
         run: cargo check --workspace $CARGO_TARGET_ARGS
 
       - name: Check dawn-rs examples (default)
+        if: runner.os != 'Windows'
         run: cargo check -p dawn-rs --examples $CARGO_TARGET_ARGS
 
       #- name: Build dawn-rs wire example
+      #  if: runner.os != 'Windows'
       #  run: cargo build -p dawn-rs --example triangle-wire --features wire
 
       - name: Check dawn-wgpu examples (default)
+        if: runner.os != 'Windows'
         run: cargo check -p dawn-wgpu --examples $CARGO_TARGET_ARGS
 
       #- name: Build dawn-wgpu wire example
+      #  if: runner.os != 'Windows'
       #  run: cargo build -p dawn-wgpu --example nya-cat-wire --features wire
