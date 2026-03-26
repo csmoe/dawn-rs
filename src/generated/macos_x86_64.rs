@@ -20586,6 +20586,14 @@ mod objects {
         pub(crate) fn as_raw(&self) -> ffi::WGPUSharedFence {
             self.raw
         }
+        pub fn set_label(&self, label: String) -> () {
+            let label_ffi = ffi::WGPUStringView {
+                data: label.as_ptr().cast(),
+                length: label.len(),
+            };
+            unsafe { ffi::wgpuSharedFenceSetLabel(self.raw, label_ffi) };
+            ()
+        }
         pub fn export_info(&self, info: &mut SharedFenceExportInfo) -> () {
             let (mut info_ffi, _info_storage) = info.to_ffi();
             let info_ptr = std::ptr::addr_of_mut!(info_ffi);
