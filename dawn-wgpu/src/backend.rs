@@ -348,6 +348,13 @@ impl AdapterInterface for DawnAdapter {
             desc.label = label;
             desc.required_features = Some(required_features);
             desc.required_limits = required_limits;
+            let mut toggles = DawnTogglesDescriptor::new();
+            toggles.enabled_toggles = Some(vec![
+                "skip_validation".into(),
+                "disable_robustness".into(),
+                "disable_lazy_clear_for_mapped_at_creation_buffer".into(),
+            ]);
+            desc = desc.with_extension(toggles.into());
 
             let error_info = dawn_rs::UncapturedErrorCallbackInfo::new();
             let error_handler_state = Arc::clone(&error_handler_state);
