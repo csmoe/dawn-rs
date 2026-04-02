@@ -461,6 +461,8 @@ pub const WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture: 
     327742;
 pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 327743;
 pub const WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea: WGPUFeatureName = 327744;
+pub const WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents: WGPUFeatureName =
+    327745;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;

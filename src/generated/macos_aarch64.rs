@@ -1191,6 +1191,8 @@ mod enums {
         OpaqueYCbCrAndroidForExternalTexture,
         Unorm16Filterable,
         RenderPassRenderArea,
+        DawnNativeSpontaneousQueueEvents,
+        AdapterPropertiesDrm,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1448,6 +1450,12 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea => {
                     FeatureName::RenderPassRenderArea
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents => {
+                    FeatureName::DawnNativeSpontaneousQueueEvents
+                }
+                ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm => {
+                    FeatureName::AdapterPropertiesDrm
                 }
                 _ => FeatureName::CoreFeaturesAndLimits,
             }
@@ -1709,6 +1717,12 @@ mod enums {
                 }
                 FeatureName::RenderPassRenderArea => {
                     ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea
+                }
+                FeatureName::DawnNativeSpontaneousQueueEvents => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents
+                }
+                FeatureName::AdapterPropertiesDrm => {
+                    ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm
                 }
             }
         }
@@ -2426,6 +2440,7 @@ mod enums {
         RequestAdapterOptionsAngleVirtualizationGroup,
         PipelineLayoutResourceTable,
         AdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+        AdapterPropertiesDrm,
     }
     impl From<ffi::WGPUSType> for SType {
         fn from(value: ffi::WGPUSType) -> Self {
@@ -2709,6 +2724,9 @@ mod enums {
                 }
                 ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
                     SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs
+                }
+                ffi::WGPUSType_WGPUSType_AdapterPropertiesDrm => {
+                    SType::AdapterPropertiesDrm
                 }
                 _ => SType::ShaderSourceSPIRV,
             }
@@ -2996,6 +3014,9 @@ mod enums {
                 }
                 SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
                     ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs
+                }
+                SType::AdapterPropertiesDrm => {
+                    ffi::WGPUSType_WGPUSType_AdapterPropertiesDrm
                 }
             }
         }
@@ -5076,6 +5097,62 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUAdapterPropertiesWGPU) -> Self {
             Self {
                 backend_type: Some(value.backendType.into()),
+            }
+        }
+    }
+    pub struct AdapterPropertiesDrm {
+        pub has_primary: Option<bool>,
+        pub has_render: Option<bool>,
+        pub primary_major: Option<u64>,
+        pub primary_minor: Option<u64>,
+        pub render_major: Option<u64>,
+        pub render_minor: Option<u64>,
+    }
+    impl Default for AdapterPropertiesDrm {
+        fn default() -> Self {
+            Self {
+                has_primary: None,
+                has_render: None,
+                primary_major: Some(0),
+                primary_minor: Some(0),
+                render_major: Some(0),
+                render_minor: Some(0),
+            }
+        }
+    }
+    impl AdapterPropertiesDrm {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPUAdapterPropertiesDrm, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUAdapterPropertiesDrm = unsafe { std::mem::zeroed() };
+            raw.hasPrimary = if self.has_primary.unwrap_or(false) { 1 } else { 0 };
+            raw.hasRender = if self.has_render.unwrap_or(false) { 1 } else { 0 };
+            if let Some(value) = self.primary_major {
+                raw.primaryMajor = value;
+            }
+            if let Some(value) = self.primary_minor {
+                raw.primaryMinor = value;
+            }
+            if let Some(value) = self.render_major {
+                raw.renderMajor = value;
+            }
+            if let Some(value) = self.render_minor {
+                raw.renderMinor = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPUAdapterPropertiesDrm) -> Self {
+            Self {
+                has_primary: Some(value.hasPrimary != 0),
+                has_render: Some(value.hasRender != 0),
+                primary_major: Some(value.primaryMajor),
+                primary_minor: Some(value.primaryMinor),
+                render_major: Some(value.renderMajor),
+                render_minor: Some(value.renderMinor),
             }
         }
     }
@@ -15549,6 +15626,7 @@ mod extensions {
     pub enum AdapterInfoExtension {
         AdapterPropertiesD3D(AdapterPropertiesD3D),
         AdapterPropertiesWGPU(AdapterPropertiesWGPU),
+        AdapterPropertiesDrm(AdapterPropertiesDrm),
         AdapterPropertiesExplicitComputeSubgroupSizeConfigs(
             AdapterPropertiesExplicitComputeSubgroupSizeConfigs,
         ),
@@ -15565,6 +15643,11 @@ mod extensions {
     impl std::convert::From<AdapterPropertiesWGPU> for AdapterInfoExtension {
         fn from(ext: AdapterPropertiesWGPU) -> Self {
             AdapterInfoExtension::AdapterPropertiesWGPU(ext)
+        }
+    }
+    impl std::convert::From<AdapterPropertiesDrm> for AdapterInfoExtension {
+        fn from(ext: AdapterPropertiesDrm) -> Self {
+            AdapterInfoExtension::AdapterPropertiesDrm(ext)
         }
     }
     impl std::convert::From<AdapterPropertiesExplicitComputeSubgroupSizeConfigs>
@@ -15615,6 +15698,14 @@ mod extensions {
                 AdapterInfoExtension::AdapterPropertiesWGPU(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::AdapterPropertiesWGPU.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                AdapterInfoExtension::AdapterPropertiesDrm(value) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::AdapterPropertiesDrm.into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
