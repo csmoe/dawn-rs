@@ -10,6 +10,7 @@ mod types;
 
 pub use compat::{DawnIntoWgpu, DawnTextureIntoWgpu};
 pub use types::*;
+use std::sync::Arc;
 
 #[cfg(feature = "wire")]
 pub mod wire_backend;
@@ -50,6 +51,63 @@ fn create_wire_instance_with_options(
 ) -> Result<wgpu::Instance, wire_backend::WireBackendError> {
     let backend = wire_backend::IpcWireBackend::connect_name_with_options(name, opts)?;
     let (instance, handle) = backend.into_instance_and_handle();
-    let custom = types::DawnInstance::from_factory(move || instance, Some(handle));
+    let custom =
+        types::DawnInstance::from_factory(wgpu::Backends::all(), move || instance, Some(handle));
     Ok(wgpu::Instance::from_custom(custom))
+}
+
+pub async fn request_adapter_with_fallback(
+    instance: &wgpu::Instance,
+    options: &wgpu::RequestAdapterOptions<'_, '_>,
+    backends: wgpu::Backends,
+) -> Result<wgpu::Adapter, wgpu::RequestAdapterError> {
+    let instance = instance
+        .as_custom::<types::DawnInstance>()
+        .ok_or(wgpu::RequestAdapterError::NotFound {
+            active_backends: wgpu::Backends::empty(),
+            requested_backends: backends,
+            supported_backends: wgpu::Backends::empty(),
+            no_fallback_backends: wgpu::Backends::empty(),
+            no_adapter_backends: wgpu::Backends::empty(),
+            incompatible_surface_backends: wgpu::Backends::empty(),
+        })?
+        .clone();
+
+    let worker = Arc::clone(&instance.inner);
+    let power_preference = mapping::map_power_preference(options.power_preference);
+    let force_fallback_adapter = options.force_fallback_adapter;
+    let compatible_surface = options
+        .compatible_surface
+        .map(|surface| dispatch::expect_surface_from_api(surface).inner.clone());
+
+    instance.with_instance(move |state| {
+        for dawn_options in backend::adapter_attempts(
+            backends,
+            power_preference,
+            compatible_surface,
+            force_fallback_adapter,
+        ) {
+            if let Ok(adapter) = backend::request_adapter_sync(&state.instance, &dawn_options) {
+                if dawn_options.force_fallback_adapter == Some(true)
+                    && !backend::is_swiftshader_adapter(&adapter)
+                {
+                    continue;
+                }
+
+                return Ok(wgpu::Adapter::from_custom(types::DawnAdapter::from_adapter(
+                    Arc::clone(&worker),
+                    adapter,
+                )));
+            }
+        }
+
+        Err(wgpu::RequestAdapterError::NotFound {
+            active_backends: state.backends,
+            requested_backends: backends,
+            supported_backends: wgpu::Backends::PRIMARY | wgpu::Backends::GL,
+            no_fallback_backends: wgpu::Backends::empty(),
+            no_adapter_backends: wgpu::Backends::empty(),
+            incompatible_surface_backends: wgpu::Backends::empty(),
+        })
+    })
 }

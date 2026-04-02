@@ -59,7 +59,10 @@ impl State {
                 .create_surface_unsafe(target)
                 .expect("create surface")
         };
-
+        let adapters = block_on(instance.enumerate_adapters(wgpu::Backends::VULKAN.with_env()));
+        for adapter in adapters {
+            dbg!(adapter.get_info());
+        }
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),

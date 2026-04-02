@@ -13,11 +13,12 @@ pub(crate) struct DawnInstanceWorker {
 #[derive(Debug)]
 pub(crate) struct DawnInstanceState {
     pub(crate) instance: Instance,
+    pub(crate) backends: wgpu::Backends,
 }
 
 impl DawnInstanceState {
-    fn new(instance: Instance) -> Self {
-        Self { instance }
+    fn new(instance: Instance, backends: wgpu::Backends) -> Self {
+        Self { instance, backends }
     }
 }
 
@@ -29,12 +30,13 @@ pub struct DawnInstance {
 
 impl DawnInstance {
     pub(crate) fn from_factory(
+        backends: wgpu::Backends,
         factory: impl FnOnce() -> Instance + Send + 'static,
         #[cfg(feature = "wire")] wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
     ) -> Self {
         let (sender, receiver) = std::sync::mpsc::channel::<InstanceJob>();
         std::thread::spawn(move || {
-            let mut state = DawnInstanceState::new(factory());
+            let mut state = DawnInstanceState::new(factory(), backends);
             while let Ok(job) = receiver.recv() {
                 job(&mut state);
             }
@@ -96,10 +98,7 @@ impl DawnAdapter {
     pub(crate) fn from_adapter(worker: Arc<DawnInstanceWorker>, adapter: Adapter) -> Self {
         let raw = Box::into_raw(Box::new(adapter));
         Self {
-            shared: Arc::new(DawnAdapterShared {
-                worker,
-                raw,
-            }),
+            shared: Arc::new(DawnAdapterShared { worker, raw }),
         }
     }
 
@@ -170,7 +169,9 @@ impl DawnDevice {
     pub(crate) fn with_callback_state(
         device: Device,
         device_lost_callback: Arc<std::sync::Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>>,
-        uncaptured_error_handler: Arc<std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>>,
+        uncaptured_error_handler: Arc<
+            std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>,
+        >,
     ) -> Self {
         Self {
             inner: device,
