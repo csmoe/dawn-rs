@@ -6,6 +6,7 @@ use crate::types::*;
 use dawn_rs::*;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::thread;
 use wgpu::custom::*;
 
 /// Reinterpret a `&[u8]` as `&[c_void]` for passing to Dawn C APIs.
@@ -42,10 +43,165 @@ fn ensure_native_procs() {
 #[cfg(not(feature = "wire"))]
 fn ensure_native_procs() {}
 
+fn build_request_adapter_options(
+    power_preference: PowerPreference,
+    compatible_surface: Option<Surface>,
+    backend_type: Option<BackendType>,
+    force_fallback_adapter: bool,
+) -> RequestAdapterOptions {
+    let mut options = RequestAdapterOptions::new();
+    options.power_preference = Some(power_preference);
+    options.compatible_surface = compatible_surface;
+    options.backend_type = backend_type;
+    options.force_fallback_adapter = Some(force_fallback_adapter);
+    options
+}
+
+pub(crate) fn request_adapter_sync(
+    instance: &Instance,
+    options: &RequestAdapterOptions,
+) -> Result<Adapter, String> {
+    let (tx, rx) = std::sync::mpsc::channel::<Result<usize, String>>();
+
+    let _future = instance.request_adapter(Some(options), move |status, adapter, message| {
+        if status != RequestAdapterStatus::Success {
+            let _ = tx.send(Err(format!("{status:?}: {message}")));
+            return;
+        }
+
+        match adapter {
+            Some(adapter) => {
+                let _ = tx.send(Ok(Box::into_raw(Box::new(adapter)) as usize));
+            }
+            None => {
+                let _ = tx.send(Err("request_adapter returned None".to_owned()));
+            }
+        }
+    });
+
+    loop {
+        match rx.try_recv() {
+            Ok(result) => {
+                return result.map(|adapter| unsafe { *Box::from_raw(adapter as *mut Adapter) });
+            }
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                instance.process_events();
+                thread::yield_now();
+            }
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                return Err("request_adapter callback disconnected".to_owned());
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn is_windows_7_or_older() -> bool {
+    use windows::Wdk::System::SystemServices::RtlGetVersion;
+    use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
+
+    let mut version = OSVERSIONINFOW::default();
+    version.dwOSVersionInfoSize = std::mem::size_of::<OSVERSIONINFOW>() as u32;
+
+    unsafe { RtlGetVersion(&mut version) }.is_ok()
+        && (version.dwMajorVersion < 6
+            || (version.dwMajorVersion == 6 && version.dwMinorVersion <= 1))
+}
+
+#[cfg(not(target_os = "windows"))]
+fn is_windows_7_or_older() -> bool {
+    false
+}
+
+pub(crate) fn adapter_attempts(
+    backends: wgpu::Backends,
+    power_preference: PowerPreference,
+    compatible_surface: Option<Surface>,
+    force_fallback_adapter: bool,
+) -> Vec<RequestAdapterOptions> {
+    let mut attempts = Vec::new();
+
+    if !force_fallback_adapter {
+        #[cfg(target_os = "macos")]
+        if backends.contains(wgpu::Backends::METAL) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Metal),
+                false,
+            ));
+        }
+
+        #[cfg(target_os = "windows")]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(if is_windows_7_or_older() {
+                    BackendType::D3D11
+                } else {
+                    BackendType::D3D12
+                }),
+                false,
+            ));
+        }
+
+        if backends.contains(wgpu::Backends::VULKAN) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Vulkan),
+                false,
+            ));
+        }
+    }
+
+    if backends.contains(wgpu::Backends::VULKAN) {
+        attempts.push(build_request_adapter_options(
+            power_preference,
+            compatible_surface.clone(),
+            Some(BackendType::Vulkan),
+            true,
+        ));
+    }
+
+    if attempts.is_empty() {
+        attempts.push(build_request_adapter_options(
+            power_preference,
+            compatible_surface,
+            None,
+            force_fallback_adapter,
+        ));
+    }
+
+    attempts
+}
+
+pub(crate) fn is_swiftshader_adapter(adapter: &Adapter) -> bool {
+    let mut info = AdapterInfo::new();
+    let _ = adapter.get_info(&mut info);
+
+    let contains_swiftshader = |value: Option<&str>| {
+        value.is_some_and(|value| value.to_ascii_lowercase().contains("swiftshader"))
+    };
+
+    matches!(
+        info.adapter_type.unwrap_or(AdapterType::Unknown),
+        AdapterType::Cpu
+    ) && matches!(
+        info.backend_type.unwrap_or(BackendType::Undefined),
+        BackendType::Vulkan
+    ) && (contains_swiftshader(info.vendor.as_deref())
+        || contains_swiftshader(info.architecture.as_deref())
+        || contains_swiftshader(info.device.as_deref())
+        || contains_swiftshader(info.description.as_deref()))
+}
+
 impl InstanceInterface for DawnInstance {
-    fn new(_desc: &wgpu::InstanceDescriptor) -> Self {
+    fn new(desc: &wgpu::InstanceDescriptor) -> Self {
         ensure_native_procs();
         Self::from_factory(
+            desc.backends,
             move || {
                 let mut desc = InstanceDescriptor::new();
                 desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
@@ -200,38 +356,21 @@ impl InstanceInterface for DawnInstance {
         options: &wgpu::RequestAdapterOptions<'_, '_>,
     ) -> Pin<Box<dyn wgpu::custom::RequestAdapterFuture>> {
         let (future, shared) = CallbackFuture::new();
+        let worker = Arc::clone(&self.inner);
         let mut dawn_options = RequestAdapterOptions::new();
         dawn_options.power_preference = Some(map_power_preference(options.power_preference));
         dawn_options.force_fallback_adapter = Some(options.force_fallback_adapter);
         if let Some(surface) = options.compatible_surface {
             dawn_options.compatible_surface = Some(expect_surface_from_api(surface).inner.clone());
         }
-        #[cfg(feature = "shared_texture_memory")]
-        {
-            #[cfg(target_os = "windows")]
-            {
-                #[cfg(target_vendor = "win7")]
-                {
-                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D11)
-                }
-                #[cfg(not(target_vendor = "win7"))]
-                {
-                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D12)
-                }
-            }
 
-            #[cfg(target_os = "macos")]
-            {
-                dawn_options.backend_type = Some(dawn_rs::BackendType::Metal);
-            }
-        }
-        let worker = Arc::clone(&self.inner);
         let future_handle = self.with_instance(move |state| {
             state.instance.clone().request_adapter(
                 Some(&dawn_options),
                 move |status, adapter, _message| {
-                    if status == RequestAdapterStatus::Success {
-                        let adapter = adapter.expect("wgpu-compat: missing adapter");
+                    if status == RequestAdapterStatus::Success
+                        && let Some(adapter) = adapter
+                    {
                         complete_shared(
                             &shared,
                             Ok(dispatch_adapter(DawnAdapter::from_adapter(
@@ -264,6 +403,7 @@ impl InstanceInterface for DawnInstance {
                 0,
             )
         });
+
         Box::pin(future)
     }
 
@@ -292,9 +432,51 @@ impl InstanceInterface for DawnInstance {
 
     fn enumerate_adapters(
         &self,
-        _backends: wgpu::Backends,
+        backends: wgpu::Backends,
     ) -> Pin<Box<dyn wgpu::custom::EnumerateAdapterFuture>> {
-        Box::pin(std::future::ready(Vec::new()))
+        let worker = Arc::clone(&self.inner);
+        let adapters = self.with_instance(move |state| {
+            let instance = state.instance.clone();
+            let requested_backends = map_backends_to_dawn(backends);
+
+            requested_backends
+                .into_iter()
+                .filter_map(|backend_type| {
+                    let mut options = RequestAdapterOptions::new();
+                    options.backend_type = Some(backend_type);
+
+                    let (sender, receiver) = std::sync::mpsc::channel();
+                    let worker = Arc::clone(&worker);
+                    let future = instance.clone().request_adapter(
+                        Some(&options),
+                        move |status, adapter, _message| {
+                            let _ = sender.send(
+                                (status == RequestAdapterStatus::Success)
+                                    .then_some(adapter.map(|adapter| {
+                                        dispatch_adapter(DawnAdapter::from_adapter(
+                                            Arc::clone(&worker),
+                                            adapter,
+                                        ))
+                                    }))
+                                    .flatten(),
+                            );
+                        },
+                    );
+
+                    instance.clone().wait_any(
+                        Some(&mut [FutureWaitInfo {
+                            future: Some(future),
+                            completed: None,
+                        }]),
+                        0,
+                    );
+
+                    receiver.recv().ok().flatten()
+                })
+                .collect::<Vec<_>>()
+        });
+
+        Box::pin(std::future::ready(adapters))
     }
 }
 

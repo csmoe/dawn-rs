@@ -149,5 +149,3 @@ impl fmt::Debug for WireBackendHandle {
         f.debug_struct("WireBackendHandle").finish_non_exhaustive()
     }
 }
-
-

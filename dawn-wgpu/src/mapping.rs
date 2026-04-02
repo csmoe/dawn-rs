@@ -10,12 +10,36 @@ pub(crate) fn map_backend_type_to_wgpu(value: BackendType) -> wgpu::Backend {
     match value {
         BackendType::Vulkan => wgpu::Backend::Vulkan,
         BackendType::Metal => wgpu::Backend::Metal,
-        BackendType::D3D12 => wgpu::Backend::Dx12,
-        BackendType::D3D11 => wgpu::Backend::Noop,
+        BackendType::D3D12 | BackendType::D3D11 => wgpu::Backend::Dx12,
         BackendType::OpenGL | BackendType::OpenGLes => wgpu::Backend::Gl,
         BackendType::WebGPU => wgpu::Backend::BrowserWebGpu,
         _ => wgpu::Backend::Noop,
     }
+}
+
+pub(crate) fn map_backends_to_dawn(value: wgpu::Backends) -> Vec<BackendType> {
+    let mut backends = Vec::new();
+
+    if value.contains(wgpu::Backends::VULKAN) {
+        backends.push(BackendType::Vulkan);
+    }
+    if value.contains(wgpu::Backends::METAL) {
+        backends.push(BackendType::Metal);
+    }
+    if value.contains(wgpu::Backends::DX12) {
+        backends.push(BackendType::D3D12);
+    }
+    if value.contains(wgpu::Backends::GL) {
+        backends.push(BackendType::OpenGL);
+    }
+    if value.contains(wgpu::Backends::BROWSER_WEBGPU) {
+        backends.push(BackendType::WebGPU);
+    }
+    if value.contains(wgpu::Backends::NOOP) {
+        backends.push(BackendType::Null);
+    }
+
+    backends
 }
 
 pub(crate) fn map_power_preference(value: wgpu::PowerPreference) -> PowerPreference {
