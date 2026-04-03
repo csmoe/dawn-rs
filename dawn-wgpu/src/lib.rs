@@ -9,8 +9,8 @@ mod mapping;
 mod types;
 
 pub use compat::{DawnIntoWgpu, DawnTextureIntoWgpu};
-pub use types::*;
 use std::sync::Arc;
+pub use types::*;
 
 #[cfg(feature = "wire")]
 pub mod wire_backend;
@@ -94,10 +94,9 @@ pub async fn request_adapter_with_fallback(
                     continue;
                 }
 
-                return Ok(wgpu::Adapter::from_custom(types::DawnAdapter::from_adapter(
-                    Arc::clone(&worker),
-                    adapter,
-                )));
+                return Ok(wgpu::Adapter::from_custom(
+                    types::DawnAdapter::from_adapter(Arc::clone(&worker), adapter),
+                ));
             }
         }
 

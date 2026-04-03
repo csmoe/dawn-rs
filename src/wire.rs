@@ -401,7 +401,8 @@ impl Server {
     ) -> Result<Self, WireError> {
         let (native_instance, native_surface) = with_native_runtime(|| {
             let native_instance = Instance::new(None);
-            let native_surface = native_surface_desc.map(|desc| native_instance.create_surface(desc));
+            let native_surface =
+                native_surface_desc.map(|desc| native_instance.create_surface(desc));
             (native_instance, native_surface)
         })?;
         let mut server =
