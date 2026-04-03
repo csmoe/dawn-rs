@@ -42,6 +42,7 @@ DAWN_ROOT=/path/to/dawn cargo run --example triangle
 
 ```bash
 DAWN_ROOT=/path/to/dawn cargo run -p dawn-wgpu --example triangle
+DAWN_ROOT=/path/to/dawn cargo run -p dawn-wgpu --example triangle -- --swiftshader-vk
 ```
 
 Wire examples:

@@ -1,4 +1,5 @@
 use pollster::block_on;
+use std::env;
 use wgpu::SurfaceError;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
@@ -37,6 +38,64 @@ struct Vertex {
     color: [f32; 3],
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Backend {
+    Native,
+    SwiftShaderVk,
+}
+
+impl Backend {
+    fn from_args() -> Self {
+        let mut backend = Self::Native;
+        for arg in env::args().skip(1) {
+            if arg == "--swiftshader-vk" || arg == "--angle-swiftshader" {
+                backend = Self::SwiftShaderVk;
+            }
+        }
+        backend
+    }
+
+    fn backends(self) -> wgpu::Backends {
+        match self {
+            Self::Native => wgpu::Backends::PRIMARY.with_env(),
+            Self::SwiftShaderVk => wgpu::Backends::VULKAN.with_env(),
+        }
+    }
+
+    fn configure_env(self) {
+        if self != Self::SwiftShaderVk {
+            return;
+        }
+
+        if let Ok(current_exe) = env::current_exe()
+            && let Some(exe_dir) = current_exe.parent()
+        {
+            let icd = exe_dir.join("vk_swiftshader_icd.json");
+            if icd.is_file() {
+                unsafe {
+                    env::set_var("VK_ICD_FILENAMES", &icd);
+                }
+            }
+        }
+    }
+
+    fn request_adapter(
+        self,
+        instance: &wgpu::Instance,
+        options: &wgpu::RequestAdapterOptions<'_, '_>,
+    ) -> wgpu::Adapter {
+        match self {
+            Self::Native => block_on(instance.request_adapter(options)).expect("request adapter"),
+            Self::SwiftShaderVk => block_on(dawn_wgpu::request_adapter_with_fallback(
+                instance,
+                options,
+                self.backends(),
+            ))
+            .expect("request SwiftShader adapter"),
+        }
+    }
+}
+
 struct State {
     window: Window,
     surface: wgpu::Surface<'static>,
@@ -49,8 +108,14 @@ struct State {
 }
 
 impl State {
-    fn new(window: Window) -> Self {
-        let instance: wgpu::Instance = dawn_wgpu::create_instance(&Default::default()).into();
+    fn new(window: Window, backend: Backend) -> Self {
+        backend.configure_env();
+
+        let instance: wgpu::Instance = dawn_wgpu::create_instance(&wgpu::InstanceDescriptor {
+            backends: backend.backends(),
+            ..Default::default()
+        })
+        .into();
 
         let surface = unsafe {
             let target =
@@ -59,17 +124,15 @@ impl State {
                 .create_surface_unsafe(target)
                 .expect("create surface")
         };
-        let adapters = block_on(instance.enumerate_adapters(wgpu::Backends::VULKAN.with_env()));
-        for adapter in adapters {
-            dbg!(adapter.get_info());
-        }
-        let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        let adapter_options = wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: Some(&surface),
-            force_fallback_adapter: false,
-        }))
-        .expect("request adapter");
+            force_fallback_adapter: backend == Backend::SwiftShaderVk,
+        };
 
+        let adapter = backend.request_adapter(&instance, &adapter_options);
+
+        dbg!(&adapter.get_info());
         let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: None,
             required_features: wgpu::Features::empty(),
@@ -258,21 +321,28 @@ impl State {
 }
 
 struct TriangleApp {
+    backend: Backend,
     state: Option<State>,
 }
 
 impl TriangleApp {
-    fn new() -> Self {
-        Self { state: None }
+    fn new(backend: Backend) -> Self {
+        Self {
+            backend,
+            state: None,
+        }
     }
 }
 
 impl ApplicationHandler for TriangleApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = event_loop
-            .create_window(WindowAttributes::default().with_title("Dawn WGPU Triangle"))
+            .create_window(WindowAttributes::default().with_title(match self.backend {
+                Backend::Native => "Dawn WGPU Triangle",
+                Backend::SwiftShaderVk => "Dawn WGPU Triangle (SwiftShader Vulkan)",
+            }))
             .expect("create window");
-        self.state = Some(State::new(window));
+        self.state = Some(State::new(window, self.backend));
     }
 
     fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -304,6 +374,6 @@ impl ApplicationHandler for TriangleApp {
 
 fn main() {
     let event_loop = EventLoop::new().expect("create event loop");
-    let mut app = TriangleApp::new();
+    let mut app = TriangleApp::new(Backend::from_args());
     event_loop.run_app(&mut app).expect("run app");
 }

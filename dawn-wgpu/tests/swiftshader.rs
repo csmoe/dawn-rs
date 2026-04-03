@@ -1,5 +1,4 @@
 use pollster::block_on;
-use std::path::PathBuf;
 
 #[test]
 fn request_adapter_with_fallback_uses_swiftshader() {
