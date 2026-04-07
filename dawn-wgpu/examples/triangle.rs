@@ -132,7 +132,6 @@ impl State {
 
         let adapter = backend.request_adapter(&instance, &adapter_options);
 
-        dbg!(&adapter.get_info());
         let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: None,
             required_features: wgpu::Features::empty(),

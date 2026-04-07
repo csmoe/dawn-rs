@@ -95,24 +95,6 @@ pub(crate) fn request_adapter_sync(
     }
 }
 
-#[cfg(target_os = "windows")]
-fn is_windows_7_or_older() -> bool {
-    use windows::Wdk::System::SystemServices::RtlGetVersion;
-    use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
-
-    let mut version = OSVERSIONINFOW::default();
-    version.dwOSVersionInfoSize = std::mem::size_of::<OSVERSIONINFOW>() as u32;
-
-    unsafe { RtlGetVersion(&mut version) }.is_ok()
-        && (version.dwMajorVersion < 6
-            || (version.dwMajorVersion == 6 && version.dwMinorVersion <= 1))
-}
-
-#[cfg(not(target_os = "windows"))]
-fn is_windows_7_or_older() -> bool {
-    false
-}
-
 pub(crate) fn adapter_attempts(
     backends: wgpu::Backends,
     power_preference: PowerPreference,
@@ -132,16 +114,24 @@ pub(crate) fn adapter_attempts(
             ));
         }
 
-        #[cfg(target_os = "windows")]
+        // DX12
+        #[cfg(all(target_os = "windows", target_env = "pc"))]
         if backends.contains(wgpu::Backends::DX12) {
             attempts.push(build_request_adapter_options(
                 power_preference,
                 compatible_surface.clone(),
-                Some(if is_windows_7_or_older() {
-                    BackendType::D3D11
-                } else {
-                    BackendType::D3D12
-                }),
+                Some(BackendType::D3D12),
+                false,
+            ));
+        }
+
+        // DX11
+        #[cfg(all(target_os = "windows", target_env = "win7"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D11),
                 false,
             ));
         }
@@ -154,15 +144,38 @@ pub(crate) fn adapter_attempts(
                 false,
             ));
         }
-    }
+    } else {
+        // DX12 + WARP
+        #[cfg(all(target_os = "windows", target_env = "pc"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D12),
+                true,
+            ));
+        }
 
-    if backends.contains(wgpu::Backends::VULKAN) {
-        attempts.push(build_request_adapter_options(
-            power_preference,
-            compatible_surface.clone(),
-            Some(BackendType::Vulkan),
-            true,
-        ));
+        // DX11 + WARP
+        #[cfg(all(target_os = "windows", target_env = "win7"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D11),
+                true,
+            ));
+        }
+
+        // VULKAN + SWIFTSHADER
+        if backends.contains(wgpu::Backends::VULKAN) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Vulkan),
+                true,
+            ));
+        }
     }
 
     if attempts.is_empty() {
@@ -497,15 +510,23 @@ impl AdapterInterface for DawnAdapter {
 
         #[cfg(feature = "shared_texture_memory")]
         {
+            let info = self.get_info();
             #[cfg(target_os = "windows")]
             {
-                required_features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
-                required_features.push(FeatureName::SharedFenceDXGISharedHandle);
+                match info.backend_type {
+                    BackendType::D3D11 | BackendType::D3D12 => {
+                        required_features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
+                        required_features.push(FeatureName::SharedFenceDXGISharedHandle);
+                    }
+                    _ => {}
+                }
             }
             #[cfg(target_os = "macos")]
             {
-                required_features.push(FeatureName::SharedTextureMemoryIOSurface);
-                required_features.push(FeatureName::SharedFenceMTLSharedEvent);
+                if matches!(info.backend, BackendType::Metal) {
+                    required_features.push(FeatureName::SharedTextureMemoryIOSurface);
+                    required_features.push(FeatureName::SharedFenceMTLSharedEvent);
+                }
             }
 
             #[cfg(target_os = "linux")]
