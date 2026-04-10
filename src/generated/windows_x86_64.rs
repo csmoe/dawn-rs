@@ -11006,6 +11006,36 @@ mod structs {
             }
         }
     }
+    pub struct RequestAdapterOptionsD3D11Device {
+        pub device: Option<*mut std::ffi::c_void>,
+    }
+    impl Default for RequestAdapterOptionsD3D11Device {
+        fn default() -> Self {
+            Self { device: None }
+        }
+    }
+    impl RequestAdapterOptionsD3D11Device {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (ffi::WGPURequestAdapterOptionsD3D11Device, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPURequestAdapterOptionsD3D11Device = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.device {
+                raw.device = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPURequestAdapterOptionsD3D11Device) -> Self {
+            Self {
+                device: Some(value.device),
+            }
+        }
+    }
     pub struct RequestAdapterOptions {
         pub(crate) extensions: Vec<RequestAdapterOptionsExtension>,
         pub feature_level: Option<FeatureLevel>,
@@ -12404,6 +12434,41 @@ mod structs {
         ) -> Self {
             Self {
                 requires_end_access_fence: Some(value.requiresEndAccessFence != 0),
+            }
+        }
+    }
+    pub struct SharedTextureMemoryD3D11Texture2DDescriptor {
+        pub texture: Option<*mut std::ffi::c_void>,
+    }
+    impl Default for SharedTextureMemoryD3D11Texture2DDescriptor {
+        fn default() -> Self {
+            Self { texture: None }
+        }
+    }
+    impl SharedTextureMemoryD3D11Texture2DDescriptor {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(
+            &self,
+        ) -> (
+            ffi::WGPUSharedTextureMemoryD3D11Texture2DDescriptor,
+            ChainedStructStorage,
+        ) {
+            let mut storage = ChainedStructStorage::new();
+            let mut raw: ffi::WGPUSharedTextureMemoryD3D11Texture2DDescriptor = unsafe {
+                std::mem::zeroed()
+            };
+            if let Some(value) = self.texture {
+                raw.texture = value;
+            }
+            (raw, storage)
+        }
+        pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedTextureMemoryD3D11Texture2DDescriptor,
+        ) -> Self {
+            Self {
+                texture: Some(value.texture),
             }
         }
     }
@@ -16806,12 +16871,19 @@ mod extensions {
     #[allow(dead_code)]
     pub enum RequestAdapterOptionsExtension {
         DawnTogglesDescriptor(DawnTogglesDescriptor),
+        RequestAdapterOptionsD3D11Device(RequestAdapterOptionsD3D11Device),
         RequestAdapterWebGPUBackendOptions(RequestAdapterWebGPUBackendOptions),
         RequestAdapterWebXROptions(RequestAdapterWebXROptions),
     }
     impl std::convert::From<DawnTogglesDescriptor> for RequestAdapterOptionsExtension {
         fn from(ext: DawnTogglesDescriptor) -> Self {
             RequestAdapterOptionsExtension::DawnTogglesDescriptor(ext)
+        }
+    }
+    impl std::convert::From<RequestAdapterOptionsD3D11Device>
+    for RequestAdapterOptionsExtension {
+        fn from(ext: RequestAdapterOptionsD3D11Device) -> Self {
+            RequestAdapterOptionsExtension::RequestAdapterOptionsD3D11Device(ext)
         }
     }
     impl std::convert::From<RequestAdapterWebGPUBackendOptions>
@@ -16836,6 +16908,16 @@ mod extensions {
                 RequestAdapterOptionsExtension::DawnTogglesDescriptor(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::DawnTogglesDescriptor.into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
+                RequestAdapterOptionsExtension::RequestAdapterOptionsD3D11Device(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::RequestAdapterOptionsD3D11Device.into();
                     raw.chain.next = next;
                     storage.push_storage(storage_value);
                     let raw_ptr = storage.push_value_mut(raw);
@@ -17386,6 +17468,9 @@ mod extensions {
     }
     #[allow(dead_code)]
     pub enum SharedTextureMemoryDescriptorExtension {
+        SharedTextureMemoryD3D11Texture2DDescriptor(
+            SharedTextureMemoryD3D11Texture2DDescriptor,
+        ),
         SharedTextureMemoryDXGISharedHandleDescriptor(
             SharedTextureMemoryDXGISharedHandleDescriptor,
         ),
@@ -17402,6 +17487,14 @@ mod extensions {
         SharedTextureMemoryZirconHandleDescriptor(
             SharedTextureMemoryZirconHandleDescriptor,
         ),
+    }
+    impl std::convert::From<SharedTextureMemoryD3D11Texture2DDescriptor>
+    for SharedTextureMemoryDescriptorExtension {
+        fn from(ext: SharedTextureMemoryD3D11Texture2DDescriptor) -> Self {
+            SharedTextureMemoryDescriptorExtension::SharedTextureMemoryD3D11Texture2DDescriptor(
+                ext,
+            )
+        }
     }
     impl std::convert::From<SharedTextureMemoryDXGISharedHandleDescriptor>
     for SharedTextureMemoryDescriptorExtension {
@@ -17474,6 +17567,17 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
+                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryD3D11Texture2DDescriptor(
+                    value,
+                ) => {
+                    let (mut raw, storage_value) = value.to_ffi();
+                    raw.chain.sType = SType::SharedTextureMemoryD3D11Texture2DDescriptor
+                        .into();
+                    raw.chain.next = next;
+                    storage.push_storage(storage_value);
+                    let raw_ptr = storage.push_value_mut(raw);
+                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
+                }
                 SharedTextureMemoryDescriptorExtension::SharedTextureMemoryDXGISharedHandleDescriptor(
                     value,
                 ) => {

@@ -2615,6 +2615,23 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPURequestAdapterOptionsD3D11Device {
+    pub chain: WGPUChainedStruct,
+    pub device: *mut ::std::os::raw::c_void,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPURequestAdapterOptionsD3D11Device"]
+        [::std::mem::size_of::<WGPURequestAdapterOptionsD3D11Device>() - 24usize];
+    ["Alignment of WGPURequestAdapterOptionsD3D11Device"]
+        [::std::mem::align_of::<WGPURequestAdapterOptionsD3D11Device>() - 8usize];
+    ["Offset of field: WGPURequestAdapterOptionsD3D11Device::chain"]
+        [::std::mem::offset_of!(WGPURequestAdapterOptionsD3D11Device, chain) - 0usize];
+    ["Offset of field: WGPURequestAdapterOptionsD3D11Device::device"]
+        [::std::mem::offset_of!(WGPURequestAdapterOptionsD3D11Device, device) - 16usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUResourceTableDescriptor {
     pub nextInChain: *mut WGPUChainedStruct,
     pub label: WGPUStringView,
@@ -3044,6 +3061,25 @@ const _: () = {
         requiresEndAccessFence
     )
         - 16usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPUSharedTextureMemoryD3D11Texture2DDescriptor {
+    pub chain: WGPUChainedStruct,
+    pub texture: *mut ::std::os::raw::c_void,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUSharedTextureMemoryD3D11Texture2DDescriptor"]
+        [::std::mem::size_of::<WGPUSharedTextureMemoryD3D11Texture2DDescriptor>() - 24usize];
+    ["Alignment of WGPUSharedTextureMemoryD3D11Texture2DDescriptor"]
+        [::std::mem::align_of::<WGPUSharedTextureMemoryD3D11Texture2DDescriptor>() - 8usize];
+    ["Offset of field: WGPUSharedTextureMemoryD3D11Texture2DDescriptor::chain"]
+        [::std::mem::offset_of!(WGPUSharedTextureMemoryD3D11Texture2DDescriptor, chain) - 0usize];
+    ["Offset of field: WGPUSharedTextureMemoryD3D11Texture2DDescriptor::texture"][::std::mem::offset_of!(
+        WGPUSharedTextureMemoryD3D11Texture2DDescriptor,
+        texture
+    ) - 16usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

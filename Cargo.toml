@@ -44,7 +44,7 @@ objc2-quartz-core = { version = "0.3", features = ["CALayer", "CAMetalLayer"] }
 raw-window-metal = "1"
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
-windows = { version = "0.62", features = ["Win32_Graphics_Dxgi","Win32_Graphics_Direct3D", "Win32_Foundation", "Win32","Win32_Graphics_Dxgi_Common"]}
+windows = { version = "0.62", features = ["Win32_Graphics_Dxgi","Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_Foundation", "Win32","Win32_Graphics_Dxgi_Common"]}
 
 [build-dependencies]
 cc = "1"
@@ -70,3 +70,7 @@ path = "examples/triangle.rs"
 name = "triangle-wire"
 path = "examples/triangle_wire.rs"
 required-features = ["wire"]
+
+[[example]]
+name = "import-dxgi-shared-handle"
+path = "examples/import_dxgi_shared_handle.rs"
