@@ -16,9 +16,8 @@ mod imp {
         BackendType, Device, DeviceDescriptor, FeatureName, FutureWaitInfo, Instance,
         InstanceDescriptor, InstanceFeatureName, RequestAdapterOptions,
         RequestAdapterOptionsD3D11Device, RequestAdapterStatus,
-        SharedFenceDXGISharedHandleDescriptor, SharedFenceDescriptor,
         SharedTextureMemoryD3D11Texture2DDescriptor, SharedTextureMemoryDescriptor,
-        SharedTextureMemoryDXGISharedHandleDescriptor, Status, WaitStatus,
+        SharedTextureMemoryDXGISharedHandleDescriptor, WaitStatus,
     };
     use std::ffi::c_void;
     use std::sync::mpsc;
@@ -28,8 +27,9 @@ mod imp {
     use windows::Win32::Graphics::Direct3D::D3D_DRIVER_TYPE_HARDWARE;
     use windows::Win32::Graphics::Direct3D11::{
         D3D11CreateDevice, ID3D11Device, ID3D11Texture2D, D3D11_BIND_RENDER_TARGET,
-        D3D11_BIND_SHADER_RESOURCE, D3D11_CREATE_DEVICE_FLAG, D3D11_SDK_VERSION,
-        D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT,
+        D3D11_BIND_SHADER_RESOURCE, D3D11_CREATE_DEVICE_FLAG, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE, D3D11_SDK_VERSION, D3D11_TEXTURE2D_DESC,
+        D3D11_USAGE_DEFAULT,
     };
     use windows::Win32::Graphics::Dxgi::Common::{DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC};
     use windows::Win32::Graphics::Dxgi::{
@@ -73,7 +73,8 @@ mod imp {
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as u32,
             CPUAccessFlags: 0,
-            MiscFlags: 0x20, // D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX
+            MiscFlags: (D3D11_RESOURCE_MISC_SHARED_NTHANDLE.0
+                | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX.0) as u32,
         };
 
         let d3d11_texture: ID3D11Texture2D = unsafe {
@@ -201,16 +202,6 @@ mod imp {
             "SharedTextureMemory (D3D11Texture2D): size={:?}",
             props2.size
         );
-
-        // ------------------------------------------------------------------ //
-        // 6. Import a shared fence                                             //
-        // ------------------------------------------------------------------ //
-        let mut fence_desc = SharedFenceDescriptor::new();
-        let mut dxgi_fence_desc = SharedFenceDXGISharedHandleDescriptor::new();
-        dxgi_fence_desc.handle = Some(shared_handle.0 as *mut c_void);
-        fence_desc = fence_desc.with_extension(dxgi_fence_desc.into());
-        let _shared_fence = device.import_shared_fence(&fence_desc);
-        println!("SharedFence (DXGI handle): imported successfully");
 
         // Clean up the NT handle.
         unsafe {
