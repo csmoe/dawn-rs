@@ -269,6 +269,52 @@ pub const WGPUCallbackMode_WGPUCallbackMode_AllowProcessEvents: WGPUCallbackMode
 pub const WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous: WGPUCallbackMode = 3;
 pub const WGPUCallbackMode_WGPUCallbackMode_Force32: WGPUCallbackMode = 2147483647;
 pub type WGPUCallbackMode = ::std::os::raw::c_uint;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_SRGB:
+    WGPUColorSpacePrimariesDawn = 1;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec709:
+    WGPUColorSpacePrimariesDawn = 1;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec601:
+    WGPUColorSpacePrimariesDawn = 2;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec2020:
+    WGPUColorSpacePrimariesDawn = 3;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_DisplayP3:
+    WGPUColorSpacePrimariesDawn = 4;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Force32:
+    WGPUColorSpacePrimariesDawn = 2147483647;
+pub type WGPUColorSpacePrimariesDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Identity:
+    WGPUColorSpaceTransferDawn = 1;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SRGB: WGPUColorSpaceTransferDawn =
+    2;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_DisplayP3:
+    WGPUColorSpaceTransferDawn = 3;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SMPTE_170M:
+    WGPUColorSpaceTransferDawn = 4;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_HLG: WGPUColorSpaceTransferDawn = 5;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_PQ: WGPUColorSpaceTransferDawn = 6;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Force32:
+    WGPUColorSpaceTransferDawn = 2147483647;
+pub type WGPUColorSpaceTransferDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Identity:
+    WGPUColorSpaceYCbCrMatrixDawn = 1;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec601:
+    WGPUColorSpaceYCbCrMatrixDawn = 2;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec709:
+    WGPUColorSpaceYCbCrMatrixDawn = 3;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec2020:
+    WGPUColorSpaceYCbCrMatrixDawn = 4;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Force32:
+    WGPUColorSpaceYCbCrMatrixDawn = 2147483647;
+pub type WGPUColorSpaceYCbCrMatrixDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Identity:
+    WGPUColorSpaceYCbCrRangeDawn = 1;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Narrow:
+    WGPUColorSpaceYCbCrRangeDawn = 2;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Full:
+    WGPUColorSpaceYCbCrRangeDawn = 3;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Force32:
+    WGPUColorSpaceYCbCrRangeDawn = 2147483647;
+pub type WGPUColorSpaceYCbCrRangeDawn = ::std::os::raw::c_uint;
 pub const WGPUCompareFunction_WGPUCompareFunction_Undefined: WGPUCompareFunction = 0;
 pub const WGPUCompareFunction_WGPUCompareFunction_Never: WGPUCompareFunction = 1;
 pub const WGPUCompareFunction_WGPUCompareFunction_Less: WGPUCompareFunction = 2;
@@ -465,6 +511,7 @@ pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 3
 pub const WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea: WGPUFeatureName = 327744;
 pub const WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents: WGPUFeatureName =
     327745;
+pub const WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm: WGPUFeatureName = 327746;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -532,6 +579,10 @@ pub const WGPUPowerPreference_WGPUPowerPreference_Force32: WGPUPowerPreference =
 pub type WGPUPowerPreference = ::std::os::raw::c_uint;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGB: WGPUPredefinedColorSpace = 1;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3: WGPUPredefinedColorSpace = 2;
+pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGBLinear: WGPUPredefinedColorSpace =
+    327683;
+pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3Linear:
+    WGPUPredefinedColorSpace = 327684;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_Force32: WGPUPredefinedColorSpace =
     2147483647;
 pub type WGPUPredefinedColorSpace = ::std::os::raw::c_uint;
@@ -721,6 +772,7 @@ pub const WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup: WGP
 pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327760;
 pub const WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs: WGPUSType =
     327761;
+pub const WGPUSType_WGPUSType_AdapterPropertiesDrm: WGPUSType = 327762;
 pub const WGPUSType_WGPUSType_Force32: WGPUSType = 2147483647;
 pub type WGPUSType = ::std::os::raw::c_uint;
 pub const WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32:
@@ -1483,6 +1535,38 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUAdapterPropertiesDrm {
+    pub chain: WGPUChainedStruct,
+    pub hasPrimary: WGPUBool,
+    pub hasRender: WGPUBool,
+    pub primaryMajor: u64,
+    pub primaryMinor: u64,
+    pub renderMajor: u64,
+    pub renderMinor: u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUAdapterPropertiesDrm"]
+        [::std::mem::size_of::<WGPUAdapterPropertiesDrm>() - 56usize];
+    ["Alignment of WGPUAdapterPropertiesDrm"]
+        [::std::mem::align_of::<WGPUAdapterPropertiesDrm>() - 8usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::chain"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, chain) - 0usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::hasPrimary"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, hasPrimary) - 16usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::hasRender"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, hasRender) - 20usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::primaryMajor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, primaryMajor) - 24usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::primaryMinor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, primaryMinor) - 32usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::renderMajor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, renderMajor) - 40usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::renderMinor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, renderMinor) - 48usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUAdapterPropertiesExplicitComputeSubgroupSizeConfigs {
     pub chain: WGPUChainedStruct,
     pub minExplicitComputeSubgroupSize: u32,
@@ -1644,6 +1728,30 @@ const _: () = {
     ["Offset of field: WGPUColor::g"][::std::mem::offset_of!(WGPUColor, g) - 8usize];
     ["Offset of field: WGPUColor::b"][::std::mem::offset_of!(WGPUColor, b) - 16usize];
     ["Offset of field: WGPUColor::a"][::std::mem::offset_of!(WGPUColor, a) - 24usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPUColorSpaceDawn {
+    pub nextInChain: *mut WGPUChainedStruct,
+    pub primaries: WGPUColorSpacePrimariesDawn,
+    pub transfer: WGPUColorSpaceTransferDawn,
+    pub yCbCrRange: WGPUColorSpaceYCbCrRangeDawn,
+    pub yCbCrMatrix: WGPUColorSpaceYCbCrMatrixDawn,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUColorSpaceDawn"][::std::mem::size_of::<WGPUColorSpaceDawn>() - 24usize];
+    ["Alignment of WGPUColorSpaceDawn"][::std::mem::align_of::<WGPUColorSpaceDawn>() - 8usize];
+    ["Offset of field: WGPUColorSpaceDawn::nextInChain"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, nextInChain) - 0usize];
+    ["Offset of field: WGPUColorSpaceDawn::primaries"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, primaries) - 8usize];
+    ["Offset of field: WGPUColorSpaceDawn::transfer"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, transfer) - 12usize];
+    ["Offset of field: WGPUColorSpaceDawn::yCbCrRange"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, yCbCrRange) - 16usize];
+    ["Offset of field: WGPUColorSpaceDawn::yCbCrMatrix"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, yCbCrMatrix) - 20usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

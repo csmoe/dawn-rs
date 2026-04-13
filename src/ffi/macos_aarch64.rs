@@ -66,6 +66,12 @@ pub struct WGPUCommandEncoderImpl {
 pub type WGPUCommandEncoder = *mut WGPUCommandEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUComputePassEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPUComputePassEncoder = *mut WGPUComputePassEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUComputePipelineImpl {
     _unused: [u8; 0],
 }
@@ -112,6 +118,18 @@ pub struct WGPURenderBundleImpl {
     _unused: [u8; 0],
 }
 pub type WGPURenderBundle = *mut WGPURenderBundleImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPURenderBundleEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPURenderBundleEncoder = *mut WGPURenderBundleEncoderImpl;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPURenderPassEncoderImpl {
+    _unused: [u8; 0],
+}
+pub type WGPURenderPassEncoder = *mut WGPURenderPassEncoderImpl;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct WGPURenderPipelineImpl {
@@ -178,24 +196,6 @@ pub struct WGPUTextureViewImpl {
     _unused: [u8; 0],
 }
 pub type WGPUTextureView = *mut WGPUTextureViewImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPUComputePassEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPUComputePassEncoder = *mut WGPUComputePassEncoderImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPURenderBundleEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPURenderBundleEncoder = *mut WGPURenderBundleEncoderImpl;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct WGPURenderPassEncoderImpl {
-    _unused: [u8; 0],
-}
-pub type WGPURenderPassEncoder = *mut WGPURenderPassEncoderImpl;
 pub const WGPUAdapterType_WGPUAdapterType_DiscreteGPU: WGPUAdapterType = 1;
 pub const WGPUAdapterType_WGPUAdapterType_IntegratedGPU: WGPUAdapterType = 2;
 pub const WGPUAdapterType_WGPUAdapterType_CPU: WGPUAdapterType = 3;
@@ -269,6 +269,52 @@ pub const WGPUCallbackMode_WGPUCallbackMode_AllowProcessEvents: WGPUCallbackMode
 pub const WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous: WGPUCallbackMode = 3;
 pub const WGPUCallbackMode_WGPUCallbackMode_Force32: WGPUCallbackMode = 2147483647;
 pub type WGPUCallbackMode = ::std::os::raw::c_uint;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_SRGB:
+    WGPUColorSpacePrimariesDawn = 1;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec709:
+    WGPUColorSpacePrimariesDawn = 1;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec601:
+    WGPUColorSpacePrimariesDawn = 2;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec2020:
+    WGPUColorSpacePrimariesDawn = 3;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_DisplayP3:
+    WGPUColorSpacePrimariesDawn = 4;
+pub const WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Force32:
+    WGPUColorSpacePrimariesDawn = 2147483647;
+pub type WGPUColorSpacePrimariesDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Identity:
+    WGPUColorSpaceTransferDawn = 1;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SRGB: WGPUColorSpaceTransferDawn =
+    2;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_DisplayP3:
+    WGPUColorSpaceTransferDawn = 3;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SMPTE_170M:
+    WGPUColorSpaceTransferDawn = 4;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_HLG: WGPUColorSpaceTransferDawn = 5;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_PQ: WGPUColorSpaceTransferDawn = 6;
+pub const WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Force32:
+    WGPUColorSpaceTransferDawn = 2147483647;
+pub type WGPUColorSpaceTransferDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Identity:
+    WGPUColorSpaceYCbCrMatrixDawn = 1;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec601:
+    WGPUColorSpaceYCbCrMatrixDawn = 2;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec709:
+    WGPUColorSpaceYCbCrMatrixDawn = 3;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec2020:
+    WGPUColorSpaceYCbCrMatrixDawn = 4;
+pub const WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Force32:
+    WGPUColorSpaceYCbCrMatrixDawn = 2147483647;
+pub type WGPUColorSpaceYCbCrMatrixDawn = ::std::os::raw::c_uint;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Identity:
+    WGPUColorSpaceYCbCrRangeDawn = 1;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Narrow:
+    WGPUColorSpaceYCbCrRangeDawn = 2;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Full:
+    WGPUColorSpaceYCbCrRangeDawn = 3;
+pub const WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Force32:
+    WGPUColorSpaceYCbCrRangeDawn = 2147483647;
+pub type WGPUColorSpaceYCbCrRangeDawn = ::std::os::raw::c_uint;
 pub const WGPUCompareFunction_WGPUCompareFunction_Undefined: WGPUCompareFunction = 0;
 pub const WGPUCompareFunction_WGPUCompareFunction_Never: WGPUCompareFunction = 1;
 pub const WGPUCompareFunction_WGPUCompareFunction_Less: WGPUCompareFunction = 2;
@@ -465,6 +511,7 @@ pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 3
 pub const WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea: WGPUFeatureName = 327744;
 pub const WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents: WGPUFeatureName =
     327745;
+pub const WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm: WGPUFeatureName = 327746;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_uint;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -532,6 +579,10 @@ pub const WGPUPowerPreference_WGPUPowerPreference_Force32: WGPUPowerPreference =
 pub type WGPUPowerPreference = ::std::os::raw::c_uint;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGB: WGPUPredefinedColorSpace = 1;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3: WGPUPredefinedColorSpace = 2;
+pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SRGBLinear: WGPUPredefinedColorSpace =
+    327683;
+pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3Linear:
+    WGPUPredefinedColorSpace = 327684;
 pub const WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_Force32: WGPUPredefinedColorSpace =
     2147483647;
 pub type WGPUPredefinedColorSpace = ::std::os::raw::c_uint;
@@ -634,12 +685,12 @@ pub const WGPUSType_WGPUSType_SurfaceSourceXCBWindow: WGPUSType = 9;
 pub const WGPUSType_WGPUSType_SurfaceColorManagement: WGPUSType = 10;
 pub const WGPUSType_WGPUSType_RequestAdapterWebXROptions: WGPUSType = 11;
 pub const WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor: WGPUSType = 12;
+pub const WGPUSType_WGPUSType_ExternalTextureBindingLayout: WGPUSType = 13;
+pub const WGPUSType_WGPUSType_ExternalTextureBindingEntry: WGPUSType = 14;
 pub const WGPUSType_WGPUSType_CompatibilityModeLimits: WGPUSType = 15;
 pub const WGPUSType_WGPUSType_TextureBindingViewDimension: WGPUSType = 16;
 pub const WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector: WGPUSType = 262144;
 pub const WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow: WGPUSType = 327680;
-pub const WGPUSType_WGPUSType_ExternalTextureBindingEntry: WGPUSType = 327681;
-pub const WGPUSType_WGPUSType_ExternalTextureBindingLayout: WGPUSType = 327682;
 pub const WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel: WGPUSType = 327683;
 pub const WGPUSType_WGPUSType_DawnTextureInternalUsageDescriptor: WGPUSType = 327684;
 pub const WGPUSType_WGPUSType_DawnEncoderInternalUsageDescriptor: WGPUSType = 327685;
@@ -721,6 +772,7 @@ pub const WGPUSType_WGPUSType_RequestAdapterOptionsAngleVirtualizationGroup: WGP
 pub const WGPUSType_WGPUSType_PipelineLayoutResourceTable: WGPUSType = 327760;
 pub const WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs: WGPUSType =
     327761;
+pub const WGPUSType_WGPUSType_AdapterPropertiesDrm: WGPUSType = 327762;
 pub const WGPUSType_WGPUSType_Force32: WGPUSType = 2147483647;
 pub type WGPUSType = ::std::os::raw::c_uint;
 pub const WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_F32:
@@ -1483,6 +1535,38 @@ const _: () = {
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct WGPUAdapterPropertiesDrm {
+    pub chain: WGPUChainedStruct,
+    pub hasPrimary: WGPUBool,
+    pub hasRender: WGPUBool,
+    pub primaryMajor: u64,
+    pub primaryMinor: u64,
+    pub renderMajor: u64,
+    pub renderMinor: u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUAdapterPropertiesDrm"]
+        [::std::mem::size_of::<WGPUAdapterPropertiesDrm>() - 56usize];
+    ["Alignment of WGPUAdapterPropertiesDrm"]
+        [::std::mem::align_of::<WGPUAdapterPropertiesDrm>() - 8usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::chain"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, chain) - 0usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::hasPrimary"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, hasPrimary) - 16usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::hasRender"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, hasRender) - 20usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::primaryMajor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, primaryMajor) - 24usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::primaryMinor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, primaryMinor) - 32usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::renderMajor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, renderMajor) - 40usize];
+    ["Offset of field: WGPUAdapterPropertiesDrm::renderMinor"]
+        [::std::mem::offset_of!(WGPUAdapterPropertiesDrm, renderMinor) - 48usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct WGPUAdapterPropertiesExplicitComputeSubgroupSizeConfigs {
     pub chain: WGPUChainedStruct,
     pub minExplicitComputeSubgroupSize: u32,
@@ -1644,6 +1728,30 @@ const _: () = {
     ["Offset of field: WGPUColor::g"][::std::mem::offset_of!(WGPUColor, g) - 8usize];
     ["Offset of field: WGPUColor::b"][::std::mem::offset_of!(WGPUColor, b) - 16usize];
     ["Offset of field: WGPUColor::a"][::std::mem::offset_of!(WGPUColor, a) - 24usize];
+};
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct WGPUColorSpaceDawn {
+    pub nextInChain: *mut WGPUChainedStruct,
+    pub primaries: WGPUColorSpacePrimariesDawn,
+    pub transfer: WGPUColorSpaceTransferDawn,
+    pub yCbCrRange: WGPUColorSpaceYCbCrRangeDawn,
+    pub yCbCrMatrix: WGPUColorSpaceYCbCrMatrixDawn,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of WGPUColorSpaceDawn"][::std::mem::size_of::<WGPUColorSpaceDawn>() - 24usize];
+    ["Alignment of WGPUColorSpaceDawn"][::std::mem::align_of::<WGPUColorSpaceDawn>() - 8usize];
+    ["Offset of field: WGPUColorSpaceDawn::nextInChain"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, nextInChain) - 0usize];
+    ["Offset of field: WGPUColorSpaceDawn::primaries"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, primaries) - 8usize];
+    ["Offset of field: WGPUColorSpaceDawn::transfer"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, transfer) - 12usize];
+    ["Offset of field: WGPUColorSpaceDawn::yCbCrRange"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, yCbCrRange) - 16usize];
+    ["Offset of field: WGPUColorSpaceDawn::yCbCrMatrix"]
+        [::std::mem::offset_of!(WGPUColorSpaceDawn, yCbCrMatrix) - 20usize];
 };
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6416,6 +6524,9 @@ pub type WGPUProcSharedBufferMemoryEndAccessStateFreeMembers = ::std::option::Op
 pub type WGPUProcSharedFenceExportInfo = ::std::option::Option<
     unsafe extern "C" fn(sharedFence: WGPUSharedFence, info: *mut WGPUSharedFenceExportInfo),
 >;
+pub type WGPUProcSharedFenceSetLabel = ::std::option::Option<
+    unsafe extern "C" fn(sharedFence: WGPUSharedFence, label: WGPUStringView),
+>;
 pub type WGPUProcSharedFenceAddRef =
     ::std::option::Option<unsafe extern "C" fn(sharedFence: WGPUSharedFence)>;
 pub type WGPUProcSharedFenceRelease =
@@ -7719,6 +7830,9 @@ unsafe extern "C" {
     );
 }
 unsafe extern "C" {
+    pub fn wgpuSharedFenceSetLabel(sharedFence: WGPUSharedFence, label: WGPUStringView);
+}
+unsafe extern "C" {
     pub fn wgpuSharedFenceAddRef(sharedFence: WGPUSharedFence);
 }
 unsafe extern "C" {
@@ -8135,6 +8249,7 @@ pub struct DawnProcTable {
     pub sharedBufferMemoryEndAccessStateFreeMembers:
         WGPUProcSharedBufferMemoryEndAccessStateFreeMembers,
     pub sharedFenceExportInfo: WGPUProcSharedFenceExportInfo,
+    pub sharedFenceSetLabel: WGPUProcSharedFenceSetLabel,
     pub sharedFenceAddRef: WGPUProcSharedFenceAddRef,
     pub sharedFenceRelease: WGPUProcSharedFenceRelease,
     pub sharedTextureMemoryBeginAccess: WGPUProcSharedTextureMemoryBeginAccess,
@@ -8186,7 +8301,7 @@ pub struct DawnProcTable {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of DawnProcTable"][::std::mem::size_of::<DawnProcTable>() - 2200usize];
+    ["Size of DawnProcTable"][::std::mem::size_of::<DawnProcTable>() - 2208usize];
     ["Alignment of DawnProcTable"][::std::mem::align_of::<DawnProcTable>() - 8usize];
     ["Offset of field: DawnProcTable::createInstance"]
         [::std::mem::offset_of!(DawnProcTable, createInstance) - 0usize];
@@ -8655,102 +8770,104 @@ const _: () = {
     ) - 1808usize];
     ["Offset of field: DawnProcTable::sharedFenceExportInfo"]
         [::std::mem::offset_of!(DawnProcTable, sharedFenceExportInfo) - 1816usize];
+    ["Offset of field: DawnProcTable::sharedFenceSetLabel"]
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceSetLabel) - 1824usize];
     ["Offset of field: DawnProcTable::sharedFenceAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, sharedFenceAddRef) - 1824usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceAddRef) - 1832usize];
     ["Offset of field: DawnProcTable::sharedFenceRelease"]
-        [::std::mem::offset_of!(DawnProcTable, sharedFenceRelease) - 1832usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedFenceRelease) - 1840usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryBeginAccess"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryBeginAccess) - 1840usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryBeginAccess) - 1848usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryCreateTexture"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryCreateTexture) - 1848usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryCreateTexture) - 1856usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryEndAccess"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryEndAccess) - 1856usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryEndAccess) - 1864usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryGetProperties"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryGetProperties) - 1864usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryGetProperties) - 1872usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryIsDeviceLost"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryIsDeviceLost) - 1872usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryIsDeviceLost) - 1880usize];
     ["Offset of field: DawnProcTable::sharedTextureMemorySetLabel"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemorySetLabel) - 1880usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemorySetLabel) - 1888usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryAddRef) - 1888usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryAddRef) - 1896usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryRelease"]
-        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryRelease) - 1896usize];
+        [::std::mem::offset_of!(DawnProcTable, sharedTextureMemoryRelease) - 1904usize];
     ["Offset of field: DawnProcTable::sharedTextureMemoryEndAccessStateFreeMembers"][::std::mem::offset_of!(
         DawnProcTable,
         sharedTextureMemoryEndAccessStateFreeMembers
-    ) - 1904usize];
+    ) - 1912usize];
     ["Offset of field: DawnProcTable::supportedFeaturesFreeMembers"]
-        [::std::mem::offset_of!(DawnProcTable, supportedFeaturesFreeMembers) - 1912usize];
+        [::std::mem::offset_of!(DawnProcTable, supportedFeaturesFreeMembers) - 1920usize];
     ["Offset of field: DawnProcTable::supportedInstanceFeaturesFreeMembers"]
-        [::std::mem::offset_of!(DawnProcTable, supportedInstanceFeaturesFreeMembers) - 1920usize];
+        [::std::mem::offset_of!(DawnProcTable, supportedInstanceFeaturesFreeMembers) - 1928usize];
     ["Offset of field: DawnProcTable::supportedWGSLLanguageFeaturesFreeMembers"][::std::mem::offset_of!(
         DawnProcTable,
         supportedWGSLLanguageFeaturesFreeMembers
-    ) - 1928usize];
+    ) - 1936usize];
     ["Offset of field: DawnProcTable::surfaceConfigure"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceConfigure) - 1936usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceConfigure) - 1944usize];
     ["Offset of field: DawnProcTable::surfaceGetCapabilities"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceGetCapabilities) - 1944usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceGetCapabilities) - 1952usize];
     ["Offset of field: DawnProcTable::surfaceGetCurrentTexture"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceGetCurrentTexture) - 1952usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceGetCurrentTexture) - 1960usize];
     ["Offset of field: DawnProcTable::surfacePresent"]
-        [::std::mem::offset_of!(DawnProcTable, surfacePresent) - 1960usize];
+        [::std::mem::offset_of!(DawnProcTable, surfacePresent) - 1968usize];
     ["Offset of field: DawnProcTable::surfaceSetLabel"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceSetLabel) - 1968usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceSetLabel) - 1976usize];
     ["Offset of field: DawnProcTable::surfaceUnconfigure"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceUnconfigure) - 1976usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceUnconfigure) - 1984usize];
     ["Offset of field: DawnProcTable::surfaceAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceAddRef) - 1984usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceAddRef) - 1992usize];
     ["Offset of field: DawnProcTable::surfaceRelease"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceRelease) - 1992usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceRelease) - 2000usize];
     ["Offset of field: DawnProcTable::surfaceCapabilitiesFreeMembers"]
-        [::std::mem::offset_of!(DawnProcTable, surfaceCapabilitiesFreeMembers) - 2000usize];
+        [::std::mem::offset_of!(DawnProcTable, surfaceCapabilitiesFreeMembers) - 2008usize];
     ["Offset of field: DawnProcTable::texelBufferViewSetLabel"]
-        [::std::mem::offset_of!(DawnProcTable, texelBufferViewSetLabel) - 2008usize];
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewSetLabel) - 2016usize];
     ["Offset of field: DawnProcTable::texelBufferViewAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, texelBufferViewAddRef) - 2016usize];
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewAddRef) - 2024usize];
     ["Offset of field: DawnProcTable::texelBufferViewRelease"]
-        [::std::mem::offset_of!(DawnProcTable, texelBufferViewRelease) - 2024usize];
+        [::std::mem::offset_of!(DawnProcTable, texelBufferViewRelease) - 2032usize];
     ["Offset of field: DawnProcTable::textureCreateErrorView"]
-        [::std::mem::offset_of!(DawnProcTable, textureCreateErrorView) - 2032usize];
+        [::std::mem::offset_of!(DawnProcTable, textureCreateErrorView) - 2040usize];
     ["Offset of field: DawnProcTable::textureCreateView"]
-        [::std::mem::offset_of!(DawnProcTable, textureCreateView) - 2040usize];
+        [::std::mem::offset_of!(DawnProcTable, textureCreateView) - 2048usize];
     ["Offset of field: DawnProcTable::textureDestroy"]
-        [::std::mem::offset_of!(DawnProcTable, textureDestroy) - 2048usize];
+        [::std::mem::offset_of!(DawnProcTable, textureDestroy) - 2056usize];
     ["Offset of field: DawnProcTable::textureGetDepthOrArrayLayers"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetDepthOrArrayLayers) - 2056usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetDepthOrArrayLayers) - 2064usize];
     ["Offset of field: DawnProcTable::textureGetDimension"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetDimension) - 2064usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetDimension) - 2072usize];
     ["Offset of field: DawnProcTable::textureGetFormat"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetFormat) - 2072usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetFormat) - 2080usize];
     ["Offset of field: DawnProcTable::textureGetHeight"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetHeight) - 2080usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetHeight) - 2088usize];
     ["Offset of field: DawnProcTable::textureGetMipLevelCount"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetMipLevelCount) - 2088usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetMipLevelCount) - 2096usize];
     ["Offset of field: DawnProcTable::textureGetSampleCount"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetSampleCount) - 2096usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetSampleCount) - 2104usize];
     ["Offset of field: DawnProcTable::textureGetTextureBindingViewDimension"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetTextureBindingViewDimension) - 2104usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetTextureBindingViewDimension) - 2112usize];
     ["Offset of field: DawnProcTable::textureGetUsage"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetUsage) - 2112usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetUsage) - 2120usize];
     ["Offset of field: DawnProcTable::textureGetWidth"]
-        [::std::mem::offset_of!(DawnProcTable, textureGetWidth) - 2120usize];
+        [::std::mem::offset_of!(DawnProcTable, textureGetWidth) - 2128usize];
     ["Offset of field: DawnProcTable::texturePin"]
-        [::std::mem::offset_of!(DawnProcTable, texturePin) - 2128usize];
+        [::std::mem::offset_of!(DawnProcTable, texturePin) - 2136usize];
     ["Offset of field: DawnProcTable::textureSetLabel"]
-        [::std::mem::offset_of!(DawnProcTable, textureSetLabel) - 2136usize];
+        [::std::mem::offset_of!(DawnProcTable, textureSetLabel) - 2144usize];
     ["Offset of field: DawnProcTable::textureSetOwnershipForMemoryDump"]
-        [::std::mem::offset_of!(DawnProcTable, textureSetOwnershipForMemoryDump) - 2144usize];
+        [::std::mem::offset_of!(DawnProcTable, textureSetOwnershipForMemoryDump) - 2152usize];
     ["Offset of field: DawnProcTable::textureUnpin"]
-        [::std::mem::offset_of!(DawnProcTable, textureUnpin) - 2152usize];
+        [::std::mem::offset_of!(DawnProcTable, textureUnpin) - 2160usize];
     ["Offset of field: DawnProcTable::textureAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, textureAddRef) - 2160usize];
+        [::std::mem::offset_of!(DawnProcTable, textureAddRef) - 2168usize];
     ["Offset of field: DawnProcTable::textureRelease"]
-        [::std::mem::offset_of!(DawnProcTable, textureRelease) - 2168usize];
+        [::std::mem::offset_of!(DawnProcTable, textureRelease) - 2176usize];
     ["Offset of field: DawnProcTable::textureViewSetLabel"]
-        [::std::mem::offset_of!(DawnProcTable, textureViewSetLabel) - 2176usize];
+        [::std::mem::offset_of!(DawnProcTable, textureViewSetLabel) - 2184usize];
     ["Offset of field: DawnProcTable::textureViewAddRef"]
-        [::std::mem::offset_of!(DawnProcTable, textureViewAddRef) - 2184usize];
+        [::std::mem::offset_of!(DawnProcTable, textureViewAddRef) - 2192usize];
     ["Offset of field: DawnProcTable::textureViewRelease"]
-        [::std::mem::offset_of!(DawnProcTable, textureViewRelease) - 2192usize];
+        [::std::mem::offset_of!(DawnProcTable, textureViewRelease) - 2200usize];
 };

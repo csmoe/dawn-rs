@@ -601,6 +601,196 @@ mod enums {
         }
     }
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub enum ColorSpacePrimariesDawn {
+        SRgb,
+        Rec709,
+        Rec601,
+        Rec2020,
+        DisplayP3,
+    }
+    impl From<ffi::WGPUColorSpacePrimariesDawn> for ColorSpacePrimariesDawn {
+        fn from(value: ffi::WGPUColorSpacePrimariesDawn) -> Self {
+            match value {
+                ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_SRGB => {
+                    ColorSpacePrimariesDawn::SRgb
+                }
+                ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec709 => {
+                    ColorSpacePrimariesDawn::Rec709
+                }
+                ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec601 => {
+                    ColorSpacePrimariesDawn::Rec601
+                }
+                ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec2020 => {
+                    ColorSpacePrimariesDawn::Rec2020
+                }
+                ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_DisplayP3 => {
+                    ColorSpacePrimariesDawn::DisplayP3
+                }
+                _ => ColorSpacePrimariesDawn::SRgb,
+            }
+        }
+    }
+    impl From<ColorSpacePrimariesDawn> for ffi::WGPUColorSpacePrimariesDawn {
+        fn from(value: ColorSpacePrimariesDawn) -> Self {
+            match value {
+                ColorSpacePrimariesDawn::SRgb => {
+                    ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_SRGB
+                }
+                ColorSpacePrimariesDawn::Rec709 => {
+                    ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec709
+                }
+                ColorSpacePrimariesDawn::Rec601 => {
+                    ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec601
+                }
+                ColorSpacePrimariesDawn::Rec2020 => {
+                    ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_Rec2020
+                }
+                ColorSpacePrimariesDawn::DisplayP3 => {
+                    ffi::WGPUColorSpacePrimariesDawn_WGPUColorSpacePrimariesDawn_DisplayP3
+                }
+            }
+        }
+    }
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub enum ColorSpaceTransferDawn {
+        Identity,
+        SRgb,
+        DisplayP3,
+        Smpte170M,
+        Hlg,
+        Pq,
+    }
+    impl From<ffi::WGPUColorSpaceTransferDawn> for ColorSpaceTransferDawn {
+        fn from(value: ffi::WGPUColorSpaceTransferDawn) -> Self {
+            match value {
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Identity => {
+                    ColorSpaceTransferDawn::Identity
+                }
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SRGB => {
+                    ColorSpaceTransferDawn::SRgb
+                }
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_DisplayP3 => {
+                    ColorSpaceTransferDawn::DisplayP3
+                }
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Smpte_170m => {
+                    ColorSpaceTransferDawn::Smpte170M
+                }
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_HLG => {
+                    ColorSpaceTransferDawn::Hlg
+                }
+                ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_PQ => {
+                    ColorSpaceTransferDawn::Pq
+                }
+                _ => ColorSpaceTransferDawn::Identity,
+            }
+        }
+    }
+    impl From<ColorSpaceTransferDawn> for ffi::WGPUColorSpaceTransferDawn {
+        fn from(value: ColorSpaceTransferDawn) -> Self {
+            match value {
+                ColorSpaceTransferDawn::Identity => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Identity
+                }
+                ColorSpaceTransferDawn::SRgb => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_SRGB
+                }
+                ColorSpaceTransferDawn::DisplayP3 => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_DisplayP3
+                }
+                ColorSpaceTransferDawn::Smpte170M => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_Smpte_170m
+                }
+                ColorSpaceTransferDawn::Hlg => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_HLG
+                }
+                ColorSpaceTransferDawn::Pq => {
+                    ffi::WGPUColorSpaceTransferDawn_WGPUColorSpaceTransferDawn_PQ
+                }
+            }
+        }
+    }
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub enum ColorSpaceYCbCrMatrixDawn {
+        Identity,
+        Rec601,
+        Rec709,
+        Rec2020,
+    }
+    impl From<ffi::WGPUColorSpaceYCbCrMatrixDawn> for ColorSpaceYCbCrMatrixDawn {
+        fn from(value: ffi::WGPUColorSpaceYCbCrMatrixDawn) -> Self {
+            match value {
+                ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Identity => {
+                    ColorSpaceYCbCrMatrixDawn::Identity
+                }
+                ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec601 => {
+                    ColorSpaceYCbCrMatrixDawn::Rec601
+                }
+                ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec709 => {
+                    ColorSpaceYCbCrMatrixDawn::Rec709
+                }
+                ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec2020 => {
+                    ColorSpaceYCbCrMatrixDawn::Rec2020
+                }
+                _ => ColorSpaceYCbCrMatrixDawn::Identity,
+            }
+        }
+    }
+    impl From<ColorSpaceYCbCrMatrixDawn> for ffi::WGPUColorSpaceYCbCrMatrixDawn {
+        fn from(value: ColorSpaceYCbCrMatrixDawn) -> Self {
+            match value {
+                ColorSpaceYCbCrMatrixDawn::Identity => {
+                    ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Identity
+                }
+                ColorSpaceYCbCrMatrixDawn::Rec601 => {
+                    ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec601
+                }
+                ColorSpaceYCbCrMatrixDawn::Rec709 => {
+                    ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec709
+                }
+                ColorSpaceYCbCrMatrixDawn::Rec2020 => {
+                    ffi::WGPUColorSpaceYCbCrMatrixDawn_WGPUColorSpaceYCbCrMatrixDawn_Rec2020
+                }
+            }
+        }
+    }
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub enum ColorSpaceYCbCrRangeDawn {
+        Identity,
+        Narrow,
+        Full,
+    }
+    impl From<ffi::WGPUColorSpaceYCbCrRangeDawn> for ColorSpaceYCbCrRangeDawn {
+        fn from(value: ffi::WGPUColorSpaceYCbCrRangeDawn) -> Self {
+            match value {
+                ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Identity => {
+                    ColorSpaceYCbCrRangeDawn::Identity
+                }
+                ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Narrow => {
+                    ColorSpaceYCbCrRangeDawn::Narrow
+                }
+                ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Full => {
+                    ColorSpaceYCbCrRangeDawn::Full
+                }
+                _ => ColorSpaceYCbCrRangeDawn::Identity,
+            }
+        }
+    }
+    impl From<ColorSpaceYCbCrRangeDawn> for ffi::WGPUColorSpaceYCbCrRangeDawn {
+        fn from(value: ColorSpaceYCbCrRangeDawn) -> Self {
+            match value {
+                ColorSpaceYCbCrRangeDawn::Identity => {
+                    ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Identity
+                }
+                ColorSpaceYCbCrRangeDawn::Narrow => {
+                    ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Narrow
+                }
+                ColorSpaceYCbCrRangeDawn::Full => {
+                    ffi::WGPUColorSpaceYCbCrRangeDawn_WGPUColorSpaceYCbCrRangeDawn_Full
+                }
+            }
+        }
+    }
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum CompareFunction {
         Undefined,
         Never,
@@ -2083,6 +2273,8 @@ mod enums {
     pub enum PredefinedColorSpace {
         SRgb,
         DisplayP3,
+        SRgbLinear,
+        DisplayP3Linear,
     }
     impl From<ffi::WGPUPredefinedColorSpace> for PredefinedColorSpace {
         fn from(value: ffi::WGPUPredefinedColorSpace) -> Self {
@@ -2092,6 +2284,12 @@ mod enums {
                 }
                 ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3 => {
                     PredefinedColorSpace::DisplayP3
+                }
+                ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SrgbLinear => {
+                    PredefinedColorSpace::SRgbLinear
+                }
+                ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3Linear => {
+                    PredefinedColorSpace::DisplayP3Linear
                 }
                 _ => PredefinedColorSpace::SRgb,
             }
@@ -2105,6 +2303,12 @@ mod enums {
                 }
                 PredefinedColorSpace::DisplayP3 => {
                     ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3
+                }
+                PredefinedColorSpace::SRgbLinear => {
+                    ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_SrgbLinear
+                }
+                PredefinedColorSpace::DisplayP3Linear => {
+                    ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3Linear
                 }
             }
         }
@@ -6157,6 +6361,72 @@ mod structs {
                 g: Some(value.g),
                 b: Some(value.b),
                 a: Some(value.a),
+            }
+        }
+    }
+    pub struct ColorSpaceDawn {
+        pub(crate) extensions: Vec<ColorSpaceDawnExtension>,
+        pub primaries: Option<ColorSpacePrimariesDawn>,
+        pub transfer: Option<ColorSpaceTransferDawn>,
+        pub y_cb_cr_range: Option<ColorSpaceYCbCrRangeDawn>,
+        pub y_cb_cr_matrix: Option<ColorSpaceYCbCrMatrixDawn>,
+    }
+    impl Default for ColorSpaceDawn {
+        fn default() -> Self {
+            Self {
+                extensions: Vec::new(),
+                primaries: None,
+                transfer: None,
+                y_cb_cr_range: None,
+                y_cb_cr_matrix: None,
+            }
+        }
+    }
+    impl ColorSpaceDawn {
+        pub fn new() -> Self {
+            Self::default()
+        }
+        pub(crate) fn to_ffi(&self) -> (ffi::WGPUColorSpaceDawn, ChainedStructStorage) {
+            let mut storage = ChainedStructStorage::new();
+            let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
+            for ext in self.extensions.iter().rev() {
+                next = ext.push_chain(&mut storage, next);
+            }
+            let mut raw: ffi::WGPUColorSpaceDawn = unsafe { std::mem::zeroed() };
+            raw.nextInChain = next;
+            if let Some(value) = self.primaries {
+                raw.primaries = value.into();
+            } else {
+                raw.primaries = 0 as ffi::WGPUColorSpacePrimariesDawn;
+            }
+            if let Some(value) = self.transfer {
+                raw.transfer = value.into();
+            } else {
+                raw.transfer = 0 as ffi::WGPUColorSpaceTransferDawn;
+            }
+            if let Some(value) = self.y_cb_cr_range {
+                raw.yCbCrRange = value.into();
+            } else {
+                raw.yCbCrRange = 0 as ffi::WGPUColorSpaceYCbCrRangeDawn;
+            }
+            if let Some(value) = self.y_cb_cr_matrix {
+                raw.yCbCrMatrix = value.into();
+            } else {
+                raw.yCbCrMatrix = 0 as ffi::WGPUColorSpaceYCbCrMatrixDawn;
+            }
+            (raw, storage)
+        }
+        pub fn with_extension(mut self, extension: ColorSpaceDawnExtension) -> Self {
+            self.extensions.push(extension);
+            self
+        }
+        pub(crate) fn from_ffi(value: ffi::WGPUColorSpaceDawn) -> Self {
+            Self {
+                extensions: Vec::new(),
+                primaries: Some(value.primaries.into()),
+                transfer: Some(value.transfer.into()),
+                y_cb_cr_range: Some(value.yCbCrRange.into()),
+                y_cb_cr_matrix: Some(value.yCbCrMatrix.into()),
             }
         }
     }
@@ -15967,6 +16237,19 @@ mod extensions {
                     raw_ptr.cast::<ffi::WGPUChainedStruct>()
                 }
             }
+        }
+    }
+    #[allow(dead_code)]
+    pub enum ColorSpaceDawnExtension {}
+    impl ColorSpaceDawnExtension {
+        pub(crate) fn push_chain(
+            &self,
+            storage: &mut ChainedStructStorage,
+            next: *mut ffi::WGPUChainedStruct,
+        ) -> *mut ffi::WGPUChainedStruct {
+            let _ = self;
+            let _ = storage;
+            next
         }
     }
     #[allow(dead_code)]
