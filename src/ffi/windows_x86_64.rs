@@ -498,9 +498,7 @@ pub const WGPUFeatureName_WGPUFeatureName_OpaqueYCbCrAndroidForExternalTexture: 
     327742;
 pub const WGPUFeatureName_WGPUFeatureName_Unorm16Filterable: WGPUFeatureName = 327743;
 pub const WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea: WGPUFeatureName = 327744;
-pub const WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents: WGPUFeatureName =
-    327745;
-pub const WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm: WGPUFeatureName = 327746;
+pub const WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm: WGPUFeatureName = 327745;
 pub const WGPUFeatureName_WGPUFeatureName_Force32: WGPUFeatureName = 2147483647;
 pub type WGPUFeatureName = ::std::os::raw::c_int;
 pub const WGPUFilterMode_WGPUFilterMode_Undefined: WGPUFilterMode = 0;
@@ -1021,6 +1019,8 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SubgroupUnifor
     WGPUWGSLLanguageFeatureName = 8;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1:
     WGPUWGSLLanguageFeatureName = 9;
+pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing:
+    WGPUWGSLLanguageFeatureName = 10;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented:
     WGPUWGSLLanguageFeatureName = 327680;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnsafeExperimental : WGPUWGSLLanguageFeatureName = 327681 ;
@@ -1045,8 +1045,6 @@ pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_FilteringParam
     WGPUWGSLLanguageFeatureName = 327692;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment:
     WGPUWGSLLanguageFeatureName = 327693;
-pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing:
-    WGPUWGSLLanguageFeatureName = 327694;
 pub const WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_Force32:
     WGPUWGSLLanguageFeatureName = 2147483647;
 pub type WGPUWGSLLanguageFeatureName = ::std::os::raw::c_int;

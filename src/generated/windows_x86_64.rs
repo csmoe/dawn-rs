@@ -13,6 +13,7 @@ mod enums {
         TextureAndSamplerLet,
         SubgroupUniformity,
         TextureFormatsTier1,
+        LinearIndexing,
         ChromiumTestingUnimplemented,
         ChromiumTestingUnsafeExperimental,
         ChromiumTestingExperimental,
@@ -26,7 +27,6 @@ mod enums {
         BufferView,
         FilteringParameters,
         SwizzleAssignment,
-        LinearIndexing,
     }
     impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
         fn from(value: ffi::WGPUWGSLLanguageFeatureName) -> Self {
@@ -57,6 +57,9 @@ mod enums {
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1 => {
                     WGSLLanguageFeatureName::TextureFormatsTier1
+                }
+                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing => {
+                    WGSLLanguageFeatureName::LinearIndexing
                 }
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented => {
                     WGSLLanguageFeatureName::ChromiumTestingUnimplemented
@@ -97,9 +100,6 @@ mod enums {
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment => {
                     WGSLLanguageFeatureName::SwizzleAssignment
                 }
-                ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing => {
-                    WGSLLanguageFeatureName::LinearIndexing
-                }
                 _ => WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures,
             }
         }
@@ -133,6 +133,9 @@ mod enums {
                 }
                 WGSLLanguageFeatureName::TextureFormatsTier1 => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_TextureFormatsTier1
+                }
+                WGSLLanguageFeatureName::LinearIndexing => {
+                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing
                 }
                 WGSLLanguageFeatureName::ChromiumTestingUnimplemented => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_ChromiumTestingUnimplemented
@@ -172,9 +175,6 @@ mod enums {
                 }
                 WGSLLanguageFeatureName::SwizzleAssignment => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_SwizzleAssignment
-                }
-                WGSLLanguageFeatureName::LinearIndexing => {
-                    ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing
                 }
             }
         }
@@ -1381,7 +1381,6 @@ mod enums {
         OpaqueYCbCrAndroidForExternalTexture,
         Unorm16Filterable,
         RenderPassRenderArea,
-        DawnNativeSpontaneousQueueEvents,
         AdapterPropertiesDrm,
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
@@ -1640,9 +1639,6 @@ mod enums {
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea => {
                     FeatureName::RenderPassRenderArea
-                }
-                ffi::WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents => {
-                    FeatureName::DawnNativeSpontaneousQueueEvents
                 }
                 ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm => {
                     FeatureName::AdapterPropertiesDrm
@@ -1907,9 +1903,6 @@ mod enums {
                 }
                 FeatureName::RenderPassRenderArea => {
                     ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea
-                }
-                FeatureName::DawnNativeSpontaneousQueueEvents => {
-                    ffi::WGPUFeatureName_WGPUFeatureName_DawnNativeSpontaneousQueueEvents
                 }
                 FeatureName::AdapterPropertiesDrm => {
                     ffi::WGPUFeatureName_WGPUFeatureName_AdapterPropertiesDrm
