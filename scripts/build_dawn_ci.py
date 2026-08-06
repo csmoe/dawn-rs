@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import os
 import shutil
@@ -87,6 +89,16 @@ def tool_in_depot_tools(root: Path, name: str) -> str:
     raise RuntimeError(f"Failed to locate `{name}` in depot_tools or PATH")
 
 
+def materialize_static_archive(llvm_ar: str, source: Path, destination: Path) -> None:
+    """Convert Chromium thin archives into portable, self-contained archives."""
+    if not source.is_file():
+        raise RuntimeError(f"Missing Dawn static archive: {source}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.unlink(missing_ok=True)
+    mri = f"CREATE {destination.as_posix()}\nADDLIB {source.as_posix()}\nSAVE\nEND\n"
+    subprocess.run([llvm_ar, "-M"], input=mri, text=True, check=True)
+
+
 def build_dawn(tag: str, cache_root: Path, runner_os: str) -> Path:
     script = repo_root() / "scripts" / "download_dawn_source.py"
     dawn_root = subprocess.check_output(
@@ -123,11 +135,18 @@ def build_dawn(tag: str, cache_root: Path, runner_os: str) -> Path:
     gn_args = [
         "is_debug=false",
         "is_component_build=false",
-        "dawn_build_samples=false",
-        "dawn_build_tests=false",
-        "dawn_build_benchmarks=false",
-        "tint_build_tests=false",
-        "tint_build_ir_binary=false",
+        "dawn_complete_static_libs=true",
+        "dawn_use_swiftshader=false",
+        "dawn_enable_d3d11=false",
+        "dawn_enable_d3d12=false",
+        "dawn_enable_metal=false",
+        "dawn_enable_desktop_gl=false",
+        "dawn_enable_opengles=false",
+        "dawn_enable_vulkan=false",
+        "dawn_enable_vulkan_validation_layers=false",
+        "dawn_enable_vulkan_loader=false",
+        "dawn_enable_spirv_validation=false",
+        "dawn_enable_webgpu_on_webgpu=false",
     ]
     if runner_os == "Windows":
         gn_args.extend(
@@ -141,15 +160,56 @@ def build_dawn(tag: str, cache_root: Path, runner_os: str) -> Path:
         autoninja,
         "-C",
         str(out_dir),
-        "webgpu_dawn",
-        "dawn_proc",
-        "dawn_wire",
+        "src/dawn/native:webgpu_dawn_static",
+        "src/dawn:proc_static",
+        "src/dawn/wire:static",
     ]
-    try:
-        run(target_build, cwd=root, env=env)
-    except subprocess.CalledProcessError:
-        print("Targeted Dawn build failed, falling back to full build.", flush=True)
-        run([autoninja, "-C", str(out_dir)], cwd=root, env=env)
+    run(target_build, cwd=root, env=env)
+
+    llvm_ar = root / "third_party" / "llvm-build" / "Release+Asserts" / "bin" / (
+        "llvm-ar.exe" if os.name == "nt" else "llvm-ar"
+    )
+    if not llvm_ar.is_file():
+        raise RuntimeError(f"Failed to locate llvm-ar: {llvm_ar}")
+    lib_dir = root / "lib"
+    if os.name == "nt":
+        archives = [
+            (out_dir / "obj/src/dawn/dawn_proc_static.lib", "dawn_proc_static.lib"),
+            (out_dir / "obj/src/dawn/native/webgpu_dawn.lib", "webgpu_dawn.lib"),
+            (
+                out_dir / "obj/src/dawn/native/dawn_native_static.lib",
+                "dawn_native_static.lib",
+            ),
+            (
+                out_dir / "obj/src/dawn/platform/dawn_platform_static.lib",
+                "dawn_platform_static.lib",
+            ),
+            (out_dir / "obj/src/dawn/wire/dawn_wire_static.lib", "dawn_wire_static.lib"),
+        ]
+    else:
+        archives = [
+            (out_dir / "obj/src/dawn/libdawn_proc_static.a", "libdawn_proc_static.a"),
+            (out_dir / "obj/src/dawn/native/libwebgpu_dawn.a", "libwebgpu_dawn.a"),
+            (
+                out_dir / "obj/src/dawn/native/libdawn_native_static.a",
+                "libdawn_native_static.a",
+            ),
+            (
+                out_dir / "obj/src/dawn/platform/libdawn_platform_static.a",
+                "libdawn_platform_static.a",
+            ),
+            (out_dir / "obj/src/dawn/wire/libdawn_wire_static.a", "libdawn_wire_static.a"),
+            (
+                out_dir / "obj/buildtools/third_party/libc++/libc++.a",
+                "libdawn_libcxx.a",
+            ),
+            (
+                out_dir / "obj/buildtools/third_party/libc++abi/libc++abi.a",
+                "libdawn_libcxxabi.a",
+            ),
+        ]
+    for source, name in archives:
+        materialize_static_archive(str(llvm_ar), source, lib_dir / name)
     return root
 
 

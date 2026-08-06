@@ -21,6 +21,7 @@ pub fn generate_ffi_string(
     );
     let mut builder = bindgen::Builder::default()
         .header_contents("dawn_rs_bindgen_wrapper.h", &wrapper)
+        .clang_arg(format!("-I{}/include", env!("CARGO_MANIFEST_DIR")))
         .allowlist_item("WGPU.*")
         .allowlist_item("wgpu.*")
         .allowlist_item("DawnProcTable")

@@ -116,8 +116,7 @@ impl TriangleApp {
                 _ => panic!("expected AppKit window handle"),
             };
             let layer_ptr = layer.as_ptr().as_ptr();
-            let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
-            metal_layer.layer = Some(layer_ptr.cast());
+            let metal_layer = dawn_rs::SurfaceSourceMetalLayer::new(layer_ptr.cast());
             surface_desc = surface_desc.with_extension(metal_layer.into());
             self.metal_layer = Some(layer);
         }
@@ -128,11 +127,14 @@ impl TriangleApp {
                 RawWindowHandle::Win32(handle) => handle,
                 _ => panic!("expected Win32 window handle"),
             };
-            let mut win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new();
-            win32_layer.hwnd = Some((win.hwnd.get() as *mut std::ffi::c_void).cast());
-            win32_layer.hinstance = win
+            let hinstance = win
                 .hinstance
-                .map(|h| (h.get() as *mut std::ffi::c_void).cast());
+                .map(|h| (h.get() as *mut std::ffi::c_void).cast())
+                .unwrap_or(std::ptr::null_mut());
+            let win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new(
+                hinstance,
+                (win.hwnd.get() as *mut std::ffi::c_void).cast(),
+            );
             surface_desc = surface_desc.with_extension(win32_layer.into());
         }
 
@@ -142,21 +144,28 @@ impl TriangleApp {
             let raw_display = display_handle.as_raw();
             match (raw_display, raw_window) {
                 (RawDisplayHandle::Wayland(disp), RawWindowHandle::Wayland(win)) => {
-                    let mut wayland = dawn_rs::SurfaceSourceWaylandSurface::new();
-                    wayland.display = Some(disp.display.as_ptr().cast());
-                    wayland.surface = Some(win.surface.as_ptr().cast());
+                    let wayland = dawn_rs::SurfaceSourceWaylandSurface::new(
+                        disp.display.as_ptr().cast(),
+                        win.surface.as_ptr().cast(),
+                    );
                     surface_desc = surface_desc.with_extension(wayland.into());
                 }
                 (RawDisplayHandle::Xlib(disp), RawWindowHandle::Xlib(win)) => {
-                    let mut xlib = dawn_rs::SurfaceSourceXlibWindow::new();
-                    xlib.display = disp.display.map(|p| p.as_ptr().cast());
-                    xlib.window = Some(win.window);
+                    let xlib = dawn_rs::SurfaceSourceXlibWindow::new(
+                        disp.display
+                            .map(|p| p.as_ptr().cast())
+                            .unwrap_or(std::ptr::null_mut()),
+                        win.window,
+                    );
                     surface_desc = surface_desc.with_extension(xlib.into());
                 }
                 (RawDisplayHandle::Xcb(disp), RawWindowHandle::Xcb(win)) => {
-                    let mut xcb = dawn_rs::SurfaceSourceXCBWindow::new();
-                    xcb.connection = disp.connection.map(|p| p.as_ptr().cast());
-                    xcb.window = Some(win.window.get());
+                    let xcb = dawn_rs::SurfaceSourceXCBWindow::new(
+                        disp.connection
+                            .map(|p| p.as_ptr().cast())
+                            .unwrap_or(std::ptr::null_mut()),
+                        win.window.get(),
+                    );
                     surface_desc = surface_desc.with_extension(xcb.into());
                 }
                 _ => {
@@ -193,10 +202,10 @@ impl TriangleApp {
                 vertex_data.len() * std::mem::size_of::<f32>(),
             )
         };
-        let mut vertex_buffer_desc = dawn_rs::BufferDescriptor::new();
-        vertex_buffer_desc.size = Some(vertex_bytes.len() as u64);
-        vertex_buffer_desc.usage =
-            Some(dawn_rs::BufferUsage::VERTEX | dawn_rs::BufferUsage::COPY_DST);
+        let vertex_buffer_desc = dawn_rs::BufferDescriptor::new(
+            dawn_rs::BufferUsage::VERTEX | dawn_rs::BufferUsage::COPY_DST,
+            vertex_bytes.len() as u64,
+        );
         let vertex_buffer = device
             .create_buffer(&vertex_buffer_desc)
             .expect("create vertex buffer");
@@ -243,12 +252,8 @@ impl TriangleApp {
             .unwrap_or(dawn_rs::CompositeAlphaMode::Auto);
 
         let size = window.inner_size();
-        let mut config = dawn_rs::SurfaceConfiguration::new();
-        config.device = Some(device.clone());
-        config.format = Some(format);
-        config.usage = Some(dawn_rs::TextureUsage::RENDER_ATTACHMENT);
-        config.width = Some(size.width);
-        config.height = Some(size.height);
+        let mut config =
+            dawn_rs::SurfaceConfiguration::new(device.clone(), format, size.width, size.height);
         config.present_mode = Some(present_mode);
         config.alpha_mode = Some(alpha_mode);
         surface.configure(&config);
@@ -260,25 +265,28 @@ impl TriangleApp {
         shader_desc = shader_desc.with_extension(shader_source.into());
         let shader = device.create_shader_module(&shader_desc);
         let (shader_tx, shader_rx) = std::sync::mpsc::channel::<String>();
-        let future = shader.get_compilation_info(move |status, info| {
-            if status != dawn_rs::CompilationInfoRequestStatus::Success {
-                let _ = shader_tx.send(format!("Shader compilation info status: {:?}", status));
-                return;
-            }
-            let mut output = String::new();
-            if let Some(messages) = &info.messages {
-                for message in messages.iter() {
-                    let line = message.line_num.unwrap_or(0);
-                    let col = message.line_pos.unwrap_or(0);
-                    let kind = message
-                        .r#type
-                        .unwrap_or(dawn_rs::CompilationMessageType::Info);
-                    let text = message.message.clone().unwrap_or_default();
-                    output.push_str(&format!("[{:?}] {}:{} {}\n", kind, line, col, text));
+        let future = shader.get_compilation_info(
+            dawn_rs::CallbackMode::AllowProcessEvents,
+            move |status, info| {
+                if status != dawn_rs::CompilationInfoRequestStatus::Success {
+                    let _ = shader_tx.send(format!("Shader compilation info status: {:?}", status));
+                    return;
                 }
-            }
-            let _ = shader_tx.send(output);
-        });
+                let mut output = String::new();
+                if let Some(messages) = &info.messages {
+                    for message in messages.iter() {
+                        let line = message.line_num.unwrap_or(0);
+                        let col = message.line_pos.unwrap_or(0);
+                        let kind = message
+                            .r#type
+                            .unwrap_or(dawn_rs::CompilationMessageType::Info);
+                        let text = message.message.clone().unwrap_or_default();
+                        output.push_str(&format!("[{:?}] {}:{} {}\n", kind, line, col, text));
+                    }
+                }
+                let _ = shader_tx.send(output);
+            },
+        );
         let status = instance.wait_any(
             Some(&mut [FutureWaitInfo {
                 future: Some(future),
@@ -304,34 +312,25 @@ impl TriangleApp {
             }
         }
 
-        let mut vertex_state = dawn_rs::VertexState::new();
-        vertex_state.module = Some(shader.clone());
+        let mut vertex_state = dawn_rs::VertexState::new(shader.clone());
         vertex_state.entry_point = Some("vs_main".to_string());
-        let mut vertex_attribute = dawn_rs::VertexAttribute::new();
-        vertex_attribute.format = Some(dawn_rs::VertexFormat::Float32X2);
-        vertex_attribute.offset = Some(0);
-        vertex_attribute.shader_location = Some(0);
-        let mut color_attribute = dawn_rs::VertexAttribute::new();
-        color_attribute.format = Some(dawn_rs::VertexFormat::Float32X3);
-        color_attribute.offset = Some(8);
-        color_attribute.shader_location = Some(1);
-        let mut vertex_buffer_layout = dawn_rs::VertexBufferLayout::new();
-        vertex_buffer_layout.array_stride = Some(20);
-        vertex_buffer_layout.step_mode = Some(dawn_rs::VertexStepMode::Vertex);
-        vertex_buffer_layout.attributes = Some(vec![vertex_attribute, color_attribute]);
+        let vertex_attribute =
+            dawn_rs::VertexAttribute::new(dawn_rs::VertexFormat::Float32X2, 0, 0);
+        let color_attribute = dawn_rs::VertexAttribute::new(dawn_rs::VertexFormat::Float32X3, 8, 1);
+        let vertex_buffer_layout = dawn_rs::VertexBufferLayout::new(
+            dawn_rs::VertexStepMode::Vertex,
+            20,
+            vec![vertex_attribute, color_attribute],
+        );
         vertex_state.buffers = Some(vec![vertex_buffer_layout]);
 
-        let mut fragment_state = dawn_rs::FragmentState::new();
-        fragment_state.module = Some(shader);
+        let color_target = dawn_rs::ColorTargetState::new(format);
+        let mut fragment_state = dawn_rs::FragmentState::new(shader, vec![color_target]);
         fragment_state.entry_point = Some("fs_main".to_string());
-        let mut color_target = dawn_rs::ColorTargetState::new();
-        color_target.format = Some(format);
-        fragment_state.targets = Some(vec![color_target]);
 
-        let mut pipeline_desc = dawn_rs::RenderPipelineDescriptor::new();
-        pipeline_desc.vertex = Some(vertex_state);
+        let primitive = dawn_rs::PrimitiveState::new(dawn_rs::IndexFormat::Undefined);
+        let mut pipeline_desc = dawn_rs::RenderPipelineDescriptor::new(vertex_state, primitive);
         pipeline_desc.fragment = Some(fragment_state);
-        pipeline_desc.primitive = Some(dawn_rs::PrimitiveState::new());
         pipeline_desc.multisample = Some(dawn_rs::MultisampleState::new());
         let pipeline = device.create_render_pipeline(&pipeline_desc);
 
@@ -398,19 +397,19 @@ impl TriangleApp {
         };
         let view = texture.create_view(None);
 
-        let mut color_attachment = dawn_rs::RenderPassColorAttachment::new();
-        color_attachment.view = Some(view);
-        color_attachment.load_op = Some(dawn_rs::LoadOp::Clear);
-        color_attachment.store_op = Some(dawn_rs::StoreOp::Store);
-        color_attachment.clear_value = Some(dawn_rs::Color {
+        let clear_value = dawn_rs::Color {
             r: Some(0.1),
             g: Some(0.1),
             b: Some(0.12),
             a: Some(1.0),
-        });
-
-        let mut render_pass_desc = dawn_rs::RenderPassDescriptor::new();
-        render_pass_desc.color_attachments = Some(vec![color_attachment]);
+        };
+        let mut color_attachment = dawn_rs::RenderPassColorAttachment::new(
+            dawn_rs::LoadOp::Clear,
+            dawn_rs::StoreOp::Store,
+            clear_value,
+        );
+        color_attachment.view = Some(view);
+        let render_pass_desc = dawn_rs::RenderPassDescriptor::new(vec![color_attachment]);
 
         let encoder = device.create_command_encoder(None);
         let pass = encoder.begin_render_pass(&render_pass_desc);
@@ -481,20 +480,24 @@ impl ApplicationHandler for TriangleApp {
 impl InstanceRequestAdapterSync for dawn_rs::Instance {
     fn request_adapter_sync(&self) -> dawn_rs::Adapter {
         let (tx, rx) = std::sync::mpsc::channel::<Result<SendAdapter, String>>();
-        let _future = self.request_adapter(None, move |status, adapter, message| {
-            if status != dawn_rs::RequestAdapterStatus::Success {
-                let _ = tx.send(Err(message));
-                return;
-            }
-            let adapter = match adapter {
-                Some(adapter) => adapter,
-                None => {
-                    let _ = tx.send(Err("No adapter".to_string()));
+        let _future = self.request_adapter(
+            None,
+            dawn_rs::CallbackMode::AllowProcessEvents,
+            move |status, adapter, message| {
+                if status != dawn_rs::RequestAdapterStatus::Success {
+                    let _ = tx.send(Err(message));
                     return;
                 }
-            };
-            let _ = tx.send(Ok(SendAdapter(adapter)));
-        });
+                let adapter = match adapter {
+                    Some(adapter) => adapter,
+                    None => {
+                        let _ = tx.send(Err("No adapter".to_string()));
+                        return;
+                    }
+                };
+                let _ = tx.send(Ok(SendAdapter(adapter)));
+            },
+        );
         loop {
             match rx.try_recv() {
                 Ok(Ok(adapter)) => return adapter.0,

@@ -17,7 +17,7 @@ extern "C" {
 
 struct DawnRsWireSerializerCallbacks {
     void* userdata;
-    void (*on_flush)(void* userdata, const uint8_t* data, size_t size);
+    bool (*on_flush)(void* userdata, const uint8_t* data, size_t size);
     void (*on_error)(void* userdata, const char* message, size_t message_len);
     size_t max_allocation_size;
 };
@@ -76,7 +76,9 @@ class SerializerBridge final : public dawn::wire::CommandSerializer {
         if (buffer_.empty()) {
             return true;
         }
-        callbacks_.on_flush(callbacks_.userdata, buffer_.data(), buffer_.size());
+        if (!callbacks_.on_flush(callbacks_.userdata, buffer_.data(), buffer_.size())) {
+            return false;
+        }
         buffer_.clear();
         return true;
     }

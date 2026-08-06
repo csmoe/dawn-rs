@@ -11,6 +11,16 @@ pub(crate) fn emit(model: &ApiModel, c_prefix: &str) -> String {
 
 use crate::ffi;
 use crate::generated::*;
+
+fn invoke_callback_safely<R: Default>(callback: impl FnOnce() -> R) -> R {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(callback)) {
+        Ok(value) => value,
+        Err(_) => {
+            eprintln!("panic in Dawn callback was contained at the FFI boundary");
+            R::default()
+        }
+    }
+}
 "#,
     );
 

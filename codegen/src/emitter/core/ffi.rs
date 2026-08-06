@@ -50,10 +50,7 @@ pub(crate) fn emit_ffi_arg_prelude(
                     .copied()
                     .unwrap_or(false);
                 let mode_line = if has_mode {
-                    format!(
-                        "            mode: ffi::{prefix}CallbackMode_{prefix}CallbackMode_AllowSpontaneous,\n",
-                        prefix = c_prefix
-                    )
+                    format!("            mode: {name}_mode.into(),\n")
                 } else {
                     String::new()
                 };
@@ -196,7 +193,13 @@ pub(crate) fn emit_ffi_arg_prelude(
                     "as_deref()"
                 };
                 let ptr_expr = if arg.annotation.is_mut_ptr() {
-                    "value.as_mut_ptr()"
+                    if arg.member_type == "void" {
+                        "value.as_mut_ptr().cast::<std::ffi::c_void>()"
+                    } else {
+                        "value.as_mut_ptr()"
+                    }
+                } else if arg.member_type == "void" {
+                    "value.as_ptr().cast::<std::ffi::c_void>()"
                 } else {
                     "value.as_ptr()"
                 };
@@ -213,9 +216,15 @@ pub(crate) fn emit_ffi_arg_prelude(
                 ));
             } else {
                 let ptr_expr = if arg.annotation.is_mut_ptr() {
-                    format!("{name}.as_mut_ptr()", name = name)
+                    if arg.member_type == "void" {
+                        format!("{name}.as_mut_ptr().cast::<std::ffi::c_void>()")
+                    } else {
+                        format!("{name}.as_mut_ptr()")
+                    }
+                } else if arg.member_type == "void" {
+                    format!("{name}.as_ptr().cast::<std::ffi::c_void>()")
                 } else {
-                    format!("{name}.as_ptr()", name = name)
+                    format!("{name}.as_ptr()")
                 };
                 prelude.push(format!(
                     r#"        let {name}_ptr = {ptr_expr};"#,
@@ -296,7 +305,7 @@ pub(crate) fn emit_ffi_arg_prelude(
                     prelude.push(format!(
                         r#"        let mut {name}_storage = ChainedStructStorage::new();
         let mut {name}_ffi: Option<ffi::{ffi_ty}> = None;
-        let {name}_ptr = if let Some(value) = &{name} {{
+        let {name}_ptr = if let Some(value) = {option_ref}{name} {{
             let (raw, storage) = value.to_ffi();
             {name}_storage = storage;
             {name}_ffi = Some(raw);
@@ -309,6 +318,11 @@ pub(crate) fn emit_ffi_arg_prelude(
             {null_ptr}
         }};"#,
                         ffi_ty = ffi_type_name(&arg.member_type, c_prefix),
+                        option_ref = if arg.annotation.is_mut_ptr() {
+                            "&mut "
+                        } else {
+                            "&"
+                        },
                         opt_ref = if arg.annotation.is_mut_ptr() {
                             "mut"
                         } else {
@@ -367,9 +381,6 @@ pub(crate) fn emit_ffi_arg_prelude(
 pub(crate) fn emit_out_struct_postlude(args: &[RecordMember], index: &TypeIndex) -> String {
     let mut lines = Vec::new();
     for arg in args {
-        if arg.optional {
-            continue;
-        }
         if !arg.annotation.is_mut_ptr() {
             continue;
         }
@@ -378,6 +389,32 @@ pub(crate) fn emit_out_struct_postlude(args: &[RecordMember], index: &TypeIndex)
         }
         let name = safe_ident(&snake_case_name(&arg.name));
         let ty = type_name(&arg.member_type);
+        if arg.length.is_some() {
+            if arg.optional {
+                lines.push(format!(
+                    r#"        if let Some(values) = {name}.as_deref_mut() {{
+            for (value, raw) in values.iter_mut().zip({name}_raw.into_iter()) {{
+                *value = {ty}::from_ffi(raw);
+            }}
+        }}"#
+                ));
+            } else {
+                lines.push(format!(
+                    r#"        for (value, raw) in {name}.iter_mut().zip({name}_raw.into_iter()) {{
+            *value = {ty}::from_ffi(raw);
+        }}"#
+                ));
+            }
+            continue;
+        }
+        if arg.optional {
+            lines.push(format!(
+                r#"        if let (Some(value), Some(raw)) = ({name}.as_deref_mut(), {name}_ffi) {{
+            *value = {ty}::from_ffi(raw);
+        }}"#
+            ));
+            continue;
+        }
         lines.push(format!(
             r#"        *{name} = {ty}::from_ffi({name}_ffi);"#,
             name = name,

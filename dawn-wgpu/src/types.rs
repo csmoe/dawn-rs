@@ -3,76 +3,25 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 
-type InstanceJob = Box<dyn FnOnce(&mut DawnInstanceState) + Send + 'static>;
-
-#[derive(Debug)]
-pub(crate) struct DawnInstanceWorker {
-    sender: std::sync::mpsc::Sender<InstanceJob>,
-}
-
-#[derive(Debug)]
-pub(crate) struct DawnInstanceState {
-    pub(crate) instance: Instance,
-}
-
-impl DawnInstanceState {
-    fn new(instance: Instance) -> Self {
-        Self { instance }
-    }
-}
-
+#[derive(Clone)]
 pub struct DawnInstance {
-    pub(crate) inner: Arc<DawnInstanceWorker>,
+    pub(crate) inner: Instance,
+    pub(crate) backends: wgpu::Backends,
     #[cfg(feature = "wire")]
     pub(crate) wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
 }
 
 impl DawnInstance {
     pub(crate) fn from_factory(
+        backends: wgpu::Backends,
         factory: impl FnOnce() -> Instance + Send + 'static,
         #[cfg(feature = "wire")] wire_handle: Option<Arc<crate::wire_backend::WireBackendHandle>>,
     ) -> Self {
-        let (sender, receiver) = std::sync::mpsc::channel::<InstanceJob>();
-        std::thread::spawn(move || {
-            let mut state = DawnInstanceState::new(factory());
-            while let Ok(job) = receiver.recv() {
-                job(&mut state);
-            }
-        });
         Self {
-            inner: Arc::new(DawnInstanceWorker { sender }),
+            inner: factory(),
+            backends,
             #[cfg(feature = "wire")]
             wire_handle,
-        }
-    }
-
-    pub(crate) fn with_instance<R: Send + 'static>(
-        &self,
-        f: impl FnOnce(&mut DawnInstanceState) -> R + Send + 'static,
-    ) -> R {
-        let (sender, receiver) = std::sync::mpsc::channel::<R>();
-        self.inner
-            .sender
-            .send(Box::new(move |state| {
-                let result = f(state);
-                let _ = sender.send(result);
-            }))
-            .expect("wgpu-compat: failed to send instance task to worker");
-        receiver
-            .recv()
-            .expect("wgpu-compat: failed to receive instance task result")
-    }
-}
-
-unsafe impl Send for DawnAdapterShared {}
-unsafe impl Sync for DawnAdapterShared {}
-
-impl Clone for DawnInstance {
-    fn clone(&self) -> Self {
-        Self {
-            inner: Arc::clone(&self.inner),
-            #[cfg(feature = "wire")]
-            wire_handle: self.wire_handle.clone(),
         }
     }
 }
@@ -80,72 +29,22 @@ impl Clone for DawnInstance {
 impl fmt::Debug for DawnInstance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut dbg = f.debug_struct("DawnInstance");
-        dbg.field("inner", &"worker-thread");
+        dbg.field("inner", &self.inner);
+        dbg.field("backends", &self.backends);
         #[cfg(feature = "wire")]
         dbg.field("wire_handle", &self.wire_handle.is_some());
         dbg.finish()
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DawnAdapter {
-    pub(crate) shared: Arc<DawnAdapterShared>,
+    pub(crate) inner: Adapter,
 }
 
 impl DawnAdapter {
-    pub(crate) fn from_adapter(worker: Arc<DawnInstanceWorker>, adapter: Adapter) -> Self {
-        let raw = Box::into_raw(Box::new(adapter));
-        Self {
-            shared: Arc::new(DawnAdapterShared {
-                worker,
-                raw,
-            }),
-        }
-    }
-
-    pub(crate) fn with_adapter<R: Send + 'static>(
-        &self,
-        f: impl FnOnce(&Adapter) -> R + Send + 'static,
-    ) -> R {
-        let raw = self.shared.raw as usize;
-        let (sender, receiver) = std::sync::mpsc::channel::<R>();
-        self.shared
-            .worker
-            .sender
-            .send(Box::new(move |_state| {
-                // SAFETY: raw points to a valid boxed Adapter for the lifetime of shared.
-                let adapter = unsafe { &*(raw as *mut Adapter) };
-                let result = f(adapter);
-                let _ = sender.send(result);
-            }))
-            .expect("wgpu-compat: failed to send adapter task to worker");
-        receiver
-            .recv()
-            .expect("wgpu-compat: failed to receive adapter task result")
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct DawnAdapterShared {
-    worker: Arc<DawnInstanceWorker>,
-    raw: *mut Adapter,
-}
-
-impl Drop for DawnAdapterShared {
-    fn drop(&mut self) {
-        let raw = self.raw as usize;
-        let _ = self.worker.sender.send(Box::new(move |_state| {
-            // SAFETY: raw originated from Box::into_raw and is dropped exactly once here.
-            unsafe { drop(Box::from_raw(raw as *mut Adapter)) };
-        }));
-    }
-}
-
-impl fmt::Debug for DawnAdapter {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DawnAdapter")
-            .field("raw", &self.shared.raw)
-            .finish()
+    pub(crate) fn from_adapter(adapter: Adapter) -> Self {
+        Self { inner: adapter }
     }
 }
 
@@ -170,7 +69,9 @@ impl DawnDevice {
     pub(crate) fn with_callback_state(
         device: Device,
         device_lost_callback: Arc<std::sync::Mutex<Option<wgpu::custom::BoxDeviceLostCallback>>>,
-        uncaptured_error_handler: Arc<std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>>,
+        uncaptured_error_handler: Arc<
+            std::sync::Mutex<Option<Arc<dyn wgpu::UncapturedErrorHandler>>>,
+        >,
     ) -> Self {
         Self {
             inner: device,

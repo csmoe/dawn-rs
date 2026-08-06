@@ -107,22 +107,56 @@ jobs:
             echo "CARGO_TARGET_ARGS=" >> "$GITHUB_ENV"
           fi
 
-      - name: Cargo check workspace
+      - name: Test code generator
+        run: cargo test -p dawn-codegen
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Check dawn-rs and codegen
         if: runner.os != 'Windows'
-        run: cargo check --workspace $CARGO_TARGET_ARGS
+        run: cargo check -p dawn-codegen -p dawn-rs $CARGO_TARGET_ARGS
 
       - name: Check dawn-rs examples (default)
         if: runner.os != 'Windows'
         run: cargo check -p dawn-rs --examples $CARGO_TARGET_ARGS
 
-      #- name: Build dawn-rs wire example
-      #  if: runner.os != 'Windows'
-      #  run: cargo build -p dawn-rs --example triangle-wire --features wire
+  wire:
+    name: Wire smoke (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Check dawn-wgpu examples (default)
-        if: runner.os != 'Windows'
-        run: cargo check -p dawn-wgpu --examples $CARGO_TARGET_ARGS
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
 
-      #- name: Build dawn-wgpu wire example
-      #  if: runner.os != 'Windows'
-      #  run: cargo build -p dawn-wgpu --example nya-cat-wire --features wire
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: wire-v1
+
+      - name: Cache Dawn wire build
+        uses: actions/cache@v4
+        with:
+          path: .ci/dawn-wire
+          key: dawn-wire-linux-${{ hashFiles('DAWN_VERSION', 'scripts/build_dawn_ci.py') }}-v1
+
+      - name: Build Dawn wire runtime
+        run: |
+          dawn_tag="$(tr -d '\r\n' < DAWN_VERSION)"
+          python3 scripts/build_dawn_ci.py \
+            --tag "$dawn_tag" \
+            --cache-root .ci/dawn-wire \
+            --runner-os Linux
+
+      - name: Test wire framing and linked runtime
+        run: cargo test -p dawn-rs --lib --no-default-features --features wire
+
+      - name: Build wire example
+        run: cargo build -p dawn-rs --example triangle-wire --no-default-features --features wire

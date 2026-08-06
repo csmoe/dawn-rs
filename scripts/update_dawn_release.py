@@ -4,13 +4,12 @@ import sys
 import tempfile
 
 from dawn_release_utils import (
-    detect_platform_hint,
     download_file,
     extract_archive,
     extract_prebuilt_asset,
     find_first_dir,
     release_latest,
-    select_prebuilt_asset,
+    select_headers_asset,
 )
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -33,9 +32,12 @@ def write_text(path: str, content: str) -> None:
 
 
 def find_webgpu_header(root: str) -> str:
+    preferred = os.path.join(root, "dawn-headers", "include", "dawn", "webgpu.h")
+    if os.path.isfile(preferred):
+        return preferred
     for dirpath, _, filenames in os.walk(root):
         for name in filenames:
-            if name == "webgpu.h" and os.path.basename(dirpath) == "webgpu":
+            if name == "webgpu.h" and os.path.basename(dirpath) == "dawn":
                 return os.path.join(dirpath, name)
     return ""
 
@@ -57,9 +59,8 @@ def main() -> int:
         print("Missing tarball_url in release payload.")
         return 1
 
-    platform_hint = detect_platform_hint()
     try:
-        selected_asset = select_prebuilt_asset(release_json, platform_hint)
+        selected_asset = select_headers_asset(release_json)
     except RuntimeError as e:
         print(str(e))
         return 1
@@ -89,30 +90,45 @@ def main() -> int:
 
         os.makedirs(OUT_DIR, exist_ok=True)
         tags = os.environ.get("DAWN_TAGS", DEFAULT_TAGS).strip()
-        cmd = [
-            "cargo",
-            "run",
-            "-p",
-            "dawn-codegen",
-            "--bin",
-            "dawn_codegen",
-            "--",
-            "--dawn-json",
-            dawn_json,
-            "--api-header",
-            api_header,
-            "--out-dir",
-            OUT_DIR,
-        ]
         target_os = os.environ.get("DAWN_CODEGEN_TARGET_OS", "").strip()
         target_arch = os.environ.get("DAWN_CODEGEN_TARGET_ARCH", "").strip()
-        if target_os:
-            cmd.extend(["--target-os", target_os])
-        if target_arch:
-            cmd.extend(["--target-arch", target_arch])
-        if tags:
-            cmd.extend(["--tags", tags])
-        subprocess.check_call(cmd, cwd=REPO_ROOT)
+        if bool(target_os) != bool(target_arch):
+            raise RuntimeError(
+                "DAWN_CODEGEN_TARGET_OS and DAWN_CODEGEN_TARGET_ARCH must be set together"
+            )
+        targets = (
+            [(target_os, target_arch)]
+            if target_os
+            else [
+                ("linux", "x86_64"),
+                ("macos", "aarch64"),
+                ("macos", "x86_64"),
+                ("windows", "x86_64"),
+            ]
+        )
+        for target_os, target_arch in targets:
+            cmd = [
+                "cargo",
+                "run",
+                "-p",
+                "dawn-codegen",
+                "--bin",
+                "dawn_codegen",
+                "--",
+                "--dawn-json",
+                dawn_json,
+                "--api-header",
+                api_header,
+                "--out-dir",
+                OUT_DIR,
+                "--target-os",
+                target_os,
+                "--target-arch",
+                target_arch,
+            ]
+            if tags:
+                cmd.extend(["--tags", tags])
+            subprocess.check_call(cmd, cwd=REPO_ROOT)
 
     write_text(VERSION_FILE, latest_tag + "\n")
     subprocess.check_call(["git", "status", "--porcelain"], cwd=REPO_ROOT)

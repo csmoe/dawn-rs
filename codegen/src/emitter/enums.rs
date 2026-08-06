@@ -59,19 +59,21 @@ pub(crate) fn emit_enum(e: &EnumModel, c_prefix: &str) -> String {
     let variants_block = variants.join("\n");
     let from_arms_block = from_arms.join("\n");
     let into_arms_block = into_arms.join("\n");
-    let fallback_variant = first_variant.unwrap_or_else(|| "Undefined".to_string());
+    let _ = first_variant;
+    let docs = crate::emitter::core::doc_comment(e.def.comment.as_deref());
 
     format!(
-        r#"#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        r#"{docs}#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum {name} {{
 {variants}
+    UnknownValue(u32),
 }}
 
 impl From<ffi::{ffi_type}> for {name} {{
     fn from(value: ffi::{ffi_type}) -> Self {{
         match value {{
 {from_arms}
-            _ => {name}::{fallback},
+            _ => {name}::UnknownValue(value as u32),
         }}
     }}
 }}
@@ -80,17 +82,18 @@ impl From<{name}> for ffi::{ffi_type} {{
     fn from(value: {name}) -> Self {{
         match value {{
 {into_arms}
+            {name}::UnknownValue(value) => value as ffi::{ffi_type},
         }}
     }}
 }}
 
 "#,
         name = name,
+        docs = docs,
         variants = variants_block,
         ffi_type = ffi_type,
         from_arms = from_arms_block,
         into_arms = into_arms_block,
-        fallback = fallback_variant
     )
 }
 
@@ -111,9 +114,10 @@ pub(crate) fn emit_bitmask(b: &BitmaskModel, c_prefix: &str) -> String {
     }
 
     let variants_block = variants.join("\n");
+    let docs = crate::emitter::core::doc_comment(b.def.comment.as_deref());
 
     format!(
-        r#"bitflags! {{
+        r#"{docs}bitflags! {{
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct {name}: u64 {{
 {variants}
@@ -122,7 +126,7 @@ pub(crate) fn emit_bitmask(b: &BitmaskModel, c_prefix: &str) -> String {
 
 impl From<ffi::{ffi_type}> for {name} {{
     fn from(value: ffi::{ffi_type}) -> Self {{
-        {name}::from_bits_truncate(value as u64)
+        {name}::from_bits_retain(value as u64)
     }}
 }}
 
@@ -134,6 +138,7 @@ impl From<{name}> for ffi::{ffi_type} {{
 
 "#,
         name = name,
+        docs = docs,
         variants = variants_block,
         ffi_type = ffi_type
     )

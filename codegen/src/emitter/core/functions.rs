@@ -9,10 +9,25 @@ pub(crate) fn emit_function(
     c_prefix: &str,
 ) -> String {
     let name = safe_ident(&snake_case_name(&f.name));
+    let docs = doc_comment(f.def.comment.as_deref());
+    let uses_raw_pointer = f
+        .def
+        .args
+        .iter()
+        .any(|arg| arg.length.is_none() && arg.member_type.contains('*'))
+        || f.def
+            .returns()
+            .is_some_and(|ret| ret.get_type().contains('*'));
+    let safety = if uses_raw_pointer { "unsafe " } else { "" };
+    let safety_docs = if uses_raw_pointer {
+        "/// # Safety\n/// All raw pointers must remain valid for the duration required by Dawn.\n"
+    } else {
+        ""
+    };
     let return_ty = f
         .def
         .returns()
-        .map(|ret| rust_return_type(ret))
+        .map(rust_return_type)
         .unwrap_or_else(|| "()".to_string());
 
     let signature = fn_signature_params(&f.def.args, model, None);
@@ -21,13 +36,16 @@ pub(crate) fn emit_function(
     let postlude = emit_out_struct_postlude(&f.def.args, index);
 
     format!(
-        r#"pub fn {name}({signature}) -> {return_ty} {{
+        r#"{docs}{safety_docs}pub {safety}fn {name}({signature}) -> {return_ty} {{
 {arg_prelude}
 {body}
 }}
 
 "#,
         name = name,
+        docs = docs,
+        safety_docs = safety_docs,
+        safety = safety,
         signature = signature,
         return_ty = return_ty,
         arg_prelude = indent_block(&arg_prelude, 4),
@@ -76,21 +94,30 @@ pub(crate) fn fn_signature_params(
 ) -> String {
     let mut parts = Vec::new();
     let callback_info_map = build_callback_info_map(model);
+    let callback_info_mode_map = build_callback_info_mode_map(model);
     let callback_fn_map = build_callback_function_map(model);
     let length_fields = length_field_names(args);
 
-    if let Some(recv) = receiver {
-        if recv == "self" {
-            parts.push("&self".to_string());
-        }
+    if let Some(recv) = receiver
+        && recv == "self"
+    {
+        parts.push("&self".to_string());
     }
 
     for arg in args {
         if let Some(callback_fn_name) = callback_info_map.get(&arg.member_type) {
+            if callback_info_mode_map
+                .get(&arg.member_type)
+                .copied()
+                .unwrap_or(false)
+            {
+                let name = safe_ident(&snake_case_name(&arg.name));
+                parts.push(format!("{name}_mode: CallbackMode"));
+            }
             let callback_args = callback_fn_map
                 .get(callback_fn_name)
                 .map(|c| callback_arg_list(&c.def.args))
-                .unwrap_or_else(|| "".to_string());
+                .unwrap_or_default();
             parts.push(format!(
                 r#"callback: impl FnMut({callback_args}) + Send + 'static"#,
                 callback_args = callback_args
@@ -104,7 +131,7 @@ pub(crate) fn fn_signature_params(
 
         let param_name = safe_ident(&snake_case_name(&arg.name));
         let param_ty = rust_param_type(arg);
-        let needs_mut = arg.length.is_some() && arg.annotation.is_mut_ptr();
+        let needs_mut = arg.annotation.is_mut_ptr() && (arg.length.is_some() || arg.optional);
         let param_name = if needs_mut {
             format!(r#"mut {param_name}"#, param_name = param_name)
         } else {
@@ -134,7 +161,11 @@ pub(crate) fn rust_return_type(ret: &ReturnType) -> String {
 }
 
 pub(crate) fn rust_param_type(arg: &RecordMember) -> String {
-    let base = rust_type_for(&arg.member_type);
+    let base = if arg.length.is_some() && arg.member_type == "void" {
+        "u8".to_string()
+    } else {
+        rust_type_for(&arg.member_type)
+    };
 
     let mut ty = if arg.length.is_some() {
         if arg.annotation.is_mut_ptr() {

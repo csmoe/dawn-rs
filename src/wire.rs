@@ -26,11 +26,6 @@ const DEFAULT_WIRE_MAX_PENDING_PACKETS: usize = 4096;
 const DEFAULT_WIRE_MAX_PENDING_BYTES: usize = 16 * 1024 * 1024;
 const DEFAULT_WIRE_PACKET_POOL_LIMIT: usize = 1024;
 
-pub(crate) fn with_native_runtime<R>(f: impl FnOnce() -> R) -> Result<R, WireError> {
-    let _guard = WireNativeProcGuard::acquire().map_err(WireError::Wire)?;
-    Ok(f())
-}
-
 #[derive(Debug, Error)]
 pub enum WireError {
     #[error("io error: {0}")]
@@ -43,6 +38,28 @@ pub enum WireError {
     LockPoisoned(&'static str),
     #[error("timeout: {0}")]
     Timeout(&'static str),
+    #[error("wire transport stopped: {0}")]
+    Transport(String),
+}
+
+type TransportFailure = Arc<Mutex<Option<String>>>;
+
+fn record_transport_failure(state: &TransportFailure, message: impl Into<String>) {
+    if let Ok(mut failure) = state.lock()
+        && failure.is_none()
+    {
+        *failure = Some(message.into());
+    }
+}
+
+fn check_transport(state: &TransportFailure) -> Result<(), WireError> {
+    let failure = state
+        .lock()
+        .map_err(|_| WireError::LockPoisoned("wire transport state"))?;
+    match failure.as_ref() {
+        Some(message) => Err(WireError::Transport(message.clone())),
+        None => Ok(()),
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -125,10 +142,12 @@ impl Default for ServerOptions {
 /// 1) connect
 /// 2) use `instance()` / `surface()`
 /// 3) call `pump()` in your event loop
+/// 4) drop every derived wire object before dropping the client
 pub struct Client {
     client: Arc<Mutex<WireClientShim>>,
     instance: Option<Instance>,
     surface: Option<Surface>,
+    transport_failure: TransportFailure,
     stop: Arc<AtomicBool>,
     tx: Option<mpsc::SyncSender<WireOutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireError>>>,
@@ -145,16 +164,48 @@ pub struct ReservedTexture {
 }
 
 impl Client {
-    pub fn connect(name: &str, opts: ClientOptions) -> Result<Self, WireError> {
+    /// Connects a Dawn wire client and installs Dawn's process-global wire proc table.
+    ///
+    /// # Safety
+    ///
+    /// The process must not use native Dawn handles while this client exists. Every proxy object
+    /// derived from this client, including objects retained by callbacks, must be dropped before
+    /// the client. Dawn invalidates all remaining proxy handles when `WireClient` is destroyed.
+    pub unsafe fn connect(name: &str, opts: ClientOptions) -> Result<Self, WireError> {
         let stream = wire_ipc::connect_with_retry(name, opts.connect_attempts, opts.connect_delay)?;
-        Self::from_stream(stream, opts)
+        unsafe { Self::from_stream(stream, opts) }
     }
 
-    pub fn from_stream(stream: Stream, opts: ClientOptions) -> Result<Self, WireError> {
+    /// Creates a wire client over an established stream.
+    ///
+    /// # Safety
+    ///
+    /// The same process-global proc-table and proxy lifetime requirements as [`Self::connect`]
+    /// apply.
+    pub unsafe fn from_stream(stream: Stream, opts: ClientOptions) -> Result<Self, WireError> {
         let mut reader_stream = stream.try_clone()?;
         let mut writer_stream = stream.try_clone()?;
 
+        wire_ipc::write_message(
+            &mut writer_stream,
+            &WireIpcMessage::Hello {
+                protocol_version: wire_ipc::PROTOCOL_VERSION,
+                dawn_version: wire_ipc::DAWN_VERSION.trim().to_string(),
+            },
+        )?;
+        writer_stream.flush()?;
+        match wire_ipc::read_message(&mut reader_stream)? {
+            WireIpcMessage::HelloAck { accepted: true } => {}
+            WireIpcMessage::HelloAck { accepted: false } => {
+                return Err(WireError::Protocol(
+                    "wire protocol or Dawn version mismatch",
+                ));
+            }
+            _ => return Err(WireError::Protocol("expected wire hello acknowledgement")),
+        }
+
         let transport = opts.transport;
+        let transport_failure = Arc::new(Mutex::new(None));
         let packet_pool = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
         let (to_writer_tx, to_writer_rx) =
             mpsc::sync_channel::<WireOutboundPacket>(transport.channel_capacity.max(1));
@@ -172,10 +223,13 @@ impl Client {
                         };
                         buf.clear();
                         buf.extend_from_slice(bytes);
-                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(buf));
+                        to_writer_tx.send(WireOutboundPacket::Wire(buf)).is_ok()
                     }
                 },
-                |_msg: &str| {},
+                {
+                    let transport_failure = transport_failure.clone();
+                    move |message: &str| record_transport_failure(&transport_failure, message)
+                },
             )
             .map_err(WireError::Wire)?,
         ));
@@ -270,17 +324,27 @@ impl Client {
             },
         );
 
+        let writer_failure = transport_failure.clone();
         let writer_thread = thread::spawn(move || -> Result<(), WireError> {
-            writer_raw
+            let result = writer_raw
                 .join()
                 .map_err(|_| WireError::Protocol("wire writer thread panicked"))?
-                .map_err(WireError::Wire)
+                .map_err(WireError::Wire);
+            if let Err(error) = &result {
+                record_transport_failure(&writer_failure, error.to_string());
+            }
+            result
         });
+        let reader_failure = transport_failure.clone();
         let reader_thread = thread::spawn(move || -> Result<(), WireError> {
-            reader_raw
+            let result = reader_raw
                 .join()
                 .map_err(|_| WireError::Protocol("wire reader thread panicked"))?
-                .map_err(WireError::Wire)
+                .map_err(WireError::Wire);
+            if let Err(error) = &result {
+                record_transport_failure(&reader_failure, error.to_string());
+            }
+            result
         });
 
         let instance = unsafe { WireClientShim::reserved_instance_to_instance(reserved_instance) };
@@ -291,6 +355,7 @@ impl Client {
             client,
             instance: Some(instance),
             surface,
+            transport_failure,
             stop,
             tx: Some(to_writer_tx),
             writer_thread: Some(writer_thread),
@@ -298,24 +363,30 @@ impl Client {
         })
     }
 
-    pub fn instance(&self) -> Instance {
+    pub fn instance(&self) -> &Instance {
         self.instance
             .as_ref()
             .expect("wire client instance already dropped")
-            .clone()
     }
 
-    pub fn surface(&self) -> Option<Surface> {
-        self.surface.clone()
+    pub fn surface(&self) -> Option<&Surface> {
+        self.surface.as_ref()
     }
 
-    pub fn pump(&self) {
-        if let Ok(mut guard) = self.client.lock() {
-            let _ = guard.flush();
+    pub fn pump(&self) -> Result<(), WireError> {
+        check_transport(&self.transport_failure)?;
+        let mut guard = self
+            .client
+            .lock()
+            .map_err(|_| WireError::LockPoisoned("wire client"))?;
+        if !guard.flush() {
+            return Err(WireError::Wire("wire client flush failed".to_string()));
         }
+        drop(guard);
         if let Some(instance) = self.instance.as_ref() {
             instance.process_events();
         }
+        check_transport(&self.transport_failure)
     }
 
     #[cfg(feature = "wire")]
@@ -335,7 +406,7 @@ impl Client {
             device.as_raw().cast(),
             width,
             height,
-            format as u32,
+            u32::from(format),
             usage.bits(),
         );
         if reserved.texture.is_null() {
@@ -352,7 +423,7 @@ impl Client {
                 reserved.device_handle.into(),
                 width,
                 height,
-                format as u32,
+                u32::from(format),
                 usage.bits(),
             ),
             width,
@@ -363,21 +434,25 @@ impl Client {
 
 impl Drop for Client {
     fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
+        // Dawn guarantees that commands serialized before Disconnect can still be flushed.
+        // Release the owned proxy objects while the transport is alive, flush those releases,
+        // then disconnect to cancel outstanding callbacks.
+        let _ = self.surface.take();
+        let _ = self.instance.take();
+        if let Ok(mut guard) = self.client.lock() {
+            let _ = guard.flush();
+            guard.disconnect();
+            let _ = guard.flush();
+        }
         if let Some(tx) = self.tx.take() {
             let _ = tx.send(WireOutboundPacket::Shutdown);
         }
         if let Some(handle) = self.writer_thread.take() {
             let _ = handle.join();
         }
+        self.stop.store(true, Ordering::Relaxed);
         if let Some(handle) = self.reader_thread.take() {
             let _ = handle.join();
-        }
-        let _ = self.surface.take();
-        let _ = self.instance.take();
-        if let Ok(mut guard) = self.client.lock() {
-            let _ = guard.flush();
-            guard.disconnect();
         }
     }
 }
@@ -385,8 +460,12 @@ impl Drop for Client {
 /// High-level wire server runtime for instance/surface injection and command pumping.
 pub struct Server {
     server: Arc<Mutex<WireServerShim>>,
-    owned_instance: Option<Instance>,
     owned_surface: Option<Surface>,
+    owned_instance: Option<Instance>,
+    // Kept after the wire server and owned native objects so their Drop impls can still call the
+    // native proc table. The wire server itself owns a second lease.
+    _native_proc: Option<WireNativeProcGuard>,
+    transport_failure: TransportFailure,
     stop: Arc<AtomicBool>,
     tx: Option<mpsc::SyncSender<WireOutboundPacket>>,
     writer_thread: Option<JoinHandle<Result<(), WireError>>>,
@@ -399,15 +478,18 @@ impl Server {
         native_surface_desc: Option<&crate::SurfaceDescriptor>,
         opts: ServerOptions,
     ) -> Result<Self, WireError> {
-        let (native_instance, native_surface) = with_native_runtime(|| {
+        let native_proc = WireNativeProcGuard::acquire().map_err(WireError::Wire)?;
+        let (native_instance, native_surface) = {
             let native_instance = Instance::new(None);
-            let native_surface = native_surface_desc.map(|desc| native_instance.create_surface(desc));
+            let native_surface =
+                native_surface_desc.map(|desc| native_instance.create_surface(desc));
             (native_instance, native_surface)
-        })?;
+        };
         let mut server =
             Self::accept_and_inject(socket_name, &native_instance, native_surface.as_ref(), opts)?;
         server.owned_instance = Some(native_instance);
         server.owned_surface = native_surface;
+        server._native_proc = Some(native_proc);
         Ok(server)
     }
 
@@ -420,6 +502,29 @@ impl Server {
         let stream = wire_ipc::bind_and_accept(socket_name)?;
         let mut reader_stream = stream.try_clone()?;
         let mut writer_stream = stream.try_clone()?;
+
+        let compatible = match wire_ipc::read_message(&mut reader_stream)? {
+            WireIpcMessage::Hello {
+                protocol_version,
+                dawn_version,
+            } => {
+                protocol_version == wire_ipc::PROTOCOL_VERSION
+                    && dawn_version == wire_ipc::DAWN_VERSION.trim()
+            }
+            _ => return Err(WireError::Protocol("expected wire hello")),
+        };
+        wire_ipc::write_message(
+            &mut writer_stream,
+            &WireIpcMessage::HelloAck {
+                accepted: compatible,
+            },
+        )?;
+        writer_stream.flush()?;
+        if !compatible {
+            return Err(WireError::Protocol(
+                "wire protocol or Dawn version mismatch",
+            ));
+        }
 
         let instance_handle = match wire_ipc::read_message(&mut reader_stream)? {
             WireIpcMessage::ReserveInstance { id, generation } => {
@@ -449,6 +554,7 @@ impl Server {
         };
 
         let transport = opts.transport;
+        let transport_failure = Arc::new(Mutex::new(None));
         let packet_pool = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
         let (to_writer_tx, to_writer_rx) =
             mpsc::sync_channel::<WireOutboundPacket>(transport.channel_capacity.max(1));
@@ -467,10 +573,13 @@ impl Server {
                         };
                         buf.clear();
                         buf.extend_from_slice(bytes);
-                        let _ = to_writer_tx.send(WireOutboundPacket::Wire(buf));
+                        to_writer_tx.send(WireOutboundPacket::Wire(buf)).is_ok()
                     }
                 },
-                |_msg: &str| {},
+                {
+                    let transport_failure = transport_failure.clone();
+                    move |message: &str| record_transport_failure(&transport_failure, message)
+                },
             )
             .map_err(WireError::Wire)?,
         ));
@@ -545,23 +654,35 @@ impl Server {
             },
         );
 
+        let writer_failure = transport_failure.clone();
         let writer_thread = thread::spawn(move || -> Result<(), WireError> {
-            writer_raw
+            let result = writer_raw
                 .join()
                 .map_err(|_| WireError::Protocol("wire writer thread panicked"))?
-                .map_err(WireError::Wire)
+                .map_err(WireError::Wire);
+            if let Err(error) = &result {
+                record_transport_failure(&writer_failure, error.to_string());
+            }
+            result
         });
+        let reader_failure = transport_failure.clone();
         let reader_thread = thread::spawn(move || -> Result<(), WireError> {
-            reader_raw
+            let result = reader_raw
                 .join()
                 .map_err(|_| WireError::Protocol("wire reader thread panicked"))?
-                .map_err(WireError::Wire)
+                .map_err(WireError::Wire);
+            if let Err(error) = &result {
+                record_transport_failure(&reader_failure, error.to_string());
+            }
+            result
         });
 
         Ok(Self {
             server,
-            owned_instance: None,
             owned_surface: None,
+            owned_instance: None,
+            _native_proc: None,
+            transport_failure,
             stop,
             tx: Some(to_writer_tx),
             writer_thread: Some(writer_thread),
@@ -569,22 +690,32 @@ impl Server {
         })
     }
 
-    pub fn flush(&self) {
-        if let Ok(mut guard) = self.server.lock() {
-            let _ = guard.flush();
+    pub fn flush(&self) -> Result<(), WireError> {
+        check_transport(&self.transport_failure)?;
+        let mut guard = self
+            .server
+            .lock()
+            .map_err(|_| WireError::LockPoisoned("wire server"))?;
+        if !guard.flush() {
+            return Err(WireError::Wire("wire server flush failed".to_string()));
         }
+        drop(guard);
+        check_transport(&self.transport_failure)
     }
 }
 
 impl Drop for Server {
     fn drop(&mut self) {
-        self.stop.store(true, Ordering::Relaxed);
+        if let Ok(mut guard) = self.server.lock() {
+            let _ = guard.flush();
+        }
         if let Some(tx) = self.tx.take() {
             let _ = tx.send(WireOutboundPacket::Shutdown);
         }
         if let Some(handle) = self.writer_thread.take() {
             let _ = handle.join();
         }
+        self.stop.store(true, Ordering::Relaxed);
         if let Some(handle) = self.reader_thread.take() {
             let _ = handle.join();
         }
@@ -597,23 +728,27 @@ pub fn request_adapter_blocking(
     options: Option<RequestAdapterOptions>,
     timeout: Duration,
     poll_interval: Duration,
-    mut pump: impl FnMut(),
+    mut pump: impl FnMut() -> Result<(), WireError>,
 ) -> Result<Adapter, WireError> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<Adapter, String>>();
-    let _future = instance.request_adapter(options.as_ref(), move |status, adapter, message| {
-        if status != RequestAdapterStatus::Success {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-            return;
-        }
-        match adapter {
-            Some(adapter) => {
-                let _ = tx.send(Ok(adapter));
+    let _future = instance.request_adapter(
+        options.as_ref(),
+        crate::CallbackMode::AllowProcessEvents,
+        move |status, adapter, message| {
+            if status != RequestAdapterStatus::Success {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
+                return;
             }
-            None => {
-                let _ = tx.send(Err("request_adapter returned None".to_string()));
+            match adapter {
+                Some(adapter) => {
+                    let _ = tx.send(Ok(adapter));
+                }
+                None => {
+                    let _ = tx.send(Err("request_adapter returned None".to_string()));
+                }
             }
-        }
-    });
+        },
+    );
 
     let started = Instant::now();
     loop {
@@ -624,7 +759,7 @@ pub fn request_adapter_blocking(
                 if started.elapsed() > timeout {
                     return Err(WireError::Timeout("request_adapter_blocking"));
                 }
-                pump();
+                pump()?;
                 instance.process_events();
                 thread::sleep(poll_interval);
             }
@@ -642,23 +777,27 @@ pub fn request_device_blocking(
     desc: Option<&crate::DeviceDescriptor>,
     timeout: Duration,
     poll_interval: Duration,
-    mut pump: impl FnMut(),
+    mut pump: impl FnMut() -> Result<(), WireError>,
 ) -> Result<Device, WireError> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<Device, String>>();
-    let _future = adapter.request_device(desc, move |status, device, message| {
-        if status != crate::RequestDeviceStatus::Success {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-            return;
-        }
-        match device {
-            Some(device) => {
-                let _ = tx.send(Ok(device));
+    let _future = adapter.request_device(
+        desc,
+        crate::CallbackMode::AllowProcessEvents,
+        move |status, device, message| {
+            if status != crate::RequestDeviceStatus::Success {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
+                return;
             }
-            None => {
-                let _ = tx.send(Err("request_device returned None".to_string()));
+            match device {
+                Some(device) => {
+                    let _ = tx.send(Ok(device));
+                }
+                None => {
+                    let _ = tx.send(Err("request_device returned None".to_string()));
+                }
             }
-        }
-    });
+        },
+    );
 
     let started = Instant::now();
     loop {
@@ -669,7 +808,7 @@ pub fn request_device_blocking(
                 if started.elapsed() > timeout {
                     return Err(WireError::Timeout("request_device_blocking"));
                 }
-                pump();
+                pump()?;
                 instance.process_events();
                 thread::sleep(poll_interval);
             }
@@ -677,5 +816,57 @@ pub fn request_device_blocking(
                 return Err(WireError::Protocol("request_device callback disconnected"));
             }
         }
+    }
+}
+
+#[cfg(all(test, dawn_wire_linked))]
+mod tests {
+    use super::*;
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    const SERVER_ROLE: &str = "DAWN_RS_WIRE_TEST_SERVER";
+    const SOCKET_NAME: &str = "DAWN_RS_WIRE_TEST_SOCKET";
+
+    #[test]
+    fn ipc_client_server_handshake() {
+        if std::env::var_os(SERVER_ROLE).is_some() {
+            let socket = std::env::var(SOCKET_NAME).expect("wire test socket");
+            let server = Server::accept_and_inject_native(&socket, None, ServerOptions::default())
+                .expect("accept wire client");
+            thread::sleep(Duration::from_millis(250));
+            drop(server);
+            return;
+        }
+
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let socket = format!("dawn-rs-wire-test-{}-{stamp}", std::process::id());
+        let mut child = Command::new(std::env::current_exe().expect("test executable"))
+            .arg("ipc_client_server_handshake")
+            .arg("--nocapture")
+            .env(SERVER_ROLE, "1")
+            .env(SOCKET_NAME, &socket)
+            .spawn()
+            .expect("spawn wire server test process");
+
+        let client = unsafe {
+            Client::connect(
+                &socket,
+                ClientOptions {
+                    connect_attempts: 500,
+                    connect_delay: Duration::from_millis(10),
+                    ..ClientOptions::default()
+                },
+            )
+        }
+        .expect("connect wire client");
+        client.pump().expect("pump wire client");
+        drop(client);
+
+        let status = child.wait().expect("wait for wire server test process");
+        assert!(status.success(), "wire server test failed: {status}");
     }
 }

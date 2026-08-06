@@ -13,12 +13,30 @@ pub(crate) fn emit_struct(
 ) -> String {
     let name = type_name(&s.name);
     let ffi_name = ffi_type_name(&s.name, c_prefix);
+    let docs = doc_comment(s.def.comment.as_deref());
 
     let mut fields = Vec::new();
     let mut default_fields = Vec::new();
     let mut extra_methods = Vec::new();
     let length_fields = length_field_names(&s.def.members);
     let needs_free_members = index.struct_needs_free_members(&s.name);
+    let required_members = s
+        .def
+        .members
+        .iter()
+        .filter(|member| member_is_required(s, member, index, &length_fields))
+        .collect::<Vec<_>>();
+    let required_checks = required_members
+        .iter()
+        .map(|member| {
+            let field = safe_ident(&snake_case_name(&member.name));
+            format!(
+                "assert!(self.{field}.is_some(), \"required field {name}.{field} is missing\");",
+                name = type_name(&s.name)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
 
     if s.def.extensible.is_extensible() {
         let ext_enum = format!("{}Extension", type_name(&s.name));
@@ -27,7 +45,7 @@ pub(crate) fn emit_struct(
             ext_enum = ext_enum
         ));
         default_fields.push("extensions: Vec::new(),".to_string());
-        let to_ffi_body = emit_struct_to_ffi_body(
+        let mut to_ffi_body = emit_struct_to_ffi_body(
             s,
             index,
             c_prefix,
@@ -35,6 +53,9 @@ pub(crate) fn emit_struct(
             callback_info_map,
             callback_info_mode_map,
         );
+        if !required_checks.is_empty() {
+            to_ffi_body = format!("{required_checks}\n{to_ffi_body}");
+        }
         extra_methods.push(format!(
             r#"pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
         let mut storage = ChainedStructStorage::new();
@@ -52,7 +73,7 @@ pub(crate) fn emit_struct(
         }}"#
         ));
     } else {
-        let to_ffi_body = emit_struct_to_ffi_body(
+        let mut to_ffi_body = emit_struct_to_ffi_body(
             s,
             index,
             c_prefix,
@@ -60,6 +81,9 @@ pub(crate) fn emit_struct(
             callback_info_map,
             callback_info_mode_map,
         );
+        if !required_checks.is_empty() {
+            to_ffi_body = format!("{required_checks}\n{to_ffi_body}");
+        }
         extra_methods.push(
             format!(
                 r#"    pub(crate) fn to_ffi(&self) -> (ffi::{ffi_name}, ChainedStructStorage) {{
@@ -97,20 +121,15 @@ pub(crate) fn emit_struct(
         let _ = param_ty;
     }
 
-    if needs_free_members {
-        fields.push(format!(
-            r#"#[doc(hidden)]
-    pub(crate) _free_members: Option<ffi::{ffi_name}>,"#,
-            ffi_name = ffi_name
-        ));
-        default_fields.push("        _free_members: None,".to_string());
-    }
-
     let fields_block = fields.join("\n");
     let default_fields_block = default_fields.join("\n");
-    let mut from_ffi_body = emit_struct_from_ffi_body(s, index);
+    let mut from_ffi_body = emit_struct_from_ffi_body(s, index, true);
     if from_ffi_body.is_empty() {
         from_ffi_body = "let _ = value;\n        Self::default()".to_string();
+    } else if needs_free_members {
+        let free_fn = free_members_fn_name(&s.name);
+        from_ffi_body =
+            format!("let result = {from_ffi_body};\nunsafe {{ ffi::{free_fn}(value) }};\nresult");
     }
     let from_ffi = format!(
         r#"    pub(crate) fn from_ffi(value: ffi::{ffi_name}) -> Self {{
@@ -119,52 +138,28 @@ pub(crate) fn emit_struct(
         ffi_name = ffi_name,
         from_ffi_body = indent_block(&from_ffi_body, 8)
     );
-
-    let mut free_members = String::new();
-    if needs_free_members {
-        let free_fn = free_members_fn_name(&s.name);
-        free_members = format!(
-            r#"    pub(crate) fn free_members(value: ffi::{ffi_name}) {{
-        unsafe {{ ffi::{free_fn}(value) }};
-    }}"#,
-            ffi_name = ffi_name,
-            free_fn = free_fn
-        );
+    let mut from_ffi_borrowed_body = emit_struct_from_ffi_body(s, index, false);
+    if from_ffi_borrowed_body.is_empty() {
+        from_ffi_borrowed_body = "let _ = value;\n        Self::default()".to_string();
     }
+    let from_ffi_borrowed = format!(
+        r#"    pub(crate) fn from_ffi_borrowed(value: ffi::{ffi_name}) -> Self {{
+{from_ffi_borrowed_body}
+    }}"#,
+        ffi_name = ffi_name,
+        from_ffi_borrowed_body = indent_block(&from_ffi_borrowed_body, 8)
+    );
 
     let mut extra_blocks = extra_methods.clone();
     if !from_ffi.is_empty() {
         extra_blocks.push(from_ffi);
     }
-    if !free_members.is_empty() {
-        extra_blocks.push(free_members);
-    }
+    extra_blocks.push(from_ffi_borrowed);
     let extra_methods_block = extra_blocks.join("\n\n");
-    let drop_impl = if needs_free_members {
-        let free_fn = free_members_fn_name(&s.name);
+
+    let default_impl = if required_members.is_empty() {
         format!(
-            r#"impl Drop for {name} {{
-    fn drop(&mut self) {{
-        if let Some(value) = self._free_members.take() {{
-            unsafe {{ ffi::{free_fn}(value) }};
-        }}
-    }}
-}}
-
-"#,
-            name = name,
-            free_fn = free_fn
-        )
-    } else {
-        String::new()
-    };
-
-    let struct_block = format!(
-        r#"pub struct {name} {{
-{fields}
-}}
-
-impl Default for {name} {{
+            r#"impl Default for {name} {{
     fn default() -> Self {{
         Self {{
 {defaults}
@@ -172,33 +167,125 @@ impl Default for {name} {{
     }}
 }}
 
-impl {name} {{
-    pub fn new() -> Self {{
-        Self::default()
+"#,
+            name = name,
+            defaults = default_fields_block,
+        )
+    } else {
+        String::new()
+    };
+    let constructor_signature = required_members
+        .iter()
+        .map(|member| {
+            let field = safe_ident(&snake_case_name(&member.name));
+            let ty = builder_param_type(member, index);
+            format!("{field}: {ty}")
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let constructor_body = if required_members.is_empty() {
+        "Self::default()".to_string()
+    } else {
+        let required_names = required_members
+            .iter()
+            .map(|member| safe_ident(&snake_case_name(&member.name)))
+            .collect::<HashSet<_>>();
+        let mut constructor_fields = Vec::new();
+        if s.def.extensible.is_extensible() {
+            constructor_fields.push("extensions: Vec::new(),".to_string());
+        }
+        for member in &s.def.members {
+            if length_fields.contains(&member.name) {
+                continue;
+            }
+            let field = safe_ident(&snake_case_name(&member.name));
+            if required_names.contains(&field) {
+                constructor_fields.push(format!("{field}: Some({field}),"));
+            } else {
+                let value = member_default_expr(member, index, c_prefix, constant_map)
+                    .map(|expr| format!("Some({expr})"))
+                    .unwrap_or_else(|| "None".to_string());
+                constructor_fields.push(format!("{field}: {value},"));
+            }
+        }
+        format!(
+            "Self {{\n{}\n        }}",
+            indent_block(&constructor_fields.join("\n"), 12)
+        )
+    };
+
+    let struct_block = format!(
+        r#"{docs}pub struct {name} {{
+{fields}
+}}
+
+{default_impl}impl {name} {{
+    pub fn new({constructor_signature}) -> Self {{
+        {constructor_body}
     }}
 {extra_methods}
 }}
 
 "#,
         name = name,
+        docs = docs,
         fields = fields_block,
-        defaults = default_fields_block,
+        default_impl = default_impl,
+        constructor_signature = constructor_signature,
+        constructor_body = constructor_body,
         extra_methods = extra_methods_block
     );
-    format!(
-        "{struct_block}{drop_impl}",
-        struct_block = struct_block,
-        drop_impl = drop_impl
-    )
+    struct_block
 }
 
-pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -> String {
+fn member_is_required(
+    structure: &StructureModel,
+    member: &RecordMember,
+    index: &TypeIndex,
+    length_fields: &HashSet<String>,
+) -> bool {
+    if structure.def.is_output()
+        || length_fields.contains(&member.name)
+        || member.optional
+        || member.default.is_some()
+        || index.is_callback_info(&member.member_type)
+        || (index.struct_defaultable(&member.member_type) && member.annotation.is_value())
+    {
+        return false;
+    }
+
+    !member.length.as_ref().is_some_and(|length| match length {
+        LengthValue::String(name) => structure
+            .def
+            .members
+            .iter()
+            .find(|candidate| candidate.name == *name)
+            .is_some_and(|count| count.default.is_some()),
+        LengthValue::Number(_) => false,
+    })
+}
+
+pub(crate) fn emit_struct_from_ffi_body(
+    s: &StructureModel,
+    index: &TypeIndex,
+    take_ownership: bool,
+) -> String {
     let mut fields = Vec::new();
     let length_fields = length_field_names(&s.def.members);
 
     if s.def.extensible.is_extensible() {
-        fields.push("extensions: Vec::new(),".to_string());
+        let extension_ty = format!("{}Extension", type_name(&s.name));
+        let from_chain = if take_ownership {
+            "from_chain"
+        } else {
+            "from_chain_borrowed"
+        };
+        fields.push(format!(
+            "extensions: unsafe {{ {extension_ty}::{from_chain}(value.nextInChain) }},"
+        ));
     }
+
+    let raw_objects_are_borrowed = !take_ownership || index.struct_needs_free_members(&s.name);
 
     for member in &s.def.members {
         if length_fields.contains(&member.name) {
@@ -231,8 +318,67 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
                 )
             } else if index.is_object(&member.member_type) {
                 let obj = type_name(&member.member_type);
-                format!(
-                    r#"if value.{ffi_field}.is_null() {{
+                if member.array_element_optional == Some(true) && raw_objects_are_borrowed {
+                    format!(
+                        r#"if value.{ffi_field}.is_null() {{
+            None
+        }} else {{
+            Some(
+                unsafe {{ std::slice::from_raw_parts(value.{ffi_field}, {len_expr}) }}
+                    .iter()
+                    .map(|raw| {{
+                        if raw.is_null() {{
+                            None
+                        }} else {{
+                            unsafe {{ ffi::wgpu{obj}AddRef(*raw) }};
+                            Some(unsafe {{ {obj}::from_raw(*raw) }})
+                        }}
+                    }})
+                    .collect(),
+            )
+        }}"#,
+                        ffi_field = ffi_field,
+                        len_expr = len_expr,
+                        obj = obj
+                    )
+                } else if member.array_element_optional == Some(true) {
+                    format!(
+                        r#"if value.{ffi_field}.is_null() {{
+            None
+        }} else {{
+            Some(
+                unsafe {{ std::slice::from_raw_parts(value.{ffi_field}, {len_expr}) }}
+                    .iter()
+                    .map(|raw| if raw.is_null() {{ None }} else {{ Some(unsafe {{ {obj}::from_raw(*raw) }}) }})
+                    .collect(),
+            )
+        }}"#,
+                        ffi_field = ffi_field,
+                        len_expr = len_expr,
+                        obj = obj
+                    )
+                } else if raw_objects_are_borrowed {
+                    format!(
+                        r#"if value.{ffi_field}.is_null() {{
+            None
+        }} else {{
+            Some(
+                unsafe {{ std::slice::from_raw_parts(value.{ffi_field}, {len_expr}) }}
+                    .iter()
+                    .map(|raw| {{
+                        unsafe {{ ffi::wgpu{obj}AddRef(*raw) }};
+                        unsafe {{ {obj}::from_raw(*raw) }}
+                    }})
+                    .collect(),
+            )
+        }}"#,
+                        ffi_field = ffi_field,
+                        len_expr = len_expr,
+                        obj = obj
+                    )
+                } else {
+                    format!(
+                        r#"if value.{ffi_field}.is_null() {{
             None
         }} else {{
             Some(
@@ -242,10 +388,11 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
                     .collect(),
             )
         }}"#,
-                    ffi_field = ffi_field,
-                    len_expr = len_expr,
-                    obj = obj
-                )
+                        ffi_field = ffi_field,
+                        len_expr = len_expr,
+                        obj = obj
+                    )
+                }
             } else if index.is_enum(&member.member_type) || index.is_bitmask(&member.member_type) {
                 let rust_ty = type_name(&member.member_type);
                 format!(
@@ -265,6 +412,11 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
                 )
             } else if index.struct_extensible(&member.member_type).is_some() {
                 let rust_ty = type_name(&member.member_type);
+                let from_ffi_fn = if take_ownership && !index.struct_needs_free_members(&s.name) {
+                    "from_ffi"
+                } else {
+                    "from_ffi_borrowed"
+                };
                 format!(
                     r#"if value.{ffi_field}.is_null() {{
             None
@@ -272,13 +424,14 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
             Some(
                 unsafe {{ std::slice::from_raw_parts(value.{ffi_field}, {len_expr}) }}
                     .iter()
-                    .map(|raw| {rust_ty}::from_ffi(*raw))
+                    .map(|raw| {rust_ty}::{from_ffi_fn}(*raw))
                     .collect(),
             )
         }}"#,
                     ffi_field = ffi_field,
                     len_expr = len_expr,
-                    rust_ty = rust_ty
+                    rust_ty = rust_ty,
+                    from_ffi_fn = from_ffi_fn
                 )
             } else {
                 format!(
@@ -313,7 +466,27 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
             "None".to_string()
         } else if index.is_object(&member.member_type) {
             let obj = type_name(&member.member_type);
-            if member.optional {
+            if raw_objects_are_borrowed && member.optional {
+                format!(
+                    r#"if value.{ffi_field}.is_null() {{
+            None
+        }} else {{
+            unsafe {{ ffi::wgpu{obj}AddRef(value.{ffi_field}) }};
+            Some(unsafe {{ {obj}::from_raw(value.{ffi_field}) }})
+        }}"#,
+                    ffi_field = ffi_field,
+                    obj = obj
+                )
+            } else if raw_objects_are_borrowed {
+                format!(
+                    r#"{{
+            unsafe {{ ffi::wgpu{obj}AddRef(value.{ffi_field}) }};
+            Some(unsafe {{ {obj}::from_raw(value.{ffi_field}) }})
+        }}"#,
+                    ffi_field = ffi_field,
+                    obj = obj
+                )
+            } else if member.optional {
                 format!(
                     r#"if value.{ffi_field}.is_null() {{
             None
@@ -334,23 +507,35 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
             && member.annotation.is_value()
         {
             let rust_ty = type_name(&member.member_type);
+            let from_ffi_fn = if take_ownership && !index.struct_needs_free_members(&s.name) {
+                "from_ffi"
+            } else {
+                "from_ffi_borrowed"
+            };
             format!(
-                r#"Some({rust_ty}::from_ffi(value.{ffi_field}))"#,
+                r#"Some({rust_ty}::{from_ffi_fn}(value.{ffi_field}))"#,
                 rust_ty = rust_ty,
-                ffi_field = ffi_field
+                ffi_field = ffi_field,
+                from_ffi_fn = from_ffi_fn
             )
         } else if index.struct_extensible(&member.member_type).is_some()
             && (member.annotation.is_const_ptr() || member.annotation.is_mut_ptr())
         {
             let rust_ty = type_name(&member.member_type);
+            let from_ffi_fn = if take_ownership && !index.struct_needs_free_members(&s.name) {
+                "from_ffi"
+            } else {
+                "from_ffi_borrowed"
+            };
             format!(
                 r#"if value.{ffi_field}.is_null() {{
             None
         }} else {{
-            Some({rust_ty}::from_ffi(unsafe {{ *value.{ffi_field} }}))
+            Some({rust_ty}::{from_ffi_fn}(unsafe {{ *value.{ffi_field} }}))
         }}"#,
                 ffi_field = ffi_field,
-                rust_ty = rust_ty
+                rust_ty = rust_ty,
+                from_ffi_fn = from_ffi_fn
             )
         } else if member.member_type == "bool" {
             format!("Some(value.{ffi_field} != 0)", ffi_field = ffi_field)
@@ -363,10 +548,6 @@ pub(crate) fn emit_struct_from_ffi_body(s: &StructureModel, index: &TypeIndex) -
             field_name = field_name,
             value_expr = value_expr
         ));
-    }
-
-    if index.struct_needs_free_members(&s.name) {
-        fields.push("    _free_members: Some(value),".to_string());
     }
 
     if fields.is_empty() {
@@ -476,10 +657,16 @@ pub(crate) fn emit_struct_to_ffi_body(
                     body.push(assign);
                 }
             } else if index.is_object(&member.member_type) {
+                let mapping = if member.array_element_optional == Some(true) {
+                    "v.as_ref().map(|v| v.as_raw()).unwrap_or(std::ptr::null_mut())"
+                } else {
+                    "v.as_raw()"
+                };
                 body.push(format!(
-                    r#"let raw_vec: Vec<ffi::{prefix}{obj}> = values.iter().map(|v| v.as_raw()).collect();"#,
+                    r#"let raw_vec: Vec<ffi::{prefix}{obj}> = values.iter().map(|v| {mapping}).collect();"#,
                     prefix = c_prefix,
-                    obj = type_name(&member.member_type)
+                    obj = type_name(&member.member_type),
+                    mapping = mapping,
                 ));
                 body.push("let ptr = storage.push_vec(raw_vec);".to_string());
                 body.push(format!(r#"raw.{ffi_field} = ptr;"#, ffi_field = ffi_field));
@@ -609,7 +796,7 @@ pub(crate) fn emit_struct_to_ffi_body(
                     .copied()
                     .unwrap_or(false);
                 let mode_line = if has_mode {
-                    "    let mode = info.mode.unwrap_or(CallbackMode::AllowSpontaneous);\n"
+                    "    let mode = info.mode.unwrap_or(CallbackMode::AllowProcessEvents);\n"
                 } else {
                     ""
                 };
@@ -619,9 +806,22 @@ pub(crate) fn emit_struct_to_ffi_body(
                     ""
                 };
                 let default_mode_field = if has_mode {
-                    "        mode: CallbackMode::AllowSpontaneous.into(),\n"
+                    "        mode: CallbackMode::AllowProcessEvents.into(),\n"
                 } else {
                     ""
+                };
+                let callback_userdata_storage = if callback_info_is_persistent(callback_fn_name) {
+                    format!(
+                        "        storage.push_callback_userdata(CallbackUserdata::new_mutex::<{callback_ty}>(userdata));\n",
+                        callback_ty = callback_ty
+                    )
+                } else {
+                    String::new()
+                };
+                let callback_box_wrapper = if callback_info_is_persistent(callback_fn_name) {
+                    "        let callback_box = Box::new(std::sync::Mutex::new(Some(callback_box)));\n"
+                } else {
+                    "        let callback_box = Box::new(Some(callback_box));\n"
                 };
 
                 lines.push(format!(
@@ -630,9 +830,9 @@ pub(crate) fn emit_struct_to_ffi_body(
     let callback = callback_slot.take();
     let (callback_ptr, userdata1): (ffi::{ffi_callback_ty}, *mut std::ffi::c_void) = if let Some(callback) = callback {{
         let callback_box: {callback_ty} = callback;
-        let callback_box = Box::new(Some(callback_box));
+{callback_box_wrapper}
         let userdata = Box::into_raw(callback_box).cast::<std::ffi::c_void>();
-        (Some({trampoline}), userdata)
+{callback_userdata_storage}        (Some({trampoline}), userdata)
     }} else {{
         (None, std::ptr::null_mut())
     }};
@@ -654,6 +854,8 @@ pub(crate) fn emit_struct_to_ffi_body(
                     callback_ty = callback_ty,
                     ffi_callback_ty = ffi_callback_ty,
                     trampoline = trampoline,
+                    callback_userdata_storage = callback_userdata_storage,
+                    callback_box_wrapper = callback_box_wrapper,
                     mode_line = mode_line,
                     mode_field = mode_field,
                     default_mode_field = default_mode_field,
@@ -738,7 +940,11 @@ pub(crate) fn struct_field_type(member: &RecordMember, index: &TypeIndex) -> Str
         || index.is_callback_info(&member.member_type);
 
     let ty = if member.length.is_some() {
-        format!(r#"Vec<{base}>"#, base = base)
+        if member.array_element_optional == Some(true) && index.is_object(&member.member_type) {
+            format!(r#"Vec<Option<{base}>>"#, base = base)
+        } else {
+            format!(r#"Vec<{base}>"#, base = base)
+        }
     } else if member.member_type.contains('*') {
         base
     } else if member.annotation.is_const_ptr() && !is_struct {
@@ -762,7 +968,11 @@ pub(crate) fn builder_param_type(member: &RecordMember, index: &TypeIndex) -> St
         || index.is_callback_info(&member.member_type);
 
     if member.length.is_some() {
-        format!(r#"Vec<{base}>"#, base = base)
+        if member.array_element_optional == Some(true) && index.is_object(&member.member_type) {
+            format!(r#"Vec<Option<{base}>>"#, base = base)
+        } else {
+            format!(r#"Vec<{base}>"#, base = base)
+        }
     } else if member.member_type.contains('*') {
         base
     } else if member.annotation.is_const_ptr() && !is_struct {
@@ -801,9 +1011,11 @@ fn member_default_expr(
             )
         } else if index.is_bitmask(ty) {
             format!(
-                "{mask_ty}::from_bits_truncate({value} as u64)",
+                "{mask_ty}::from_bits_retain({value} as u64)",
                 mask_ty = type_name(ty)
             )
+        } else if ty == "float" || ty == "double" {
+            format!("{value}.0")
         } else {
             value.to_string()
         }
@@ -827,10 +1039,8 @@ fn member_default_expr(
                 ))
             } else if index.is_bitmask(ty) {
                 Some(format!(r#"{}::{}"#, type_name(ty), bitmask_variant_name(s)))
-            } else if let Some(const_name) = constant_map.get(s) {
-                Some(const_name.clone())
             } else {
-                None
+                constant_map.get(s).cloned()
             }
         }
         _ => None,
@@ -869,4 +1079,14 @@ pub(crate) fn is_char_string_list(member: &RecordMember) -> bool {
     member.member_type == "char"
         && member.length.is_some()
         && member.annotation.is_const_const_ptr()
+}
+
+fn callback_info_is_persistent(callback_name: &str) -> bool {
+    matches!(
+        callback_name,
+        "device lost callback"
+            | "uncaptured error callback"
+            | "dawn load cache data callback"
+            | "dawn store cache data callback"
+    )
 }

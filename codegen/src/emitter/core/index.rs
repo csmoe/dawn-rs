@@ -1,13 +1,15 @@
 use crate::api_model::{ApiModel, CallbackFunctionModel, FunctionModel, StructureModel};
 use crate::emitter::core::is_char_string_list;
 use crate::emitter::core::names::{enum_variant_name_camel, shouty_snake_case_name, type_name};
-use std::collections::HashMap;
+use crate::parser::LengthValue;
+use std::collections::{HashMap, HashSet};
 
 pub(crate) struct TypeIndex {
     objects: HashMap<String, ()>,
     enums: HashMap<String, ()>,
     bitmasks: HashMap<String, ()>,
     structs: HashMap<String, bool>,
+    structs_defaultable: HashMap<String, ()>,
     callback_infos: HashMap<String, ()>,
     structs_need_free: HashMap<String, ()>,
 }
@@ -40,11 +42,58 @@ impl TypeIndex {
             callback_infos.insert(c.name.clone(), ());
         }
 
+        let mut structs_defaultable = HashMap::new();
+        loop {
+            let mut changed = false;
+            for s in &model.structures {
+                if structs_defaultable.contains_key(&s.name) {
+                    continue;
+                }
+                let length_fields = s
+                    .def
+                    .members
+                    .iter()
+                    .filter_map(|member| match &member.length {
+                        Some(LengthValue::String(name)) => Some(name.as_str()),
+                        _ => None,
+                    })
+                    .collect::<HashSet<_>>();
+                let defaultable = s.def.is_output()
+                    || s.def.members.iter().all(|member| {
+                        let length_has_default =
+                            member.length.as_ref().is_some_and(|length| match length {
+                                LengthValue::String(name) => s
+                                    .def
+                                    .members
+                                    .iter()
+                                    .find(|candidate| candidate.name == *name)
+                                    .is_some_and(|count| count.default.is_some()),
+                                LengthValue::Number(_) => false,
+                            });
+                        length_fields.contains(member.name.as_str())
+                            || member.optional
+                            || member.default.is_some()
+                            || length_has_default
+                            || callback_infos.contains_key(&member.member_type)
+                            || (member.annotation.is_value()
+                                && structs_defaultable.contains_key(&member.member_type))
+                    });
+                if defaultable {
+                    structs_defaultable.insert(s.name.clone(), ());
+                    changed = true;
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+
         Self {
             objects,
             enums,
             bitmasks,
             structs,
+            structs_defaultable,
             callback_infos,
             structs_need_free,
         }
@@ -64,6 +113,10 @@ impl TypeIndex {
 
     pub(crate) fn struct_extensible(&self, name: &str) -> Option<bool> {
         self.structs.get(name).copied()
+    }
+
+    pub(crate) fn struct_defaultable(&self, name: &str) -> bool {
+        self.structs_defaultable.contains_key(name)
     }
 
     pub(crate) fn is_callback_info(&self, name: &str) -> bool {
@@ -136,10 +189,7 @@ pub(crate) fn build_stype_map(model: &ApiModel, c_prefix: &str) -> HashMap<Strin
 }
 
 fn struct_needs_free_members(s: &StructureModel) -> bool {
-    let is_out = s.def.extensible.is_output()
-        || s.def.chained.as_deref() == Some("out")
-        || s.def.out == Some(true);
-    if !is_out {
+    if !s.def.is_output() {
         return false;
     }
     s.def.members.iter().any(|member| {

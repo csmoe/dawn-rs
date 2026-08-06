@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 mod enums {
     #![allow(dead_code, unused_imports)]
     use crate::ffi;
@@ -27,6 +28,7 @@ mod enums {
         FilteringParameters,
         SwizzleAssignment,
         LinearIndexing,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUWGSLLanguageFeatureName> for WGSLLanguageFeatureName {
         fn from(value: ffi::WGPUWGSLLanguageFeatureName) -> Self {
@@ -100,7 +102,7 @@ mod enums {
                 ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing => {
                     WGSLLanguageFeatureName::LinearIndexing
                 }
-                _ => WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures,
+                _ => WGSLLanguageFeatureName::UnknownValue(value as u32),
             }
         }
     }
@@ -176,6 +178,9 @@ mod enums {
                 WGSLLanguageFeatureName::LinearIndexing => {
                     ffi::WGPUWGSLLanguageFeatureName_WGPUWGSLLanguageFeatureName_LinearIndexing
                 }
+                WGSLLanguageFeatureName::UnknownValue(value) => {
+                    value as ffi::WGPUWGSLLanguageFeatureName
+                }
             }
         }
     }
@@ -185,6 +190,7 @@ mod enums {
         IntegratedGpu,
         Cpu,
         Unknown,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUAdapterType> for AdapterType {
         fn from(value: ffi::WGPUAdapterType) -> Self {
@@ -197,7 +203,7 @@ mod enums {
                 }
                 ffi::WGPUAdapterType_WGPUAdapterType_CPU => AdapterType::Cpu,
                 ffi::WGPUAdapterType_WGPUAdapterType_Unknown => AdapterType::Unknown,
-                _ => AdapterType::DiscreteGpu,
+                _ => AdapterType::UnknownValue(value as u32),
             }
         }
     }
@@ -212,6 +218,7 @@ mod enums {
                 }
                 AdapterType::Cpu => ffi::WGPUAdapterType_WGPUAdapterType_CPU,
                 AdapterType::Unknown => ffi::WGPUAdapterType_WGPUAdapterType_Unknown,
+                AdapterType::UnknownValue(value) => value as ffi::WGPUAdapterType,
             }
         }
     }
@@ -221,6 +228,7 @@ mod enums {
         ClampToEdge,
         Repeat,
         MirrorRepeat,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUAddressMode> for AddressMode {
         fn from(value: ffi::WGPUAddressMode) -> Self {
@@ -233,7 +241,7 @@ mod enums {
                 ffi::WGPUAddressMode_WGPUAddressMode_MirrorRepeat => {
                     AddressMode::MirrorRepeat
                 }
-                _ => AddressMode::Undefined,
+                _ => AddressMode::UnknownValue(value as u32),
             }
         }
     }
@@ -248,6 +256,7 @@ mod enums {
                 AddressMode::MirrorRepeat => {
                     ffi::WGPUAddressMode_WGPUAddressMode_MirrorRepeat
                 }
+                AddressMode::UnknownValue(value) => value as ffi::WGPUAddressMode,
             }
         }
     }
@@ -256,6 +265,7 @@ mod enums {
         Opaque,
         Premultiplied,
         Unpremultiplied,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUAlphaMode> for AlphaMode {
         fn from(value: ffi::WGPUAlphaMode) -> Self {
@@ -267,7 +277,7 @@ mod enums {
                 ffi::WGPUAlphaMode_WGPUAlphaMode_Unpremultiplied => {
                     AlphaMode::Unpremultiplied
                 }
-                _ => AlphaMode::Opaque,
+                _ => AlphaMode::UnknownValue(value as u32),
             }
         }
     }
@@ -281,6 +291,7 @@ mod enums {
                 AlphaMode::Unpremultiplied => {
                     ffi::WGPUAlphaMode_WGPUAlphaMode_Unpremultiplied
                 }
+                AlphaMode::UnknownValue(value) => value as ffi::WGPUAlphaMode,
             }
         }
     }
@@ -295,6 +306,7 @@ mod enums {
         Vulkan,
         OpenGL,
         OpenGLes,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUBackendType> for BackendType {
         fn from(value: ffi::WGPUBackendType) -> Self {
@@ -308,7 +320,7 @@ mod enums {
                 ffi::WGPUBackendType_WGPUBackendType_Vulkan => BackendType::Vulkan,
                 ffi::WGPUBackendType_WGPUBackendType_OpenGL => BackendType::OpenGL,
                 ffi::WGPUBackendType_WGPUBackendType_OpenGLES => BackendType::OpenGLes,
-                _ => BackendType::Undefined,
+                _ => BackendType::UnknownValue(value as u32),
             }
         }
     }
@@ -324,6 +336,7 @@ mod enums {
                 BackendType::Vulkan => ffi::WGPUBackendType_WGPUBackendType_Vulkan,
                 BackendType::OpenGL => ffi::WGPUBackendType_WGPUBackendType_OpenGL,
                 BackendType::OpenGLes => ffi::WGPUBackendType_WGPUBackendType_OpenGLES,
+                BackendType::UnknownValue(value) => value as ffi::WGPUBackendType,
             }
         }
     }
@@ -347,6 +360,7 @@ mod enums {
         OneMinusSrc1,
         Src1Alpha,
         OneMinusSrc1Alpha,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUBlendFactor> for BlendFactor {
         fn from(value: ffi::WGPUBlendFactor) -> Self {
@@ -385,7 +399,7 @@ mod enums {
                 ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1Alpha => {
                     BlendFactor::OneMinusSrc1Alpha
                 }
-                _ => BlendFactor::Undefined,
+                _ => BlendFactor::UnknownValue(value as u32),
             }
         }
     }
@@ -426,6 +440,7 @@ mod enums {
                 BlendFactor::OneMinusSrc1Alpha => {
                     ffi::WGPUBlendFactor_WGPUBlendFactor_OneMinusSrc1Alpha
                 }
+                BlendFactor::UnknownValue(value) => value as ffi::WGPUBlendFactor,
             }
         }
     }
@@ -437,6 +452,7 @@ mod enums {
         ReverseSubtract,
         Min,
         Max,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUBlendOperation> for BlendOperation {
         fn from(value: ffi::WGPUBlendOperation) -> Self {
@@ -453,7 +469,7 @@ mod enums {
                 }
                 ffi::WGPUBlendOperation_WGPUBlendOperation_Min => BlendOperation::Min,
                 ffi::WGPUBlendOperation_WGPUBlendOperation_Max => BlendOperation::Max,
-                _ => BlendOperation::Undefined,
+                _ => BlendOperation::UnknownValue(value as u32),
             }
         }
     }
@@ -472,6 +488,7 @@ mod enums {
                 }
                 BlendOperation::Min => ffi::WGPUBlendOperation_WGPUBlendOperation_Min,
                 BlendOperation::Max => ffi::WGPUBlendOperation_WGPUBlendOperation_Max,
+                BlendOperation::UnknownValue(value) => value as ffi::WGPUBlendOperation,
             }
         }
     }
@@ -482,6 +499,7 @@ mod enums {
         Uniform,
         Storage,
         ReadOnlyStorage,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUBufferBindingType> for BufferBindingType {
         fn from(value: ffi::WGPUBufferBindingType) -> Self {
@@ -501,7 +519,7 @@ mod enums {
                 ffi::WGPUBufferBindingType_WGPUBufferBindingType_ReadOnlyStorage => {
                     BufferBindingType::ReadOnlyStorage
                 }
-                _ => BufferBindingType::BindingNotUsed,
+                _ => BufferBindingType::UnknownValue(value as u32),
             }
         }
     }
@@ -523,6 +541,9 @@ mod enums {
                 BufferBindingType::ReadOnlyStorage => {
                     ffi::WGPUBufferBindingType_WGPUBufferBindingType_ReadOnlyStorage
                 }
+                BufferBindingType::UnknownValue(value) => {
+                    value as ffi::WGPUBufferBindingType
+                }
             }
         }
     }
@@ -531,6 +552,7 @@ mod enums {
         Unmapped,
         Pending,
         Mapped,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUBufferMapState> for BufferMapState {
         fn from(value: ffi::WGPUBufferMapState) -> Self {
@@ -544,7 +566,7 @@ mod enums {
                 ffi::WGPUBufferMapState_WGPUBufferMapState_Mapped => {
                     BufferMapState::Mapped
                 }
-                _ => BufferMapState::Unmapped,
+                _ => BufferMapState::UnknownValue(value as u32),
             }
         }
     }
@@ -560,6 +582,7 @@ mod enums {
                 BufferMapState::Mapped => {
                     ffi::WGPUBufferMapState_WGPUBufferMapState_Mapped
                 }
+                BufferMapState::UnknownValue(value) => value as ffi::WGPUBufferMapState,
             }
         }
     }
@@ -568,6 +591,7 @@ mod enums {
         WaitAnyOnly,
         AllowProcessEvents,
         AllowSpontaneous,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCallbackMode> for CallbackMode {
         fn from(value: ffi::WGPUCallbackMode) -> Self {
@@ -581,7 +605,7 @@ mod enums {
                 ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous => {
                     CallbackMode::AllowSpontaneous
                 }
-                _ => CallbackMode::WaitAnyOnly,
+                _ => CallbackMode::UnknownValue(value as u32),
             }
         }
     }
@@ -597,6 +621,7 @@ mod enums {
                 CallbackMode::AllowSpontaneous => {
                     ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous
                 }
+                CallbackMode::UnknownValue(value) => value as ffi::WGPUCallbackMode,
             }
         }
     }
@@ -611,6 +636,7 @@ mod enums {
         NotEqual,
         GreaterEqual,
         Always,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCompareFunction> for CompareFunction {
         fn from(value: ffi::WGPUCompareFunction) -> Self {
@@ -642,7 +668,7 @@ mod enums {
                 ffi::WGPUCompareFunction_WGPUCompareFunction_Always => {
                     CompareFunction::Always
                 }
-                _ => CompareFunction::Undefined,
+                _ => CompareFunction::UnknownValue(value as u32),
             }
         }
     }
@@ -676,6 +702,7 @@ mod enums {
                 CompareFunction::Always => {
                     ffi::WGPUCompareFunction_WGPUCompareFunction_Always
                 }
+                CompareFunction::UnknownValue(value) => value as ffi::WGPUCompareFunction,
             }
         }
     }
@@ -683,6 +710,7 @@ mod enums {
     pub enum CompilationInfoRequestStatus {
         Success,
         CallbackCancelled,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCompilationInfoRequestStatus> for CompilationInfoRequestStatus {
         fn from(value: ffi::WGPUCompilationInfoRequestStatus) -> Self {
@@ -693,7 +721,7 @@ mod enums {
                 ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_CallbackCancelled => {
                     CompilationInfoRequestStatus::CallbackCancelled
                 }
-                _ => CompilationInfoRequestStatus::Success,
+                _ => CompilationInfoRequestStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -706,6 +734,9 @@ mod enums {
                 CompilationInfoRequestStatus::CallbackCancelled => {
                     ffi::WGPUCompilationInfoRequestStatus_WGPUCompilationInfoRequestStatus_CallbackCancelled
                 }
+                CompilationInfoRequestStatus::UnknownValue(value) => {
+                    value as ffi::WGPUCompilationInfoRequestStatus
+                }
             }
         }
     }
@@ -714,6 +745,7 @@ mod enums {
         Error,
         Warning,
         Info,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCompilationMessageType> for CompilationMessageType {
         fn from(value: ffi::WGPUCompilationMessageType) -> Self {
@@ -727,7 +759,7 @@ mod enums {
                 ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Info => {
                     CompilationMessageType::Info
                 }
-                _ => CompilationMessageType::Error,
+                _ => CompilationMessageType::UnknownValue(value as u32),
             }
         }
     }
@@ -743,6 +775,9 @@ mod enums {
                 CompilationMessageType::Info => {
                     ffi::WGPUCompilationMessageType_WGPUCompilationMessageType_Info
                 }
+                CompilationMessageType::UnknownValue(value) => {
+                    value as ffi::WGPUCompilationMessageType
+                }
             }
         }
     }
@@ -755,6 +790,7 @@ mod enums {
         G,
         B,
         A,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUComponentSwizzle> for ComponentSwizzle {
         fn from(value: ffi::WGPUComponentSwizzle) -> Self {
@@ -772,7 +808,7 @@ mod enums {
                 ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_G => ComponentSwizzle::G,
                 ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_B => ComponentSwizzle::B,
                 ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_A => ComponentSwizzle::A,
-                _ => ComponentSwizzle::Undefined,
+                _ => ComponentSwizzle::UnknownValue(value as u32),
             }
         }
     }
@@ -792,6 +828,9 @@ mod enums {
                 ComponentSwizzle::G => ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_G,
                 ComponentSwizzle::B => ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_B,
                 ComponentSwizzle::A => ffi::WGPUComponentSwizzle_WGPUComponentSwizzle_A,
+                ComponentSwizzle::UnknownValue(value) => {
+                    value as ffi::WGPUComponentSwizzle
+                }
             }
         }
     }
@@ -802,6 +841,7 @@ mod enums {
         Premultiplied,
         Unpremultiplied,
         Inherit,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCompositeAlphaMode> for CompositeAlphaMode {
         fn from(value: ffi::WGPUCompositeAlphaMode) -> Self {
@@ -821,7 +861,7 @@ mod enums {
                 ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Inherit => {
                     CompositeAlphaMode::Inherit
                 }
-                _ => CompositeAlphaMode::Auto,
+                _ => CompositeAlphaMode::UnknownValue(value as u32),
             }
         }
     }
@@ -843,6 +883,9 @@ mod enums {
                 CompositeAlphaMode::Inherit => {
                     ffi::WGPUCompositeAlphaMode_WGPUCompositeAlphaMode_Inherit
                 }
+                CompositeAlphaMode::UnknownValue(value) => {
+                    value as ffi::WGPUCompositeAlphaMode
+                }
             }
         }
     }
@@ -852,6 +895,7 @@ mod enums {
         CallbackCancelled,
         ValidationError,
         InternalError,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCreatePipelineAsyncStatus> for CreatePipelineAsyncStatus {
         fn from(value: ffi::WGPUCreatePipelineAsyncStatus) -> Self {
@@ -868,7 +912,7 @@ mod enums {
                 ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_InternalError => {
                     CreatePipelineAsyncStatus::InternalError
                 }
-                _ => CreatePipelineAsyncStatus::Success,
+                _ => CreatePipelineAsyncStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -887,6 +931,9 @@ mod enums {
                 CreatePipelineAsyncStatus::InternalError => {
                     ffi::WGPUCreatePipelineAsyncStatus_WGPUCreatePipelineAsyncStatus_InternalError
                 }
+                CreatePipelineAsyncStatus::UnknownValue(value) => {
+                    value as ffi::WGPUCreatePipelineAsyncStatus
+                }
             }
         }
     }
@@ -896,6 +943,7 @@ mod enums {
         None,
         Front,
         Back,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUCullMode> for CullMode {
         fn from(value: ffi::WGPUCullMode) -> Self {
@@ -904,7 +952,7 @@ mod enums {
                 ffi::WGPUCullMode_WGPUCullMode_None => CullMode::None,
                 ffi::WGPUCullMode_WGPUCullMode_Front => CullMode::Front,
                 ffi::WGPUCullMode_WGPUCullMode_Back => CullMode::Back,
-                _ => CullMode::Undefined,
+                _ => CullMode::UnknownValue(value as u32),
             }
         }
     }
@@ -915,6 +963,7 @@ mod enums {
                 CullMode::None => ffi::WGPUCullMode_WGPUCullMode_None,
                 CullMode::Front => ffi::WGPUCullMode_WGPUCullMode_Front,
                 CullMode::Back => ffi::WGPUCullMode_WGPUCullMode_Back,
+                CullMode::UnknownValue(value) => value as ffi::WGPUCullMode,
             }
         }
     }
@@ -924,6 +973,7 @@ mod enums {
         Destroyed,
         CallbackCancelled,
         FailedCreation,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUDeviceLostReason> for DeviceLostReason {
         fn from(value: ffi::WGPUDeviceLostReason) -> Self {
@@ -940,7 +990,7 @@ mod enums {
                 ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_FailedCreation => {
                     DeviceLostReason::FailedCreation
                 }
-                _ => DeviceLostReason::Unknown,
+                _ => DeviceLostReason::UnknownValue(value as u32),
             }
         }
     }
@@ -959,6 +1009,9 @@ mod enums {
                 DeviceLostReason::FailedCreation => {
                     ffi::WGPUDeviceLostReason_WGPUDeviceLostReason_FailedCreation
                 }
+                DeviceLostReason::UnknownValue(value) => {
+                    value as ffi::WGPUDeviceLostReason
+                }
             }
         }
     }
@@ -967,6 +1020,7 @@ mod enums {
         Validation,
         OutOfMemory,
         Internal,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUErrorFilter> for ErrorFilter {
         fn from(value: ffi::WGPUErrorFilter) -> Self {
@@ -978,7 +1032,7 @@ mod enums {
                     ErrorFilter::OutOfMemory
                 }
                 ffi::WGPUErrorFilter_WGPUErrorFilter_Internal => ErrorFilter::Internal,
-                _ => ErrorFilter::Validation,
+                _ => ErrorFilter::UnknownValue(value as u32),
             }
         }
     }
@@ -992,6 +1046,7 @@ mod enums {
                     ffi::WGPUErrorFilter_WGPUErrorFilter_OutOfMemory
                 }
                 ErrorFilter::Internal => ffi::WGPUErrorFilter_WGPUErrorFilter_Internal,
+                ErrorFilter::UnknownValue(value) => value as ffi::WGPUErrorFilter,
             }
         }
     }
@@ -1002,6 +1057,7 @@ mod enums {
         OutOfMemory,
         Internal,
         Unknown,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUErrorType> for ErrorType {
         fn from(value: ffi::WGPUErrorType) -> Self {
@@ -1011,7 +1067,7 @@ mod enums {
                 ffi::WGPUErrorType_WGPUErrorType_OutOfMemory => ErrorType::OutOfMemory,
                 ffi::WGPUErrorType_WGPUErrorType_Internal => ErrorType::Internal,
                 ffi::WGPUErrorType_WGPUErrorType_Unknown => ErrorType::Unknown,
-                _ => ErrorType::NoError,
+                _ => ErrorType::UnknownValue(value as u32),
             }
         }
     }
@@ -1023,15 +1079,18 @@ mod enums {
                 ErrorType::OutOfMemory => ffi::WGPUErrorType_WGPUErrorType_OutOfMemory,
                 ErrorType::Internal => ffi::WGPUErrorType_WGPUErrorType_Internal,
                 ErrorType::Unknown => ffi::WGPUErrorType_WGPUErrorType_Unknown,
+                ErrorType::UnknownValue(value) => value as ffi::WGPUErrorType,
             }
         }
     }
+    /// Angles are clockwise rotation degrees and not trigonometric.
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum ExternalTextureRotation {
         Rotate0Degrees,
         Rotate90Degrees,
         Rotate180Degrees,
         Rotate270Degrees,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUExternalTextureRotation> for ExternalTextureRotation {
         fn from(value: ffi::WGPUExternalTextureRotation) -> Self {
@@ -1048,7 +1107,7 @@ mod enums {
                 ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate270Degrees => {
                     ExternalTextureRotation::Rotate270Degrees
                 }
-                _ => ExternalTextureRotation::Rotate0Degrees,
+                _ => ExternalTextureRotation::UnknownValue(value as u32),
             }
         }
     }
@@ -1067,6 +1126,9 @@ mod enums {
                 ExternalTextureRotation::Rotate270Degrees => {
                     ffi::WGPUExternalTextureRotation_WGPUExternalTextureRotation_Rotate270Degrees
                 }
+                ExternalTextureRotation::UnknownValue(value) => {
+                    value as ffi::WGPUExternalTextureRotation
+                }
             }
         }
     }
@@ -1075,6 +1137,7 @@ mod enums {
         Undefined,
         Compatibility,
         Core,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUFeatureLevel> for FeatureLevel {
         fn from(value: ffi::WGPUFeatureLevel) -> Self {
@@ -1086,7 +1149,7 @@ mod enums {
                     FeatureLevel::Compatibility
                 }
                 ffi::WGPUFeatureLevel_WGPUFeatureLevel_Core => FeatureLevel::Core,
-                _ => FeatureLevel::Undefined,
+                _ => FeatureLevel::UnknownValue(value as u32),
             }
         }
     }
@@ -1100,6 +1163,7 @@ mod enums {
                     ffi::WGPUFeatureLevel_WGPUFeatureLevel_Compatibility
                 }
                 FeatureLevel::Core => ffi::WGPUFeatureLevel_WGPUFeatureLevel_Core,
+                FeatureLevel::UnknownValue(value) => value as ffi::WGPUFeatureLevel,
             }
         }
     }
@@ -1191,6 +1255,7 @@ mod enums {
         OpaqueYCbCrAndroidForExternalTexture,
         Unorm16Filterable,
         RenderPassRenderArea,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUFeatureName> for FeatureName {
         fn from(value: ffi::WGPUFeatureName) -> Self {
@@ -1449,7 +1514,7 @@ mod enums {
                 ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea => {
                     FeatureName::RenderPassRenderArea
                 }
-                _ => FeatureName::CoreFeaturesAndLimits,
+                _ => FeatureName::UnknownValue(value as u32),
             }
         }
     }
@@ -1710,6 +1775,7 @@ mod enums {
                 FeatureName::RenderPassRenderArea => {
                     ffi::WGPUFeatureName_WGPUFeatureName_RenderPassRenderArea
                 }
+                FeatureName::UnknownValue(value) => value as ffi::WGPUFeatureName,
             }
         }
     }
@@ -1718,6 +1784,7 @@ mod enums {
         Undefined,
         Nearest,
         Linear,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUFilterMode> for FilterMode {
         fn from(value: ffi::WGPUFilterMode) -> Self {
@@ -1725,7 +1792,7 @@ mod enums {
                 ffi::WGPUFilterMode_WGPUFilterMode_Undefined => FilterMode::Undefined,
                 ffi::WGPUFilterMode_WGPUFilterMode_Nearest => FilterMode::Nearest,
                 ffi::WGPUFilterMode_WGPUFilterMode_Linear => FilterMode::Linear,
-                _ => FilterMode::Undefined,
+                _ => FilterMode::UnknownValue(value as u32),
             }
         }
     }
@@ -1735,6 +1802,7 @@ mod enums {
                 FilterMode::Undefined => ffi::WGPUFilterMode_WGPUFilterMode_Undefined,
                 FilterMode::Nearest => ffi::WGPUFilterMode_WGPUFilterMode_Nearest,
                 FilterMode::Linear => ffi::WGPUFilterMode_WGPUFilterMode_Linear,
+                FilterMode::UnknownValue(value) => value as ffi::WGPUFilterMode,
             }
         }
     }
@@ -1743,6 +1811,7 @@ mod enums {
         Undefined,
         Ccw,
         Cw,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUFrontFace> for FrontFace {
         fn from(value: ffi::WGPUFrontFace) -> Self {
@@ -1750,7 +1819,7 @@ mod enums {
                 ffi::WGPUFrontFace_WGPUFrontFace_Undefined => FrontFace::Undefined,
                 ffi::WGPUFrontFace_WGPUFrontFace_CCW => FrontFace::Ccw,
                 ffi::WGPUFrontFace_WGPUFrontFace_CW => FrontFace::Cw,
-                _ => FrontFace::Undefined,
+                _ => FrontFace::UnknownValue(value as u32),
             }
         }
     }
@@ -1760,6 +1829,7 @@ mod enums {
                 FrontFace::Undefined => ffi::WGPUFrontFace_WGPUFrontFace_Undefined,
                 FrontFace::Ccw => ffi::WGPUFrontFace_WGPUFrontFace_CCW,
                 FrontFace::Cw => ffi::WGPUFrontFace_WGPUFrontFace_CW,
+                FrontFace::UnknownValue(value) => value as ffi::WGPUFrontFace,
             }
         }
     }
@@ -1768,6 +1838,7 @@ mod enums {
         Undefined,
         Uint16,
         Uint32,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUIndexFormat> for IndexFormat {
         fn from(value: ffi::WGPUIndexFormat) -> Self {
@@ -1775,7 +1846,7 @@ mod enums {
                 ffi::WGPUIndexFormat_WGPUIndexFormat_Undefined => IndexFormat::Undefined,
                 ffi::WGPUIndexFormat_WGPUIndexFormat_Uint16 => IndexFormat::Uint16,
                 ffi::WGPUIndexFormat_WGPUIndexFormat_Uint32 => IndexFormat::Uint32,
-                _ => IndexFormat::Undefined,
+                _ => IndexFormat::UnknownValue(value as u32),
             }
         }
     }
@@ -1785,6 +1856,7 @@ mod enums {
                 IndexFormat::Undefined => ffi::WGPUIndexFormat_WGPUIndexFormat_Undefined,
                 IndexFormat::Uint16 => ffi::WGPUIndexFormat_WGPUIndexFormat_Uint16,
                 IndexFormat::Uint32 => ffi::WGPUIndexFormat_WGPUIndexFormat_Uint32,
+                IndexFormat::UnknownValue(value) => value as ffi::WGPUIndexFormat,
             }
         }
     }
@@ -1793,6 +1865,7 @@ mod enums {
         TimedWaitAny,
         ShaderSourceSPIRV,
         MultipleDevicesPerAdapter,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUInstanceFeatureName> for InstanceFeatureName {
         fn from(value: ffi::WGPUInstanceFeatureName) -> Self {
@@ -1806,7 +1879,7 @@ mod enums {
                 ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_MultipleDevicesPerAdapter => {
                     InstanceFeatureName::MultipleDevicesPerAdapter
                 }
-                _ => InstanceFeatureName::TimedWaitAny,
+                _ => InstanceFeatureName::UnknownValue(value as u32),
             }
         }
     }
@@ -1822,6 +1895,9 @@ mod enums {
                 InstanceFeatureName::MultipleDevicesPerAdapter => {
                     ffi::WGPUInstanceFeatureName_WGPUInstanceFeatureName_MultipleDevicesPerAdapter
                 }
+                InstanceFeatureName::UnknownValue(value) => {
+                    value as ffi::WGPUInstanceFeatureName
+                }
             }
         }
     }
@@ -1831,6 +1907,7 @@ mod enums {
         Load,
         Clear,
         ExpandResolveTexture,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPULoadOp> for LoadOp {
         fn from(value: ffi::WGPULoadOp) -> Self {
@@ -1841,7 +1918,7 @@ mod enums {
                 ffi::WGPULoadOp_WGPULoadOp_ExpandResolveTexture => {
                     LoadOp::ExpandResolveTexture
                 }
-                _ => LoadOp::Undefined,
+                _ => LoadOp::UnknownValue(value as u32),
             }
         }
     }
@@ -1854,6 +1931,7 @@ mod enums {
                 LoadOp::ExpandResolveTexture => {
                     ffi::WGPULoadOp_WGPULoadOp_ExpandResolveTexture
                 }
+                LoadOp::UnknownValue(value) => value as ffi::WGPULoadOp,
             }
         }
     }
@@ -1863,6 +1941,7 @@ mod enums {
         Info,
         Warning,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPULoggingType> for LoggingType {
         fn from(value: ffi::WGPULoggingType) -> Self {
@@ -1871,7 +1950,7 @@ mod enums {
                 ffi::WGPULoggingType_WGPULoggingType_Info => LoggingType::Info,
                 ffi::WGPULoggingType_WGPULoggingType_Warning => LoggingType::Warning,
                 ffi::WGPULoggingType_WGPULoggingType_Error => LoggingType::Error,
-                _ => LoggingType::Verbose,
+                _ => LoggingType::UnknownValue(value as u32),
             }
         }
     }
@@ -1882,6 +1961,7 @@ mod enums {
                 LoggingType::Info => ffi::WGPULoggingType_WGPULoggingType_Info,
                 LoggingType::Warning => ffi::WGPULoggingType_WGPULoggingType_Warning,
                 LoggingType::Error => ffi::WGPULoggingType_WGPULoggingType_Error,
+                LoggingType::UnknownValue(value) => value as ffi::WGPULoggingType,
             }
         }
     }
@@ -1891,6 +1971,7 @@ mod enums {
         CallbackCancelled,
         Error,
         Aborted,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUMapAsyncStatus> for MapAsyncStatus {
         fn from(value: ffi::WGPUMapAsyncStatus) -> Self {
@@ -1905,7 +1986,7 @@ mod enums {
                 ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Aborted => {
                     MapAsyncStatus::Aborted
                 }
-                _ => MapAsyncStatus::Success,
+                _ => MapAsyncStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -1922,6 +2003,7 @@ mod enums {
                 MapAsyncStatus::Aborted => {
                     ffi::WGPUMapAsyncStatus_WGPUMapAsyncStatus_Aborted
                 }
+                MapAsyncStatus::UnknownValue(value) => value as ffi::WGPUMapAsyncStatus,
             }
         }
     }
@@ -1930,6 +2012,7 @@ mod enums {
         Undefined,
         Nearest,
         Linear,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUMipmapFilterMode> for MipmapFilterMode {
         fn from(value: ffi::WGPUMipmapFilterMode) -> Self {
@@ -1943,7 +2026,7 @@ mod enums {
                 ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Linear => {
                     MipmapFilterMode::Linear
                 }
-                _ => MipmapFilterMode::Undefined,
+                _ => MipmapFilterMode::UnknownValue(value as u32),
             }
         }
     }
@@ -1959,6 +2042,9 @@ mod enums {
                 MipmapFilterMode::Linear => {
                     ffi::WGPUMipmapFilterMode_WGPUMipmapFilterMode_Linear
                 }
+                MipmapFilterMode::UnknownValue(value) => {
+                    value as ffi::WGPUMipmapFilterMode
+                }
             }
         }
     }
@@ -1967,6 +2053,7 @@ mod enums {
         False,
         True,
         Undefined,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUOptionalBool> for OptionalBool {
         fn from(value: ffi::WGPUOptionalBool) -> Self {
@@ -1976,7 +2063,7 @@ mod enums {
                 ffi::WGPUOptionalBool_WGPUOptionalBool_Undefined => {
                     OptionalBool::Undefined
                 }
-                _ => OptionalBool::False,
+                _ => OptionalBool::UnknownValue(value as u32),
             }
         }
     }
@@ -1988,6 +2075,7 @@ mod enums {
                 OptionalBool::Undefined => {
                     ffi::WGPUOptionalBool_WGPUOptionalBool_Undefined
                 }
+                OptionalBool::UnknownValue(value) => value as ffi::WGPUOptionalBool,
             }
         }
     }
@@ -1996,6 +2084,7 @@ mod enums {
         Success,
         CallbackCancelled,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUPopErrorScopeStatus> for PopErrorScopeStatus {
         fn from(value: ffi::WGPUPopErrorScopeStatus) -> Self {
@@ -2009,7 +2098,7 @@ mod enums {
                 ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Error => {
                     PopErrorScopeStatus::Error
                 }
-                _ => PopErrorScopeStatus::Success,
+                _ => PopErrorScopeStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -2025,6 +2114,9 @@ mod enums {
                 PopErrorScopeStatus::Error => {
                     ffi::WGPUPopErrorScopeStatus_WGPUPopErrorScopeStatus_Error
                 }
+                PopErrorScopeStatus::UnknownValue(value) => {
+                    value as ffi::WGPUPopErrorScopeStatus
+                }
             }
         }
     }
@@ -2033,6 +2125,7 @@ mod enums {
         Undefined,
         LowPower,
         HighPerformance,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUPowerPreference> for PowerPreference {
         fn from(value: ffi::WGPUPowerPreference) -> Self {
@@ -2046,7 +2139,7 @@ mod enums {
                 ffi::WGPUPowerPreference_WGPUPowerPreference_HighPerformance => {
                     PowerPreference::HighPerformance
                 }
-                _ => PowerPreference::Undefined,
+                _ => PowerPreference::UnknownValue(value as u32),
             }
         }
     }
@@ -2062,6 +2155,7 @@ mod enums {
                 PowerPreference::HighPerformance => {
                     ffi::WGPUPowerPreference_WGPUPowerPreference_HighPerformance
                 }
+                PowerPreference::UnknownValue(value) => value as ffi::WGPUPowerPreference,
             }
         }
     }
@@ -2069,6 +2163,7 @@ mod enums {
     pub enum PredefinedColorSpace {
         SRgb,
         DisplayP3,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUPredefinedColorSpace> for PredefinedColorSpace {
         fn from(value: ffi::WGPUPredefinedColorSpace) -> Self {
@@ -2079,7 +2174,7 @@ mod enums {
                 ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3 => {
                     PredefinedColorSpace::DisplayP3
                 }
-                _ => PredefinedColorSpace::SRgb,
+                _ => PredefinedColorSpace::UnknownValue(value as u32),
             }
         }
     }
@@ -2092,6 +2187,9 @@ mod enums {
                 PredefinedColorSpace::DisplayP3 => {
                     ffi::WGPUPredefinedColorSpace_WGPUPredefinedColorSpace_DisplayP3
                 }
+                PredefinedColorSpace::UnknownValue(value) => {
+                    value as ffi::WGPUPredefinedColorSpace
+                }
             }
         }
     }
@@ -2102,6 +2200,7 @@ mod enums {
         FifoRelaxed,
         Immediate,
         Mailbox,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUPresentMode> for PresentMode {
         fn from(value: ffi::WGPUPresentMode) -> Self {
@@ -2113,7 +2212,7 @@ mod enums {
                 }
                 ffi::WGPUPresentMode_WGPUPresentMode_Immediate => PresentMode::Immediate,
                 ffi::WGPUPresentMode_WGPUPresentMode_Mailbox => PresentMode::Mailbox,
-                _ => PresentMode::Undefined,
+                _ => PresentMode::UnknownValue(value as u32),
             }
         }
     }
@@ -2127,6 +2226,7 @@ mod enums {
                 }
                 PresentMode::Immediate => ffi::WGPUPresentMode_WGPUPresentMode_Immediate,
                 PresentMode::Mailbox => ffi::WGPUPresentMode_WGPUPresentMode_Mailbox,
+                PresentMode::UnknownValue(value) => value as ffi::WGPUPresentMode,
             }
         }
     }
@@ -2138,6 +2238,7 @@ mod enums {
         LineStrip,
         TriangleList,
         TriangleStrip,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUPrimitiveTopology> for PrimitiveTopology {
         fn from(value: ffi::WGPUPrimitiveTopology) -> Self {
@@ -2160,7 +2261,7 @@ mod enums {
                 ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleStrip => {
                     PrimitiveTopology::TriangleStrip
                 }
-                _ => PrimitiveTopology::Undefined,
+                _ => PrimitiveTopology::UnknownValue(value as u32),
             }
         }
     }
@@ -2185,6 +2286,9 @@ mod enums {
                 PrimitiveTopology::TriangleStrip => {
                     ffi::WGPUPrimitiveTopology_WGPUPrimitiveTopology_TriangleStrip
                 }
+                PrimitiveTopology::UnknownValue(value) => {
+                    value as ffi::WGPUPrimitiveTopology
+                }
             }
         }
     }
@@ -2192,13 +2296,14 @@ mod enums {
     pub enum QueryType {
         Occlusion,
         Timestamp,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUQueryType> for QueryType {
         fn from(value: ffi::WGPUQueryType) -> Self {
             match value {
                 ffi::WGPUQueryType_WGPUQueryType_Occlusion => QueryType::Occlusion,
                 ffi::WGPUQueryType_WGPUQueryType_Timestamp => QueryType::Timestamp,
-                _ => QueryType::Occlusion,
+                _ => QueryType::UnknownValue(value as u32),
             }
         }
     }
@@ -2207,6 +2312,7 @@ mod enums {
             match value {
                 QueryType::Occlusion => ffi::WGPUQueryType_WGPUQueryType_Occlusion,
                 QueryType::Timestamp => ffi::WGPUQueryType_WGPUQueryType_Timestamp,
+                QueryType::UnknownValue(value) => value as ffi::WGPUQueryType,
             }
         }
     }
@@ -2215,6 +2321,7 @@ mod enums {
         Success,
         CallbackCancelled,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUQueueWorkDoneStatus> for QueueWorkDoneStatus {
         fn from(value: ffi::WGPUQueueWorkDoneStatus) -> Self {
@@ -2228,7 +2335,7 @@ mod enums {
                 ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Error => {
                     QueueWorkDoneStatus::Error
                 }
-                _ => QueueWorkDoneStatus::Success,
+                _ => QueueWorkDoneStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -2244,6 +2351,9 @@ mod enums {
                 QueueWorkDoneStatus::Error => {
                     ffi::WGPUQueueWorkDoneStatus_WGPUQueueWorkDoneStatus_Error
                 }
+                QueueWorkDoneStatus::UnknownValue(value) => {
+                    value as ffi::WGPUQueueWorkDoneStatus
+                }
             }
         }
     }
@@ -2253,6 +2363,7 @@ mod enums {
         CallbackCancelled,
         Unavailable,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPURequestAdapterStatus> for RequestAdapterStatus {
         fn from(value: ffi::WGPURequestAdapterStatus) -> Self {
@@ -2269,7 +2380,7 @@ mod enums {
                 ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Error => {
                     RequestAdapterStatus::Error
                 }
-                _ => RequestAdapterStatus::Success,
+                _ => RequestAdapterStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -2288,6 +2399,9 @@ mod enums {
                 RequestAdapterStatus::Error => {
                     ffi::WGPURequestAdapterStatus_WGPURequestAdapterStatus_Error
                 }
+                RequestAdapterStatus::UnknownValue(value) => {
+                    value as ffi::WGPURequestAdapterStatus
+                }
             }
         }
     }
@@ -2296,6 +2410,7 @@ mod enums {
         Success,
         CallbackCancelled,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPURequestDeviceStatus> for RequestDeviceStatus {
         fn from(value: ffi::WGPURequestDeviceStatus) -> Self {
@@ -2309,7 +2424,7 @@ mod enums {
                 ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Error => {
                     RequestDeviceStatus::Error
                 }
-                _ => RequestDeviceStatus::Success,
+                _ => RequestDeviceStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -2324,6 +2439,9 @@ mod enums {
                 }
                 RequestDeviceStatus::Error => {
                     ffi::WGPURequestDeviceStatus_WGPURequestDeviceStatus_Error
+                }
+                RequestDeviceStatus::UnknownValue(value) => {
+                    value as ffi::WGPURequestDeviceStatus
                 }
             }
         }
@@ -2342,12 +2460,11 @@ mod enums {
         SurfaceColorManagement,
         RequestAdapterWebXROptions,
         TextureComponentSwizzleDescriptor,
+        ExternalTextureBindingLayout,
+        ExternalTextureBindingEntry,
         CompatibilityModeLimits,
         TextureBindingViewDimension,
-        EmscriptenSurfaceSourceCanvasHTMLSelector,
         SurfaceDescriptorFromWindowsCoreWindow,
-        ExternalTextureBindingEntry,
-        ExternalTextureBindingLayout,
         SurfaceDescriptorFromWindowsUWPSwapChainPanel,
         DawnTextureInternalUsageDescriptor,
         DawnEncoderInternalUsageDescriptor,
@@ -2426,6 +2543,7 @@ mod enums {
         RequestAdapterOptionsAngleVirtualizationGroup,
         PipelineLayoutResourceTable,
         AdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUSType> for SType {
         fn from(value: ffi::WGPUSType) -> Self {
@@ -2462,23 +2580,20 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor => {
                     SType::TextureComponentSwizzleDescriptor
                 }
+                ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout => {
+                    SType::ExternalTextureBindingLayout
+                }
+                ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry => {
+                    SType::ExternalTextureBindingEntry
+                }
                 ffi::WGPUSType_WGPUSType_CompatibilityModeLimits => {
                     SType::CompatibilityModeLimits
                 }
                 ffi::WGPUSType_WGPUSType_TextureBindingViewDimension => {
                     SType::TextureBindingViewDimension
                 }
-                ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector => {
-                    SType::EmscriptenSurfaceSourceCanvasHTMLSelector
-                }
                 ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow => {
                     SType::SurfaceDescriptorFromWindowsCoreWindow
-                }
-                ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry => {
-                    SType::ExternalTextureBindingEntry
-                }
-                ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout => {
-                    SType::ExternalTextureBindingLayout
                 }
                 ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
                     SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel
@@ -2710,7 +2825,7 @@ mod enums {
                 ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
                     SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs
                 }
-                _ => SType::ShaderSourceSPIRV,
+                _ => SType::UnknownValue(value as u32),
             }
         }
     }
@@ -2749,23 +2864,20 @@ mod enums {
                 SType::TextureComponentSwizzleDescriptor => {
                     ffi::WGPUSType_WGPUSType_TextureComponentSwizzleDescriptor
                 }
+                SType::ExternalTextureBindingLayout => {
+                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout
+                }
+                SType::ExternalTextureBindingEntry => {
+                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry
+                }
                 SType::CompatibilityModeLimits => {
                     ffi::WGPUSType_WGPUSType_CompatibilityModeLimits
                 }
                 SType::TextureBindingViewDimension => {
                     ffi::WGPUSType_WGPUSType_TextureBindingViewDimension
                 }
-                SType::EmscriptenSurfaceSourceCanvasHTMLSelector => {
-                    ffi::WGPUSType_WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector
-                }
                 SType::SurfaceDescriptorFromWindowsCoreWindow => {
                     ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsCoreWindow
-                }
-                SType::ExternalTextureBindingEntry => {
-                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingEntry
-                }
-                SType::ExternalTextureBindingLayout => {
-                    ffi::WGPUSType_WGPUSType_ExternalTextureBindingLayout
                 }
                 SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
                     ffi::WGPUSType_WGPUSType_SurfaceDescriptorFromWindowsUWPSwapChainPanel
@@ -2997,6 +3109,7 @@ mod enums {
                 SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
                     ffi::WGPUSType_WGPUSType_AdapterPropertiesExplicitComputeSubgroupSizeConfigs
                 }
+                SType::UnknownValue(value) => value as ffi::WGPUSType,
             }
         }
     }
@@ -3007,6 +3120,7 @@ mod enums {
         Filtering,
         NonFiltering,
         Comparison,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUSamplerBindingType> for SamplerBindingType {
         fn from(value: ffi::WGPUSamplerBindingType) -> Self {
@@ -3026,7 +3140,7 @@ mod enums {
                 ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Comparison => {
                     SamplerBindingType::Comparison
                 }
-                _ => SamplerBindingType::BindingNotUsed,
+                _ => SamplerBindingType::UnknownValue(value as u32),
             }
         }
     }
@@ -3048,6 +3162,9 @@ mod enums {
                 SamplerBindingType::Comparison => {
                     ffi::WGPUSamplerBindingType_WGPUSamplerBindingType_Comparison
                 }
+                SamplerBindingType::UnknownValue(value) => {
+                    value as ffi::WGPUSamplerBindingType
+                }
             }
         }
     }
@@ -3059,6 +3176,7 @@ mod enums {
         DXGISharedHandle,
         MTLSharedEvent,
         EGLSync,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUSharedFenceType> for SharedFenceType {
         fn from(value: ffi::WGPUSharedFenceType) -> Self {
@@ -3081,7 +3199,7 @@ mod enums {
                 ffi::WGPUSharedFenceType_WGPUSharedFenceType_EGLSync => {
                     SharedFenceType::EGLSync
                 }
-                _ => SharedFenceType::VkSemaphoreOpaqueFD,
+                _ => SharedFenceType::UnknownValue(value as u32),
             }
         }
     }
@@ -3106,6 +3224,7 @@ mod enums {
                 SharedFenceType::EGLSync => {
                     ffi::WGPUSharedFenceType_WGPUSharedFenceType_EGLSync
                 }
+                SharedFenceType::UnknownValue(value) => value as ffi::WGPUSharedFenceType,
             }
         }
     }
@@ -3113,13 +3232,14 @@ mod enums {
     pub enum Status {
         Success,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUStatus> for Status {
         fn from(value: ffi::WGPUStatus) -> Self {
             match value {
                 ffi::WGPUStatus_WGPUStatus_Success => Status::Success,
                 ffi::WGPUStatus_WGPUStatus_Error => Status::Error,
-                _ => Status::Success,
+                _ => Status::UnknownValue(value as u32),
             }
         }
     }
@@ -3128,6 +3248,7 @@ mod enums {
             match value {
                 Status::Success => ffi::WGPUStatus_WGPUStatus_Success,
                 Status::Error => ffi::WGPUStatus_WGPUStatus_Error,
+                Status::UnknownValue(value) => value as ffi::WGPUStatus,
             }
         }
     }
@@ -3142,6 +3263,7 @@ mod enums {
         DecrementClamp,
         IncrementWrap,
         DecrementWrap,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUStencilOperation> for StencilOperation {
         fn from(value: ffi::WGPUStencilOperation) -> Self {
@@ -3173,7 +3295,7 @@ mod enums {
                 ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementWrap => {
                     StencilOperation::DecrementWrap
                 }
-                _ => StencilOperation::Undefined,
+                _ => StencilOperation::UnknownValue(value as u32),
             }
         }
     }
@@ -3207,6 +3329,9 @@ mod enums {
                 StencilOperation::DecrementWrap => {
                     ffi::WGPUStencilOperation_WGPUStencilOperation_DecrementWrap
                 }
+                StencilOperation::UnknownValue(value) => {
+                    value as ffi::WGPUStencilOperation
+                }
             }
         }
     }
@@ -3217,6 +3342,7 @@ mod enums {
         WriteOnly,
         ReadOnly,
         ReadWrite,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUStorageTextureAccess> for StorageTextureAccess {
         fn from(value: ffi::WGPUStorageTextureAccess) -> Self {
@@ -3236,7 +3362,7 @@ mod enums {
                 ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadWrite => {
                     StorageTextureAccess::ReadWrite
                 }
-                _ => StorageTextureAccess::BindingNotUsed,
+                _ => StorageTextureAccess::UnknownValue(value as u32),
             }
         }
     }
@@ -3258,6 +3384,9 @@ mod enums {
                 StorageTextureAccess::ReadWrite => {
                     ffi::WGPUStorageTextureAccess_WGPUStorageTextureAccess_ReadWrite
                 }
+                StorageTextureAccess::UnknownValue(value) => {
+                    value as ffi::WGPUStorageTextureAccess
+                }
             }
         }
     }
@@ -3266,6 +3395,7 @@ mod enums {
         Undefined,
         Store,
         Discard,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUStoreOp> for StoreOp {
         fn from(value: ffi::WGPUStoreOp) -> Self {
@@ -3273,7 +3403,7 @@ mod enums {
                 ffi::WGPUStoreOp_WGPUStoreOp_Undefined => StoreOp::Undefined,
                 ffi::WGPUStoreOp_WGPUStoreOp_Store => StoreOp::Store,
                 ffi::WGPUStoreOp_WGPUStoreOp_Discard => StoreOp::Discard,
-                _ => StoreOp::Undefined,
+                _ => StoreOp::UnknownValue(value as u32),
             }
         }
     }
@@ -3283,6 +3413,7 @@ mod enums {
                 StoreOp::Undefined => ffi::WGPUStoreOp_WGPUStoreOp_Undefined,
                 StoreOp::Store => ffi::WGPUStoreOp_WGPUStoreOp_Store,
                 StoreOp::Discard => ffi::WGPUStoreOp_WGPUStoreOp_Discard,
+                StoreOp::UnknownValue(value) => value as ffi::WGPUStoreOp,
             }
         }
     }
@@ -3294,6 +3425,7 @@ mod enums {
         I32,
         U8,
         I8,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUSubgroupMatrixComponentType> for SubgroupMatrixComponentType {
         fn from(value: ffi::WGPUSubgroupMatrixComponentType) -> Self {
@@ -3316,7 +3448,7 @@ mod enums {
                 ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I8 => {
                     SubgroupMatrixComponentType::I8
                 }
-                _ => SubgroupMatrixComponentType::F32,
+                _ => SubgroupMatrixComponentType::UnknownValue(value as u32),
             }
         }
     }
@@ -3341,6 +3473,9 @@ mod enums {
                 SubgroupMatrixComponentType::I8 => {
                     ffi::WGPUSubgroupMatrixComponentType_WGPUSubgroupMatrixComponentType_I8
                 }
+                SubgroupMatrixComponentType::UnknownValue(value) => {
+                    value as ffi::WGPUSubgroupMatrixComponentType
+                }
             }
         }
     }
@@ -3352,6 +3487,7 @@ mod enums {
         Outdated,
         Lost,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUSurfaceGetCurrentTextureStatus>
     for SurfaceGetCurrentTextureStatus {
@@ -3375,7 +3511,7 @@ mod enums {
                 ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Error => {
                     SurfaceGetCurrentTextureStatus::Error
                 }
-                _ => SurfaceGetCurrentTextureStatus::SuccessOptimal,
+                _ => SurfaceGetCurrentTextureStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -3401,6 +3537,9 @@ mod enums {
                 SurfaceGetCurrentTextureStatus::Error => {
                     ffi::WGPUSurfaceGetCurrentTextureStatus_WGPUSurfaceGetCurrentTextureStatus_Error
                 }
+                SurfaceGetCurrentTextureStatus::UnknownValue(value) => {
+                    value as ffi::WGPUSurfaceGetCurrentTextureStatus
+                }
             }
         }
     }
@@ -3409,6 +3548,7 @@ mod enums {
         Undefined,
         ReadOnly,
         ReadWrite,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTexelBufferAccess> for TexelBufferAccess {
         fn from(value: ffi::WGPUTexelBufferAccess) -> Self {
@@ -3422,7 +3562,7 @@ mod enums {
                 ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadWrite => {
                     TexelBufferAccess::ReadWrite
                 }
-                _ => TexelBufferAccess::Undefined,
+                _ => TexelBufferAccess::UnknownValue(value as u32),
             }
         }
     }
@@ -3438,6 +3578,9 @@ mod enums {
                 TexelBufferAccess::ReadWrite => {
                     ffi::WGPUTexelBufferAccess_WGPUTexelBufferAccess_ReadWrite
                 }
+                TexelBufferAccess::UnknownValue(value) => {
+                    value as ffi::WGPUTexelBufferAccess
+                }
             }
         }
     }
@@ -3450,6 +3593,7 @@ mod enums {
         Plane0Only,
         Plane1Only,
         Plane2Only,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTextureAspect> for TextureAspect {
         fn from(value: ffi::WGPUTextureAspect) -> Self {
@@ -3473,7 +3617,7 @@ mod enums {
                 ffi::WGPUTextureAspect_WGPUTextureAspect_Plane2Only => {
                     TextureAspect::Plane2Only
                 }
-                _ => TextureAspect::Undefined,
+                _ => TextureAspect::UnknownValue(value as u32),
             }
         }
     }
@@ -3499,6 +3643,7 @@ mod enums {
                 TextureAspect::Plane2Only => {
                     ffi::WGPUTextureAspect_WGPUTextureAspect_Plane2Only
                 }
+                TextureAspect::UnknownValue(value) => value as ffi::WGPUTextureAspect,
             }
         }
     }
@@ -3508,6 +3653,7 @@ mod enums {
         D1,
         D2,
         D3,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTextureDimension> for TextureDimension {
         fn from(value: ffi::WGPUTextureDimension) -> Self {
@@ -3518,7 +3664,7 @@ mod enums {
                 ffi::WGPUTextureDimension_WGPUTextureDimension_1D => TextureDimension::D1,
                 ffi::WGPUTextureDimension_WGPUTextureDimension_2D => TextureDimension::D2,
                 ffi::WGPUTextureDimension_WGPUTextureDimension_3D => TextureDimension::D3,
-                _ => TextureDimension::Undefined,
+                _ => TextureDimension::UnknownValue(value as u32),
             }
         }
     }
@@ -3531,6 +3677,9 @@ mod enums {
                 TextureDimension::D1 => ffi::WGPUTextureDimension_WGPUTextureDimension_1D,
                 TextureDimension::D2 => ffi::WGPUTextureDimension_WGPUTextureDimension_2D,
                 TextureDimension::D3 => ffi::WGPUTextureDimension_WGPUTextureDimension_3D,
+                TextureDimension::UnknownValue(value) => {
+                    value as ffi::WGPUTextureDimension
+                }
             }
         }
     }
@@ -3646,6 +3795,7 @@ mod enums {
         R10X6Bg10X6Biplanar422Unorm,
         R10X6Bg10X6Biplanar444Unorm,
         OpaqueYCbCrAndroid,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTextureFormat> for TextureFormat {
         fn from(value: ffi::WGPUTextureFormat) -> Self {
@@ -3976,7 +4126,7 @@ mod enums {
                 ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid => {
                     TextureFormat::OpaqueYCbCrAndroid
                 }
-                _ => TextureFormat::Undefined,
+                _ => TextureFormat::UnknownValue(value as u32),
             }
         }
     }
@@ -4309,6 +4459,7 @@ mod enums {
                 TextureFormat::OpaqueYCbCrAndroid => {
                     ffi::WGPUTextureFormat_WGPUTextureFormat_OpaqueYCbCrAndroid
                 }
+                TextureFormat::UnknownValue(value) => value as ffi::WGPUTextureFormat,
             }
         }
     }
@@ -4321,6 +4472,7 @@ mod enums {
         Depth,
         Sint,
         Uint,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTextureSampleType> for TextureSampleType {
         fn from(value: ffi::WGPUTextureSampleType) -> Self {
@@ -4346,7 +4498,7 @@ mod enums {
                 ffi::WGPUTextureSampleType_WGPUTextureSampleType_Uint => {
                     TextureSampleType::Uint
                 }
-                _ => TextureSampleType::BindingNotUsed,
+                _ => TextureSampleType::UnknownValue(value as u32),
             }
         }
     }
@@ -4374,6 +4526,9 @@ mod enums {
                 TextureSampleType::Uint => {
                     ffi::WGPUTextureSampleType_WGPUTextureSampleType_Uint
                 }
+                TextureSampleType::UnknownValue(value) => {
+                    value as ffi::WGPUTextureSampleType
+                }
             }
         }
     }
@@ -4386,6 +4541,7 @@ mod enums {
         Cube,
         CubeArray,
         D3,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUTextureViewDimension> for TextureViewDimension {
         fn from(value: ffi::WGPUTextureViewDimension) -> Self {
@@ -4411,7 +4567,7 @@ mod enums {
                 ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_3D => {
                     TextureViewDimension::D3
                 }
-                _ => TextureViewDimension::Undefined,
+                _ => TextureViewDimension::UnknownValue(value as u32),
             }
         }
     }
@@ -4439,6 +4595,9 @@ mod enums {
                 TextureViewDimension::D3 => {
                     ffi::WGPUTextureViewDimension_WGPUTextureViewDimension_3D
                 }
+                TextureViewDimension::UnknownValue(value) => {
+                    value as ffi::WGPUTextureViewDimension
+                }
             }
         }
     }
@@ -4446,6 +4605,7 @@ mod enums {
     pub enum ToneMappingMode {
         Standard,
         Extended,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUToneMappingMode> for ToneMappingMode {
         fn from(value: ffi::WGPUToneMappingMode) -> Self {
@@ -4456,7 +4616,7 @@ mod enums {
                 ffi::WGPUToneMappingMode_WGPUToneMappingMode_Extended => {
                     ToneMappingMode::Extended
                 }
-                _ => ToneMappingMode::Standard,
+                _ => ToneMappingMode::UnknownValue(value as u32),
             }
         }
     }
@@ -4469,6 +4629,7 @@ mod enums {
                 ToneMappingMode::Extended => {
                     ffi::WGPUToneMappingMode_WGPUToneMappingMode_Extended
                 }
+                ToneMappingMode::UnknownValue(value) => value as ffi::WGPUToneMappingMode,
             }
         }
     }
@@ -4515,6 +4676,7 @@ mod enums {
         Sint32X4,
         Unorm1010102,
         Unorm8X4Bgra,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUVertexFormat> for VertexFormat {
         fn from(value: ffi::WGPUVertexFormat) -> Self {
@@ -4582,7 +4744,7 @@ mod enums {
                 ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4BGRA => {
                     VertexFormat::Unorm8X4Bgra
                 }
-                _ => VertexFormat::Uint8,
+                _ => VertexFormat::UnknownValue(value as u32),
             }
         }
     }
@@ -4652,6 +4814,7 @@ mod enums {
                 VertexFormat::Unorm8X4Bgra => {
                     ffi::WGPUVertexFormat_WGPUVertexFormat_Unorm8x4BGRA
                 }
+                VertexFormat::UnknownValue(value) => value as ffi::WGPUVertexFormat,
             }
         }
     }
@@ -4660,6 +4823,7 @@ mod enums {
         Undefined,
         Vertex,
         Instance,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUVertexStepMode> for VertexStepMode {
         fn from(value: ffi::WGPUVertexStepMode) -> Self {
@@ -4673,7 +4837,7 @@ mod enums {
                 ffi::WGPUVertexStepMode_WGPUVertexStepMode_Instance => {
                     VertexStepMode::Instance
                 }
-                _ => VertexStepMode::Undefined,
+                _ => VertexStepMode::UnknownValue(value as u32),
             }
         }
     }
@@ -4689,14 +4853,17 @@ mod enums {
                 VertexStepMode::Instance => {
                     ffi::WGPUVertexStepMode_WGPUVertexStepMode_Instance
                 }
+                VertexStepMode::UnknownValue(value) => value as ffi::WGPUVertexStepMode,
             }
         }
     }
+    /// TODO(crbug.com/dawn/2053): This could possibly be [[nodiscard]].
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub enum WaitStatus {
         Success,
         TimedOut,
         Error,
+        UnknownValue(u32),
     }
     impl From<ffi::WGPUWaitStatus> for WaitStatus {
         fn from(value: ffi::WGPUWaitStatus) -> Self {
@@ -4704,7 +4871,7 @@ mod enums {
                 ffi::WGPUWaitStatus_WGPUWaitStatus_Success => WaitStatus::Success,
                 ffi::WGPUWaitStatus_WGPUWaitStatus_TimedOut => WaitStatus::TimedOut,
                 ffi::WGPUWaitStatus_WGPUWaitStatus_Error => WaitStatus::Error,
-                _ => WaitStatus::Success,
+                _ => WaitStatus::UnknownValue(value as u32),
             }
         }
     }
@@ -4714,6 +4881,7 @@ mod enums {
                 WaitStatus::Success => ffi::WGPUWaitStatus_WGPUWaitStatus_Success,
                 WaitStatus::TimedOut => ffi::WGPUWaitStatus_WGPUWaitStatus_TimedOut,
                 WaitStatus::Error => ffi::WGPUWaitStatus_WGPUWaitStatus_Error,
+                WaitStatus::UnknownValue(value) => value as ffi::WGPUWaitStatus,
             }
         }
     }
@@ -4732,7 +4900,7 @@ mod enums {
     }
     impl From<ffi::WGPUBufferUsage> for BufferUsage {
         fn from(value: ffi::WGPUBufferUsage) -> Self {
-            BufferUsage::from_bits_truncate(value as u64)
+            BufferUsage::from_bits_retain(value as u64)
         }
     }
     impl From<BufferUsage> for ffi::WGPUBufferUsage {
@@ -4750,7 +4918,7 @@ mod enums {
     }
     impl From<ffi::WGPUColorWriteMask> for ColorWriteMask {
         fn from(value: ffi::WGPUColorWriteMask) -> Self {
-            ColorWriteMask::from_bits_truncate(value as u64)
+            ColorWriteMask::from_bits_retain(value as u64)
         }
     }
     impl From<ColorWriteMask> for ffi::WGPUColorWriteMask {
@@ -4769,7 +4937,7 @@ mod enums {
     }
     impl From<ffi::WGPUHeapProperty> for HeapProperty {
         fn from(value: ffi::WGPUHeapProperty) -> Self {
-            HeapProperty::from_bits_truncate(value as u64)
+            HeapProperty::from_bits_retain(value as u64)
         }
     }
     impl From<HeapProperty> for ffi::WGPUHeapProperty {
@@ -4784,7 +4952,7 @@ mod enums {
     }
     impl From<ffi::WGPUMapMode> for MapMode {
         fn from(value: ffi::WGPUMapMode) -> Self {
-            MapMode::from_bits_truncate(value as u64)
+            MapMode::from_bits_retain(value as u64)
         }
     }
     impl From<MapMode> for ffi::WGPUMapMode {
@@ -4801,7 +4969,7 @@ mod enums {
     }
     impl From<ffi::WGPUShaderStage> for ShaderStage {
         fn from(value: ffi::WGPUShaderStage) -> Self {
-            ShaderStage::from_bits_truncate(value as u64)
+            ShaderStage::from_bits_retain(value as u64)
         }
     }
     impl From<ShaderStage> for ffi::WGPUShaderStage {
@@ -4822,7 +4990,7 @@ mod enums {
     }
     impl From<ffi::WGPUTextureUsage> for TextureUsage {
         fn from(value: ffi::WGPUTextureUsage) -> Self {
-            TextureUsage::from_bits_truncate(value as u64)
+            TextureUsage::from_bits_retain(value as u64)
         }
     }
     impl From<TextureUsage> for ffi::WGPUTextureUsage {
@@ -4844,36 +5012,6 @@ mod structs {
         let data = view.data.cast::<u8>();
         let slice = unsafe { std::slice::from_raw_parts(data, view.length) };
         String::from_utf8_lossy(slice).into_owned()
-    }
-    pub struct InternalHaveEmdawnwebgpuHeader {
-        pub unused: Option<bool>,
-    }
-    impl Default for InternalHaveEmdawnwebgpuHeader {
-        fn default() -> Self {
-            Self { unused: None }
-        }
-    }
-    impl InternalHaveEmdawnwebgpuHeader {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER = unsafe {
-                std::mem::zeroed()
-            };
-            raw.unused = if self.unused.unwrap_or(false) { 1 } else { 0 };
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUINTERNAL_HAVE_EMDAWNWEBGPU_HEADER,
-        ) -> Self {
-            Self {
-                unused: Some(value.unused != 0),
-            }
-        }
     }
     pub struct AHardwareBufferProperties {
         pub y_cb_cr_info: Option<YCbCrVkDescriptor>,
@@ -4906,6 +5044,13 @@ mod structs {
                 y_cb_cr_info: Some(YCbCrVkDescriptor::from_ffi(value.yCbCrInfo)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUAHardwareBufferProperties,
+        ) -> Self {
+            Self {
+                y_cb_cr_info: Some(YCbCrVkDescriptor::from_ffi_borrowed(value.yCbCrInfo)),
+            }
+        }
     }
     pub struct AdapterInfo {
         pub(crate) extensions: Vec<AdapterInfoExtension>,
@@ -4919,8 +5064,6 @@ mod structs {
         pub device_id: Option<u32>,
         pub subgroup_min_size: Option<u32>,
         pub subgroup_max_size: Option<u32>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUAdapterInfo>,
     }
     impl Default for AdapterInfo {
         fn default() -> Self {
@@ -4936,7 +5079,6 @@ mod structs {
                 device_id: None,
                 subgroup_min_size: None,
                 subgroup_max_size: None,
-                _free_members: None,
             }
         }
     }
@@ -5025,8 +5167,10 @@ mod structs {
             self
         }
         pub(crate) fn from_ffi(value: ffi::WGPUAdapterInfo) -> Self {
-            Self {
-                extensions: Vec::new(),
+            let result = Self {
+                extensions: unsafe {
+                    AdapterInfoExtension::from_chain(value.nextInChain)
+                },
                 vendor: Some(string_view_to_string(value.vendor)),
                 architecture: Some(string_view_to_string(value.architecture)),
                 device: Some(string_view_to_string(value.device)),
@@ -5037,17 +5181,25 @@ mod structs {
                 device_id: Some(value.deviceID),
                 subgroup_min_size: Some(value.subgroupMinSize),
                 subgroup_max_size: Some(value.subgroupMaxSize),
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUAdapterInfo) {
+            };
             unsafe { ffi::wgpuAdapterInfoFreeMembers(value) };
+            result
         }
-    }
-    impl Drop for AdapterInfo {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuAdapterInfoFreeMembers(value) };
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUAdapterInfo) -> Self {
+            Self {
+                extensions: unsafe {
+                    AdapterInfoExtension::from_chain_borrowed(value.nextInChain)
+                },
+                vendor: Some(string_view_to_string(value.vendor)),
+                architecture: Some(string_view_to_string(value.architecture)),
+                device: Some(string_view_to_string(value.device)),
+                description: Some(string_view_to_string(value.description)),
+                backend_type: Some(value.backendType.into()),
+                adapter_type: Some(value.adapterType.into()),
+                vendor_id: Some(value.vendorID),
+                device_id: Some(value.deviceID),
+                subgroup_min_size: Some(value.subgroupMinSize),
+                subgroup_max_size: Some(value.subgroupMaxSize),
             }
         }
     }
@@ -5078,6 +5230,11 @@ mod structs {
                 shader_model: Some(value.shaderModel),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUAdapterPropertiesD3D) -> Self {
+            Self {
+                shader_model: Some(value.shaderModel),
+            }
+        }
     }
     pub struct AdapterPropertiesWGPU {
         pub backend_type: Option<BackendType>,
@@ -5104,6 +5261,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUAdapterPropertiesWGPU) -> Self {
+            Self {
+                backend_type: Some(value.backendType.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUAdapterPropertiesWGPU) -> Self {
             Self {
                 backend_type: Some(value.backendType.into()),
             }
@@ -5161,18 +5323,26 @@ mod structs {
                 max_compute_workgroup_subgroups: Some(value.maxComputeWorkgroupSubgroups),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUAdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+        ) -> Self {
+            Self {
+                min_explicit_compute_subgroup_size: Some(
+                    value.minExplicitComputeSubgroupSize,
+                ),
+                max_explicit_compute_subgroup_size: Some(
+                    value.maxExplicitComputeSubgroupSize,
+                ),
+                max_compute_workgroup_subgroups: Some(value.maxComputeWorkgroupSubgroups),
+            }
+        }
     }
     pub struct AdapterPropertiesMemoryHeaps {
         pub heap_info: Option<Vec<MemoryHeapInfo>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUAdapterPropertiesMemoryHeaps>,
     }
     impl Default for AdapterPropertiesMemoryHeaps {
         fn default() -> Self {
-            Self {
-                heap_info: None,
-                _free_members: None,
-            }
+            Self { heap_info: None }
         }
     }
     impl AdapterPropertiesMemoryHeaps {
@@ -5207,6 +5377,29 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUAdapterPropertiesMemoryHeaps) -> Self {
+            let result = Self {
+                heap_info: if value.heapInfo.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.heapInfo,
+                                value.heapCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| MemoryHeapInfo::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuAdapterPropertiesMemoryHeapsFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUAdapterPropertiesMemoryHeaps,
+        ) -> Self {
             Self {
                 heap_info: if value.heapInfo.is_null() {
                     None
@@ -5219,37 +5412,19 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| MemoryHeapInfo::from_ffi(*raw))
+                            .map(|raw| MemoryHeapInfo::from_ffi_borrowed(*raw))
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUAdapterPropertiesMemoryHeaps) {
-            unsafe { ffi::wgpuAdapterPropertiesMemoryHeapsFreeMembers(value) };
-        }
-    }
-    impl Drop for AdapterPropertiesMemoryHeaps {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuAdapterPropertiesMemoryHeapsFreeMembers(value) };
             }
         }
     }
     pub struct AdapterPropertiesSubgroupMatrixConfigs {
         pub configs: Option<Vec<SubgroupMatrixConfig>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<
-            ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs,
-        >,
     }
     impl Default for AdapterPropertiesSubgroupMatrixConfigs {
         fn default() -> Self {
-            Self {
-                configs: None,
-                _free_members: None,
-            }
+            Self { configs: None }
         }
     }
     impl AdapterPropertiesSubgroupMatrixConfigs {
@@ -5286,6 +5461,29 @@ mod structs {
         pub(crate) fn from_ffi(
             value: ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs,
         ) -> Self {
+            let result = Self {
+                configs: if value.configs.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.configs,
+                                value.configCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| SubgroupMatrixConfig::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuAdapterPropertiesSubgroupMatrixConfigsFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs,
+        ) -> Self {
             Self {
                 configs: if value.configs.is_null() {
                     None
@@ -5298,25 +5496,10 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| SubgroupMatrixConfig::from_ffi(*raw))
+                            .map(|raw| SubgroupMatrixConfig::from_ffi_borrowed(*raw))
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(
-            value: ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs,
-        ) {
-            unsafe { ffi::wgpuAdapterPropertiesSubgroupMatrixConfigsFreeMembers(value) };
-        }
-    }
-    impl Drop for AdapterPropertiesSubgroupMatrixConfigs {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe {
-                    ffi::wgpuAdapterPropertiesSubgroupMatrixConfigsFreeMembers(value)
-                };
             }
         }
     }
@@ -5347,6 +5530,11 @@ mod structs {
                 driver_version: Some(value.driverVersion),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUAdapterPropertiesVk) -> Self {
+            Self {
+                driver_version: Some(value.driverVersion),
+            }
+        }
     }
     pub struct BindGroupDescriptor {
         pub(crate) extensions: Vec<BindGroupDescriptorExtension>,
@@ -5354,19 +5542,14 @@ mod structs {
         pub layout: Option<BindGroupLayout>,
         pub entries: Option<Vec<BindGroupEntry>>,
     }
-    impl Default for BindGroupDescriptor {
-        fn default() -> Self {
+    impl BindGroupDescriptor {
+        pub fn new(layout: BindGroupLayout) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                layout: None,
+                layout: Some(layout),
                 entries: None,
             }
-        }
-    }
-    impl BindGroupDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -5376,6 +5559,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.layout.is_some(),
+                "required field BindGroupDescriptor.layout is missing",
+            );
             let mut raw: ffi::WGPUBindGroupDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -5423,7 +5610,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBindGroupDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BindGroupDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -5447,6 +5636,37 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBindGroupDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    BindGroupDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                layout: {
+                    unsafe { ffi::wgpuBindGroupLayoutAddRef(value.layout) };
+                    Some(unsafe { BindGroupLayout::from_raw(value.layout) })
+                },
+                entries: if value.entries.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.entries,
+                                value.entryCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| BindGroupEntry::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct BindGroupEntry {
         pub(crate) extensions: Vec<BindGroupEntryExtension>,
@@ -5457,11 +5677,11 @@ mod structs {
         pub sampler: Option<Sampler>,
         pub texture_view: Option<TextureView>,
     }
-    impl Default for BindGroupEntry {
-        fn default() -> Self {
+    impl BindGroupEntry {
+        pub fn new(binding: u32) -> Self {
             Self {
                 extensions: Vec::new(),
-                binding: None,
+                binding: Some(binding),
                 buffer: None,
                 offset: Some(0),
                 size: Some(WHOLE_SIZE),
@@ -5469,17 +5689,16 @@ mod structs {
                 texture_view: None,
             }
         }
-    }
-    impl BindGroupEntry {
-        pub fn new() -> Self {
-            Self::default()
-        }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUBindGroupEntry, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
             let mut next: *mut ffi::WGPUChainedStruct = std::ptr::null_mut();
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.binding.is_some(),
+                "required field BindGroupEntry.binding is missing",
+            );
             let mut raw: ffi::WGPUBindGroupEntry = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.binding {
@@ -5514,7 +5733,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBindGroupEntry) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BindGroupEntryExtension::from_chain(value.nextInChain)
+                },
                 binding: Some(value.binding),
                 buffer: if value.buffer.is_null() {
                     None
@@ -5531,6 +5752,34 @@ mod structs {
                 texture_view: if value.textureView.is_null() {
                     None
                 } else {
+                    Some(unsafe { TextureView::from_raw(value.textureView) })
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBindGroupEntry) -> Self {
+            Self {
+                extensions: unsafe {
+                    BindGroupEntryExtension::from_chain_borrowed(value.nextInChain)
+                },
+                binding: Some(value.binding),
+                buffer: if value.buffer.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuBufferAddRef(value.buffer) };
+                    Some(unsafe { Buffer::from_raw(value.buffer) })
+                },
+                offset: Some(value.offset),
+                size: Some(value.size),
+                sampler: if value.sampler.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuSamplerAddRef(value.sampler) };
+                    Some(unsafe { Sampler::from_raw(value.sampler) })
+                },
+                texture_view: if value.textureView.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.textureView) };
                     Some(unsafe { TextureView::from_raw(value.textureView) })
                 },
             }
@@ -5606,7 +5855,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBindGroupLayoutDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BindGroupLayoutDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -5629,6 +5880,37 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUBindGroupLayoutDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    BindGroupLayoutDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                entries: if value.entries.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.entries,
+                                value.entryCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| BindGroupLayoutEntry::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct BindGroupLayoutEntry {
         pub(crate) extensions: Vec<BindGroupLayoutEntryExtension>,
@@ -5640,23 +5922,18 @@ mod structs {
         pub texture: Option<TextureBindingLayout>,
         pub storage_texture: Option<StorageTextureBindingLayout>,
     }
-    impl Default for BindGroupLayoutEntry {
-        fn default() -> Self {
+    impl BindGroupLayoutEntry {
+        pub fn new(binding: u32, visibility: ShaderStage) -> Self {
             Self {
                 extensions: Vec::new(),
-                binding: None,
-                visibility: None,
+                binding: Some(binding),
+                visibility: Some(visibility),
                 binding_array_size: Some(0),
                 buffer: None,
                 sampler: None,
                 texture: None,
                 storage_texture: None,
             }
-        }
-    }
-    impl BindGroupLayoutEntry {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -5666,6 +5943,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.binding.is_some(),
+                "required field BindGroupLayoutEntry.binding is missing",
+            );
+            assert!(
+                self.visibility.is_some(),
+                "required field BindGroupLayoutEntry.visibility is missing",
+            );
             let mut raw: ffi::WGPUBindGroupLayoutEntry = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.binding {
@@ -5710,7 +5995,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBindGroupLayoutEntry) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BindGroupLayoutEntryExtension::from_chain(value.nextInChain)
+                },
                 binding: Some(value.binding),
                 visibility: Some(value.visibility.into()),
                 binding_array_size: Some(value.bindingArraySize),
@@ -5719,6 +6006,22 @@ mod structs {
                 texture: Some(TextureBindingLayout::from_ffi(value.texture)),
                 storage_texture: Some(
                     StorageTextureBindingLayout::from_ffi(value.storageTexture),
+                ),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBindGroupLayoutEntry) -> Self {
+            Self {
+                extensions: unsafe {
+                    BindGroupLayoutEntryExtension::from_chain_borrowed(value.nextInChain)
+                },
+                binding: Some(value.binding),
+                visibility: Some(value.visibility.into()),
+                binding_array_size: Some(value.bindingArraySize),
+                buffer: Some(BufferBindingLayout::from_ffi_borrowed(value.buffer)),
+                sampler: Some(SamplerBindingLayout::from_ffi_borrowed(value.sampler)),
+                texture: Some(TextureBindingLayout::from_ffi_borrowed(value.texture)),
+                storage_texture: Some(
+                    StorageTextureBindingLayout::from_ffi_borrowed(value.storageTexture),
                 ),
             }
         }
@@ -5784,7 +6087,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBindingResource) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BindingResourceExtension::from_chain(value.nextInChain)
+                },
                 buffer: if value.buffer.is_null() {
                     None
                 } else {
@@ -5800,6 +6105,33 @@ mod structs {
                 texture_view: if value.textureView.is_null() {
                     None
                 } else {
+                    Some(unsafe { TextureView::from_raw(value.textureView) })
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBindingResource) -> Self {
+            Self {
+                extensions: unsafe {
+                    BindingResourceExtension::from_chain_borrowed(value.nextInChain)
+                },
+                buffer: if value.buffer.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuBufferAddRef(value.buffer) };
+                    Some(unsafe { Buffer::from_raw(value.buffer) })
+                },
+                offset: Some(value.offset),
+                size: Some(value.size),
+                sampler: if value.sampler.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuSamplerAddRef(value.sampler) };
+                    Some(unsafe { Sampler::from_raw(value.sampler) })
+                },
+                texture_view: if value.textureView.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.textureView) };
                     Some(unsafe { TextureView::from_raw(value.textureView) })
                 },
             }
@@ -5850,6 +6182,13 @@ mod structs {
                 dst_factor: Some(value.dstFactor.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBlendComponent) -> Self {
+            Self {
+                operation: Some(value.operation.into()),
+                src_factor: Some(value.srcFactor.into()),
+                dst_factor: Some(value.dstFactor.into()),
+            }
+        }
     }
     pub struct BlendState {
         pub color: Option<BlendComponent>,
@@ -5883,6 +6222,12 @@ mod structs {
             Self {
                 color: Some(BlendComponent::from_ffi(value.color)),
                 alpha: Some(BlendComponent::from_ffi(value.alpha)),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBlendState) -> Self {
+            Self {
+                color: Some(BlendComponent::from_ffi_borrowed(value.color)),
+                alpha: Some(BlendComponent::from_ffi_borrowed(value.alpha)),
             }
         }
     }
@@ -5940,7 +6285,19 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBufferBindingLayout) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BufferBindingLayoutExtension::from_chain(value.nextInChain)
+                },
+                r#type: Some(value.type_.into()),
+                has_dynamic_offset: Some(value.hasDynamicOffset != 0),
+                min_binding_size: Some(value.minBindingSize),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBufferBindingLayout) -> Self {
+            Self {
+                extensions: unsafe {
+                    BufferBindingLayoutExtension::from_chain_borrowed(value.nextInChain)
+                },
                 r#type: Some(value.type_.into()),
                 has_dynamic_offset: Some(value.hasDynamicOffset != 0),
                 min_binding_size: Some(value.minBindingSize),
@@ -5954,20 +6311,15 @@ mod structs {
         pub size: Option<u64>,
         pub mapped_at_creation: Option<bool>,
     }
-    impl Default for BufferDescriptor {
-        fn default() -> Self {
+    impl BufferDescriptor {
+        pub fn new(usage: BufferUsage, size: u64) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                usage: None,
-                size: None,
+                usage: Some(usage),
+                size: Some(size),
                 mapped_at_creation: None,
             }
-        }
-    }
-    impl BufferDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -5977,6 +6329,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.usage.is_some(),
+                "required field BufferDescriptor.usage is missing",
+            );
+            assert!(
+                self.size.is_some(),
+                "required field BufferDescriptor.size is missing",
+            );
             let mut raw: ffi::WGPUBufferDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -6011,7 +6371,24 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUBufferDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    BufferDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                usage: Some(value.usage.into()),
+                size: Some(value.size),
+                mapped_at_creation: Some(value.mappedAtCreation != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUBufferDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    BufferDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -6028,23 +6405,34 @@ mod structs {
         pub dispose_callback: Option<Callback>,
         pub userdata: Option<*mut std::ffi::c_void>,
     }
-    impl Default for BufferHostMappedPointer {
-        fn default() -> Self {
-            Self {
-                pointer: None,
-                dispose_callback: None,
-                userdata: None,
-            }
-        }
-    }
     impl BufferHostMappedPointer {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            pointer: *mut std::ffi::c_void,
+            dispose_callback: Callback,
+            userdata: *mut std::ffi::c_void,
+        ) -> Self {
+            Self {
+                pointer: Some(pointer),
+                dispose_callback: Some(dispose_callback),
+                userdata: Some(userdata),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUBufferHostMappedPointer, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.pointer.is_some(),
+                "required field BufferHostMappedPointer.pointer is missing",
+            );
+            assert!(
+                self.dispose_callback.is_some(),
+                "required field BufferHostMappedPointer.dispose_callback is missing",
+            );
+            assert!(
+                self.userdata.is_some(),
+                "required field BufferHostMappedPointer.userdata is missing",
+            );
             let mut raw: ffi::WGPUBufferHostMappedPointer = unsafe {
                 std::mem::zeroed()
             };
@@ -6066,6 +6454,15 @@ mod structs {
                 userdata: Some(value.userdata),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUBufferHostMappedPointer,
+        ) -> Self {
+            Self {
+                pointer: Some(value.pointer),
+                dispose_callback: Some(value.disposeCallback),
+                userdata: Some(value.userdata),
+            }
+        }
     }
     pub struct Color {
         pub r: Option<f64>,
@@ -6073,22 +6470,21 @@ mod structs {
         pub b: Option<f64>,
         pub a: Option<f64>,
     }
-    impl Default for Color {
-        fn default() -> Self {
-            Self {
-                r: None,
-                g: None,
-                b: None,
-                a: None,
-            }
-        }
-    }
     impl Color {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(r: f64, g: f64, b: f64, a: f64) -> Self {
+            Self {
+                r: Some(r),
+                g: Some(g),
+                b: Some(b),
+                a: Some(a),
+            }
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUColor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(self.r.is_some(), "required field Color.r is missing");
+            assert!(self.g.is_some(), "required field Color.g is missing");
+            assert!(self.b.is_some(), "required field Color.b is missing");
+            assert!(self.a.is_some(), "required field Color.a is missing");
             let mut raw: ffi::WGPUColor = unsafe { std::mem::zeroed() };
             if let Some(value) = self.r {
                 raw.r = value;
@@ -6112,6 +6508,14 @@ mod structs {
                 a: Some(value.a),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUColor) -> Self {
+            Self {
+                r: Some(value.r),
+                g: Some(value.g),
+                b: Some(value.b),
+                a: Some(value.a),
+            }
+        }
     }
     pub struct ColorTargetState {
         pub(crate) extensions: Vec<ColorTargetStateExtension>,
@@ -6119,19 +6523,14 @@ mod structs {
         pub blend: Option<BlendState>,
         pub write_mask: Option<ColorWriteMask>,
     }
-    impl Default for ColorTargetState {
-        fn default() -> Self {
+    impl ColorTargetState {
+        pub fn new(format: TextureFormat) -> Self {
             Self {
                 extensions: Vec::new(),
-                format: None,
+                format: Some(format),
                 blend: None,
                 write_mask: Some(ColorWriteMask::ALL),
             }
-        }
-    }
-    impl ColorTargetState {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -6141,6 +6540,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field ColorTargetState.format is missing",
+            );
             let mut raw: ffi::WGPUColorTargetState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.format {
@@ -6169,12 +6572,28 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUColorTargetState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ColorTargetStateExtension::from_chain(value.nextInChain)
+                },
                 format: Some(value.format.into()),
                 blend: if value.blend.is_null() {
                     None
                 } else {
                     Some(BlendState::from_ffi(unsafe { *value.blend }))
+                },
+                write_mask: Some(value.writeMask.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUColorTargetState) -> Self {
+            Self {
+                extensions: unsafe {
+                    ColorTargetStateExtension::from_chain_borrowed(value.nextInChain)
+                },
+                format: Some(value.format.into()),
+                blend: if value.blend.is_null() {
+                    None
+                } else {
+                    Some(BlendState::from_ffi_borrowed(unsafe { *value.blend }))
                 },
                 write_mask: Some(value.writeMask.into()),
             }
@@ -6203,6 +6622,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUColorTargetStateExpandResolveTextureDawn,
+        ) -> Self {
+            Self {
+                enabled: Some(value.enabled != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUColorTargetStateExpandResolveTextureDawn,
         ) -> Self {
             Self {
@@ -6260,7 +6686,25 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUCommandBufferDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    CommandBufferDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUCommandBufferDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    CommandBufferDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -6319,7 +6763,25 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUCommandEncoderDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    CommandEncoderDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUCommandEncoderDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    CommandEncoderDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -6385,22 +6847,35 @@ mod structs {
                 ),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUCompatibilityModeLimits,
+        ) -> Self {
+            Self {
+                max_storage_buffers_in_vertex_stage: Some(
+                    value.maxStorageBuffersInVertexStage,
+                ),
+                max_storage_textures_in_vertex_stage: Some(
+                    value.maxStorageTexturesInVertexStage,
+                ),
+                max_storage_buffers_in_fragment_stage: Some(
+                    value.maxStorageBuffersInFragmentStage,
+                ),
+                max_storage_textures_in_fragment_stage: Some(
+                    value.maxStorageTexturesInFragmentStage,
+                ),
+            }
+        }
     }
     pub struct CompilationInfo {
         pub(crate) extensions: Vec<CompilationInfoExtension>,
         pub messages: Option<Vec<CompilationMessage>>,
     }
-    impl Default for CompilationInfo {
-        fn default() -> Self {
+    impl CompilationInfo {
+        pub fn new(messages: Vec<CompilationMessage>) -> Self {
             Self {
                 extensions: Vec::new(),
-                messages: None,
+                messages: Some(messages),
             }
-        }
-    }
-    impl CompilationInfo {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUCompilationInfo, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -6408,6 +6883,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.messages.is_some(),
+                "required field CompilationInfo.messages is missing",
+            );
             let mut raw: ffi::WGPUCompilationInfo = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.messageCount = self.messages.as_ref().map(|v| v.len()).unwrap_or(0);
@@ -6436,7 +6915,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUCompilationInfo) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    CompilationInfoExtension::from_chain(value.nextInChain)
+                },
                 messages: if value.messages.is_null() {
                     None
                 } else {
@@ -6454,6 +6935,28 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUCompilationInfo) -> Self {
+            Self {
+                extensions: unsafe {
+                    CompilationInfoExtension::from_chain_borrowed(value.nextInChain)
+                },
+                messages: if value.messages.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.messages,
+                                value.messageCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| CompilationMessage::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct CompilationMessage {
         pub(crate) extensions: Vec<CompilationMessageExtension>,
@@ -6464,22 +6967,23 @@ mod structs {
         pub offset: Option<u64>,
         pub length: Option<u64>,
     }
-    impl Default for CompilationMessage {
-        fn default() -> Self {
+    impl CompilationMessage {
+        pub fn new(
+            r#type: CompilationMessageType,
+            line_num: u64,
+            line_pos: u64,
+            offset: u64,
+            length: u64,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
                 message: None,
-                r#type: None,
-                line_num: None,
-                line_pos: None,
-                offset: None,
-                length: None,
+                r#type: Some(r#type),
+                line_num: Some(line_num),
+                line_pos: Some(line_pos),
+                offset: Some(offset),
+                length: Some(length),
             }
-        }
-    }
-    impl CompilationMessage {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -6489,6 +6993,26 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.r#type.is_some(),
+                "required field CompilationMessage.r#type is missing",
+            );
+            assert!(
+                self.line_num.is_some(),
+                "required field CompilationMessage.line_num is missing",
+            );
+            assert!(
+                self.line_pos.is_some(),
+                "required field CompilationMessage.line_pos is missing",
+            );
+            assert!(
+                self.offset.is_some(),
+                "required field CompilationMessage.offset is missing",
+            );
+            assert!(
+                self.length.is_some(),
+                "required field CompilationMessage.length is missing",
+            );
             let mut raw: ffi::WGPUCompilationMessage = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.message {
@@ -6527,7 +7051,22 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUCompilationMessage) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    CompilationMessageExtension::from_chain(value.nextInChain)
+                },
+                message: Some(string_view_to_string(value.message)),
+                r#type: Some(value.type_.into()),
+                line_num: Some(value.lineNum),
+                line_pos: Some(value.linePos),
+                offset: Some(value.offset),
+                length: Some(value.length),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUCompilationMessage) -> Self {
+            Self {
+                extensions: unsafe {
+                    CompilationMessageExtension::from_chain_borrowed(value.nextInChain)
+                },
                 message: Some(string_view_to_string(value.message)),
                 r#type: Some(value.type_.into()),
                 line_num: Some(value.lineNum),
@@ -6595,7 +7134,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUComputePassDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ComputePassDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -6610,6 +7151,29 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUComputePassDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    ComputePassDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                timestamp_writes: if value.timestampWrites.is_null() {
+                    None
+                } else {
+                    Some(
+                        PassTimestampWrites::from_ffi_borrowed(unsafe {
+                            *value.timestampWrites
+                        }),
+                    )
+                },
+            }
+        }
     }
     pub struct ComputePipelineDescriptor {
         pub(crate) extensions: Vec<ComputePipelineDescriptorExtension>,
@@ -6617,19 +7181,14 @@ mod structs {
         pub layout: Option<PipelineLayout>,
         pub compute: Option<ComputeState>,
     }
-    impl Default for ComputePipelineDescriptor {
-        fn default() -> Self {
+    impl ComputePipelineDescriptor {
+        pub fn new(compute: ComputeState) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
                 layout: None,
-                compute: None,
+                compute: Some(compute),
             }
-        }
-    }
-    impl ComputePipelineDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -6639,6 +7198,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.compute.is_some(),
+                "required field ComputePipelineDescriptor.compute is missing",
+            );
             let mut raw: ffi::WGPUComputePipelineDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -6675,7 +7238,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUComputePipelineDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ComputePipelineDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -6689,6 +7254,29 @@ mod structs {
                 compute: Some(ComputeState::from_ffi(value.compute)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUComputePipelineDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    ComputePipelineDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                layout: if value.layout.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuPipelineLayoutAddRef(value.layout) };
+                    Some(unsafe { PipelineLayout::from_raw(value.layout) })
+                },
+                compute: Some(ComputeState::from_ffi_borrowed(value.compute)),
+            }
+        }
     }
     pub struct ComputeState {
         pub(crate) extensions: Vec<ComputeStateExtension>,
@@ -6696,19 +7284,14 @@ mod structs {
         pub entry_point: Option<String>,
         pub constants: Option<Vec<ConstantEntry>>,
     }
-    impl Default for ComputeState {
-        fn default() -> Self {
+    impl ComputeState {
+        pub fn new(module: ShaderModule) -> Self {
             Self {
                 extensions: Vec::new(),
-                module: None,
+                module: Some(module),
                 entry_point: None,
                 constants: None,
             }
-        }
-    }
-    impl ComputeState {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUComputeState, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -6716,6 +7299,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.module.is_some(),
+                "required field ComputeState.module is missing",
+            );
             let mut raw: ffi::WGPUComputeState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.module = self
@@ -6760,7 +7347,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUComputeState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ComputeStateExtension::from_chain(value.nextInChain)
+                },
                 module: Some(unsafe { ShaderModule::from_raw(value.module) }),
                 entry_point: if value.entryPoint.data.is_null()
                     || value.entryPoint.length == 0
@@ -6786,24 +7375,52 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUComputeState) -> Self {
+            Self {
+                extensions: unsafe {
+                    ComputeStateExtension::from_chain_borrowed(value.nextInChain)
+                },
+                module: {
+                    unsafe { ffi::wgpuShaderModuleAddRef(value.module) };
+                    Some(unsafe { ShaderModule::from_raw(value.module) })
+                },
+                entry_point: if value.entryPoint.data.is_null()
+                    || value.entryPoint.length == 0
+                {
+                    None
+                } else {
+                    Some(string_view_to_string(value.entryPoint))
+                },
+                constants: if value.constants.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.constants,
+                                value.constantCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| ConstantEntry::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct ConstantEntry {
         pub(crate) extensions: Vec<ConstantEntryExtension>,
         pub key: Option<String>,
         pub value: Option<f64>,
     }
-    impl Default for ConstantEntry {
-        fn default() -> Self {
+    impl ConstantEntry {
+        pub fn new(value: f64) -> Self {
             Self {
                 extensions: Vec::new(),
                 key: None,
-                value: None,
+                value: Some(value),
             }
-        }
-    }
-    impl ConstantEntry {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUConstantEntry, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -6811,6 +7428,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.value.is_some(),
+                "required field ConstantEntry.value is missing",
+            );
             let mut raw: ffi::WGPUConstantEntry = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.key {
@@ -6835,7 +7456,18 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUConstantEntry) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ConstantEntryExtension::from_chain(value.nextInChain)
+                },
+                key: Some(string_view_to_string(value.key)),
+                value: Some(value.value),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUConstantEntry) -> Self {
+            Self {
+                extensions: unsafe {
+                    ConstantEntryExtension::from_chain_borrowed(value.nextInChain)
+                },
                 key: Some(string_view_to_string(value.key)),
                 value: Some(value.value),
             }
@@ -6941,7 +7573,67 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUCopyTextureForBrowserOptions) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    CopyTextureForBrowserOptionsExtension::from_chain(value.nextInChain)
+                },
+                flip_y: Some(value.flipY != 0),
+                needs_color_space_conversion: Some(value.needsColorSpaceConversion != 0),
+                src_alpha_mode: Some(value.srcAlphaMode.into()),
+                src_transfer_function_parameters: if value
+                    .srcTransferFunctionParameters
+                    .is_null()
+                {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.srcTransferFunctionParameters,
+                                7usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                conversion_matrix: if value.conversionMatrix.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(value.conversionMatrix, 9usize)
+                        }
+                            .to_vec(),
+                    )
+                },
+                dst_transfer_function_parameters: if value
+                    .dstTransferFunctionParameters
+                    .is_null()
+                {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.dstTransferFunctionParameters,
+                                7usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                dst_alpha_mode: Some(value.dstAlphaMode.into()),
+                internal_usage: Some(value.internalUsage != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUCopyTextureForBrowserOptions,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    CopyTextureForBrowserOptionsExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 flip_y: Some(value.flipY != 0),
                 needs_color_space_conversion: Some(value.needsColorSpaceConversion != 0),
                 src_alpha_mode: Some(value.srcAlphaMode.into()),
@@ -7065,6 +7757,33 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDawnWGSLBlocklist) -> Self {
+            Self {
+                blocklisted_features: if value.blocklistedFeatures.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.blocklistedFeatures,
+                                value.blocklistedFeatureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                if raw.is_null() {
+                                    String::new()
+                                } else {
+                                    unsafe { CStr::from_ptr(*raw) }
+                                        .to_string_lossy()
+                                        .into_owned()
+                                }
+                            })
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct DawnAdapterPropertiesPowerPreference {
         pub power_preference: Option<PowerPreference>,
@@ -7099,6 +7818,13 @@ mod structs {
                 power_preference: Some(value.powerPreference.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnAdapterPropertiesPowerPreference,
+        ) -> Self {
+            Self {
+                power_preference: Some(value.powerPreference.into()),
+            }
+        }
     }
     pub struct DawnBufferDescriptorErrorInfoFromWireClient {
         pub out_of_memory: Option<bool>,
@@ -7126,6 +7852,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUDawnBufferDescriptorErrorInfoFromWireClient,
+        ) -> Self {
+            Self {
+                out_of_memory: Some(value.outOfMemory != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUDawnBufferDescriptorErrorInfoFromWireClient,
         ) -> Self {
             Self {
@@ -7190,29 +7923,46 @@ mod structs {
                 function_userdata: Some(value.functionUserdata),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnCacheDeviceDescriptor,
+        ) -> Self {
+            Self {
+                isolation_key: Some(string_view_to_string(value.isolationKey)),
+                load_data_function: Some(value.loadDataFunction),
+                store_data_function: Some(value.storeDataFunction),
+                function_userdata: Some(value.functionUserdata),
+            }
+        }
     }
     pub struct DawnCompilationMessageUtf16 {
         pub line_pos: Option<u64>,
         pub offset: Option<u64>,
         pub length: Option<u64>,
     }
-    impl Default for DawnCompilationMessageUtf16 {
-        fn default() -> Self {
-            Self {
-                line_pos: None,
-                offset: None,
-                length: None,
-            }
-        }
-    }
     impl DawnCompilationMessageUtf16 {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(line_pos: u64, offset: u64, length: u64) -> Self {
+            Self {
+                line_pos: Some(line_pos),
+                offset: Some(offset),
+                length: Some(length),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDawnCompilationMessageUtf16, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.line_pos.is_some(),
+                "required field DawnCompilationMessageUtf16.line_pos is missing",
+            );
+            assert!(
+                self.offset.is_some(),
+                "required field DawnCompilationMessageUtf16.offset is missing",
+            );
+            assert!(
+                self.length.is_some(),
+                "required field DawnCompilationMessageUtf16.length is missing",
+            );
             let mut raw: ffi::WGPUDawnCompilationMessageUtf16 = unsafe {
                 std::mem::zeroed()
             };
@@ -7228,6 +7978,15 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnCompilationMessageUtf16) -> Self {
+            Self {
+                line_pos: Some(value.linePos),
+                offset: Some(value.offset),
+                length: Some(value.length),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnCompilationMessageUtf16,
+        ) -> Self {
             Self {
                 line_pos: Some(value.linePos),
                 offset: Some(value.offset),
@@ -7266,6 +8025,13 @@ mod structs {
                 consume_adapter: Some(value.consumeAdapter != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnConsumeAdapterDescriptor,
+        ) -> Self {
+            Self {
+                consume_adapter: Some(value.consumeAdapter != 0),
+            }
+        }
     }
     pub struct DawnDeviceAllocatorControl {
         pub allocator_heap_block_size: Option<usize>,
@@ -7298,18 +8064,20 @@ mod structs {
                 allocator_heap_block_size: Some(value.allocatorHeapBlockSize),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnDeviceAllocatorControl,
+        ) -> Self {
+            Self {
+                allocator_heap_block_size: Some(value.allocatorHeapBlockSize),
+            }
+        }
     }
     pub struct DawnDrmFormatCapabilities {
         pub properties: Option<Vec<DawnDrmFormatProperties>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUDawnDrmFormatCapabilities>,
     }
     impl Default for DawnDrmFormatCapabilities {
         fn default() -> Self {
-            Self {
-                properties: None,
-                _free_members: None,
-            }
+            Self { properties: None }
         }
     }
     impl DawnDrmFormatCapabilities {
@@ -7344,6 +8112,29 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnDrmFormatCapabilities) -> Self {
+            let result = Self {
+                properties: if value.properties.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.properties,
+                                value.propertiesCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| DawnDrmFormatProperties::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuDawnDrmFormatCapabilitiesFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnDrmFormatCapabilities,
+        ) -> Self {
             Self {
                 properties: if value.properties.is_null() {
                     None
@@ -7356,21 +8147,10 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| DawnDrmFormatProperties::from_ffi(*raw))
+                            .map(|raw| DawnDrmFormatProperties::from_ffi_borrowed(*raw))
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUDawnDrmFormatCapabilities) {
-            unsafe { ffi::wgpuDawnDrmFormatCapabilitiesFreeMembers(value) };
-        }
-    }
-    impl Drop for DawnDrmFormatCapabilities {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuDawnDrmFormatCapabilitiesFreeMembers(value) };
             }
         }
     }
@@ -7378,22 +8158,25 @@ mod structs {
         pub modifier: Option<u64>,
         pub modifier_plane_count: Option<u32>,
     }
-    impl Default for DawnDrmFormatProperties {
-        fn default() -> Self {
-            Self {
-                modifier: None,
-                modifier_plane_count: None,
-            }
-        }
-    }
     impl DawnDrmFormatProperties {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(modifier: u64, modifier_plane_count: u32) -> Self {
+            Self {
+                modifier: Some(modifier),
+                modifier_plane_count: Some(modifier_plane_count),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDawnDrmFormatProperties, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.modifier.is_some(),
+                "required field DawnDrmFormatProperties.modifier is missing",
+            );
+            assert!(
+                self.modifier_plane_count.is_some(),
+                "required field DawnDrmFormatProperties.modifier_plane_count is missing",
+            );
             let mut raw: ffi::WGPUDawnDrmFormatProperties = unsafe {
                 std::mem::zeroed()
             };
@@ -7406,6 +8189,14 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnDrmFormatProperties) -> Self {
+            Self {
+                modifier: Some(value.modifier),
+                modifier_plane_count: Some(value.modifierPlaneCount),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnDrmFormatProperties,
+        ) -> Self {
             Self {
                 modifier: Some(value.modifier),
                 modifier_plane_count: Some(value.modifierPlaneCount),
@@ -7445,29 +8236,47 @@ mod structs {
                 use_internal_usages: Some(value.useInternalUsages != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnEncoderInternalUsageDescriptor,
+        ) -> Self {
+            Self {
+                use_internal_usages: Some(value.useInternalUsages != 0),
+            }
+        }
     }
     pub struct DawnFakeBufferOOMForTesting {
         pub fake_oom_at_wire_client_map: Option<bool>,
         pub fake_oom_at_native_map: Option<bool>,
         pub fake_oom_at_device: Option<bool>,
     }
-    impl Default for DawnFakeBufferOOMForTesting {
-        fn default() -> Self {
-            Self {
-                fake_oom_at_wire_client_map: None,
-                fake_oom_at_native_map: None,
-                fake_oom_at_device: None,
-            }
-        }
-    }
     impl DawnFakeBufferOOMForTesting {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            fake_oom_at_wire_client_map: bool,
+            fake_oom_at_native_map: bool,
+            fake_oom_at_device: bool,
+        ) -> Self {
+            Self {
+                fake_oom_at_wire_client_map: Some(fake_oom_at_wire_client_map),
+                fake_oom_at_native_map: Some(fake_oom_at_native_map),
+                fake_oom_at_device: Some(fake_oom_at_device),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDawnFakeBufferOOMForTesting, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.fake_oom_at_wire_client_map.is_some(),
+                "required field DawnFakeBufferOOMForTesting.fake_oom_at_wire_client_map is missing",
+            );
+            assert!(
+                self.fake_oom_at_native_map.is_some(),
+                "required field DawnFakeBufferOOMForTesting.fake_oom_at_native_map is missing",
+            );
+            assert!(
+                self.fake_oom_at_device.is_some(),
+                "required field DawnFakeBufferOOMForTesting.fake_oom_at_device is missing",
+            );
             let mut raw: ffi::WGPUDawnFakeBufferOOMForTesting = unsafe {
                 std::mem::zeroed()
             };
@@ -7498,6 +8307,15 @@ mod structs {
                 fake_oom_at_device: Some(value.fakeOOMAtDevice != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnFakeBufferOOMForTesting,
+        ) -> Self {
+            Self {
+                fake_oom_at_wire_client_map: Some(value.fakeOOMAtWireClientMap != 0),
+                fake_oom_at_native_map: Some(value.fakeOOMAtNativeMap != 0),
+                fake_oom_at_device: Some(value.fakeOOMAtDevice != 0),
+            }
+        }
     }
     pub struct DawnFakeDeviceInitializeErrorForTesting {}
     impl Default for DawnFakeDeviceInitializeErrorForTesting {
@@ -7519,6 +8337,12 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUDawnFakeDeviceInitializeErrorForTesting,
+        ) -> Self {
+            let _ = value;
+            Self::default()
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUDawnFakeDeviceInitializeErrorForTesting,
         ) -> Self {
             let _ = value;
@@ -7557,7 +8381,20 @@ mod structs {
             self
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnFormatCapabilities) -> Self {
-            Self { extensions: Vec::new() }
+            Self {
+                extensions: unsafe {
+                    DawnFormatCapabilitiesExtension::from_chain(value.nextInChain)
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDawnFormatCapabilities) -> Self {
+            Self {
+                extensions: unsafe {
+                    DawnFormatCapabilitiesExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+            }
         }
     }
     pub struct DawnHostMappedPointerLimits {
@@ -7591,23 +8428,31 @@ mod structs {
                 host_mapped_pointer_alignment: Some(value.hostMappedPointerAlignment),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnHostMappedPointerLimits,
+        ) -> Self {
+            Self {
+                host_mapped_pointer_alignment: Some(value.hostMappedPointerAlignment),
+            }
+        }
     }
     pub struct DawnInjectedInvalidSType {
         pub invalid_s_type: Option<SType>,
     }
-    impl Default for DawnInjectedInvalidSType {
-        fn default() -> Self {
-            Self { invalid_s_type: None }
-        }
-    }
     impl DawnInjectedInvalidSType {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(invalid_s_type: SType) -> Self {
+            Self {
+                invalid_s_type: Some(invalid_s_type),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDawnInjectedInvalidSType, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.invalid_s_type.is_some(),
+                "required field DawnInjectedInvalidSType.invalid_s_type is missing",
+            );
             let mut raw: ffi::WGPUDawnInjectedInvalidSType = unsafe {
                 std::mem::zeroed()
             };
@@ -7619,6 +8464,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnInjectedInvalidSType) -> Self {
+            Self {
+                invalid_s_type: Some(value.invalidSType.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnInjectedInvalidSType,
+        ) -> Self {
             Self {
                 invalid_s_type: Some(value.invalidSType.into()),
             }
@@ -7649,6 +8501,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDawnRenderPassSampleCount) -> Self {
+            Self {
+                sample_count: Some(value.sampleCount),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnRenderPassSampleCount,
+        ) -> Self {
             Self {
                 sample_count: Some(value.sampleCount),
             }
@@ -7694,6 +8553,15 @@ mod structs {
                 ),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnShaderModuleSPIRVOptionsDescriptor,
+        ) -> Self {
+            Self {
+                allow_non_uniform_derivatives: Some(
+                    value.allowNonUniformDerivatives != 0,
+                ),
+            }
+        }
     }
     pub struct DawnTexelCopyBufferRowAlignmentLimits {
         pub min_texel_copy_buffer_row_alignment: Option<u32>,
@@ -7730,23 +8598,33 @@ mod structs {
                 ),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUDawnTexelCopyBufferRowAlignmentLimits,
+        ) -> Self {
+            Self {
+                min_texel_copy_buffer_row_alignment: Some(
+                    value.minTexelCopyBufferRowAlignment,
+                ),
+            }
+        }
     }
     pub struct DawnTextureInternalUsageDescriptor {
         pub internal_usage: Option<TextureUsage>,
     }
-    impl Default for DawnTextureInternalUsageDescriptor {
-        fn default() -> Self {
-            Self { internal_usage: None }
-        }
-    }
     impl DawnTextureInternalUsageDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(internal_usage: TextureUsage) -> Self {
+            Self {
+                internal_usage: Some(internal_usage),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDawnTextureInternalUsageDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.internal_usage.is_some(),
+                "required field DawnTextureInternalUsageDescriptor.internal_usage is missing",
+            );
             let mut raw: ffi::WGPUDawnTextureInternalUsageDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -7758,6 +8636,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUDawnTextureInternalUsageDescriptor,
+        ) -> Self {
+            Self {
+                internal_usage: Some(value.internalUsage.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUDawnTextureInternalUsageDescriptor,
         ) -> Self {
             Self {
@@ -7892,6 +8777,56 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDawnTogglesDescriptor) -> Self {
+            Self {
+                enabled_toggles: if value.enabledToggles.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.enabledToggles,
+                                value.enabledToggleCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                if raw.is_null() {
+                                    String::new()
+                                } else {
+                                    unsafe { CStr::from_ptr(*raw) }
+                                        .to_string_lossy()
+                                        .into_owned()
+                                }
+                            })
+                            .collect(),
+                    )
+                },
+                disabled_toggles: if value.disabledToggles.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.disabledToggles,
+                                value.disabledToggleCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                if raw.is_null() {
+                                    String::new()
+                                } else {
+                                    unsafe { CStr::from_ptr(*raw) }
+                                        .to_string_lossy()
+                                        .into_owned()
+                                }
+                            })
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct DawnWireWGSLControl {
         pub enable_experimental: Option<bool>,
@@ -7932,6 +8867,13 @@ mod structs {
                 enable_testing: Some(value.enableTesting != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDawnWireWGSLControl) -> Self {
+            Self {
+                enable_experimental: Some(value.enableExperimental != 0),
+                enable_unsafe: Some(value.enableUnsafe != 0),
+                enable_testing: Some(value.enableTesting != 0),
+            }
+        }
     }
     pub struct DepthStencilState {
         pub(crate) extensions: Vec<DepthStencilStateExtension>,
@@ -7946,13 +8888,17 @@ mod structs {
         pub depth_bias_slope_scale: Option<f32>,
         pub depth_bias_clamp: Option<f32>,
     }
-    impl Default for DepthStencilState {
-        fn default() -> Self {
+    impl DepthStencilState {
+        pub fn new(
+            format: TextureFormat,
+            depth_write_enabled: OptionalBool,
+            depth_compare: CompareFunction,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
-                format: None,
-                depth_write_enabled: None,
-                depth_compare: None,
+                format: Some(format),
+                depth_write_enabled: Some(depth_write_enabled),
+                depth_compare: Some(depth_compare),
                 stencil_front: None,
                 stencil_back: None,
                 stencil_read_mask: Some(4294967295),
@@ -7962,11 +8908,6 @@ mod structs {
                 depth_bias_clamp: None,
             }
         }
-    }
-    impl DepthStencilState {
-        pub fn new() -> Self {
-            Self::default()
-        }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUDepthStencilState, ChainedStructStorage) {
@@ -7975,6 +8916,18 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field DepthStencilState.format is missing",
+            );
+            assert!(
+                self.depth_write_enabled.is_some(),
+                "required field DepthStencilState.depth_write_enabled is missing",
+            );
+            assert!(
+                self.depth_compare.is_some(),
+                "required field DepthStencilState.depth_compare is missing",
+            );
             let mut raw: ffi::WGPUDepthStencilState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.format {
@@ -8025,12 +8978,35 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDepthStencilState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    DepthStencilStateExtension::from_chain(value.nextInChain)
+                },
                 format: Some(value.format.into()),
                 depth_write_enabled: Some(value.depthWriteEnabled.into()),
                 depth_compare: Some(value.depthCompare.into()),
                 stencil_front: Some(StencilFaceState::from_ffi(value.stencilFront)),
                 stencil_back: Some(StencilFaceState::from_ffi(value.stencilBack)),
+                stencil_read_mask: Some(value.stencilReadMask),
+                stencil_write_mask: Some(value.stencilWriteMask),
+                depth_bias: Some(value.depthBias),
+                depth_bias_slope_scale: Some(value.depthBiasSlopeScale),
+                depth_bias_clamp: Some(value.depthBiasClamp),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDepthStencilState) -> Self {
+            Self {
+                extensions: unsafe {
+                    DepthStencilStateExtension::from_chain_borrowed(value.nextInChain)
+                },
+                format: Some(value.format.into()),
+                depth_write_enabled: Some(value.depthWriteEnabled.into()),
+                depth_compare: Some(value.depthCompare.into()),
+                stencil_front: Some(
+                    StencilFaceState::from_ffi_borrowed(value.stencilFront),
+                ),
+                stencil_back: Some(
+                    StencilFaceState::from_ffi_borrowed(value.stencilBack),
+                ),
                 stencil_read_mask: Some(value.stencilReadMask),
                 stencil_write_mask: Some(value.stencilWriteMask),
                 depth_bias: Some(value.depthBias),
@@ -8127,14 +9103,20 @@ mod structs {
                     callback,
                 ) = callback {
                     let callback_box: DeviceLostCallback = callback;
-                    let callback_box = Box::new(Some(callback_box));
+                    let callback_box = Box::new(
+                        std::sync::Mutex::new(Some(callback_box)),
+                    );
                     let userdata = Box::into_raw(callback_box)
                         .cast::<std::ffi::c_void>();
+                    storage
+                        .push_callback_userdata(
+                            CallbackUserdata::new_mutex::<DeviceLostCallback>(userdata),
+                        );
                     (Some(device_lost_callback_trampoline), userdata)
                 } else {
                     (None, std::ptr::null_mut())
                 };
-                let mode = info.mode.unwrap_or(CallbackMode::AllowSpontaneous);
+                let mode = info.mode.unwrap_or(CallbackMode::AllowProcessEvents);
                 raw.deviceLostCallbackInfo = ffi::WGPUDeviceLostCallbackInfo {
                     nextInChain: std::ptr::null_mut(),
                     mode: mode.into(),
@@ -8145,7 +9127,7 @@ mod structs {
             } else {
                 raw.deviceLostCallbackInfo = ffi::WGPUDeviceLostCallbackInfo {
                     nextInChain: std::ptr::null_mut(),
-                    mode: CallbackMode::AllowSpontaneous.into(),
+                    mode: CallbackMode::AllowProcessEvents.into(),
                     callback: None,
                     userdata1: std::ptr::null_mut(),
                     userdata2: std::ptr::null_mut(),
@@ -8161,9 +9143,17 @@ mod structs {
                     callback,
                 ) = callback {
                     let callback_box: UncapturedErrorCallback = callback;
-                    let callback_box = Box::new(Some(callback_box));
+                    let callback_box = Box::new(
+                        std::sync::Mutex::new(Some(callback_box)),
+                    );
                     let userdata = Box::into_raw(callback_box)
                         .cast::<std::ffi::c_void>();
+                    storage
+                        .push_callback_userdata(
+                            CallbackUserdata::new_mutex::<
+                                UncapturedErrorCallback,
+                            >(userdata),
+                        );
                     (Some(uncaptured_error_callback_trampoline), userdata)
                 } else {
                     (None, std::ptr::null_mut())
@@ -8190,7 +9180,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUDeviceDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    DeviceDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -8221,44 +9213,41 @@ mod structs {
                 uncaptured_error_callback_info: None,
             }
         }
-    }
-    pub struct EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub selector: Option<String>,
-    }
-    impl Default for EmscriptenSurfaceSourceCanvasHTMLSelector {
-        fn default() -> Self {
-            Self { selector: None }
-        }
-    }
-    impl EmscriptenSurfaceSourceCanvasHTMLSelector {
-        pub fn new() -> Self {
-            Self::default()
-        }
-        pub(crate) fn to_ffi(
-            &self,
-        ) -> (ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector, ChainedStructStorage) {
-            let mut storage = ChainedStructStorage::new();
-            let mut raw: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector = unsafe {
-                std::mem::zeroed()
-            };
-            if let Some(value) = &self.selector {
-                raw.selector = ffi::WGPUStringView {
-                    data: value.as_ptr().cast(),
-                    length: value.len(),
-                };
-            } else {
-                raw.selector = ffi::WGPUStringView {
-                    data: std::ptr::null(),
-                    length: 0,
-                };
-            }
-            (raw, storage)
-        }
-        pub(crate) fn from_ffi(
-            value: ffi::WGPUEmscriptenSurfaceSourceCanvasHTMLSelector,
-        ) -> Self {
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUDeviceDescriptor) -> Self {
             Self {
-                selector: Some(string_view_to_string(value.selector)),
+                extensions: unsafe {
+                    DeviceDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                required_features: if value.requiredFeatures.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.requiredFeatures,
+                                value.requiredFeatureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| FeatureName::from(*raw))
+                            .collect(),
+                    )
+                },
+                required_limits: if value.requiredLimits.is_null() {
+                    None
+                } else {
+                    Some(Limits::from_ffi_borrowed(unsafe { *value.requiredLimits }))
+                },
+                default_queue: Some(
+                    QueueDescriptor::from_ffi_borrowed(value.defaultQueue),
+                ),
+                device_lost_callback_info: None,
+                uncaptured_error_callback_info: None,
             }
         }
     }
@@ -8266,17 +9255,17 @@ mod structs {
         pub width: Option<u32>,
         pub height: Option<u32>,
     }
-    impl Default for Extent2D {
-        fn default() -> Self {
-            Self { width: None, height: None }
-        }
-    }
     impl Extent2D {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(width: u32, height: u32) -> Self {
+            Self {
+                width: Some(width),
+                height: Some(height),
+            }
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUExtent2D, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(self.width.is_some(), "required field Extent2D.width is missing");
+            assert!(self.height.is_some(), "required field Extent2D.height is missing");
             let mut raw: ffi::WGPUExtent2D = unsafe { std::mem::zeroed() };
             if let Some(value) = self.width {
                 raw.width = value;
@@ -8292,27 +9281,29 @@ mod structs {
                 height: Some(value.height),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUExtent2D) -> Self {
+            Self {
+                width: Some(value.width),
+                height: Some(value.height),
+            }
+        }
     }
     pub struct Extent3D {
         pub width: Option<u32>,
         pub height: Option<u32>,
         pub depth_or_array_layers: Option<u32>,
     }
-    impl Default for Extent3D {
-        fn default() -> Self {
+    impl Extent3D {
+        pub fn new(width: u32) -> Self {
             Self {
-                width: None,
+                width: Some(width),
                 height: Some(1),
                 depth_or_array_layers: Some(1),
             }
         }
-    }
-    impl Extent3D {
-        pub fn new() -> Self {
-            Self::default()
-        }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUExtent3D, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(self.width.is_some(), "required field Extent3D.width is missing");
             let mut raw: ffi::WGPUExtent3D = unsafe { std::mem::zeroed() };
             if let Some(value) = self.width {
                 raw.width = value;
@@ -8332,23 +9323,31 @@ mod structs {
                 depth_or_array_layers: Some(value.depthOrArrayLayers),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUExtent3D) -> Self {
+            Self {
+                width: Some(value.width),
+                height: Some(value.height),
+                depth_or_array_layers: Some(value.depthOrArrayLayers),
+            }
+        }
     }
     pub struct ExternalTextureBindingEntry {
         pub external_texture: Option<ExternalTexture>,
     }
-    impl Default for ExternalTextureBindingEntry {
-        fn default() -> Self {
-            Self { external_texture: None }
-        }
-    }
     impl ExternalTextureBindingEntry {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(external_texture: ExternalTexture) -> Self {
+            Self {
+                external_texture: Some(external_texture),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUExternalTextureBindingEntry, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.external_texture.is_some(),
+                "required field ExternalTextureBindingEntry.external_texture is missing",
+            );
             let mut raw: ffi::WGPUExternalTextureBindingEntry = unsafe {
                 std::mem::zeroed()
             };
@@ -8364,6 +9363,16 @@ mod structs {
                 external_texture: Some(unsafe {
                     ExternalTexture::from_raw(value.externalTexture)
                 }),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUExternalTextureBindingEntry,
+        ) -> Self {
+            Self {
+                external_texture: {
+                    unsafe { ffi::wgpuExternalTextureAddRef(value.externalTexture) };
+                    Some(unsafe { ExternalTexture::from_raw(value.externalTexture) })
+                },
             }
         }
     }
@@ -8390,6 +9399,12 @@ mod structs {
             let _ = value;
             Self::default()
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUExternalTextureBindingLayout,
+        ) -> Self {
+            let _ = value;
+            Self::default()
+        }
     }
     pub struct ExternalTextureDescriptor {
         pub(crate) extensions: Vec<ExternalTextureDescriptorExtension>,
@@ -8407,29 +9422,31 @@ mod structs {
         pub mirrored: Option<bool>,
         pub rotation: Option<ExternalTextureRotation>,
     }
-    impl Default for ExternalTextureDescriptor {
-        fn default() -> Self {
+    impl ExternalTextureDescriptor {
+        pub fn new(
+            plane_0: TextureView,
+            crop_size: Extent2D,
+            apparent_size: Extent2D,
+            src_transfer_function_parameters: Vec<f32>,
+            dst_transfer_function_parameters: Vec<f32>,
+            gamut_conversion_matrix: Vec<f32>,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                plane_0: None,
+                plane_0: Some(plane_0),
                 plane_1: None,
                 crop_origin: None,
-                crop_size: None,
-                apparent_size: None,
+                crop_size: Some(crop_size),
+                apparent_size: Some(apparent_size),
                 do_yuv_to_rgb_conversion_only: None,
                 yuv_to_rgb_conversion_matrix: None,
-                src_transfer_function_parameters: None,
-                dst_transfer_function_parameters: None,
-                gamut_conversion_matrix: None,
+                src_transfer_function_parameters: Some(src_transfer_function_parameters),
+                dst_transfer_function_parameters: Some(dst_transfer_function_parameters),
+                gamut_conversion_matrix: Some(gamut_conversion_matrix),
                 mirrored: None,
                 rotation: Some(ExternalTextureRotation::Rotate0Degrees),
             }
-        }
-    }
-    impl ExternalTextureDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -8439,6 +9456,30 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.plane_0.is_some(),
+                "required field ExternalTextureDescriptor.plane_0 is missing",
+            );
+            assert!(
+                self.crop_size.is_some(),
+                "required field ExternalTextureDescriptor.crop_size is missing",
+            );
+            assert!(
+                self.apparent_size.is_some(),
+                "required field ExternalTextureDescriptor.apparent_size is missing",
+            );
+            assert!(
+                self.src_transfer_function_parameters.is_some(),
+                "required field ExternalTextureDescriptor.src_transfer_function_parameters is missing",
+            );
+            assert!(
+                self.dst_transfer_function_parameters.is_some(),
+                "required field ExternalTextureDescriptor.dst_transfer_function_parameters is missing",
+            );
+            assert!(
+                self.gamut_conversion_matrix.is_some(),
+                "required field ExternalTextureDescriptor.gamut_conversion_matrix is missing",
+            );
             let mut raw: ffi::WGPUExternalTextureDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -8540,7 +9581,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUExternalTextureDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ExternalTextureDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -8619,6 +9662,97 @@ mod structs {
                 rotation: Some(value.rotation.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUExternalTextureDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    ExternalTextureDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                plane_0: {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.plane0) };
+                    Some(unsafe { TextureView::from_raw(value.plane0) })
+                },
+                plane_1: if value.plane1.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.plane1) };
+                    Some(unsafe { TextureView::from_raw(value.plane1) })
+                },
+                crop_origin: Some(Origin2D::from_ffi_borrowed(value.cropOrigin)),
+                crop_size: Some(Extent2D::from_ffi_borrowed(value.cropSize)),
+                apparent_size: Some(Extent2D::from_ffi_borrowed(value.apparentSize)),
+                do_yuv_to_rgb_conversion_only: Some(value.doYuvToRgbConversionOnly != 0),
+                yuv_to_rgb_conversion_matrix: if value.yuvToRgbConversionMatrix.is_null()
+                {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.yuvToRgbConversionMatrix,
+                                12usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                src_transfer_function_parameters: if value
+                    .srcTransferFunctionParameters
+                    .is_null()
+                {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.srcTransferFunctionParameters,
+                                7usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                dst_transfer_function_parameters: if value
+                    .dstTransferFunctionParameters
+                    .is_null()
+                {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.dstTransferFunctionParameters,
+                                7usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                gamut_conversion_matrix: if value.gamutConversionMatrix.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.gamutConversionMatrix,
+                                9usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+                mirrored: Some(value.mirrored != 0),
+                rotation: Some(value.rotation.into()),
+            }
+        }
     }
     pub struct FragmentState {
         pub(crate) extensions: Vec<FragmentStateExtension>,
@@ -8627,20 +9761,15 @@ mod structs {
         pub constants: Option<Vec<ConstantEntry>>,
         pub targets: Option<Vec<ColorTargetState>>,
     }
-    impl Default for FragmentState {
-        fn default() -> Self {
+    impl FragmentState {
+        pub fn new(module: ShaderModule, targets: Vec<ColorTargetState>) -> Self {
             Self {
                 extensions: Vec::new(),
-                module: None,
+                module: Some(module),
                 entry_point: None,
                 constants: None,
-                targets: None,
+                targets: Some(targets),
             }
-        }
-    }
-    impl FragmentState {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUFragmentState, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -8648,6 +9777,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.module.is_some(),
+                "required field FragmentState.module is missing",
+            );
+            assert!(
+                self.targets.is_some(),
+                "required field FragmentState.targets is missing",
+            );
             let mut raw: ffi::WGPUFragmentState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.module = self
@@ -8710,7 +9847,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUFragmentState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    FragmentStateExtension::from_chain(value.nextInChain)
+                },
                 module: Some(unsafe { ShaderModule::from_raw(value.module) }),
                 entry_point: if value.entryPoint.data.is_null()
                     || value.entryPoint.length == 0
@@ -8751,21 +9890,65 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUFragmentState) -> Self {
+            Self {
+                extensions: unsafe {
+                    FragmentStateExtension::from_chain_borrowed(value.nextInChain)
+                },
+                module: {
+                    unsafe { ffi::wgpuShaderModuleAddRef(value.module) };
+                    Some(unsafe { ShaderModule::from_raw(value.module) })
+                },
+                entry_point: if value.entryPoint.data.is_null()
+                    || value.entryPoint.length == 0
+                {
+                    None
+                } else {
+                    Some(string_view_to_string(value.entryPoint))
+                },
+                constants: if value.constants.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.constants,
+                                value.constantCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| ConstantEntry::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+                targets: if value.targets.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.targets,
+                                value.targetCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| ColorTargetState::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct Future {
         pub id: Option<u64>,
     }
-    impl Default for Future {
-        fn default() -> Self {
-            Self { id: None }
-        }
-    }
     impl Future {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(id: u64) -> Self {
+            Self { id: Some(id) }
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUFuture, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(self.id.is_some(), "required field Future.id is missing");
             let mut raw: ffi::WGPUFuture = unsafe { std::mem::zeroed() };
             if let Some(value) = self.id {
                 raw.id = value;
@@ -8775,25 +9958,27 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUFuture) -> Self {
             Self { id: Some(value.id) }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUFuture) -> Self {
+            Self { id: Some(value.id) }
+        }
     }
     pub struct FutureWaitInfo {
         pub future: Option<Future>,
         pub completed: Option<bool>,
     }
-    impl Default for FutureWaitInfo {
-        fn default() -> Self {
+    impl FutureWaitInfo {
+        pub fn new(future: Future) -> Self {
             Self {
-                future: None,
+                future: Some(future),
                 completed: None,
             }
         }
-    }
-    impl FutureWaitInfo {
-        pub fn new() -> Self {
-            Self::default()
-        }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUFutureWaitInfo, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.future.is_some(),
+                "required field FutureWaitInfo.future is missing",
+            );
             let mut raw: ffi::WGPUFutureWaitInfo = unsafe { std::mem::zeroed() };
             if let Some(value) = &self.future {
                 let (raw_value, storage_value) = value.to_ffi();
@@ -8809,6 +9994,12 @@ mod structs {
                 completed: Some(value.completed != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUFutureWaitInfo) -> Self {
+            Self {
+                future: Some(Future::from_ffi_borrowed(value.future)),
+                completed: Some(value.completed != 0),
+            }
+        }
     }
     pub struct ImageCopyExternalTexture {
         pub(crate) extensions: Vec<ImageCopyExternalTextureExtension>,
@@ -8816,19 +10007,14 @@ mod structs {
         pub origin: Option<Origin3D>,
         pub natural_size: Option<Extent2D>,
     }
-    impl Default for ImageCopyExternalTexture {
-        fn default() -> Self {
+    impl ImageCopyExternalTexture {
+        pub fn new(external_texture: ExternalTexture, natural_size: Extent2D) -> Self {
             Self {
                 extensions: Vec::new(),
-                external_texture: None,
+                external_texture: Some(external_texture),
                 origin: None,
-                natural_size: None,
+                natural_size: Some(natural_size),
             }
-        }
-    }
-    impl ImageCopyExternalTexture {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -8838,6 +10024,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.external_texture.is_some(),
+                "required field ImageCopyExternalTexture.external_texture is missing",
+            );
+            assert!(
+                self.natural_size.is_some(),
+                "required field ImageCopyExternalTexture.natural_size is missing",
+            );
             let mut raw: ffi::WGPUImageCopyExternalTexture = unsafe {
                 std::mem::zeroed()
             };
@@ -8868,12 +10062,31 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUImageCopyExternalTexture) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ImageCopyExternalTextureExtension::from_chain(value.nextInChain)
+                },
                 external_texture: Some(unsafe {
                     ExternalTexture::from_raw(value.externalTexture)
                 }),
                 origin: Some(Origin3D::from_ffi(value.origin)),
                 natural_size: Some(Extent2D::from_ffi(value.naturalSize)),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUImageCopyExternalTexture,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    ImageCopyExternalTextureExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                external_texture: {
+                    unsafe { ffi::wgpuExternalTextureAddRef(value.externalTexture) };
+                    Some(unsafe { ExternalTexture::from_raw(value.externalTexture) })
+                },
+                origin: Some(Origin3D::from_ffi_borrowed(value.origin)),
+                natural_size: Some(Extent2D::from_ffi_borrowed(value.naturalSize)),
             }
         }
     }
@@ -8939,7 +10152,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUInstanceDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    InstanceDescriptorExtension::from_chain(value.nextInChain)
+                },
                 required_features: if value.requiredFeatures.is_null() {
                     None
                 } else {
@@ -8959,6 +10174,37 @@ mod structs {
                     None
                 } else {
                     Some(InstanceLimits::from_ffi(unsafe { *value.requiredLimits }))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUInstanceDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    InstanceDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
+                required_features: if value.requiredFeatures.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.requiredFeatures,
+                                value.requiredFeatureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| InstanceFeatureName::from(*raw))
+                            .collect(),
+                    )
+                },
+                required_limits: if value.requiredLimits.is_null() {
+                    None
+                } else {
+                    Some(
+                        InstanceLimits::from_ffi_borrowed(unsafe {
+                            *value.requiredLimits
+                        }),
+                    )
                 },
             }
         }
@@ -8998,11 +10244,22 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUInstanceLimits) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    InstanceLimitsExtension::from_chain(value.nextInChain)
+                },
+                timed_wait_any_max_count: Some(value.timedWaitAnyMaxCount),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUInstanceLimits) -> Self {
+            Self {
+                extensions: unsafe {
+                    InstanceLimitsExtension::from_chain_borrowed(value.nextInChain)
+                },
                 timed_wait_any_max_count: Some(value.timedWaitAnyMaxCount),
             }
         }
     }
+    /// TODO(crbug.com/374263404): Using 'out' for extensible even though this can be in/out until C++ gen is updated.
     pub struct Limits {
         pub(crate) extensions: Vec<LimitsExtension>,
         pub max_texture_dimension_1d: Option<u32>,
@@ -9197,7 +10454,74 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPULimits) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe { LimitsExtension::from_chain(value.nextInChain) },
+                max_texture_dimension_1d: Some(value.maxTextureDimension1D),
+                max_texture_dimension_2d: Some(value.maxTextureDimension2D),
+                max_texture_dimension_3d: Some(value.maxTextureDimension3D),
+                max_texture_array_layers: Some(value.maxTextureArrayLayers),
+                max_bind_groups: Some(value.maxBindGroups),
+                max_bind_groups_plus_vertex_buffers: Some(
+                    value.maxBindGroupsPlusVertexBuffers,
+                ),
+                max_bindings_per_bind_group: Some(value.maxBindingsPerBindGroup),
+                max_dynamic_uniform_buffers_per_pipeline_layout: Some(
+                    value.maxDynamicUniformBuffersPerPipelineLayout,
+                ),
+                max_dynamic_storage_buffers_per_pipeline_layout: Some(
+                    value.maxDynamicStorageBuffersPerPipelineLayout,
+                ),
+                max_sampled_textures_per_shader_stage: Some(
+                    value.maxSampledTexturesPerShaderStage,
+                ),
+                max_samplers_per_shader_stage: Some(value.maxSamplersPerShaderStage),
+                max_storage_buffers_per_shader_stage: Some(
+                    value.maxStorageBuffersPerShaderStage,
+                ),
+                max_storage_textures_per_shader_stage: Some(
+                    value.maxStorageTexturesPerShaderStage,
+                ),
+                max_uniform_buffers_per_shader_stage: Some(
+                    value.maxUniformBuffersPerShaderStage,
+                ),
+                max_uniform_buffer_binding_size: Some(value.maxUniformBufferBindingSize),
+                max_storage_buffer_binding_size: Some(value.maxStorageBufferBindingSize),
+                min_uniform_buffer_offset_alignment: Some(
+                    value.minUniformBufferOffsetAlignment,
+                ),
+                min_storage_buffer_offset_alignment: Some(
+                    value.minStorageBufferOffsetAlignment,
+                ),
+                max_vertex_buffers: Some(value.maxVertexBuffers),
+                max_buffer_size: Some(value.maxBufferSize),
+                max_vertex_attributes: Some(value.maxVertexAttributes),
+                max_vertex_buffer_array_stride: Some(value.maxVertexBufferArrayStride),
+                max_inter_stage_shader_variables: Some(
+                    value.maxInterStageShaderVariables,
+                ),
+                max_color_attachments: Some(value.maxColorAttachments),
+                max_color_attachment_bytes_per_sample: Some(
+                    value.maxColorAttachmentBytesPerSample,
+                ),
+                max_compute_workgroup_storage_size: Some(
+                    value.maxComputeWorkgroupStorageSize,
+                ),
+                max_compute_invocations_per_workgroup: Some(
+                    value.maxComputeInvocationsPerWorkgroup,
+                ),
+                max_compute_workgroup_size_x: Some(value.maxComputeWorkgroupSizeX),
+                max_compute_workgroup_size_y: Some(value.maxComputeWorkgroupSizeY),
+                max_compute_workgroup_size_z: Some(value.maxComputeWorkgroupSizeZ),
+                max_compute_workgroups_per_dimension: Some(
+                    value.maxComputeWorkgroupsPerDimension,
+                ),
+                max_immediate_size: Some(value.maxImmediateSize),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPULimits) -> Self {
+            Self {
+                extensions: unsafe {
+                    LimitsExtension::from_chain_borrowed(value.nextInChain)
+                },
                 max_texture_dimension_1d: Some(value.maxTextureDimension1D),
                 max_texture_dimension_2d: Some(value.maxTextureDimension2D),
                 max_texture_dimension_3d: Some(value.maxTextureDimension3D),
@@ -9265,20 +10589,23 @@ mod structs {
         pub properties: Option<HeapProperty>,
         pub size: Option<u64>,
     }
-    impl Default for MemoryHeapInfo {
-        fn default() -> Self {
-            Self {
-                properties: None,
-                size: None,
-            }
-        }
-    }
     impl MemoryHeapInfo {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(properties: HeapProperty, size: u64) -> Self {
+            Self {
+                properties: Some(properties),
+                size: Some(size),
+            }
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUMemoryHeapInfo, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.properties.is_some(),
+                "required field MemoryHeapInfo.properties is missing",
+            );
+            assert!(
+                self.size.is_some(),
+                "required field MemoryHeapInfo.size is missing",
+            );
             let mut raw: ffi::WGPUMemoryHeapInfo = unsafe { std::mem::zeroed() };
             if let Some(value) = self.properties {
                 raw.properties = value.into();
@@ -9291,6 +10618,12 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUMemoryHeapInfo) -> Self {
+            Self {
+                properties: Some(value.properties.into()),
+                size: Some(value.size),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUMemoryHeapInfo) -> Self {
             Self {
                 properties: Some(value.properties.into()),
                 size: Some(value.size),
@@ -9349,7 +10682,19 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUMultisampleState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    MultisampleStateExtension::from_chain(value.nextInChain)
+                },
+                count: Some(value.count),
+                mask: Some(value.mask),
+                alpha_to_coverage_enabled: Some(value.alphaToCoverageEnabled != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUMultisampleState) -> Self {
+            Self {
+                extensions: unsafe {
+                    MultisampleStateExtension::from_chain_borrowed(value.nextInChain)
+                },
                 count: Some(value.count),
                 mask: Some(value.mask),
                 alpha_to_coverage_enabled: Some(value.alphaToCoverageEnabled != 0),
@@ -9381,6 +10726,12 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUOrigin2D) -> Self {
+            Self {
+                x: Some(value.x),
+                y: Some(value.y),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUOrigin2D) -> Self {
             Self {
                 x: Some(value.x),
                 y: Some(value.y),
@@ -9426,6 +10777,13 @@ mod structs {
                 z: Some(value.z),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUOrigin3D) -> Self {
+            Self {
+                x: Some(value.x),
+                y: Some(value.y),
+                z: Some(value.z),
+            }
+        }
     }
     pub struct PassTimestampWrites {
         pub(crate) extensions: Vec<PassTimestampWritesExtension>,
@@ -9433,19 +10791,14 @@ mod structs {
         pub beginning_of_pass_write_index: Option<u32>,
         pub end_of_pass_write_index: Option<u32>,
     }
-    impl Default for PassTimestampWrites {
-        fn default() -> Self {
+    impl PassTimestampWrites {
+        pub fn new(query_set: QuerySet) -> Self {
             Self {
                 extensions: Vec::new(),
-                query_set: None,
+                query_set: Some(query_set),
                 beginning_of_pass_write_index: Some(QUERY_SET_INDEX_UNDEFINED),
                 end_of_pass_write_index: Some(QUERY_SET_INDEX_UNDEFINED),
             }
-        }
-    }
-    impl PassTimestampWrites {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -9455,6 +10808,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.query_set.is_some(),
+                "required field PassTimestampWrites.query_set is missing",
+            );
             let mut raw: ffi::WGPUPassTimestampWrites = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.querySet = self
@@ -9479,8 +10836,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUPassTimestampWrites) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    PassTimestampWritesExtension::from_chain(value.nextInChain)
+                },
                 query_set: Some(unsafe { QuerySet::from_raw(value.querySet) }),
+                beginning_of_pass_write_index: Some(value.beginningOfPassWriteIndex),
+                end_of_pass_write_index: Some(value.endOfPassWriteIndex),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUPassTimestampWrites) -> Self {
+            Self {
+                extensions: unsafe {
+                    PassTimestampWritesExtension::from_chain_borrowed(value.nextInChain)
+                },
+                query_set: {
+                    unsafe { ffi::wgpuQuerySetAddRef(value.querySet) };
+                    Some(unsafe { QuerySet::from_raw(value.querySet) })
+                },
                 beginning_of_pass_write_index: Some(value.beginningOfPassWriteIndex),
                 end_of_pass_write_index: Some(value.endOfPassWriteIndex),
             }
@@ -9489,22 +10861,17 @@ mod structs {
     pub struct PipelineLayoutDescriptor {
         pub(crate) extensions: Vec<PipelineLayoutDescriptorExtension>,
         pub label: Option<String>,
-        pub bind_group_layouts: Option<Vec<BindGroupLayout>>,
+        pub bind_group_layouts: Option<Vec<Option<BindGroupLayout>>>,
         pub immediate_size: Option<u32>,
     }
-    impl Default for PipelineLayoutDescriptor {
-        fn default() -> Self {
+    impl PipelineLayoutDescriptor {
+        pub fn new(bind_group_layouts: Vec<Option<BindGroupLayout>>) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                bind_group_layouts: None,
+                bind_group_layouts: Some(bind_group_layouts),
                 immediate_size: Some(0),
             }
-        }
-    }
-    impl PipelineLayoutDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -9514,6 +10881,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.bind_group_layouts.is_some(),
+                "required field PipelineLayoutDescriptor.bind_group_layouts is missing",
+            );
             let mut raw: ffi::WGPUPipelineLayoutDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -9538,7 +10909,9 @@ mod structs {
                 let len_value = values.len();
                 let raw_vec: Vec<ffi::WGPUBindGroupLayout> = values
                     .iter()
-                    .map(|v| v.as_raw())
+                    .map(|v| {
+                        v.as_ref().map(|v| v.as_raw()).unwrap_or(std::ptr::null_mut())
+                    })
                     .collect();
                 let ptr = storage.push_vec(raw_vec);
                 raw.bindGroupLayouts = ptr;
@@ -9561,7 +10934,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUPipelineLayoutDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    PipelineLayoutDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -9578,7 +10953,52 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| unsafe { BindGroupLayout::from_raw(*raw) })
+                            .map(|raw| {
+                                if raw.is_null() {
+                                    None
+                                } else {
+                                    Some(unsafe { BindGroupLayout::from_raw(*raw) })
+                                }
+                            })
+                            .collect(),
+                    )
+                },
+                immediate_size: Some(value.immediateSize),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUPipelineLayoutDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    PipelineLayoutDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                bind_group_layouts: if value.bindGroupLayouts.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.bindGroupLayouts,
+                                value.bindGroupLayoutCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                if raw.is_null() {
+                                    None
+                                } else {
+                                    unsafe { ffi::wgpuBindGroupLayoutAddRef(*raw) };
+                                    Some(unsafe { BindGroupLayout::from_raw(*raw) })
+                                }
+                            })
                             .collect(),
                     )
                 },
@@ -9590,22 +11010,21 @@ mod structs {
         pub total_pixel_local_storage_size: Option<u64>,
         pub storage_attachments: Option<Vec<PipelineLayoutStorageAttachment>>,
     }
-    impl Default for PipelineLayoutPixelLocalStorage {
-        fn default() -> Self {
+    impl PipelineLayoutPixelLocalStorage {
+        pub fn new(total_pixel_local_storage_size: u64) -> Self {
             Self {
-                total_pixel_local_storage_size: None,
+                total_pixel_local_storage_size: Some(total_pixel_local_storage_size),
                 storage_attachments: None,
             }
-        }
-    }
-    impl PipelineLayoutPixelLocalStorage {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUPipelineLayoutPixelLocalStorage, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.total_pixel_local_storage_size.is_some(),
+                "required field PipelineLayoutPixelLocalStorage.total_pixel_local_storage_size is missing",
+            );
             let mut raw: ffi::WGPUPipelineLayoutPixelLocalStorage = unsafe {
                 std::mem::zeroed()
             };
@@ -9656,6 +11075,30 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUPipelineLayoutPixelLocalStorage,
+        ) -> Self {
+            Self {
+                total_pixel_local_storage_size: Some(value.totalPixelLocalStorageSize),
+                storage_attachments: if value.storageAttachments.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.storageAttachments,
+                                value.storageAttachmentCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| PipelineLayoutStorageAttachment::from_ffi_borrowed(
+                                *raw,
+                            ))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct PipelineLayoutResourceTable {
         pub uses_resource_table: Option<bool>,
@@ -9688,24 +11131,26 @@ mod structs {
                 uses_resource_table: Some(value.usesResourceTable != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUPipelineLayoutResourceTable,
+        ) -> Self {
+            Self {
+                uses_resource_table: Some(value.usesResourceTable != 0),
+            }
+        }
     }
     pub struct PipelineLayoutStorageAttachment {
         pub(crate) extensions: Vec<PipelineLayoutStorageAttachmentExtension>,
         pub offset: Option<u64>,
         pub format: Option<TextureFormat>,
     }
-    impl Default for PipelineLayoutStorageAttachment {
-        fn default() -> Self {
+    impl PipelineLayoutStorageAttachment {
+        pub fn new(format: TextureFormat) -> Self {
             Self {
                 extensions: Vec::new(),
                 offset: Some(0),
-                format: None,
+                format: Some(format),
             }
-        }
-    }
-    impl PipelineLayoutStorageAttachment {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -9715,6 +11160,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field PipelineLayoutStorageAttachment.format is missing",
+            );
             let mut raw: ffi::WGPUPipelineLayoutStorageAttachment = unsafe {
                 std::mem::zeroed()
             };
@@ -9738,7 +11187,24 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUPipelineLayoutStorageAttachment) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    PipelineLayoutStorageAttachmentExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
+                offset: Some(value.offset),
+                format: Some(value.format.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUPipelineLayoutStorageAttachment,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    PipelineLayoutStorageAttachmentExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 offset: Some(value.offset),
                 format: Some(value.format.into()),
             }
@@ -9752,21 +11218,16 @@ mod structs {
         pub cull_mode: Option<CullMode>,
         pub unclipped_depth: Option<bool>,
     }
-    impl Default for PrimitiveState {
-        fn default() -> Self {
+    impl PrimitiveState {
+        pub fn new(strip_index_format: IndexFormat) -> Self {
             Self {
                 extensions: Vec::new(),
                 topology: Some(PrimitiveTopology::TriangleList),
-                strip_index_format: None,
+                strip_index_format: Some(strip_index_format),
                 front_face: Some(FrontFace::Ccw),
                 cull_mode: Some(CullMode::None),
                 unclipped_depth: None,
             }
-        }
-    }
-    impl PrimitiveState {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUPrimitiveState, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -9774,6 +11235,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.strip_index_format.is_some(),
+                "required field PrimitiveState.strip_index_format is missing",
+            );
             let mut raw: ffi::WGPUPrimitiveState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.topology {
@@ -9809,7 +11274,21 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUPrimitiveState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    PrimitiveStateExtension::from_chain(value.nextInChain)
+                },
+                topology: Some(value.topology.into()),
+                strip_index_format: Some(value.stripIndexFormat.into()),
+                front_face: Some(value.frontFace.into()),
+                cull_mode: Some(value.cullMode.into()),
+                unclipped_depth: Some(value.unclippedDepth != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUPrimitiveState) -> Self {
+            Self {
+                extensions: unsafe {
+                    PrimitiveStateExtension::from_chain_borrowed(value.nextInChain)
+                },
                 topology: Some(value.topology.into()),
                 strip_index_format: Some(value.stripIndexFormat.into()),
                 front_face: Some(value.frontFace.into()),
@@ -9824,19 +11303,14 @@ mod structs {
         pub r#type: Option<QueryType>,
         pub count: Option<u32>,
     }
-    impl Default for QuerySetDescriptor {
-        fn default() -> Self {
+    impl QuerySetDescriptor {
+        pub fn new(r#type: QueryType, count: u32) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                r#type: None,
-                count: None,
+                r#type: Some(r#type),
+                count: Some(count),
             }
-        }
-    }
-    impl QuerySetDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -9846,6 +11320,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.r#type.is_some(),
+                "required field QuerySetDescriptor.r#type is missing",
+            );
+            assert!(
+                self.count.is_some(),
+                "required field QuerySetDescriptor.count is missing",
+            );
             let mut raw: ffi::WGPUQuerySetDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -9875,7 +11357,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUQuerySetDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    QuerySetDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                r#type: Some(value.type_.into()),
+                count: Some(value.count),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUQuerySetDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    QuerySetDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -9929,7 +11427,21 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUQueueDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    QueueDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUQueueDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    QueueDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -9986,7 +11498,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderBundleDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderBundleDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPURenderBundleDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderBundleDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -10004,22 +11532,20 @@ mod structs {
         pub depth_read_only: Option<bool>,
         pub stencil_read_only: Option<bool>,
     }
-    impl Default for RenderBundleEncoderDescriptor {
-        fn default() -> Self {
+    impl RenderBundleEncoderDescriptor {
+        pub fn new(
+            color_formats: Vec<TextureFormat>,
+            depth_stencil_format: TextureFormat,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                color_formats: None,
-                depth_stencil_format: None,
+                color_formats: Some(color_formats),
+                depth_stencil_format: Some(depth_stencil_format),
                 sample_count: Some(1),
                 depth_read_only: None,
                 stencil_read_only: None,
             }
-        }
-    }
-    impl RenderBundleEncoderDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10029,6 +11555,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.color_formats.is_some(),
+                "required field RenderBundleEncoderDescriptor.color_formats is missing",
+            );
+            assert!(
+                self.depth_stencil_format.is_some(),
+                "required field RenderBundleEncoderDescriptor.depth_stencil_format is missing",
+            );
             let mut raw: ffi::WGPURenderBundleEncoderDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -10091,7 +11625,44 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderBundleEncoderDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderBundleEncoderDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                color_formats: if value.colorFormats.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.colorFormats,
+                                value.colorFormatCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| TextureFormat::from(*raw))
+                            .collect(),
+                    )
+                },
+                depth_stencil_format: Some(value.depthStencilFormat.into()),
+                sample_count: Some(value.sampleCount),
+                depth_read_only: Some(value.depthReadOnly != 0),
+                stencil_read_only: Some(value.stencilReadOnly != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderBundleEncoderDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderBundleEncoderDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -10128,22 +11699,17 @@ mod structs {
         pub store_op: Option<StoreOp>,
         pub clear_value: Option<Color>,
     }
-    impl Default for RenderPassColorAttachment {
-        fn default() -> Self {
+    impl RenderPassColorAttachment {
+        pub fn new(load_op: LoadOp, store_op: StoreOp, clear_value: Color) -> Self {
             Self {
                 extensions: Vec::new(),
                 view: None,
                 depth_slice: Some(DEPTH_SLICE_UNDEFINED),
                 resolve_target: None,
-                load_op: None,
-                store_op: None,
-                clear_value: None,
+                load_op: Some(load_op),
+                store_op: Some(store_op),
+                clear_value: Some(clear_value),
             }
-        }
-    }
-    impl RenderPassColorAttachment {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10153,6 +11719,18 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.load_op.is_some(),
+                "required field RenderPassColorAttachment.load_op is missing",
+            );
+            assert!(
+                self.store_op.is_some(),
+                "required field RenderPassColorAttachment.store_op is missing",
+            );
+            assert!(
+                self.clear_value.is_some(),
+                "required field RenderPassColorAttachment.clear_value is missing",
+            );
             let mut raw: ffi::WGPURenderPassColorAttachment = unsafe {
                 std::mem::zeroed()
             };
@@ -10196,7 +11774,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderPassColorAttachment) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderPassColorAttachmentExtension::from_chain(value.nextInChain)
+                },
                 view: if value.view.is_null() {
                     None
                 } else {
@@ -10213,6 +11793,33 @@ mod structs {
                 clear_value: Some(Color::from_ffi(value.clearValue)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassColorAttachment,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderPassColorAttachmentExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                view: if value.view.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.view) };
+                    Some(unsafe { TextureView::from_raw(value.view) })
+                },
+                depth_slice: Some(value.depthSlice),
+                resolve_target: if value.resolveTarget.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.resolveTarget) };
+                    Some(unsafe { TextureView::from_raw(value.resolveTarget) })
+                },
+                load_op: Some(value.loadOp.into()),
+                store_op: Some(value.storeOp.into()),
+                clear_value: Some(Color::from_ffi_borrowed(value.clearValue)),
+            }
+        }
     }
     pub struct RenderPassDepthStencilAttachment {
         pub(crate) extensions: Vec<RenderPassDepthStencilAttachmentExtension>,
@@ -10226,25 +11833,26 @@ mod structs {
         pub stencil_clear_value: Option<u32>,
         pub stencil_read_only: Option<bool>,
     }
-    impl Default for RenderPassDepthStencilAttachment {
-        fn default() -> Self {
+    impl RenderPassDepthStencilAttachment {
+        pub fn new(
+            view: TextureView,
+            depth_load_op: LoadOp,
+            depth_store_op: StoreOp,
+            stencil_load_op: LoadOp,
+            stencil_store_op: StoreOp,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
-                view: None,
-                depth_load_op: None,
-                depth_store_op: None,
+                view: Some(view),
+                depth_load_op: Some(depth_load_op),
+                depth_store_op: Some(depth_store_op),
                 depth_clear_value: Some(DEPTH_CLEAR_VALUE_UNDEFINED),
                 depth_read_only: None,
-                stencil_load_op: None,
-                stencil_store_op: None,
+                stencil_load_op: Some(stencil_load_op),
+                stencil_store_op: Some(stencil_store_op),
                 stencil_clear_value: Some(0),
                 stencil_read_only: None,
             }
-        }
-    }
-    impl RenderPassDepthStencilAttachment {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10254,6 +11862,26 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.view.is_some(),
+                "required field RenderPassDepthStencilAttachment.view is missing",
+            );
+            assert!(
+                self.depth_load_op.is_some(),
+                "required field RenderPassDepthStencilAttachment.depth_load_op is missing",
+            );
+            assert!(
+                self.depth_store_op.is_some(),
+                "required field RenderPassDepthStencilAttachment.depth_store_op is missing",
+            );
+            assert!(
+                self.stencil_load_op.is_some(),
+                "required field RenderPassDepthStencilAttachment.stencil_load_op is missing",
+            );
+            assert!(
+                self.stencil_store_op.is_some(),
+                "required field RenderPassDepthStencilAttachment.stencil_store_op is missing",
+            );
             let mut raw: ffi::WGPURenderPassDepthStencilAttachment = unsafe {
                 std::mem::zeroed()
             };
@@ -10312,8 +11940,35 @@ mod structs {
             value: ffi::WGPURenderPassDepthStencilAttachment,
         ) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderPassDepthStencilAttachmentExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
                 view: Some(unsafe { TextureView::from_raw(value.view) }),
+                depth_load_op: Some(value.depthLoadOp.into()),
+                depth_store_op: Some(value.depthStoreOp.into()),
+                depth_clear_value: Some(value.depthClearValue),
+                depth_read_only: Some(value.depthReadOnly != 0),
+                stencil_load_op: Some(value.stencilLoadOp.into()),
+                stencil_store_op: Some(value.stencilStoreOp.into()),
+                stencil_clear_value: Some(value.stencilClearValue),
+                stencil_read_only: Some(value.stencilReadOnly != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassDepthStencilAttachment,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderPassDepthStencilAttachmentExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                view: {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.view) };
+                    Some(unsafe { TextureView::from_raw(value.view) })
+                },
                 depth_load_op: Some(value.depthLoadOp.into()),
                 depth_store_op: Some(value.depthStoreOp.into()),
                 depth_clear_value: Some(value.depthClearValue),
@@ -10333,21 +11988,16 @@ mod structs {
         pub occlusion_query_set: Option<QuerySet>,
         pub timestamp_writes: Option<PassTimestampWrites>,
     }
-    impl Default for RenderPassDescriptor {
-        fn default() -> Self {
+    impl RenderPassDescriptor {
+        pub fn new(color_attachments: Vec<RenderPassColorAttachment>) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                color_attachments: None,
+                color_attachments: Some(color_attachments),
                 depth_stencil_attachment: None,
                 occlusion_query_set: None,
                 timestamp_writes: None,
             }
-        }
-    }
-    impl RenderPassDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10357,6 +12007,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.color_attachments.is_some(),
+                "required field RenderPassDescriptor.color_attachments is missing",
+            );
             let mut raw: ffi::WGPURenderPassDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -10424,7 +12078,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderPassDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderPassDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -10468,6 +12124,59 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPURenderPassDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderPassDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                color_attachments: if value.colorAttachments.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.colorAttachments,
+                                value.colorAttachmentCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| RenderPassColorAttachment::from_ffi_borrowed(
+                                *raw,
+                            ))
+                            .collect(),
+                    )
+                },
+                depth_stencil_attachment: if value.depthStencilAttachment.is_null() {
+                    None
+                } else {
+                    Some(
+                        RenderPassDepthStencilAttachment::from_ffi_borrowed(unsafe {
+                            *value.depthStencilAttachment
+                        }),
+                    )
+                },
+                occlusion_query_set: if value.occlusionQuerySet.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuQuerySetAddRef(value.occlusionQuerySet) };
+                    Some(unsafe { QuerySet::from_raw(value.occlusionQuerySet) })
+                },
+                timestamp_writes: if value.timestampWrites.is_null() {
+                    None
+                } else {
+                    Some(
+                        PassTimestampWrites::from_ffi_borrowed(unsafe {
+                            *value.timestampWrites
+                        }),
+                    )
+                },
+            }
+        }
     }
     pub struct RenderPassDescriptorResolveRect {
         pub color_offset_x: Option<u32>,
@@ -10477,26 +12186,52 @@ mod structs {
         pub width: Option<u32>,
         pub height: Option<u32>,
     }
-    impl Default for RenderPassDescriptorResolveRect {
-        fn default() -> Self {
-            Self {
-                color_offset_x: None,
-                color_offset_y: None,
-                resolve_offset_x: None,
-                resolve_offset_y: None,
-                width: None,
-                height: None,
-            }
-        }
-    }
     impl RenderPassDescriptorResolveRect {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            color_offset_x: u32,
+            color_offset_y: u32,
+            resolve_offset_x: u32,
+            resolve_offset_y: u32,
+            width: u32,
+            height: u32,
+        ) -> Self {
+            Self {
+                color_offset_x: Some(color_offset_x),
+                color_offset_y: Some(color_offset_y),
+                resolve_offset_x: Some(resolve_offset_x),
+                resolve_offset_y: Some(resolve_offset_y),
+                width: Some(width),
+                height: Some(height),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPURenderPassDescriptorResolveRect, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.color_offset_x.is_some(),
+                "required field RenderPassDescriptorResolveRect.color_offset_x is missing",
+            );
+            assert!(
+                self.color_offset_y.is_some(),
+                "required field RenderPassDescriptorResolveRect.color_offset_y is missing",
+            );
+            assert!(
+                self.resolve_offset_x.is_some(),
+                "required field RenderPassDescriptorResolveRect.resolve_offset_x is missing",
+            );
+            assert!(
+                self.resolve_offset_y.is_some(),
+                "required field RenderPassDescriptorResolveRect.resolve_offset_y is missing",
+            );
+            assert!(
+                self.width.is_some(),
+                "required field RenderPassDescriptorResolveRect.width is missing",
+            );
+            assert!(
+                self.height.is_some(),
+                "required field RenderPassDescriptorResolveRect.height is missing",
+            );
             let mut raw: ffi::WGPURenderPassDescriptorResolveRect = unsafe {
                 std::mem::zeroed()
             };
@@ -10521,6 +12256,18 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderPassDescriptorResolveRect) -> Self {
+            Self {
+                color_offset_x: Some(value.colorOffsetX),
+                color_offset_y: Some(value.colorOffsetY),
+                resolve_offset_x: Some(value.resolveOffsetX),
+                resolve_offset_y: Some(value.resolveOffsetY),
+                width: Some(value.width),
+                height: Some(value.height),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassDescriptorResolveRect,
+        ) -> Self {
             Self {
                 color_offset_x: Some(value.colorOffsetX),
                 color_offset_y: Some(value.colorOffsetY),
@@ -10560,27 +12307,31 @@ mod structs {
                 max_draw_count: Some(value.maxDrawCount),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPURenderPassMaxDrawCount) -> Self {
+            Self {
+                max_draw_count: Some(value.maxDrawCount),
+            }
+        }
     }
     pub struct RenderPassPixelLocalStorage {
         pub total_pixel_local_storage_size: Option<u64>,
         pub storage_attachments: Option<Vec<RenderPassStorageAttachment>>,
     }
-    impl Default for RenderPassPixelLocalStorage {
-        fn default() -> Self {
+    impl RenderPassPixelLocalStorage {
+        pub fn new(total_pixel_local_storage_size: u64) -> Self {
             Self {
-                total_pixel_local_storage_size: None,
+                total_pixel_local_storage_size: Some(total_pixel_local_storage_size),
                 storage_attachments: None,
             }
-        }
-    }
-    impl RenderPassPixelLocalStorage {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPURenderPassPixelLocalStorage, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.total_pixel_local_storage_size.is_some(),
+                "required field RenderPassPixelLocalStorage.total_pixel_local_storage_size is missing",
+            );
             let mut raw: ffi::WGPURenderPassPixelLocalStorage = unsafe {
                 std::mem::zeroed()
             };
@@ -10631,24 +12382,50 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassPixelLocalStorage,
+        ) -> Self {
+            Self {
+                total_pixel_local_storage_size: Some(value.totalPixelLocalStorageSize),
+                storage_attachments: if value.storageAttachments.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.storageAttachments,
+                                value.storageAttachmentCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| RenderPassStorageAttachment::from_ffi_borrowed(
+                                *raw,
+                            ))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct RenderPassRenderAreaRect {
         pub origin: Option<Origin2D>,
         pub size: Option<Extent2D>,
     }
-    impl Default for RenderPassRenderAreaRect {
-        fn default() -> Self {
-            Self { origin: None, size: None }
-        }
-    }
     impl RenderPassRenderAreaRect {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(size: Extent2D) -> Self {
+            Self {
+                origin: None,
+                size: Some(size),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPURenderPassRenderAreaRect, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.size.is_some(),
+                "required field RenderPassRenderAreaRect.size is missing",
+            );
             let mut raw: ffi::WGPURenderPassRenderAreaRect = unsafe {
                 std::mem::zeroed()
             };
@@ -10670,6 +12447,14 @@ mod structs {
                 size: Some(Extent2D::from_ffi(value.size)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassRenderAreaRect,
+        ) -> Self {
+            Self {
+                origin: Some(Origin2D::from_ffi_borrowed(value.origin)),
+                size: Some(Extent2D::from_ffi_borrowed(value.size)),
+            }
+        }
     }
     pub struct RenderPassStorageAttachment {
         pub(crate) extensions: Vec<RenderPassStorageAttachmentExtension>,
@@ -10679,21 +12464,21 @@ mod structs {
         pub store_op: Option<StoreOp>,
         pub clear_value: Option<Color>,
     }
-    impl Default for RenderPassStorageAttachment {
-        fn default() -> Self {
+    impl RenderPassStorageAttachment {
+        pub fn new(
+            storage: TextureView,
+            load_op: LoadOp,
+            store_op: StoreOp,
+            clear_value: Color,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
                 offset: Some(0),
-                storage: None,
-                load_op: None,
-                store_op: None,
-                clear_value: None,
+                storage: Some(storage),
+                load_op: Some(load_op),
+                store_op: Some(store_op),
+                clear_value: Some(clear_value),
             }
-        }
-    }
-    impl RenderPassStorageAttachment {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10703,6 +12488,22 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.storage.is_some(),
+                "required field RenderPassStorageAttachment.storage is missing",
+            );
+            assert!(
+                self.load_op.is_some(),
+                "required field RenderPassStorageAttachment.load_op is missing",
+            );
+            assert!(
+                self.store_op.is_some(),
+                "required field RenderPassStorageAttachment.store_op is missing",
+            );
+            assert!(
+                self.clear_value.is_some(),
+                "required field RenderPassStorageAttachment.clear_value is missing",
+            );
             let mut raw: ffi::WGPURenderPassStorageAttachment = unsafe {
                 std::mem::zeroed()
             };
@@ -10741,12 +12542,33 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderPassStorageAttachment) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderPassStorageAttachmentExtension::from_chain(value.nextInChain)
+                },
                 offset: Some(value.offset),
                 storage: Some(unsafe { TextureView::from_raw(value.storage) }),
                 load_op: Some(value.loadOp.into()),
                 store_op: Some(value.storeOp.into()),
                 clear_value: Some(Color::from_ffi(value.clearValue)),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPassStorageAttachment,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderPassStorageAttachmentExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                offset: Some(value.offset),
+                storage: {
+                    unsafe { ffi::wgpuTextureViewAddRef(value.storage) };
+                    Some(unsafe { TextureView::from_raw(value.storage) })
+                },
+                load_op: Some(value.loadOp.into()),
+                store_op: Some(value.storeOp.into()),
+                clear_value: Some(Color::from_ffi_borrowed(value.clearValue)),
             }
         }
     }
@@ -10760,23 +12582,18 @@ mod structs {
         pub multisample: Option<MultisampleState>,
         pub fragment: Option<FragmentState>,
     }
-    impl Default for RenderPipelineDescriptor {
-        fn default() -> Self {
+    impl RenderPipelineDescriptor {
+        pub fn new(vertex: VertexState, primitive: PrimitiveState) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
                 layout: None,
-                vertex: None,
-                primitive: None,
+                vertex: Some(vertex),
+                primitive: Some(primitive),
                 depth_stencil: None,
                 multisample: None,
                 fragment: None,
             }
-        }
-    }
-    impl RenderPipelineDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10786,6 +12603,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.vertex.is_some(),
+                "required field RenderPipelineDescriptor.vertex is missing",
+            );
+            assert!(
+                self.primitive.is_some(),
+                "required field RenderPipelineDescriptor.primitive is missing",
+            );
             let mut raw: ffi::WGPURenderPipelineDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -10848,7 +12673,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURenderPipelineDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RenderPipelineDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -10871,6 +12698,47 @@ mod structs {
                     None
                 } else {
                     Some(FragmentState::from_ffi(unsafe { *value.fragment }))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURenderPipelineDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    RenderPipelineDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                layout: if value.layout.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuPipelineLayoutAddRef(value.layout) };
+                    Some(unsafe { PipelineLayout::from_raw(value.layout) })
+                },
+                vertex: Some(VertexState::from_ffi_borrowed(value.vertex)),
+                primitive: Some(PrimitiveState::from_ffi_borrowed(value.primitive)),
+                depth_stencil: if value.depthStencil.is_null() {
+                    None
+                } else {
+                    Some(
+                        DepthStencilState::from_ffi_borrowed(unsafe {
+                            *value.depthStencil
+                        }),
+                    )
+                },
+                multisample: Some(
+                    MultisampleState::from_ffi_borrowed(value.multisample),
+                ),
+                fragment: if value.fragment.is_null() {
+                    None
+                } else {
+                    Some(FragmentState::from_ffi_borrowed(unsafe { *value.fragment }))
                 },
             }
         }
@@ -10900,23 +12768,30 @@ mod structs {
             let _ = value;
             Self::default()
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURequestAdapterWebGPUBackendOptions,
+        ) -> Self {
+            let _ = value;
+            Self::default()
+        }
     }
     pub struct RequestAdapterWebXROptions {
         pub xr_compatible: Option<bool>,
     }
-    impl Default for RequestAdapterWebXROptions {
-        fn default() -> Self {
-            Self { xr_compatible: None }
-        }
-    }
     impl RequestAdapterWebXROptions {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(xr_compatible: bool) -> Self {
+            Self {
+                xr_compatible: Some(xr_compatible),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPURequestAdapterWebXROptions, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.xr_compatible.is_some(),
+                "required field RequestAdapterWebXROptions.xr_compatible is missing",
+            );
             let mut raw: ffi::WGPURequestAdapterWebXROptions = unsafe {
                 std::mem::zeroed()
             };
@@ -10924,6 +12799,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPURequestAdapterWebXROptions) -> Self {
+            Self {
+                xr_compatible: Some(value.xrCompatible != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPURequestAdapterWebXROptions,
+        ) -> Self {
             Self {
                 xr_compatible: Some(value.xrCompatible != 0),
             }
@@ -10937,21 +12819,19 @@ mod structs {
         pub backend_type: Option<BackendType>,
         pub compatible_surface: Option<Surface>,
     }
-    impl Default for RequestAdapterOptions {
-        fn default() -> Self {
+    impl RequestAdapterOptions {
+        pub fn new(
+            power_preference: PowerPreference,
+            backend_type: BackendType,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
                 feature_level: Some(FeatureLevel::Core),
-                power_preference: None,
+                power_preference: Some(power_preference),
                 force_fallback_adapter: None,
-                backend_type: None,
+                backend_type: Some(backend_type),
                 compatible_surface: None,
             }
-        }
-    }
-    impl RequestAdapterOptions {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -10961,6 +12841,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.power_preference.is_some(),
+                "required field RequestAdapterOptions.power_preference is missing",
+            );
+            assert!(
+                self.backend_type.is_some(),
+                "required field RequestAdapterOptions.backend_type is missing",
+            );
             let mut raw: ffi::WGPURequestAdapterOptions = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.feature_level {
@@ -10999,7 +12887,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPURequestAdapterOptions) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    RequestAdapterOptionsExtension::from_chain(value.nextInChain)
+                },
                 feature_level: Some(value.featureLevel.into()),
                 power_preference: Some(value.powerPreference.into()),
                 force_fallback_adapter: Some(value.forceFallbackAdapter != 0),
@@ -11011,24 +12901,38 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPURequestAdapterOptions) -> Self {
+            Self {
+                extensions: unsafe {
+                    RequestAdapterOptionsExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                feature_level: Some(value.featureLevel.into()),
+                power_preference: Some(value.powerPreference.into()),
+                force_fallback_adapter: Some(value.forceFallbackAdapter != 0),
+                backend_type: Some(value.backendType.into()),
+                compatible_surface: if value.compatibleSurface.is_null() {
+                    None
+                } else {
+                    unsafe { ffi::wgpuSurfaceAddRef(value.compatibleSurface) };
+                    Some(unsafe { Surface::from_raw(value.compatibleSurface) })
+                },
+            }
+        }
     }
     pub struct ResourceTableDescriptor {
         pub(crate) extensions: Vec<ResourceTableDescriptorExtension>,
         pub label: Option<String>,
         pub size: Option<u32>,
     }
-    impl Default for ResourceTableDescriptor {
-        fn default() -> Self {
+    impl ResourceTableDescriptor {
+        pub fn new(size: u32) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                size: None,
+                size: Some(size),
             }
-        }
-    }
-    impl ResourceTableDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -11038,6 +12942,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.size.is_some(),
+                "required field ResourceTableDescriptor.size is missing",
+            );
             let mut raw: ffi::WGPUResourceTableDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11067,7 +12975,26 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUResourceTableDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ResourceTableDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                size: Some(value.size),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUResourceTableDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    ResourceTableDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -11119,7 +13046,17 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSamplerBindingLayout) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SamplerBindingLayoutExtension::from_chain(value.nextInChain)
+                },
+                r#type: Some(value.type_.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSamplerBindingLayout) -> Self {
+            Self {
+                extensions: unsafe {
+                    SamplerBindingLayoutExtension::from_chain_borrowed(value.nextInChain)
+                },
                 r#type: Some(value.type_.into()),
             }
         }
@@ -11138,8 +13075,8 @@ mod structs {
         pub compare: Option<CompareFunction>,
         pub max_anisotropy: Option<u16>,
     }
-    impl Default for SamplerDescriptor {
-        fn default() -> Self {
+    impl SamplerDescriptor {
+        pub fn new(compare: CompareFunction) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
@@ -11151,14 +13088,9 @@ mod structs {
                 mipmap_filter: Some(MipmapFilterMode::Nearest),
                 lod_min_clamp: None,
                 lod_max_clamp: None,
-                compare: None,
+                compare: Some(compare),
                 max_anisotropy: Some(1),
             }
-        }
-    }
-    impl SamplerDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -11168,6 +13100,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.compare.is_some(),
+                "required field SamplerDescriptor.compare is missing",
+            );
             let mut raw: ffi::WGPUSamplerDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -11233,7 +13169,31 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSamplerDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SamplerDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                address_mode_u: Some(value.addressModeU.into()),
+                address_mode_v: Some(value.addressModeV.into()),
+                address_mode_w: Some(value.addressModeW.into()),
+                mag_filter: Some(value.magFilter.into()),
+                min_filter: Some(value.minFilter.into()),
+                mipmap_filter: Some(value.mipmapFilter.into()),
+                lod_min_clamp: Some(value.lodMinClamp),
+                lod_max_clamp: Some(value.lodMaxClamp),
+                compare: Some(value.compare.into()),
+                max_anisotropy: Some(value.maxAnisotropy),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSamplerDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    SamplerDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -11255,19 +13215,20 @@ mod structs {
     pub struct ShaderModuleCompilationOptions {
         pub strict_math: Option<bool>,
     }
-    impl Default for ShaderModuleCompilationOptions {
-        fn default() -> Self {
-            Self { strict_math: None }
-        }
-    }
     impl ShaderModuleCompilationOptions {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(strict_math: bool) -> Self {
+            Self {
+                strict_math: Some(strict_math),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUShaderModuleCompilationOptions, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.strict_math.is_some(),
+                "required field ShaderModuleCompilationOptions.strict_math is missing",
+            );
             let mut raw: ffi::WGPUShaderModuleCompilationOptions = unsafe {
                 std::mem::zeroed()
             };
@@ -11275,6 +13236,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUShaderModuleCompilationOptions) -> Self {
+            Self {
+                strict_math: Some(value.strictMath != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUShaderModuleCompilationOptions,
+        ) -> Self {
             Self {
                 strict_math: Some(value.strictMath != 0),
             }
@@ -11328,7 +13296,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUShaderModuleDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    ShaderModuleDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUShaderModuleDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    ShaderModuleDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -11340,19 +13324,18 @@ mod structs {
     pub struct ShaderSourceSPIRV {
         pub code: Option<Vec<u32>>,
     }
-    impl Default for ShaderSourceSPIRV {
-        fn default() -> Self {
-            Self { code: None }
-        }
-    }
     impl ShaderSourceSPIRV {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(code: Vec<u32>) -> Self {
+            Self { code: Some(code) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUShaderSourceSPIRV, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.code.is_some(),
+                "required field ShaderSourceSPIRV.code is missing",
+            );
             let mut raw: ffi::WGPUShaderSourceSPIRV = unsafe { std::mem::zeroed() };
             raw.codeSize = (self.code.as_ref().map(|v| v.len()).unwrap_or(0)) as u32;
             if let Some(values) = &self.code {
@@ -11368,6 +13351,23 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUShaderSourceSPIRV) -> Self {
+            Self {
+                code: if value.code.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.code,
+                                value.codeSize as usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUShaderSourceSPIRV) -> Self {
             Self {
                 code: if value.code.is_null() {
                     None
@@ -11420,19 +13420,22 @@ mod structs {
                 code: Some(string_view_to_string(value.code)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUShaderSourceWGSL) -> Self {
+            Self {
+                code: Some(string_view_to_string(value.code)),
+            }
+        }
     }
     pub struct SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
         pub size: Option<u64>,
     }
-    impl Default for SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
-        fn default() -> Self {
-            Self { handle: None, size: None }
-        }
-    }
     impl SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: *mut std::ffi::c_void, size: u64) -> Self {
+            Self {
+                handle: Some(handle),
+                size: Some(size),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -11441,6 +13444,14 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor.handle is missing",
+            );
+            assert!(
+                self.size.is_some(),
+                "required field SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor.size is missing",
+            );
             let mut raw: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11460,6 +13471,14 @@ mod structs {
                 size: Some(value.size),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+        ) -> Self {
+            Self {
+                handle: Some(value.handle),
+                size: Some(value.size),
+            }
+        }
     }
     pub struct SharedBufferMemoryBeginAccessDescriptor {
         pub(crate) extensions: Vec<SharedBufferMemoryBeginAccessDescriptorExtension>,
@@ -11467,19 +13486,14 @@ mod structs {
         pub fences: Option<Vec<SharedFence>>,
         pub signaled_values: Option<Vec<u64>>,
     }
-    impl Default for SharedBufferMemoryBeginAccessDescriptor {
-        fn default() -> Self {
+    impl SharedBufferMemoryBeginAccessDescriptor {
+        pub fn new(initialized: bool) -> Self {
             Self {
                 extensions: Vec::new(),
-                initialized: None,
+                initialized: Some(initialized),
                 fences: None,
                 signaled_values: None,
             }
-        }
-    }
-    impl SharedBufferMemoryBeginAccessDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -11489,6 +13503,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.initialized.is_some(),
+                "required field SharedBufferMemoryBeginAccessDescriptor.initialized is missing",
+            );
             let mut raw: ffi::WGPUSharedBufferMemoryBeginAccessDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11531,7 +13549,11 @@ mod structs {
             value: ffi::WGPUSharedBufferMemoryBeginAccessDescriptor,
         ) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedBufferMemoryBeginAccessDescriptorExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
                 initialized: Some(value.initialized != 0),
                 fences: if value.fences.is_null() {
                     None
@@ -11545,6 +13567,49 @@ mod structs {
                         }
                             .iter()
                             .map(|raw| unsafe { SharedFence::from_raw(*raw) })
+                            .collect(),
+                    )
+                },
+                signaled_values: if value.signaledValues.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.signaledValues,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedBufferMemoryBeginAccessDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedBufferMemoryBeginAccessDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                initialized: Some(value.initialized != 0),
+                fences: if value.fences.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.fences,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
                             .collect(),
                     )
                 },
@@ -11614,7 +13679,25 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedBufferMemoryDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedBufferMemoryDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedBufferMemoryDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedBufferMemoryDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -11628,8 +13711,6 @@ mod structs {
         pub initialized: Option<bool>,
         pub fences: Option<Vec<SharedFence>>,
         pub signaled_values: Option<Vec<u64>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSharedBufferMemoryEndAccessState>,
     }
     impl Default for SharedBufferMemoryEndAccessState {
         fn default() -> Self {
@@ -11638,7 +13719,6 @@ mod structs {
                 initialized: None,
                 fences: None,
                 signaled_values: None,
-                _free_members: None,
             }
         }
     }
@@ -11695,8 +13775,12 @@ mod structs {
         pub(crate) fn from_ffi(
             value: ffi::WGPUSharedBufferMemoryEndAccessState,
         ) -> Self {
-            Self {
-                extensions: Vec::new(),
+            let result = Self {
+                extensions: unsafe {
+                    SharedBufferMemoryEndAccessStateExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
                 initialized: Some(value.initialized != 0),
                 fences: if value.fences.is_null() {
                     None
@@ -11709,7 +13793,10 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| unsafe { SharedFence::from_raw(*raw) })
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
                             .collect(),
                     )
                 },
@@ -11726,17 +13813,51 @@ mod structs {
                             .to_vec(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSharedBufferMemoryEndAccessState) {
+            };
             unsafe { ffi::wgpuSharedBufferMemoryEndAccessStateFreeMembers(value) };
+            result
         }
-    }
-    impl Drop for SharedBufferMemoryEndAccessState {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSharedBufferMemoryEndAccessStateFreeMembers(value) };
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedBufferMemoryEndAccessState,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedBufferMemoryEndAccessStateExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                initialized: Some(value.initialized != 0),
+                fences: if value.fences.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.fences,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
+                            .collect(),
+                    )
+                },
+                signaled_values: if value.signaledValues.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.signaledValues,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
             }
         }
     }
@@ -11789,7 +13910,22 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedBufferMemoryProperties) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedBufferMemoryPropertiesExtension::from_chain(value.nextInChain)
+                },
+                usage: Some(value.usage.into()),
+                size: Some(value.size),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedBufferMemoryProperties,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedBufferMemoryPropertiesExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 usage: Some(value.usage.into()),
                 size: Some(value.size),
             }
@@ -11798,19 +13934,18 @@ mod structs {
     pub struct SharedFenceDXGISharedHandleDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SharedFenceDXGISharedHandleDescriptor {
-        fn default() -> Self {
-            Self { handle: None }
-        }
-    }
     impl SharedFenceDXGISharedHandleDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: *mut std::ffi::c_void) -> Self {
+            Self { handle: Some(handle) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedFenceDXGISharedHandleDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedFenceDXGISharedHandleDescriptor.handle is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceDXGISharedHandleDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11820,6 +13955,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedFenceDXGISharedHandleDescriptor,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedFenceDXGISharedHandleDescriptor,
         ) -> Self {
             Self { handle: Some(value.handle) }
@@ -11854,23 +13994,27 @@ mod structs {
         ) -> Self {
             Self { handle: Some(value.handle) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceDXGISharedHandleExportInfo,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
     }
     pub struct SharedFenceEGLSyncDescriptor {
         pub sync: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SharedFenceEGLSyncDescriptor {
-        fn default() -> Self {
-            Self { sync: None }
-        }
-    }
     impl SharedFenceEGLSyncDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(sync: *mut std::ffi::c_void) -> Self {
+            Self { sync: Some(sync) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedFenceEGLSyncDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.sync.is_some(),
+                "required field SharedFenceEGLSyncDescriptor.sync is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceEGLSyncDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11880,6 +14024,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceEGLSyncDescriptor) -> Self {
+            Self { sync: Some(value.sync) }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceEGLSyncDescriptor,
+        ) -> Self {
             Self { sync: Some(value.sync) }
         }
     }
@@ -11910,23 +14059,30 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceEGLSyncExportInfo) -> Self {
             Self { sync: Some(value.sync) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceEGLSyncExportInfo,
+        ) -> Self {
+            Self { sync: Some(value.sync) }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedFenceMTLSharedEventDescriptor {
         pub shared_event: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SharedFenceMTLSharedEventDescriptor {
-        fn default() -> Self {
-            Self { shared_event: None }
-        }
-    }
     impl SharedFenceMTLSharedEventDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(shared_event: *mut std::ffi::c_void) -> Self {
+            Self {
+                shared_event: Some(shared_event),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedFenceMTLSharedEventDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.shared_event.is_some(),
+                "required field SharedFenceMTLSharedEventDescriptor.shared_event is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceMTLSharedEventDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -11942,7 +14098,15 @@ mod structs {
                 shared_event: Some(value.sharedEvent),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceMTLSharedEventDescriptor,
+        ) -> Self {
+            Self {
+                shared_event: Some(value.sharedEvent),
+            }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedFenceMTLSharedEventExportInfo {
         pub shared_event: Option<*mut std::ffi::c_void>,
     }
@@ -11968,6 +14132,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedFenceMTLSharedEventExportInfo,
+        ) -> Self {
+            Self {
+                shared_event: Some(value.sharedEvent),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedFenceMTLSharedEventExportInfo,
         ) -> Self {
             Self {
@@ -12023,7 +14194,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedFenceDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSharedFenceDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedFenceDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -12074,7 +14261,19 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceExportInfo) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedFenceExportInfoExtension::from_chain(value.nextInChain)
+                },
+                r#type: Some(value.type_.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSharedFenceExportInfo) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedFenceExportInfoExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 r#type: Some(value.type_.into()),
             }
         }
@@ -12082,19 +14281,18 @@ mod structs {
     pub struct SharedFenceSyncFDDescriptor {
         pub handle: Option<i32>,
     }
-    impl Default for SharedFenceSyncFDDescriptor {
-        fn default() -> Self {
-            Self { handle: None }
-        }
-    }
     impl SharedFenceSyncFDDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: i32) -> Self {
+            Self { handle: Some(handle) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedFenceSyncFDDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedFenceSyncFDDescriptor.handle is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceSyncFDDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12104,6 +14302,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceSyncFDDescriptor) -> Self {
+            Self { handle: Some(value.handle) }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceSyncFDDescriptor,
+        ) -> Self {
             Self { handle: Some(value.handle) }
         }
     }
@@ -12134,23 +14337,27 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUSharedFenceSyncFDExportInfo) -> Self {
             Self { handle: Some(value.handle) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceSyncFDExportInfo,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
     }
     pub struct SharedFenceVkSemaphoreOpaqueFDDescriptor {
         pub handle: Option<i32>,
     }
-    impl Default for SharedFenceVkSemaphoreOpaqueFDDescriptor {
-        fn default() -> Self {
-            Self { handle: None }
-        }
-    }
     impl SharedFenceVkSemaphoreOpaqueFDDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: i32) -> Self {
+            Self { handle: Some(handle) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedFenceVkSemaphoreOpaqueFDDescriptor.handle is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12160,6 +14367,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor,
         ) -> Self {
             Self { handle: Some(value.handle) }
@@ -12194,18 +14406,18 @@ mod structs {
         ) -> Self {
             Self { handle: Some(value.handle) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceVkSemaphoreOpaqueFDExportInfo,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
     }
     pub struct SharedFenceVkSemaphoreZirconHandleDescriptor {
         pub handle: Option<u32>,
     }
-    impl Default for SharedFenceVkSemaphoreZirconHandleDescriptor {
-        fn default() -> Self {
-            Self { handle: None }
-        }
-    }
     impl SharedFenceVkSemaphoreZirconHandleDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: u32) -> Self {
+            Self { handle: Some(handle) }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -12214,6 +14426,10 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedFenceVkSemaphoreZirconHandleDescriptor.handle is missing",
+            );
             let mut raw: ffi::WGPUSharedFenceVkSemaphoreZirconHandleDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12223,6 +14439,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedFenceVkSemaphoreZirconHandleDescriptor,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedFenceVkSemaphoreZirconHandleDescriptor,
         ) -> Self {
             Self { handle: Some(value.handle) }
@@ -12260,6 +14481,11 @@ mod structs {
         ) -> Self {
             Self { handle: Some(value.handle) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedFenceVkSemaphoreZirconHandleExportInfo,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
     }
     pub struct SharedTextureMemoryD3DSwapchainBeginState {
         pub is_swapchain: Option<bool>,
@@ -12284,6 +14510,13 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedTextureMemoryD3DSwapchainBeginState,
+        ) -> Self {
+            Self {
+                is_swapchain: Some(value.isSwapchain != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedTextureMemoryD3DSwapchainBeginState,
         ) -> Self {
             Self {
@@ -12329,22 +14562,25 @@ mod structs {
                 requires_end_access_fence: Some(value.requiresEndAccessFence != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryD3D11BeginState,
+        ) -> Self {
+            Self {
+                requires_end_access_fence: Some(value.requiresEndAccessFence != 0),
+            }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedTextureMemoryDXGISharedHandleDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
         pub use_keyed_mutex: Option<bool>,
     }
-    impl Default for SharedTextureMemoryDXGISharedHandleDescriptor {
-        fn default() -> Self {
-            Self {
-                handle: None,
-                use_keyed_mutex: None,
-            }
-        }
-    }
     impl SharedTextureMemoryDXGISharedHandleDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: *mut std::ffi::c_void, use_keyed_mutex: bool) -> Self {
+            Self {
+                handle: Some(handle),
+                use_keyed_mutex: Some(use_keyed_mutex),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -12353,6 +14589,14 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedTextureMemoryDXGISharedHandleDescriptor.handle is missing",
+            );
+            assert!(
+                self.use_keyed_mutex.is_some(),
+                "required field SharedTextureMemoryDXGISharedHandleDescriptor.use_keyed_mutex is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryDXGISharedHandleDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12374,23 +14618,31 @@ mod structs {
                 use_keyed_mutex: Some(value.useKeyedMutex != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryDXGISharedHandleDescriptor,
+        ) -> Self {
+            Self {
+                handle: Some(value.handle),
+                use_keyed_mutex: Some(value.useKeyedMutex != 0),
+            }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedTextureMemoryEGLImageDescriptor {
         pub image: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SharedTextureMemoryEGLImageDescriptor {
-        fn default() -> Self {
-            Self { image: None }
-        }
-    }
     impl SharedTextureMemoryEGLImageDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(image: *mut std::ffi::c_void) -> Self {
+            Self { image: Some(image) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryEGLImageDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.image.is_some(),
+                "required field SharedTextureMemoryEGLImageDescriptor.image is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryEGLImageDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12404,27 +14656,32 @@ mod structs {
         ) -> Self {
             Self { image: Some(value.image) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryEGLImageDescriptor,
+        ) -> Self {
+            Self { image: Some(value.image) }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedTextureMemoryIOSurfaceDescriptor {
         pub io_surface: Option<*mut std::ffi::c_void>,
         pub allow_storage_binding: Option<bool>,
     }
-    impl Default for SharedTextureMemoryIOSurfaceDescriptor {
-        fn default() -> Self {
+    impl SharedTextureMemoryIOSurfaceDescriptor {
+        pub fn new(io_surface: *mut std::ffi::c_void) -> Self {
             Self {
-                io_surface: None,
+                io_surface: Some(io_surface),
                 allow_storage_binding: None,
             }
-        }
-    }
-    impl SharedTextureMemoryIOSurfaceDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryIOSurfaceDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.io_surface.is_some(),
+                "required field SharedTextureMemoryIOSurfaceDescriptor.io_surface is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryIOSurfaceDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12446,18 +14703,21 @@ mod structs {
                 allow_storage_binding: Some(value.allowStorageBinding != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryIOSurfaceDescriptor,
+        ) -> Self {
+            Self {
+                io_surface: Some(value.ioSurface),
+                allow_storage_binding: Some(value.allowStorageBinding != 0),
+            }
+        }
     }
     pub struct SharedTextureMemoryAHardwareBufferDescriptor {
         pub handle: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SharedTextureMemoryAHardwareBufferDescriptor {
-        fn default() -> Self {
-            Self { handle: None }
-        }
-    }
     impl SharedTextureMemoryAHardwareBufferDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(handle: *mut std::ffi::c_void) -> Self {
+            Self { handle: Some(handle) }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -12466,6 +14726,10 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.handle.is_some(),
+                "required field SharedTextureMemoryAHardwareBufferDescriptor.handle is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12475,6 +14739,11 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
+        ) -> Self {
+            Self { handle: Some(value.handle) }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
         ) -> Self {
             Self { handle: Some(value.handle) }
@@ -12516,6 +14785,13 @@ mod structs {
                 y_cb_cr_info: Some(YCbCrVkDescriptor::from_ffi(value.yCbCrInfo)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryAHardwareBufferProperties,
+        ) -> Self {
+            Self {
+                y_cb_cr_info: Some(YCbCrVkDescriptor::from_ffi_borrowed(value.yCbCrInfo)),
+            }
+        }
     }
     pub struct SharedTextureMemoryBeginAccessDescriptor {
         pub(crate) extensions: Vec<SharedTextureMemoryBeginAccessDescriptorExtension>,
@@ -12524,20 +14800,20 @@ mod structs {
         pub fences: Option<Vec<SharedFence>>,
         pub signaled_values: Option<Vec<u64>>,
     }
-    impl Default for SharedTextureMemoryBeginAccessDescriptor {
-        fn default() -> Self {
+    impl SharedTextureMemoryBeginAccessDescriptor {
+        pub fn new(
+            concurrent_read: bool,
+            initialized: bool,
+            fences: Vec<SharedFence>,
+            signaled_values: Vec<u64>,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
-                concurrent_read: None,
-                initialized: None,
-                fences: None,
-                signaled_values: None,
+                concurrent_read: Some(concurrent_read),
+                initialized: Some(initialized),
+                fences: Some(fences),
+                signaled_values: Some(signaled_values),
             }
-        }
-    }
-    impl SharedTextureMemoryBeginAccessDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -12547,6 +14823,22 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.concurrent_read.is_some(),
+                "required field SharedTextureMemoryBeginAccessDescriptor.concurrent_read is missing",
+            );
+            assert!(
+                self.initialized.is_some(),
+                "required field SharedTextureMemoryBeginAccessDescriptor.initialized is missing",
+            );
+            assert!(
+                self.fences.is_some(),
+                "required field SharedTextureMemoryBeginAccessDescriptor.fences is missing",
+            );
+            assert!(
+                self.signaled_values.is_some(),
+                "required field SharedTextureMemoryBeginAccessDescriptor.signaled_values is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryBeginAccessDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12594,7 +14886,11 @@ mod structs {
             value: ffi::WGPUSharedTextureMemoryBeginAccessDescriptor,
         ) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedTextureMemoryBeginAccessDescriptorExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
                 concurrent_read: Some(value.concurrentRead != 0),
                 initialized: Some(value.initialized != 0),
                 fences: if value.fences.is_null() {
@@ -12609,6 +14905,50 @@ mod structs {
                         }
                             .iter()
                             .map(|raw| unsafe { SharedFence::from_raw(*raw) })
+                            .collect(),
+                    )
+                },
+                signaled_values: if value.signaledValues.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.signaledValues,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryBeginAccessDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedTextureMemoryBeginAccessDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                concurrent_read: Some(value.concurrentRead != 0),
+                initialized: Some(value.initialized != 0),
+                fences: if value.fences.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.fences,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
                             .collect(),
                     )
                 },
@@ -12678,7 +15018,25 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedTextureMemoryDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedTextureMemoryDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedTextureMemoryDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -12693,24 +15051,40 @@ mod structs {
         pub drm_modifier: Option<u64>,
         pub planes: Option<Vec<SharedTextureMemoryDmaBufPlane>>,
     }
-    impl Default for SharedTextureMemoryDmaBufDescriptor {
-        fn default() -> Self {
-            Self {
-                size: None,
-                drm_format: None,
-                drm_modifier: None,
-                planes: None,
-            }
-        }
-    }
     impl SharedTextureMemoryDmaBufDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            size: Extent3D,
+            drm_format: u32,
+            drm_modifier: u64,
+            planes: Vec<SharedTextureMemoryDmaBufPlane>,
+        ) -> Self {
+            Self {
+                size: Some(size),
+                drm_format: Some(drm_format),
+                drm_modifier: Some(drm_modifier),
+                planes: Some(planes),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryDmaBufDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.size.is_some(),
+                "required field SharedTextureMemoryDmaBufDescriptor.size is missing",
+            );
+            assert!(
+                self.drm_format.is_some(),
+                "required field SharedTextureMemoryDmaBufDescriptor.drm_format is missing",
+            );
+            assert!(
+                self.drm_modifier.is_some(),
+                "required field SharedTextureMemoryDmaBufDescriptor.drm_modifier is missing",
+            );
+            assert!(
+                self.planes.is_some(),
+                "required field SharedTextureMemoryDmaBufDescriptor.planes is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryDmaBufDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -12769,29 +15143,62 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryDmaBufDescriptor,
+        ) -> Self {
+            Self {
+                size: Some(Extent3D::from_ffi_borrowed(value.size)),
+                drm_format: Some(value.drmFormat),
+                drm_modifier: Some(value.drmModifier),
+                planes: if value.planes.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.planes,
+                                value.planeCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| SharedTextureMemoryDmaBufPlane::from_ffi_borrowed(
+                                *raw,
+                            ))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct SharedTextureMemoryDmaBufPlane {
         pub fd: Option<i32>,
         pub offset: Option<u64>,
         pub stride: Option<u32>,
     }
-    impl Default for SharedTextureMemoryDmaBufPlane {
-        fn default() -> Self {
-            Self {
-                fd: None,
-                offset: None,
-                stride: None,
-            }
-        }
-    }
     impl SharedTextureMemoryDmaBufPlane {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(fd: i32, offset: u64, stride: u32) -> Self {
+            Self {
+                fd: Some(fd),
+                offset: Some(offset),
+                stride: Some(stride),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryDmaBufPlane, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.fd.is_some(),
+                "required field SharedTextureMemoryDmaBufPlane.fd is missing",
+            );
+            assert!(
+                self.offset.is_some(),
+                "required field SharedTextureMemoryDmaBufPlane.offset is missing",
+            );
+            assert!(
+                self.stride.is_some(),
+                "required field SharedTextureMemoryDmaBufPlane.stride is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryDmaBufPlane = unsafe {
                 std::mem::zeroed()
             };
@@ -12813,14 +15220,21 @@ mod structs {
                 stride: Some(value.stride),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryDmaBufPlane,
+        ) -> Self {
+            Self {
+                fd: Some(value.fd),
+                offset: Some(value.offset),
+                stride: Some(value.stride),
+            }
+        }
     }
     pub struct SharedTextureMemoryEndAccessState {
         pub(crate) extensions: Vec<SharedTextureMemoryEndAccessStateExtension>,
         pub initialized: Option<bool>,
         pub fences: Option<Vec<SharedFence>>,
         pub signaled_values: Option<Vec<u64>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSharedTextureMemoryEndAccessState>,
     }
     impl Default for SharedTextureMemoryEndAccessState {
         fn default() -> Self {
@@ -12829,7 +15243,6 @@ mod structs {
                 initialized: None,
                 fences: None,
                 signaled_values: None,
-                _free_members: None,
             }
         }
     }
@@ -12886,8 +15299,12 @@ mod structs {
         pub(crate) fn from_ffi(
             value: ffi::WGPUSharedTextureMemoryEndAccessState,
         ) -> Self {
-            Self {
-                extensions: Vec::new(),
+            let result = Self {
+                extensions: unsafe {
+                    SharedTextureMemoryEndAccessStateExtension::from_chain(
+                        value.nextInChain,
+                    )
+                },
                 initialized: Some(value.initialized != 0),
                 fences: if value.fences.is_null() {
                     None
@@ -12900,7 +15317,10 @@ mod structs {
                             )
                         }
                             .iter()
-                            .map(|raw| unsafe { SharedFence::from_raw(*raw) })
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
                             .collect(),
                     )
                 },
@@ -12917,17 +15337,51 @@ mod structs {
                             .to_vec(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSharedTextureMemoryEndAccessState) {
+            };
             unsafe { ffi::wgpuSharedTextureMemoryEndAccessStateFreeMembers(value) };
+            result
         }
-    }
-    impl Drop for SharedTextureMemoryEndAccessState {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSharedTextureMemoryEndAccessStateFreeMembers(value) };
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryEndAccessState,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedTextureMemoryEndAccessStateExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                initialized: Some(value.initialized != 0),
+                fences: if value.fences.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.fences,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| {
+                                unsafe { ffi::wgpuSharedFenceAddRef(*raw) };
+                                unsafe { SharedFence::from_raw(*raw) }
+                            })
+                            .collect(),
+                    )
+                },
+                signaled_values: if value.signaledValues.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.signaledValues,
+                                value.fenceCount as usize,
+                            )
+                        }
+                            .to_vec(),
+                    )
+                },
             }
         }
     }
@@ -12968,6 +15422,15 @@ mod structs {
                 ),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryMetalEndAccessState,
+        ) -> Self {
+            Self {
+                commands_scheduled_future: Some(
+                    Future::from_ffi_borrowed(value.commandsScheduledFuture),
+                ),
+            }
+        }
     }
     pub struct SharedTextureMemoryOpaqueFDDescriptor {
         pub vk_image_create_info: Option<*const std::ffi::c_void>,
@@ -12976,25 +15439,46 @@ mod structs {
         pub allocation_size: Option<u64>,
         pub dedicated_allocation: Option<bool>,
     }
-    impl Default for SharedTextureMemoryOpaqueFDDescriptor {
-        fn default() -> Self {
-            Self {
-                vk_image_create_info: None,
-                memory_fd: None,
-                memory_type_index: None,
-                allocation_size: None,
-                dedicated_allocation: None,
-            }
-        }
-    }
     impl SharedTextureMemoryOpaqueFDDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            vk_image_create_info: *const std::ffi::c_void,
+            memory_fd: i32,
+            memory_type_index: u32,
+            allocation_size: u64,
+            dedicated_allocation: bool,
+        ) -> Self {
+            Self {
+                vk_image_create_info: Some(vk_image_create_info),
+                memory_fd: Some(memory_fd),
+                memory_type_index: Some(memory_type_index),
+                allocation_size: Some(allocation_size),
+                dedicated_allocation: Some(dedicated_allocation),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.vk_image_create_info.is_some(),
+                "required field SharedTextureMemoryOpaqueFDDescriptor.vk_image_create_info is missing",
+            );
+            assert!(
+                self.memory_fd.is_some(),
+                "required field SharedTextureMemoryOpaqueFDDescriptor.memory_fd is missing",
+            );
+            assert!(
+                self.memory_type_index.is_some(),
+                "required field SharedTextureMemoryOpaqueFDDescriptor.memory_type_index is missing",
+            );
+            assert!(
+                self.allocation_size.is_some(),
+                "required field SharedTextureMemoryOpaqueFDDescriptor.allocation_size is missing",
+            );
+            assert!(
+                self.dedicated_allocation.is_some(),
+                "required field SharedTextureMemoryOpaqueFDDescriptor.dedicated_allocation is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -13018,6 +15502,17 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(
+            value: ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor,
+        ) -> Self {
+            Self {
+                vk_image_create_info: Some(value.vkImageCreateInfo),
+                memory_fd: Some(value.memoryFD),
+                memory_type_index: Some(value.memoryTypeIndex),
+                allocation_size: Some(value.allocationSize),
+                dedicated_allocation: Some(value.dedicatedAllocation != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
             value: ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor,
         ) -> Self {
             Self {
@@ -13087,9 +15582,25 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSharedTextureMemoryProperties) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SharedTextureMemoryPropertiesExtension::from_chain(value.nextInChain)
+                },
                 usage: Some(value.usage.into()),
                 size: Some(Extent3D::from_ffi(value.size)),
+                format: Some(value.format.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryProperties,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    SharedTextureMemoryPropertiesExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
+                usage: Some(value.usage.into()),
+                size: Some(Extent3D::from_ffi_borrowed(value.size)),
                 format: Some(value.format.into()),
             }
         }
@@ -13097,14 +15608,11 @@ mod structs {
     pub struct SharedTextureMemoryVkDedicatedAllocationDescriptor {
         pub dedicated_allocation: Option<bool>,
     }
-    impl Default for SharedTextureMemoryVkDedicatedAllocationDescriptor {
-        fn default() -> Self {
-            Self { dedicated_allocation: None }
-        }
-    }
     impl SharedTextureMemoryVkDedicatedAllocationDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(dedicated_allocation: bool) -> Self {
+            Self {
+                dedicated_allocation: Some(dedicated_allocation),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -13113,6 +15621,10 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.dedicated_allocation.is_some(),
+                "required field SharedTextureMemoryVkDedicatedAllocationDescriptor.dedicated_allocation is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryVkDedicatedAllocationDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -13130,22 +15642,25 @@ mod structs {
                 dedicated_allocation: Some(value.dedicatedAllocation != 0),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryVkDedicatedAllocationDescriptor,
+        ) -> Self {
+            Self {
+                dedicated_allocation: Some(value.dedicatedAllocation != 0),
+            }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedTextureMemoryVkImageLayoutBeginState {
         pub old_layout: Option<i32>,
         pub new_layout: Option<i32>,
     }
-    impl Default for SharedTextureMemoryVkImageLayoutBeginState {
-        fn default() -> Self {
-            Self {
-                old_layout: None,
-                new_layout: None,
-            }
-        }
-    }
     impl SharedTextureMemoryVkImageLayoutBeginState {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(old_layout: i32, new_layout: i32) -> Self {
+            Self {
+                old_layout: Some(old_layout),
+                new_layout: Some(new_layout),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -13154,6 +15669,14 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.old_layout.is_some(),
+                "required field SharedTextureMemoryVkImageLayoutBeginState.old_layout is missing",
+            );
+            assert!(
+                self.new_layout.is_some(),
+                "required field SharedTextureMemoryVkImageLayoutBeginState.new_layout is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryVkImageLayoutBeginState = unsafe {
                 std::mem::zeroed()
             };
@@ -13173,7 +15696,16 @@ mod structs {
                 new_layout: Some(value.newLayout),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryVkImageLayoutBeginState,
+        ) -> Self {
+            Self {
+                old_layout: Some(value.oldLayout),
+                new_layout: Some(value.newLayout),
+            }
+        }
     }
+    /// TODO(crbug.com/dawn/1745): improve type safety
     pub struct SharedTextureMemoryVkImageLayoutEndState {
         pub old_layout: Option<i32>,
         pub new_layout: Option<i32>,
@@ -13213,27 +15745,38 @@ mod structs {
                 new_layout: Some(value.newLayout),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryVkImageLayoutEndState,
+        ) -> Self {
+            Self {
+                old_layout: Some(value.oldLayout),
+                new_layout: Some(value.newLayout),
+            }
+        }
     }
     pub struct SharedTextureMemoryZirconHandleDescriptor {
         pub memory_fd: Option<u32>,
         pub allocation_size: Option<u64>,
     }
-    impl Default for SharedTextureMemoryZirconHandleDescriptor {
-        fn default() -> Self {
-            Self {
-                memory_fd: None,
-                allocation_size: None,
-            }
-        }
-    }
     impl SharedTextureMemoryZirconHandleDescriptor {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(memory_fd: u32, allocation_size: u64) -> Self {
+            Self {
+                memory_fd: Some(memory_fd),
+                allocation_size: Some(allocation_size),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSharedTextureMemoryZirconHandleDescriptor, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.memory_fd.is_some(),
+                "required field SharedTextureMemoryZirconHandleDescriptor.memory_fd is missing",
+            );
+            assert!(
+                self.allocation_size.is_some(),
+                "required field SharedTextureMemoryZirconHandleDescriptor.allocation_size is missing",
+            );
             let mut raw: ffi::WGPUSharedTextureMemoryZirconHandleDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -13253,27 +15796,34 @@ mod structs {
                 allocation_size: Some(value.allocationSize),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSharedTextureMemoryZirconHandleDescriptor,
+        ) -> Self {
+            Self {
+                memory_fd: Some(value.memoryFD),
+                allocation_size: Some(value.allocationSize),
+            }
+        }
     }
     pub struct StaticSamplerBindingLayout {
         pub sampler: Option<Sampler>,
         pub sampled_texture_binding: Option<u32>,
     }
-    impl Default for StaticSamplerBindingLayout {
-        fn default() -> Self {
+    impl StaticSamplerBindingLayout {
+        pub fn new(sampler: Sampler) -> Self {
             Self {
-                sampler: None,
+                sampler: Some(sampler),
                 sampled_texture_binding: Some(LIMIT_U32_UNDEFINED),
             }
-        }
-    }
-    impl StaticSamplerBindingLayout {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUStaticSamplerBindingLayout, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.sampler.is_some(),
+                "required field StaticSamplerBindingLayout.sampler is missing",
+            );
             let mut raw: ffi::WGPUStaticSamplerBindingLayout = unsafe {
                 std::mem::zeroed()
             };
@@ -13290,6 +15840,17 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUStaticSamplerBindingLayout) -> Self {
             Self {
                 sampler: Some(unsafe { Sampler::from_raw(value.sampler) }),
+                sampled_texture_binding: Some(value.sampledTextureBinding),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUStaticSamplerBindingLayout,
+        ) -> Self {
+            Self {
+                sampler: {
+                    unsafe { ffi::wgpuSamplerAddRef(value.sampler) };
+                    Some(unsafe { Sampler::from_raw(value.sampler) })
+                },
                 sampled_texture_binding: Some(value.sampledTextureBinding),
             }
         }
@@ -13349,6 +15910,14 @@ mod structs {
                 pass_op: Some(value.passOp.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUStencilFaceState) -> Self {
+            Self {
+                compare: Some(value.compare.into()),
+                fail_op: Some(value.failOp.into()),
+                depth_fail_op: Some(value.depthFailOp.into()),
+                pass_op: Some(value.passOp.into()),
+            }
+        }
     }
     pub struct StorageTextureBindingLayout {
         pub(crate) extensions: Vec<StorageTextureBindingLayoutExtension>,
@@ -13356,19 +15925,14 @@ mod structs {
         pub format: Option<TextureFormat>,
         pub view_dimension: Option<TextureViewDimension>,
     }
-    impl Default for StorageTextureBindingLayout {
-        fn default() -> Self {
+    impl StorageTextureBindingLayout {
+        pub fn new(format: TextureFormat) -> Self {
             Self {
                 extensions: Vec::new(),
                 access: Some(StorageTextureAccess::WriteOnly),
-                format: None,
+                format: Some(format),
                 view_dimension: Some(TextureViewDimension::D2),
             }
-        }
-    }
-    impl StorageTextureBindingLayout {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -13378,6 +15942,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field StorageTextureBindingLayout.format is missing",
+            );
             let mut raw: ffi::WGPUStorageTextureBindingLayout = unsafe {
                 std::mem::zeroed()
             };
@@ -13408,7 +15976,23 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUStorageTextureBindingLayout) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    StorageTextureBindingLayoutExtension::from_chain(value.nextInChain)
+                },
+                access: Some(value.access.into()),
+                format: Some(value.format.into()),
+                view_dimension: Some(value.viewDimension.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUStorageTextureBindingLayout,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    StorageTextureBindingLayoutExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 access: Some(value.access.into()),
                 format: Some(value.format.into()),
                 view_dimension: Some(value.viewDimension.into()),
@@ -13448,6 +16032,12 @@ mod structs {
                 length: Some(value.length),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUStringView) -> Self {
+            Self {
+                data: Some(value.data),
+                length: Some(value.length),
+            }
+        }
     }
     pub struct SubgroupMatrixConfig {
         pub component_type: Option<SubgroupMatrixComponentType>,
@@ -13456,25 +16046,46 @@ mod structs {
         pub n: Option<u32>,
         pub k: Option<u32>,
     }
-    impl Default for SubgroupMatrixConfig {
-        fn default() -> Self {
-            Self {
-                component_type: None,
-                result_component_type: None,
-                m: None,
-                n: None,
-                k: None,
-            }
-        }
-    }
     impl SubgroupMatrixConfig {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            component_type: SubgroupMatrixComponentType,
+            result_component_type: SubgroupMatrixComponentType,
+            m: u32,
+            n: u32,
+            k: u32,
+        ) -> Self {
+            Self {
+                component_type: Some(component_type),
+                result_component_type: Some(result_component_type),
+                m: Some(m),
+                n: Some(n),
+                k: Some(k),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSubgroupMatrixConfig, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.component_type.is_some(),
+                "required field SubgroupMatrixConfig.component_type is missing",
+            );
+            assert!(
+                self.result_component_type.is_some(),
+                "required field SubgroupMatrixConfig.result_component_type is missing",
+            );
+            assert!(
+                self.m.is_some(),
+                "required field SubgroupMatrixConfig.m is missing",
+            );
+            assert!(
+                self.n.is_some(),
+                "required field SubgroupMatrixConfig.n is missing",
+            );
+            assert!(
+                self.k.is_some(),
+                "required field SubgroupMatrixConfig.k is missing",
+            );
             let mut raw: ffi::WGPUSubgroupMatrixConfig = unsafe { std::mem::zeroed() };
             if let Some(value) = self.component_type {
                 raw.componentType = value.into();
@@ -13506,18 +16117,22 @@ mod structs {
                 k: Some(value.K),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSubgroupMatrixConfig) -> Self {
+            Self {
+                component_type: Some(value.componentType.into()),
+                result_component_type: Some(value.resultComponentType.into()),
+                m: Some(value.M),
+                n: Some(value.N),
+                k: Some(value.K),
+            }
+        }
     }
     pub struct SupportedWGSLLanguageFeatures {
         pub features: Option<Vec<WGSLLanguageFeatureName>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSupportedWGSLLanguageFeatures>,
     }
     impl Default for SupportedWGSLLanguageFeatures {
         fn default() -> Self {
-            Self {
-                features: None,
-                _free_members: None,
-            }
+            Self { features: None }
         }
     }
     impl SupportedWGSLLanguageFeatures {
@@ -13548,6 +16163,29 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSupportedWGSLLanguageFeatures) -> Self {
+            let result = Self {
+                features: if value.features.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.features,
+                                value.featureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| WGSLLanguageFeatureName::from(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSupportedWGSLLanguageFeatures,
+        ) -> Self {
             Self {
                 features: if value.features.is_null() {
                     None
@@ -13564,31 +16202,15 @@ mod structs {
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSupportedWGSLLanguageFeatures) {
-            unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(value) };
-        }
-    }
-    impl Drop for SupportedWGSLLanguageFeatures {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSupportedWGSLLanguageFeaturesFreeMembers(value) };
             }
         }
     }
     pub struct SupportedFeatures {
         pub features: Option<Vec<FeatureName>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSupportedFeatures>,
     }
     impl Default for SupportedFeatures {
         fn default() -> Self {
-            Self {
-                features: None,
-                _free_members: None,
-            }
+            Self { features: None }
         }
     }
     impl SupportedFeatures {
@@ -13617,6 +16239,27 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSupportedFeatures) -> Self {
+            let result = Self {
+                features: if value.features.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.features,
+                                value.featureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| FeatureName::from(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuSupportedFeaturesFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSupportedFeatures) -> Self {
             Self {
                 features: if value.features.is_null() {
                     None
@@ -13633,31 +16276,15 @@ mod structs {
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSupportedFeatures) {
-            unsafe { ffi::wgpuSupportedFeaturesFreeMembers(value) };
-        }
-    }
-    impl Drop for SupportedFeatures {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSupportedFeaturesFreeMembers(value) };
             }
         }
     }
     pub struct SupportedInstanceFeatures {
         pub features: Option<Vec<InstanceFeatureName>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSupportedInstanceFeatures>,
     }
     impl Default for SupportedInstanceFeatures {
         fn default() -> Self {
-            Self {
-                features: None,
-                _free_members: None,
-            }
+            Self { features: None }
         }
     }
     impl SupportedInstanceFeatures {
@@ -13688,6 +16315,29 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSupportedInstanceFeatures) -> Self {
+            let result = Self {
+                features: if value.features.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.features,
+                                value.featureCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| InstanceFeatureName::from(*raw))
+                            .collect(),
+                    )
+                },
+            };
+            unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(value) };
+            result
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSupportedInstanceFeatures,
+        ) -> Self {
             Self {
                 features: if value.features.is_null() {
                     None
@@ -13704,17 +16354,6 @@ mod structs {
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSupportedInstanceFeatures) {
-            unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(value) };
-        }
-    }
-    impl Drop for SupportedInstanceFeatures {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSupportedInstanceFeaturesFreeMembers(value) };
             }
         }
     }
@@ -13724,8 +16363,6 @@ mod structs {
         pub formats: Option<Vec<TextureFormat>>,
         pub present_modes: Option<Vec<PresentMode>>,
         pub alpha_modes: Option<Vec<CompositeAlphaMode>>,
-        #[doc(hidden)]
-        pub(crate) _free_members: Option<ffi::WGPUSurfaceCapabilities>,
     }
     impl Default for SurfaceCapabilities {
         fn default() -> Self {
@@ -13735,7 +16372,6 @@ mod structs {
                 formats: None,
                 present_modes: None,
                 alpha_modes: None,
-                _free_members: None,
             }
         }
     }
@@ -13814,8 +16450,10 @@ mod structs {
             self
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceCapabilities) -> Self {
-            Self {
-                extensions: Vec::new(),
+            let result = Self {
+                extensions: unsafe {
+                    SurfaceCapabilitiesExtension::from_chain(value.nextInChain)
+                },
                 usages: Some(value.usages.into()),
                 formats: if value.formats.is_null() {
                     None
@@ -13862,17 +16500,61 @@ mod structs {
                             .collect(),
                     )
                 },
-                _free_members: Some(value),
-            }
-        }
-        pub(crate) fn free_members(value: ffi::WGPUSurfaceCapabilities) {
+            };
             unsafe { ffi::wgpuSurfaceCapabilitiesFreeMembers(value) };
+            result
         }
-    }
-    impl Drop for SurfaceCapabilities {
-        fn drop(&mut self) {
-            if let Some(value) = self._free_members.take() {
-                unsafe { ffi::wgpuSurfaceCapabilitiesFreeMembers(value) };
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceCapabilities) -> Self {
+            Self {
+                extensions: unsafe {
+                    SurfaceCapabilitiesExtension::from_chain_borrowed(value.nextInChain)
+                },
+                usages: Some(value.usages.into()),
+                formats: if value.formats.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.formats,
+                                value.formatCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| TextureFormat::from(*raw))
+                            .collect(),
+                    )
+                },
+                present_modes: if value.presentModes.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.presentModes,
+                                value.presentModeCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| PresentMode::from(*raw))
+                            .collect(),
+                    )
+                },
+                alpha_modes: if value.alphaModes.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.alphaModes,
+                                value.alphaModeCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| CompositeAlphaMode::from(*raw))
+                            .collect(),
+                    )
+                },
             }
         }
     }
@@ -13880,22 +16562,28 @@ mod structs {
         pub color_space: Option<PredefinedColorSpace>,
         pub tone_mapping_mode: Option<ToneMappingMode>,
     }
-    impl Default for SurfaceColorManagement {
-        fn default() -> Self {
-            Self {
-                color_space: None,
-                tone_mapping_mode: None,
-            }
-        }
-    }
     impl SurfaceColorManagement {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            color_space: PredefinedColorSpace,
+            tone_mapping_mode: ToneMappingMode,
+        ) -> Self {
+            Self {
+                color_space: Some(color_space),
+                tone_mapping_mode: Some(tone_mapping_mode),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceColorManagement, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.color_space.is_some(),
+                "required field SurfaceColorManagement.color_space is missing",
+            );
+            assert!(
+                self.tone_mapping_mode.is_some(),
+                "required field SurfaceColorManagement.tone_mapping_mode is missing",
+            );
             let mut raw: ffi::WGPUSurfaceColorManagement = unsafe { std::mem::zeroed() };
             if let Some(value) = self.color_space {
                 raw.colorSpace = value.into();
@@ -13915,6 +16603,12 @@ mod structs {
                 tone_mapping_mode: Some(value.toneMappingMode.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceColorManagement) -> Self {
+            Self {
+                color_space: Some(value.colorSpace.into()),
+                tone_mapping_mode: Some(value.toneMappingMode.into()),
+            }
+        }
     }
     pub struct SurfaceConfiguration {
         pub(crate) extensions: Vec<SurfaceConfigurationExtension>,
@@ -13927,24 +16621,24 @@ mod structs {
         pub alpha_mode: Option<CompositeAlphaMode>,
         pub present_mode: Option<PresentMode>,
     }
-    impl Default for SurfaceConfiguration {
-        fn default() -> Self {
+    impl SurfaceConfiguration {
+        pub fn new(
+            device: Device,
+            format: TextureFormat,
+            width: u32,
+            height: u32,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
-                device: None,
-                format: None,
+                device: Some(device),
+                format: Some(format),
                 usage: Some(TextureUsage::RENDER_ATTACHMENT),
-                width: None,
-                height: None,
+                width: Some(width),
+                height: Some(height),
                 view_formats: None,
                 alpha_mode: Some(CompositeAlphaMode::Auto),
                 present_mode: Some(PresentMode::Fifo),
             }
-        }
-    }
-    impl SurfaceConfiguration {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -13954,6 +16648,22 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.device.is_some(),
+                "required field SurfaceConfiguration.device is missing",
+            );
+            assert!(
+                self.format.is_some(),
+                "required field SurfaceConfiguration.format is missing",
+            );
+            assert!(
+                self.width.is_some(),
+                "required field SurfaceConfiguration.width is missing",
+            );
+            assert!(
+                self.height.is_some(),
+                "required field SurfaceConfiguration.height is missing",
+            );
             let mut raw: ffi::WGPUSurfaceConfiguration = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.device = self
@@ -14016,8 +16726,42 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceConfiguration) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SurfaceConfigurationExtension::from_chain(value.nextInChain)
+                },
                 device: Some(unsafe { Device::from_raw(value.device) }),
+                format: Some(value.format.into()),
+                usage: Some(value.usage.into()),
+                width: Some(value.width),
+                height: Some(value.height),
+                view_formats: if value.viewFormats.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.viewFormats,
+                                value.viewFormatCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| TextureFormat::from(*raw))
+                            .collect(),
+                    )
+                },
+                alpha_mode: Some(value.alphaMode.into()),
+                present_mode: Some(value.presentMode.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceConfiguration) -> Self {
+            Self {
+                extensions: unsafe {
+                    SurfaceConfigurationExtension::from_chain_borrowed(value.nextInChain)
+                },
+                device: {
+                    unsafe { ffi::wgpuDeviceAddRef(value.device) };
+                    Some(unsafe { Device::from_raw(value.device) })
+                },
                 format: Some(value.format.into()),
                 usage: Some(value.usage.into()),
                 width: Some(value.width),
@@ -14087,7 +16831,21 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SurfaceDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    SurfaceDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -14099,14 +16857,11 @@ mod structs {
     pub struct SurfaceDescriptorFromWindowsUWPSwapChainPanel {
         pub swap_chain_panel: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceDescriptorFromWindowsUWPSwapChainPanel {
-        fn default() -> Self {
-            Self { swap_chain_panel: None }
-        }
-    }
     impl SurfaceDescriptorFromWindowsUWPSwapChainPanel {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(swap_chain_panel: *mut std::ffi::c_void) -> Self {
+            Self {
+                swap_chain_panel: Some(swap_chain_panel),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -14115,6 +16870,10 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.swap_chain_panel.is_some(),
+                "required field SurfaceDescriptorFromWindowsUWPSwapChainPanel.swap_chain_panel is missing",
+            );
             let mut raw: ffi::WGPUSurfaceDescriptorFromWindowsUWPSwapChainPanel = unsafe {
                 std::mem::zeroed()
             };
@@ -14130,18 +16889,22 @@ mod structs {
                 swap_chain_panel: Some(value.swapChainPanel),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceDescriptorFromWindowsUWPSwapChainPanel,
+        ) -> Self {
+            Self {
+                swap_chain_panel: Some(value.swapChainPanel),
+            }
+        }
     }
     pub struct SurfaceDescriptorFromWindowsWinUISwapChainPanel {
         pub swap_chain_panel: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceDescriptorFromWindowsWinUISwapChainPanel {
-        fn default() -> Self {
-            Self { swap_chain_panel: None }
-        }
-    }
     impl SurfaceDescriptorFromWindowsWinUISwapChainPanel {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(swap_chain_panel: *mut std::ffi::c_void) -> Self {
+            Self {
+                swap_chain_panel: Some(swap_chain_panel),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
@@ -14150,6 +16913,10 @@ mod structs {
             ChainedStructStorage,
         ) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.swap_chain_panel.is_some(),
+                "required field SurfaceDescriptorFromWindowsWinUISwapChainPanel.swap_chain_panel is missing",
+            );
             let mut raw: ffi::WGPUSurfaceDescriptorFromWindowsWinUISwapChainPanel = unsafe {
                 std::mem::zeroed()
             };
@@ -14165,23 +16932,31 @@ mod structs {
                 swap_chain_panel: Some(value.swapChainPanel),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceDescriptorFromWindowsWinUISwapChainPanel,
+        ) -> Self {
+            Self {
+                swap_chain_panel: Some(value.swapChainPanel),
+            }
+        }
     }
     pub struct SurfaceDescriptorFromWindowsCoreWindow {
         pub core_window: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceDescriptorFromWindowsCoreWindow {
-        fn default() -> Self {
-            Self { core_window: None }
-        }
-    }
     impl SurfaceDescriptorFromWindowsCoreWindow {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(core_window: *mut std::ffi::c_void) -> Self {
+            Self {
+                core_window: Some(core_window),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceDescriptorFromWindowsCoreWindow, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.core_window.is_some(),
+                "required field SurfaceDescriptorFromWindowsCoreWindow.core_window is missing",
+            );
             let mut raw: ffi::WGPUSurfaceDescriptorFromWindowsCoreWindow = unsafe {
                 std::mem::zeroed()
             };
@@ -14197,27 +16972,37 @@ mod structs {
                 core_window: Some(value.coreWindow),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceDescriptorFromWindowsCoreWindow,
+        ) -> Self {
+            Self {
+                core_window: Some(value.coreWindow),
+            }
+        }
     }
     pub struct SurfaceSourceXCBWindow {
         pub connection: Option<*mut std::ffi::c_void>,
         pub window: Option<u32>,
     }
-    impl Default for SurfaceSourceXCBWindow {
-        fn default() -> Self {
-            Self {
-                connection: None,
-                window: None,
-            }
-        }
-    }
     impl SurfaceSourceXCBWindow {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(connection: *mut std::ffi::c_void, window: u32) -> Self {
+            Self {
+                connection: Some(connection),
+                window: Some(window),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceXCBWindow, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.connection.is_some(),
+                "required field SurfaceSourceXCBWindow.connection is missing",
+            );
+            assert!(
+                self.window.is_some(),
+                "required field SurfaceSourceXCBWindow.window is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceXCBWindow = unsafe { std::mem::zeroed() };
             if let Some(value) = self.connection {
                 raw.connection = value;
@@ -14233,23 +17018,28 @@ mod structs {
                 window: Some(value.window),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceSourceXCBWindow) -> Self {
+            Self {
+                connection: Some(value.connection),
+                window: Some(value.window),
+            }
+        }
     }
     pub struct SurfaceSourceAndroidNativeWindow {
         pub window: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceSourceAndroidNativeWindow {
-        fn default() -> Self {
-            Self { window: None }
-        }
-    }
     impl SurfaceSourceAndroidNativeWindow {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(window: *mut std::ffi::c_void) -> Self {
+            Self { window: Some(window) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceAndroidNativeWindow, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.window.is_some(),
+                "required field SurfaceSourceAndroidNativeWindow.window is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceAndroidNativeWindow = unsafe {
                 std::mem::zeroed()
             };
@@ -14263,23 +17053,27 @@ mod structs {
         ) -> Self {
             Self { window: Some(value.window) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceSourceAndroidNativeWindow,
+        ) -> Self {
+            Self { window: Some(value.window) }
+        }
     }
     pub struct SurfaceSourceMetalLayer {
         pub layer: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceSourceMetalLayer {
-        fn default() -> Self {
-            Self { layer: None }
-        }
-    }
     impl SurfaceSourceMetalLayer {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(layer: *mut std::ffi::c_void) -> Self {
+            Self { layer: Some(layer) }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceMetalLayer, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.layer.is_some(),
+                "required field SurfaceSourceMetalLayer.layer is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceMetalLayer = unsafe {
                 std::mem::zeroed()
             };
@@ -14291,27 +17085,38 @@ mod structs {
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceSourceMetalLayer) -> Self {
             Self { layer: Some(value.layer) }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceSourceMetalLayer,
+        ) -> Self {
+            Self { layer: Some(value.layer) }
+        }
     }
     pub struct SurfaceSourceWaylandSurface {
         pub display: Option<*mut std::ffi::c_void>,
         pub surface: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceSourceWaylandSurface {
-        fn default() -> Self {
-            Self {
-                display: None,
-                surface: None,
-            }
-        }
-    }
     impl SurfaceSourceWaylandSurface {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            display: *mut std::ffi::c_void,
+            surface: *mut std::ffi::c_void,
+        ) -> Self {
+            Self {
+                display: Some(display),
+                surface: Some(surface),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceWaylandSurface, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.display.is_some(),
+                "required field SurfaceSourceWaylandSurface.display is missing",
+            );
+            assert!(
+                self.surface.is_some(),
+                "required field SurfaceSourceWaylandSurface.surface is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceWaylandSurface = unsafe {
                 std::mem::zeroed()
             };
@@ -14329,27 +17134,41 @@ mod structs {
                 surface: Some(value.surface),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceSourceWaylandSurface,
+        ) -> Self {
+            Self {
+                display: Some(value.display),
+                surface: Some(value.surface),
+            }
+        }
     }
     pub struct SurfaceSourceWindowsHWND {
         pub hinstance: Option<*mut std::ffi::c_void>,
         pub hwnd: Option<*mut std::ffi::c_void>,
     }
-    impl Default for SurfaceSourceWindowsHWND {
-        fn default() -> Self {
-            Self {
-                hinstance: None,
-                hwnd: None,
-            }
-        }
-    }
     impl SurfaceSourceWindowsHWND {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(
+            hinstance: *mut std::ffi::c_void,
+            hwnd: *mut std::ffi::c_void,
+        ) -> Self {
+            Self {
+                hinstance: Some(hinstance),
+                hwnd: Some(hwnd),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceWindowsHWND, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.hinstance.is_some(),
+                "required field SurfaceSourceWindowsHWND.hinstance is missing",
+            );
+            assert!(
+                self.hwnd.is_some(),
+                "required field SurfaceSourceWindowsHWND.hwnd is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceWindowsHWND = unsafe {
                 std::mem::zeroed()
             };
@@ -14367,27 +17186,38 @@ mod structs {
                 hwnd: Some(value.hwnd),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceSourceWindowsHWND,
+        ) -> Self {
+            Self {
+                hinstance: Some(value.hinstance),
+                hwnd: Some(value.hwnd),
+            }
+        }
     }
     pub struct SurfaceSourceXlibWindow {
         pub display: Option<*mut std::ffi::c_void>,
         pub window: Option<u64>,
     }
-    impl Default for SurfaceSourceXlibWindow {
-        fn default() -> Self {
-            Self {
-                display: None,
-                window: None,
-            }
-        }
-    }
     impl SurfaceSourceXlibWindow {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(display: *mut std::ffi::c_void, window: u64) -> Self {
+            Self {
+                display: Some(display),
+                window: Some(window),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUSurfaceSourceXlibWindow, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.display.is_some(),
+                "required field SurfaceSourceXlibWindow.display is missing",
+            );
+            assert!(
+                self.window.is_some(),
+                "required field SurfaceSourceXlibWindow.window is missing",
+            );
             let mut raw: ffi::WGPUSurfaceSourceXlibWindow = unsafe {
                 std::mem::zeroed()
             };
@@ -14400,6 +17230,14 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceSourceXlibWindow) -> Self {
+            Self {
+                display: Some(value.display),
+                window: Some(value.window),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUSurfaceSourceXlibWindow,
+        ) -> Self {
             Self {
                 display: Some(value.display),
                 window: Some(value.window),
@@ -14450,8 +17288,22 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUSurfaceTexture) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    SurfaceTextureExtension::from_chain(value.nextInChain)
+                },
                 texture: Some(unsafe { Texture::from_raw(value.texture) }),
+                status: Some(value.status.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUSurfaceTexture) -> Self {
+            Self {
+                extensions: unsafe {
+                    SurfaceTextureExtension::from_chain_borrowed(value.nextInChain)
+                },
+                texture: {
+                    unsafe { ffi::wgpuTextureAddRef(value.texture) };
+                    Some(unsafe { Texture::from_raw(value.texture) })
+                },
                 status: Some(value.status.into()),
             }
         }
@@ -14459,19 +17311,20 @@ mod structs {
     pub struct TexelBufferBindingEntry {
         pub texel_buffer_view: Option<TexelBufferView>,
     }
-    impl Default for TexelBufferBindingEntry {
-        fn default() -> Self {
-            Self { texel_buffer_view: None }
-        }
-    }
     impl TexelBufferBindingEntry {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(texel_buffer_view: TexelBufferView) -> Self {
+            Self {
+                texel_buffer_view: Some(texel_buffer_view),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUTexelBufferBindingEntry, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.texel_buffer_view.is_some(),
+                "required field TexelBufferBindingEntry.texel_buffer_view is missing",
+            );
             let mut raw: ffi::WGPUTexelBufferBindingEntry = unsafe {
                 std::mem::zeroed()
             };
@@ -14489,27 +17342,36 @@ mod structs {
                 }),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTexelBufferBindingEntry,
+        ) -> Self {
+            Self {
+                texel_buffer_view: {
+                    unsafe { ffi::wgpuTexelBufferViewAddRef(value.texelBufferView) };
+                    Some(unsafe { TexelBufferView::from_raw(value.texelBufferView) })
+                },
+            }
+        }
     }
     pub struct TexelBufferBindingLayout {
         pub access: Option<TexelBufferAccess>,
         pub format: Option<TextureFormat>,
     }
-    impl Default for TexelBufferBindingLayout {
-        fn default() -> Self {
+    impl TexelBufferBindingLayout {
+        pub fn new(format: TextureFormat) -> Self {
             Self {
                 access: Some(TexelBufferAccess::ReadWrite),
-                format: None,
+                format: Some(format),
             }
-        }
-    }
-    impl TexelBufferBindingLayout {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUTexelBufferBindingLayout, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.format.is_some(),
+                "required field TexelBufferBindingLayout.format is missing",
+            );
             let mut raw: ffi::WGPUTexelBufferBindingLayout = unsafe {
                 std::mem::zeroed()
             };
@@ -14531,6 +17393,14 @@ mod structs {
                 format: Some(value.format.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTexelBufferBindingLayout,
+        ) -> Self {
+            Self {
+                access: Some(value.access.into()),
+                format: Some(value.format.into()),
+            }
+        }
     }
     pub struct TexelBufferViewDescriptor {
         pub(crate) extensions: Vec<TexelBufferViewDescriptorExtension>,
@@ -14539,20 +17409,15 @@ mod structs {
         pub offset: Option<u64>,
         pub size: Option<u64>,
     }
-    impl Default for TexelBufferViewDescriptor {
-        fn default() -> Self {
+    impl TexelBufferViewDescriptor {
+        pub fn new(format: TextureFormat) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                format: None,
+                format: Some(format),
                 offset: Some(0),
                 size: Some(WHOLE_SIZE),
             }
-        }
-    }
-    impl TexelBufferViewDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -14562,6 +17427,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field TexelBufferViewDescriptor.format is missing",
+            );
             let mut raw: ffi::WGPUTexelBufferViewDescriptor = unsafe {
                 std::mem::zeroed()
             };
@@ -14599,7 +17468,28 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUTexelBufferViewDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    TexelBufferViewDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                format: Some(value.format.into()),
+                offset: Some(value.offset),
+                size: Some(value.size),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTexelBufferViewDescriptor,
+        ) -> Self {
+            Self {
+                extensions: unsafe {
+                    TexelBufferViewDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -14615,19 +17505,21 @@ mod structs {
         pub layout: Option<TexelCopyBufferLayout>,
         pub buffer: Option<Buffer>,
     }
-    impl Default for TexelCopyBufferInfo {
-        fn default() -> Self {
-            Self { layout: None, buffer: None }
-        }
-    }
     impl TexelCopyBufferInfo {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(buffer: Buffer) -> Self {
+            Self {
+                layout: None,
+                buffer: Some(buffer),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUTexelCopyBufferInfo, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.buffer.is_some(),
+                "required field TexelCopyBufferInfo.buffer is missing",
+            );
             let mut raw: ffi::WGPUTexelCopyBufferInfo = unsafe { std::mem::zeroed() };
             if let Some(value) = &self.layout {
                 let (raw_value, storage_value) = value.to_ffi();
@@ -14645,6 +17537,15 @@ mod structs {
             Self {
                 layout: Some(TexelCopyBufferLayout::from_ffi(value.layout)),
                 buffer: Some(unsafe { Buffer::from_raw(value.buffer) }),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTexelCopyBufferInfo) -> Self {
+            Self {
+                layout: Some(TexelCopyBufferLayout::from_ffi_borrowed(value.layout)),
+                buffer: {
+                    unsafe { ffi::wgpuBufferAddRef(value.buffer) };
+                    Some(unsafe { Buffer::from_raw(value.buffer) })
+                },
             }
         }
     }
@@ -14689,6 +17590,13 @@ mod structs {
                 rows_per_image: Some(value.rowsPerImage),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTexelCopyBufferLayout) -> Self {
+            Self {
+                offset: Some(value.offset),
+                bytes_per_row: Some(value.bytesPerRow),
+                rows_per_image: Some(value.rowsPerImage),
+            }
+        }
     }
     pub struct TexelCopyTextureInfo {
         pub texture: Option<Texture>,
@@ -14696,24 +17604,23 @@ mod structs {
         pub origin: Option<Origin3D>,
         pub aspect: Option<TextureAspect>,
     }
-    impl Default for TexelCopyTextureInfo {
-        fn default() -> Self {
+    impl TexelCopyTextureInfo {
+        pub fn new(texture: Texture) -> Self {
             Self {
-                texture: None,
+                texture: Some(texture),
                 mip_level: Some(0),
                 origin: None,
                 aspect: Some(TextureAspect::All),
             }
         }
-    }
-    impl TexelCopyTextureInfo {
-        pub fn new() -> Self {
-            Self::default()
-        }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUTexelCopyTextureInfo, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.texture.is_some(),
+                "required field TexelCopyTextureInfo.texture is missing",
+            );
             let mut raw: ffi::WGPUTexelCopyTextureInfo = unsafe { std::mem::zeroed() };
             raw.texture = self
                 .texture
@@ -14740,6 +17647,17 @@ mod structs {
                 texture: Some(unsafe { Texture::from_raw(value.texture) }),
                 mip_level: Some(value.mipLevel),
                 origin: Some(Origin3D::from_ffi(value.origin)),
+                aspect: Some(value.aspect.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTexelCopyTextureInfo) -> Self {
+            Self {
+                texture: {
+                    unsafe { ffi::wgpuTextureAddRef(value.texture) };
+                    Some(unsafe { Texture::from_raw(value.texture) })
+                },
+                mip_level: Some(value.mipLevel),
+                origin: Some(Origin3D::from_ffi_borrowed(value.origin)),
                 aspect: Some(value.aspect.into()),
             }
         }
@@ -14796,7 +17714,19 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUTextureBindingLayout) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    TextureBindingLayoutExtension::from_chain(value.nextInChain)
+                },
+                sample_type: Some(value.sampleType.into()),
+                view_dimension: Some(value.viewDimension.into()),
+                multisampled: Some(value.multisampled != 0),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTextureBindingLayout) -> Self {
+            Self {
+                extensions: unsafe {
+                    TextureBindingLayoutExtension::from_chain_borrowed(value.nextInChain)
+                },
                 sample_type: Some(value.sampleType.into()),
                 view_dimension: Some(value.viewDimension.into()),
                 multisampled: Some(value.multisampled != 0),
@@ -14806,21 +17736,20 @@ mod structs {
     pub struct TextureBindingViewDimension {
         pub texture_binding_view_dimension: Option<TextureViewDimension>,
     }
-    impl Default for TextureBindingViewDimension {
-        fn default() -> Self {
-            Self {
-                texture_binding_view_dimension: None,
-            }
-        }
-    }
     impl TextureBindingViewDimension {
-        pub fn new() -> Self {
-            Self::default()
+        pub fn new(texture_binding_view_dimension: TextureViewDimension) -> Self {
+            Self {
+                texture_binding_view_dimension: Some(texture_binding_view_dimension),
+            }
         }
         pub(crate) fn to_ffi(
             &self,
         ) -> (ffi::WGPUTextureBindingViewDimension, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
+            assert!(
+                self.texture_binding_view_dimension.is_some(),
+                "required field TextureBindingViewDimension.texture_binding_view_dimension is missing",
+            );
             let mut raw: ffi::WGPUTextureBindingViewDimension = unsafe {
                 std::mem::zeroed()
             };
@@ -14832,6 +17761,15 @@ mod structs {
             (raw, storage)
         }
         pub(crate) fn from_ffi(value: ffi::WGPUTextureBindingViewDimension) -> Self {
+            Self {
+                texture_binding_view_dimension: Some(
+                    value.textureBindingViewDimension.into(),
+                ),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTextureBindingViewDimension,
+        ) -> Self {
             Self {
                 texture_binding_view_dimension: Some(
                     value.textureBindingViewDimension.into(),
@@ -14896,6 +17834,16 @@ mod structs {
                 a: Some(value.a.into()),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTextureComponentSwizzle,
+        ) -> Self {
+            Self {
+                r: Some(value.r.into()),
+                g: Some(value.g.into()),
+                b: Some(value.b.into()),
+                a: Some(value.a.into()),
+            }
+        }
     }
     pub struct TextureComponentSwizzleDescriptor {
         pub swizzle: Option<TextureComponentSwizzle>,
@@ -14930,6 +17878,13 @@ mod structs {
                 swizzle: Some(TextureComponentSwizzle::from_ffi(value.swizzle)),
             }
         }
+        pub(crate) fn from_ffi_borrowed(
+            value: ffi::WGPUTextureComponentSwizzleDescriptor,
+        ) -> Self {
+            Self {
+                swizzle: Some(TextureComponentSwizzle::from_ffi_borrowed(value.swizzle)),
+            }
+        }
     }
     pub struct TextureDescriptor {
         pub(crate) extensions: Vec<TextureDescriptorExtension>,
@@ -14942,24 +17897,19 @@ mod structs {
         pub sample_count: Option<u32>,
         pub view_formats: Option<Vec<TextureFormat>>,
     }
-    impl Default for TextureDescriptor {
-        fn default() -> Self {
+    impl TextureDescriptor {
+        pub fn new(usage: TextureUsage, size: Extent3D, format: TextureFormat) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                usage: None,
+                usage: Some(usage),
                 dimension: Some(TextureDimension::D2),
-                size: None,
-                format: None,
+                size: Some(size),
+                format: Some(format),
                 mip_level_count: Some(1),
                 sample_count: Some(1),
                 view_formats: None,
             }
-        }
-    }
-    impl TextureDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -14969,6 +17919,18 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.usage.is_some(),
+                "required field TextureDescriptor.usage is missing",
+            );
+            assert!(
+                self.size.is_some(),
+                "required field TextureDescriptor.size is missing",
+            );
+            assert!(
+                self.format.is_some(),
+                "required field TextureDescriptor.format is missing",
+            );
             let mut raw: ffi::WGPUTextureDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -15034,7 +17996,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUTextureDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    TextureDescriptorExtension::from_chain(value.nextInChain)
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -15043,6 +18007,39 @@ mod structs {
                 usage: Some(value.usage.into()),
                 dimension: Some(value.dimension.into()),
                 size: Some(Extent3D::from_ffi(value.size)),
+                format: Some(value.format.into()),
+                mip_level_count: Some(value.mipLevelCount),
+                sample_count: Some(value.sampleCount),
+                view_formats: if value.viewFormats.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.viewFormats,
+                                value.viewFormatCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| TextureFormat::from(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTextureDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    TextureDescriptorExtension::from_chain_borrowed(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                usage: Some(value.usage.into()),
+                dimension: Some(value.dimension.into()),
+                size: Some(Extent3D::from_ffi_borrowed(value.size)),
                 format: Some(value.format.into()),
                 mip_level_count: Some(value.mipLevelCount),
                 sample_count: Some(value.sampleCount),
@@ -15076,13 +18073,13 @@ mod structs {
         pub aspect: Option<TextureAspect>,
         pub usage: Option<TextureUsage>,
     }
-    impl Default for TextureViewDescriptor {
-        fn default() -> Self {
+    impl TextureViewDescriptor {
+        pub fn new(format: TextureFormat, dimension: TextureViewDimension) -> Self {
             Self {
                 extensions: Vec::new(),
                 label: None,
-                format: None,
-                dimension: None,
+                format: Some(format),
+                dimension: Some(dimension),
                 base_mip_level: Some(0),
                 mip_level_count: Some(MIP_LEVEL_COUNT_UNDEFINED),
                 base_array_layer: Some(0),
@@ -15090,11 +18087,6 @@ mod structs {
                 aspect: Some(TextureAspect::All),
                 usage: Some(TextureUsage::NONE),
             }
-        }
-    }
-    impl TextureViewDescriptor {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -15104,6 +18096,14 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field TextureViewDescriptor.format is missing",
+            );
+            assert!(
+                self.dimension.is_some(),
+                "required field TextureViewDescriptor.dimension is missing",
+            );
             let mut raw: ffi::WGPUTextureViewDescriptor = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = &self.label {
@@ -15160,7 +18160,31 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUTextureViewDescriptor) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    TextureViewDescriptorExtension::from_chain(value.nextInChain)
+                },
+                label: if value.label.data.is_null() || value.label.length == 0 {
+                    None
+                } else {
+                    Some(string_view_to_string(value.label))
+                },
+                format: Some(value.format.into()),
+                dimension: Some(value.dimension.into()),
+                base_mip_level: Some(value.baseMipLevel),
+                mip_level_count: Some(value.mipLevelCount),
+                base_array_layer: Some(value.baseArrayLayer),
+                array_layer_count: Some(value.arrayLayerCount),
+                aspect: Some(value.aspect.into()),
+                usage: Some(value.usage.into()),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUTextureViewDescriptor) -> Self {
+            Self {
+                extensions: unsafe {
+                    TextureViewDescriptorExtension::from_chain_borrowed(
+                        value.nextInChain,
+                    )
+                },
                 label: if value.label.data.is_null() || value.label.length == 0 {
                     None
                 } else {
@@ -15183,19 +18207,14 @@ mod structs {
         pub offset: Option<u64>,
         pub shader_location: Option<u32>,
     }
-    impl Default for VertexAttribute {
-        fn default() -> Self {
+    impl VertexAttribute {
+        pub fn new(format: VertexFormat, offset: u64, shader_location: u32) -> Self {
             Self {
                 extensions: Vec::new(),
-                format: None,
-                offset: None,
-                shader_location: None,
+                format: Some(format),
+                offset: Some(offset),
+                shader_location: Some(shader_location),
             }
-        }
-    }
-    impl VertexAttribute {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUVertexAttribute, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -15203,6 +18222,18 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.format.is_some(),
+                "required field VertexAttribute.format is missing",
+            );
+            assert!(
+                self.offset.is_some(),
+                "required field VertexAttribute.offset is missing",
+            );
+            assert!(
+                self.shader_location.is_some(),
+                "required field VertexAttribute.shader_location is missing",
+            );
             let mut raw: ffi::WGPUVertexAttribute = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.format {
@@ -15224,7 +18255,19 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUVertexAttribute) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    VertexAttributeExtension::from_chain(value.nextInChain)
+                },
+                format: Some(value.format.into()),
+                offset: Some(value.offset),
+                shader_location: Some(value.shaderLocation),
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUVertexAttribute) -> Self {
+            Self {
+                extensions: unsafe {
+                    VertexAttributeExtension::from_chain_borrowed(value.nextInChain)
+                },
                 format: Some(value.format.into()),
                 offset: Some(value.offset),
                 shader_location: Some(value.shaderLocation),
@@ -15237,19 +18280,18 @@ mod structs {
         pub array_stride: Option<u64>,
         pub attributes: Option<Vec<VertexAttribute>>,
     }
-    impl Default for VertexBufferLayout {
-        fn default() -> Self {
+    impl VertexBufferLayout {
+        pub fn new(
+            step_mode: VertexStepMode,
+            array_stride: u64,
+            attributes: Vec<VertexAttribute>,
+        ) -> Self {
             Self {
                 extensions: Vec::new(),
-                step_mode: None,
-                array_stride: None,
-                attributes: None,
+                step_mode: Some(step_mode),
+                array_stride: Some(array_stride),
+                attributes: Some(attributes),
             }
-        }
-    }
-    impl VertexBufferLayout {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(
             &self,
@@ -15259,6 +18301,18 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.step_mode.is_some(),
+                "required field VertexBufferLayout.step_mode is missing",
+            );
+            assert!(
+                self.array_stride.is_some(),
+                "required field VertexBufferLayout.array_stride is missing",
+            );
+            assert!(
+                self.attributes.is_some(),
+                "required field VertexBufferLayout.attributes is missing",
+            );
             let mut raw: ffi::WGPUVertexBufferLayout = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             if let Some(value) = self.step_mode {
@@ -15295,7 +18349,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUVertexBufferLayout) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    VertexBufferLayoutExtension::from_chain(value.nextInChain)
+                },
                 step_mode: Some(value.stepMode.into()),
                 array_stride: Some(value.arrayStride),
                 attributes: if value.attributes.is_null() {
@@ -15315,6 +18371,30 @@ mod structs {
                 },
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUVertexBufferLayout) -> Self {
+            Self {
+                extensions: unsafe {
+                    VertexBufferLayoutExtension::from_chain_borrowed(value.nextInChain)
+                },
+                step_mode: Some(value.stepMode.into()),
+                array_stride: Some(value.arrayStride),
+                attributes: if value.attributes.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.attributes,
+                                value.attributeCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| VertexAttribute::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
     }
     pub struct VertexState {
         pub(crate) extensions: Vec<VertexStateExtension>,
@@ -15323,20 +18403,15 @@ mod structs {
         pub constants: Option<Vec<ConstantEntry>>,
         pub buffers: Option<Vec<VertexBufferLayout>>,
     }
-    impl Default for VertexState {
-        fn default() -> Self {
+    impl VertexState {
+        pub fn new(module: ShaderModule) -> Self {
             Self {
                 extensions: Vec::new(),
-                module: None,
+                module: Some(module),
                 entry_point: None,
                 constants: None,
                 buffers: None,
             }
-        }
-    }
-    impl VertexState {
-        pub fn new() -> Self {
-            Self::default()
         }
         pub(crate) fn to_ffi(&self) -> (ffi::WGPUVertexState, ChainedStructStorage) {
             let mut storage = ChainedStructStorage::new();
@@ -15344,6 +18419,10 @@ mod structs {
             for ext in self.extensions.iter().rev() {
                 next = ext.push_chain(&mut storage, next);
             }
+            assert!(
+                self.module.is_some(),
+                "required field VertexState.module is missing",
+            );
             let mut raw: ffi::WGPUVertexState = unsafe { std::mem::zeroed() };
             raw.nextInChain = next;
             raw.module = self
@@ -15406,7 +18485,9 @@ mod structs {
         }
         pub(crate) fn from_ffi(value: ffi::WGPUVertexState) -> Self {
             Self {
-                extensions: Vec::new(),
+                extensions: unsafe {
+                    VertexStateExtension::from_chain(value.nextInChain)
+                },
                 module: Some(unsafe { ShaderModule::from_raw(value.module) }),
                 entry_point: if value.entryPoint.data.is_null()
                     || value.entryPoint.length == 0
@@ -15442,6 +18523,54 @@ mod structs {
                         }
                             .iter()
                             .map(|raw| VertexBufferLayout::from_ffi(*raw))
+                            .collect(),
+                    )
+                },
+            }
+        }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUVertexState) -> Self {
+            Self {
+                extensions: unsafe {
+                    VertexStateExtension::from_chain_borrowed(value.nextInChain)
+                },
+                module: {
+                    unsafe { ffi::wgpuShaderModuleAddRef(value.module) };
+                    Some(unsafe { ShaderModule::from_raw(value.module) })
+                },
+                entry_point: if value.entryPoint.data.is_null()
+                    || value.entryPoint.length == 0
+                {
+                    None
+                } else {
+                    Some(string_view_to_string(value.entryPoint))
+                },
+                constants: if value.constants.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.constants,
+                                value.constantCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| ConstantEntry::from_ffi_borrowed(*raw))
+                            .collect(),
+                    )
+                },
+                buffers: if value.buffers.is_null() {
+                    None
+                } else {
+                    Some(
+                        unsafe {
+                            std::slice::from_raw_parts(
+                                value.buffers,
+                                value.bufferCount as usize,
+                            )
+                        }
+                            .iter()
+                            .map(|raw| VertexBufferLayout::from_ffi_borrowed(*raw))
                             .collect(),
                     )
                 },
@@ -15552,6 +18681,24 @@ mod structs {
                 external_format: Some(value.externalFormat),
             }
         }
+        pub(crate) fn from_ffi_borrowed(value: ffi::WGPUYCbCrVkDescriptor) -> Self {
+            Self {
+                vk_format: Some(value.vkFormat),
+                vk_y_cb_cr_model: Some(value.vkYCbCrModel),
+                vk_y_cb_cr_range: Some(value.vkYCbCrRange),
+                vk_component_swizzle_red: Some(value.vkComponentSwizzleRed),
+                vk_component_swizzle_green: Some(value.vkComponentSwizzleGreen),
+                vk_component_swizzle_blue: Some(value.vkComponentSwizzleBlue),
+                vk_component_swizzle_alpha: Some(value.vkComponentSwizzleAlpha),
+                vk_x_chroma_offset: Some(value.vkXChromaOffset),
+                vk_y_chroma_offset: Some(value.vkYChromaOffset),
+                vk_chroma_filter: Some(value.vkChromaFilter.into()),
+                force_explicit_reconstruction: Some(
+                    value.forceExplicitReconstruction != 0,
+                ),
+                external_format: Some(value.externalFormat),
+            }
+        }
     }
 }
 mod extensions {
@@ -15559,10 +18706,58 @@ mod extensions {
     use crate::ffi;
     use crate::generated::*;
     use std::any::Any;
+    use std::fmt;
+    pub(crate) struct CallbackUserdata {
+        ptr: *mut std::ffi::c_void,
+        drop_fn: unsafe fn(*mut std::ffi::c_void),
+    }
+    impl CallbackUserdata {
+        pub(crate) fn new<T: Send + 'static>(ptr: *mut std::ffi::c_void) -> Self {
+            unsafe fn drop_box<T>(ptr: *mut std::ffi::c_void) {
+                if !ptr.is_null() {
+                    unsafe {
+                        drop(Box::from_raw(ptr.cast::<Option<T>>()));
+                    }
+                }
+            }
+            Self {
+                ptr,
+                drop_fn: drop_box::<T>,
+            }
+        }
+        pub(crate) fn new_mutex<T: Send + 'static>(ptr: *mut std::ffi::c_void) -> Self {
+            unsafe fn drop_box<T>(ptr: *mut std::ffi::c_void) {
+                if !ptr.is_null() {
+                    unsafe {
+                        drop(Box::from_raw(ptr.cast::<std::sync::Mutex<Option<T>>>()));
+                    }
+                }
+            }
+            Self {
+                ptr,
+                drop_fn: drop_box::<T>,
+            }
+        }
+    }
+    impl Drop for CallbackUserdata {
+        fn drop(&mut self) {
+            unsafe { (self.drop_fn)(self.ptr) };
+        }
+    }
+    impl fmt::Debug for CallbackUserdata {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_struct("CallbackUserdata")
+                .field("ptr", &self.ptr)
+                .finish_non_exhaustive()
+        }
+    }
+    unsafe impl Send for CallbackUserdata {}
+    unsafe impl Sync for CallbackUserdata {}
     pub(crate) struct ChainedStructStorage {
         entries: Vec<Box<ffi::WGPUChainedStruct>>,
         buffers: Vec<Box<dyn Any>>,
         nested: Vec<ChainedStructStorage>,
+        callback_userdata: Vec<CallbackUserdata>,
     }
     impl ChainedStructStorage {
         pub(crate) fn new() -> Self {
@@ -15570,6 +18765,7 @@ mod extensions {
                 entries: Vec::new(),
                 buffers: Vec::new(),
                 nested: Vec::new(),
+                callback_userdata: Vec::new(),
             }
         }
         pub(crate) fn push(
@@ -15613,6 +18809,16 @@ mod extensions {
         }
         pub(crate) fn push_storage(&mut self, storage: ChainedStructStorage) {
             self.nested.push(storage);
+        }
+        pub(crate) fn push_callback_userdata(&mut self, userdata: CallbackUserdata) {
+            self.callback_userdata.push(userdata);
+        }
+        pub(crate) fn take_callback_userdatas(&mut self) -> Vec<CallbackUserdata> {
+            let mut userdatas = std::mem::take(&mut self.callback_userdata);
+            for nested in &mut self.nested {
+                userdatas.extend(nested.take_callback_userdatas());
+            }
+            userdatas
         }
     }
     #[allow(dead_code)]
@@ -15736,6 +18942,177 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::AdapterPropertiesD3D => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesD3D(
+                                    AdapterPropertiesD3D::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesD3D>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesWGPU => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesWGPU(
+                                    AdapterPropertiesWGPU::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesWGPU>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesExplicitComputeSubgroupSizeConfigs(
+                                    AdapterPropertiesExplicitComputeSubgroupSizeConfigs::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUAdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesMemoryHeaps => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesMemoryHeaps(
+                                    AdapterPropertiesMemoryHeaps::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesMemoryHeaps>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesSubgroupMatrixConfigs => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesSubgroupMatrixConfigs(
+                                    AdapterPropertiesSubgroupMatrixConfigs::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesVk => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesVk(
+                                    AdapterPropertiesVk::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesVk>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnAdapterPropertiesPowerPreference => {
+                            Some(
+                                AdapterInfoExtension::DawnAdapterPropertiesPowerPreference(
+                                    DawnAdapterPropertiesPowerPreference::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnAdapterPropertiesPowerPreference>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::AdapterPropertiesD3D => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesD3D(
+                                    AdapterPropertiesD3D::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesD3D>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesWGPU => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesWGPU(
+                                    AdapterPropertiesWGPU::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesWGPU>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesExplicitComputeSubgroupSizeConfigs => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesExplicitComputeSubgroupSizeConfigs(
+                                    AdapterPropertiesExplicitComputeSubgroupSizeConfigs::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUAdapterPropertiesExplicitComputeSubgroupSizeConfigs,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesMemoryHeaps => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesMemoryHeaps(
+                                    AdapterPropertiesMemoryHeaps::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesMemoryHeaps>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesSubgroupMatrixConfigs => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesSubgroupMatrixConfigs(
+                                    AdapterPropertiesSubgroupMatrixConfigs::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUAdapterPropertiesSubgroupMatrixConfigs>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::AdapterPropertiesVk => {
+                            Some(
+                                AdapterInfoExtension::AdapterPropertiesVk(
+                                    AdapterPropertiesVk::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUAdapterPropertiesVk>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnAdapterPropertiesPowerPreference => {
+                            Some(
+                                AdapterInfoExtension::DawnAdapterPropertiesPowerPreference(
+                                    DawnAdapterPropertiesPowerPreference::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnAdapterPropertiesPowerPreference>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum BindGroupDescriptorExtension {}
@@ -15748,6 +19125,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -15790,6 +19177,77 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::ExternalTextureBindingEntry => {
+                            Some(
+                                BindGroupEntryExtension::ExternalTextureBindingEntry(
+                                    ExternalTextureBindingEntry::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUExternalTextureBindingEntry>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TexelBufferBindingEntry => {
+                            Some(
+                                BindGroupEntryExtension::TexelBufferBindingEntry(
+                                    TexelBufferBindingEntry::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUTexelBufferBindingEntry>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::ExternalTextureBindingEntry => {
+                            Some(
+                                BindGroupEntryExtension::ExternalTextureBindingEntry(
+                                    ExternalTextureBindingEntry::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUExternalTextureBindingEntry>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TexelBufferBindingEntry => {
+                            Some(
+                                BindGroupEntryExtension::TexelBufferBindingEntry(
+                                    TexelBufferBindingEntry::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUTexelBufferBindingEntry>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum BindGroupLayoutDescriptorExtension {}
@@ -15802,6 +19260,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -15860,6 +19328,95 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::ExternalTextureBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::ExternalTextureBindingLayout(
+                                    ExternalTextureBindingLayout::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUExternalTextureBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::StaticSamplerBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::StaticSamplerBindingLayout(
+                                    StaticSamplerBindingLayout::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUStaticSamplerBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TexelBufferBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::TexelBufferBindingLayout(
+                                    TexelBufferBindingLayout::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUTexelBufferBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::ExternalTextureBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::ExternalTextureBindingLayout(
+                                    ExternalTextureBindingLayout::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUExternalTextureBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::StaticSamplerBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::StaticSamplerBindingLayout(
+                                    StaticSamplerBindingLayout::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUStaticSamplerBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TexelBufferBindingLayout => {
+                            Some(
+                                BindGroupLayoutEntryExtension::TexelBufferBindingLayout(
+                                    TexelBufferBindingLayout::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUTexelBufferBindingLayout>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum BindingResourceExtension {}
@@ -15873,6 +19430,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum BufferBindingLayoutExtension {}
@@ -15885,6 +19452,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -15947,6 +19524,101 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::BufferHostMappedPointer => {
+                            Some(
+                                BufferDescriptorExtension::BufferHostMappedPointer(
+                                    BufferHostMappedPointer::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUBufferHostMappedPointer>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnBufferDescriptorErrorInfoFromWireClient => {
+                            Some(
+                                BufferDescriptorExtension::DawnBufferDescriptorErrorInfoFromWireClient(
+                                    DawnBufferDescriptorErrorInfoFromWireClient::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUDawnBufferDescriptorErrorInfoFromWireClient,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnFakeBufferOOMForTesting => {
+                            Some(
+                                BufferDescriptorExtension::DawnFakeBufferOOMForTesting(
+                                    DawnFakeBufferOOMForTesting::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnFakeBufferOOMForTesting>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::BufferHostMappedPointer => {
+                            Some(
+                                BufferDescriptorExtension::BufferHostMappedPointer(
+                                    BufferHostMappedPointer::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUBufferHostMappedPointer>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnBufferDescriptorErrorInfoFromWireClient => {
+                            Some(
+                                BufferDescriptorExtension::DawnBufferDescriptorErrorInfoFromWireClient(
+                                    DawnBufferDescriptorErrorInfoFromWireClient::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUDawnBufferDescriptorErrorInfoFromWireClient,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnFakeBufferOOMForTesting => {
+                            Some(
+                                BufferDescriptorExtension::DawnFakeBufferOOMForTesting(
+                                    DawnFakeBufferOOMForTesting::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnFakeBufferOOMForTesting>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum ColorTargetStateExtension {
@@ -15980,6 +19652,61 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::ColorTargetStateExpandResolveTextureDawn => {
+                            Some(
+                                ColorTargetStateExtension::ColorTargetStateExpandResolveTextureDawn(
+                                    ColorTargetStateExpandResolveTextureDawn::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUColorTargetStateExpandResolveTextureDawn>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::ColorTargetStateExpandResolveTextureDawn => {
+                            Some(
+                                ColorTargetStateExtension::ColorTargetStateExpandResolveTextureDawn(
+                                    ColorTargetStateExpandResolveTextureDawn::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUColorTargetStateExpandResolveTextureDawn>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum CommandBufferDescriptorExtension {}
@@ -15992,6 +19719,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16023,6 +19760,61 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnEncoderInternalUsageDescriptor => {
+                            Some(
+                                CommandEncoderDescriptorExtension::DawnEncoderInternalUsageDescriptor(
+                                    DawnEncoderInternalUsageDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnEncoderInternalUsageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnEncoderInternalUsageDescriptor => {
+                            Some(
+                                CommandEncoderDescriptorExtension::DawnEncoderInternalUsageDescriptor(
+                                    DawnEncoderInternalUsageDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnEncoderInternalUsageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum CompilationInfoExtension {}
@@ -16035,6 +19827,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16064,6 +19866,59 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnCompilationMessageUtf16 => {
+                            Some(
+                                CompilationMessageExtension::DawnCompilationMessageUtf16(
+                                    DawnCompilationMessageUtf16::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnCompilationMessageUtf16>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnCompilationMessageUtf16 => {
+                            Some(
+                                CompilationMessageExtension::DawnCompilationMessageUtf16(
+                                    DawnCompilationMessageUtf16::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnCompilationMessageUtf16>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum ComputePassDescriptorExtension {}
@@ -16076,6 +19931,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16090,6 +19955,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum ComputeStateExtension {}
@@ -16102,6 +19977,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16116,6 +20001,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum CopyTextureForBrowserOptionsExtension {}
@@ -16128,6 +20023,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16157,6 +20062,59 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnDrmFormatCapabilities => {
+                            Some(
+                                DawnFormatCapabilitiesExtension::DawnDrmFormatCapabilities(
+                                    DawnDrmFormatCapabilities::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnDrmFormatCapabilities>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnDrmFormatCapabilities => {
+                            Some(
+                                DawnFormatCapabilitiesExtension::DawnDrmFormatCapabilities(
+                                    DawnDrmFormatCapabilities::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnDrmFormatCapabilities>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum DepthStencilStateExtension {}
@@ -16169,6 +20127,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16257,6 +20225,133 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnCacheDeviceDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnCacheDeviceDescriptor(
+                                    DawnCacheDeviceDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnCacheDeviceDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnConsumeAdapterDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnConsumeAdapterDescriptor(
+                                    DawnConsumeAdapterDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnConsumeAdapterDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnDeviceAllocatorControl => {
+                            Some(
+                                DeviceDescriptorExtension::DawnDeviceAllocatorControl(
+                                    DawnDeviceAllocatorControl::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnDeviceAllocatorControl>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnFakeDeviceInitializeErrorForTesting => {
+                            Some(
+                                DeviceDescriptorExtension::DawnFakeDeviceInitializeErrorForTesting(
+                                    DawnFakeDeviceInitializeErrorForTesting::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnFakeDeviceInitializeErrorForTesting>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnCacheDeviceDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnCacheDeviceDescriptor(
+                                    DawnCacheDeviceDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnCacheDeviceDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnConsumeAdapterDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnConsumeAdapterDescriptor(
+                                    DawnConsumeAdapterDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnConsumeAdapterDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnDeviceAllocatorControl => {
+                            Some(
+                                DeviceDescriptorExtension::DawnDeviceAllocatorControl(
+                                    DawnDeviceAllocatorControl::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnDeviceAllocatorControl>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnFakeDeviceInitializeErrorForTesting => {
+                            Some(
+                                DeviceDescriptorExtension::DawnFakeDeviceInitializeErrorForTesting(
+                                    DawnFakeDeviceInitializeErrorForTesting::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnFakeDeviceInitializeErrorForTesting>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                DeviceDescriptorExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum ExternalTextureDescriptorExtension {}
@@ -16269,6 +20364,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16283,6 +20388,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum ImageCopyExternalTextureExtension {}
@@ -16295,6 +20410,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16351,6 +20476,95 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnWGSLBlocklist => {
+                            Some(
+                                InstanceDescriptorExtension::DawnWGSLBlocklist(
+                                    DawnWGSLBlocklist::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnWGSLBlocklist>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                InstanceDescriptorExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnWireWGSLControl => {
+                            Some(
+                                InstanceDescriptorExtension::DawnWireWGSLControl(
+                                    DawnWireWGSLControl::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnWireWGSLControl>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnWGSLBlocklist => {
+                            Some(
+                                InstanceDescriptorExtension::DawnWGSLBlocklist(
+                                    DawnWGSLBlocklist::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnWGSLBlocklist>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                InstanceDescriptorExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnWireWGSLControl => {
+                            Some(
+                                InstanceDescriptorExtension::DawnWireWGSLControl(
+                                    DawnWireWGSLControl::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnWireWGSLControl>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum InstanceLimitsExtension {}
@@ -16363,6 +20577,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16420,6 +20644,97 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::CompatibilityModeLimits => {
+                            Some(
+                                LimitsExtension::CompatibilityModeLimits(
+                                    CompatibilityModeLimits::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUCompatibilityModeLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnHostMappedPointerLimits => {
+                            Some(
+                                LimitsExtension::DawnHostMappedPointerLimits(
+                                    DawnHostMappedPointerLimits::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnHostMappedPointerLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTexelCopyBufferRowAlignmentLimits => {
+                            Some(
+                                LimitsExtension::DawnTexelCopyBufferRowAlignmentLimits(
+                                    DawnTexelCopyBufferRowAlignmentLimits::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnTexelCopyBufferRowAlignmentLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::CompatibilityModeLimits => {
+                            Some(
+                                LimitsExtension::CompatibilityModeLimits(
+                                    CompatibilityModeLimits::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUCompatibilityModeLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnHostMappedPointerLimits => {
+                            Some(
+                                LimitsExtension::DawnHostMappedPointerLimits(
+                                    DawnHostMappedPointerLimits::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnHostMappedPointerLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::DawnTexelCopyBufferRowAlignmentLimits => {
+                            Some(
+                                LimitsExtension::DawnTexelCopyBufferRowAlignmentLimits(
+                                    DawnTexelCopyBufferRowAlignmentLimits::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnTexelCopyBufferRowAlignmentLimits>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum MultisampleStateExtension {}
@@ -16433,6 +20748,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum PassTimestampWritesExtension {}
@@ -16445,6 +20770,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16493,6 +20828,77 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::PipelineLayoutPixelLocalStorage => {
+                            Some(
+                                PipelineLayoutDescriptorExtension::PipelineLayoutPixelLocalStorage(
+                                    PipelineLayoutPixelLocalStorage::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUPipelineLayoutPixelLocalStorage>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::PipelineLayoutResourceTable => {
+                            Some(
+                                PipelineLayoutDescriptorExtension::PipelineLayoutResourceTable(
+                                    PipelineLayoutResourceTable::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUPipelineLayoutResourceTable>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::PipelineLayoutPixelLocalStorage => {
+                            Some(
+                                PipelineLayoutDescriptorExtension::PipelineLayoutPixelLocalStorage(
+                                    PipelineLayoutPixelLocalStorage::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUPipelineLayoutPixelLocalStorage>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::PipelineLayoutResourceTable => {
+                            Some(
+                                PipelineLayoutDescriptorExtension::PipelineLayoutResourceTable(
+                                    PipelineLayoutResourceTable::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUPipelineLayoutResourceTable>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum PipelineLayoutStorageAttachmentExtension {}
@@ -16505,6 +20911,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16519,6 +20935,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum QuerySetDescriptorExtension {}
@@ -16531,6 +20957,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16545,6 +20981,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum RenderBundleDescriptorExtension {}
@@ -16557,6 +21003,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16571,6 +21027,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum RenderPassColorAttachmentExtension {}
@@ -16584,6 +21050,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum RenderPassDepthStencilAttachmentExtension {}
@@ -16596,6 +21072,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16685,6 +21171,131 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnRenderPassSampleCount => {
+                            Some(
+                                RenderPassDescriptorExtension::DawnRenderPassSampleCount(
+                                    DawnRenderPassSampleCount::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnRenderPassSampleCount>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassDescriptorResolveRect => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassDescriptorResolveRect(
+                                    RenderPassDescriptorResolveRect::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassDescriptorResolveRect>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassMaxDrawCount => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassMaxDrawCount(
+                                    RenderPassMaxDrawCount::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassMaxDrawCount>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassPixelLocalStorage => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassPixelLocalStorage(
+                                    RenderPassPixelLocalStorage::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassPixelLocalStorage>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassRenderAreaRect => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassRenderAreaRect(
+                                    RenderPassRenderAreaRect::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassRenderAreaRect>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnRenderPassSampleCount => {
+                            Some(
+                                RenderPassDescriptorExtension::DawnRenderPassSampleCount(
+                                    DawnRenderPassSampleCount::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnRenderPassSampleCount>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassDescriptorResolveRect => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassDescriptorResolveRect(
+                                    RenderPassDescriptorResolveRect::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassDescriptorResolveRect>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassMaxDrawCount => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassMaxDrawCount(
+                                    RenderPassMaxDrawCount::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassMaxDrawCount>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassPixelLocalStorage => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassPixelLocalStorage(
+                                    RenderPassPixelLocalStorage::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassPixelLocalStorage>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RenderPassRenderAreaRect => {
+                            Some(
+                                RenderPassDescriptorExtension::RenderPassRenderAreaRect(
+                                    RenderPassRenderAreaRect::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPURenderPassRenderAreaRect>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum RenderPassStorageAttachmentExtension {}
@@ -16698,6 +21309,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum RenderPipelineDescriptorExtension {}
@@ -16710,6 +21331,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16770,6 +21401,97 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                RequestAdapterOptionsExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RequestAdapterWebGPUBackendOptions => {
+                            Some(
+                                RequestAdapterOptionsExtension::RequestAdapterWebGPUBackendOptions(
+                                    RequestAdapterWebGPUBackendOptions::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPURequestAdapterWebGPUBackendOptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RequestAdapterWebXROptions => {
+                            Some(
+                                RequestAdapterOptionsExtension::RequestAdapterWebXROptions(
+                                    RequestAdapterWebXROptions::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPURequestAdapterWebXROptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnTogglesDescriptor => {
+                            Some(
+                                RequestAdapterOptionsExtension::DawnTogglesDescriptor(
+                                    DawnTogglesDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUDawnTogglesDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RequestAdapterWebGPUBackendOptions => {
+                            Some(
+                                RequestAdapterOptionsExtension::RequestAdapterWebGPUBackendOptions(
+                                    RequestAdapterWebGPUBackendOptions::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPURequestAdapterWebGPUBackendOptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::RequestAdapterWebXROptions => {
+                            Some(
+                                RequestAdapterOptionsExtension::RequestAdapterWebXROptions(
+                                    RequestAdapterWebXROptions::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPURequestAdapterWebXROptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum ResourceTableDescriptorExtension {}
@@ -16783,6 +21505,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum SamplerBindingLayoutExtension {}
@@ -16795,6 +21527,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16822,6 +21564,59 @@ mod extensions {
                     raw_ptr.cast::<ffi::WGPUChainedStruct>()
                 }
             }
+        }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::YCbCrVkDescriptor => {
+                            Some(
+                                SamplerDescriptorExtension::YCbCrVkDescriptor(
+                                    YCbCrVkDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUYCbCrVkDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::YCbCrVkDescriptor => {
+                            Some(
+                                SamplerDescriptorExtension::YCbCrVkDescriptor(
+                                    YCbCrVkDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUYCbCrVkDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
         }
     }
     #[allow(dead_code)]
@@ -16899,6 +21694,115 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnShaderModuleSPIRVOptionsDescriptor => {
+                            Some(
+                                ShaderModuleDescriptorExtension::DawnShaderModuleSPIRVOptionsDescriptor(
+                                    DawnShaderModuleSPIRVOptionsDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnShaderModuleSPIRVOptionsDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderModuleCompilationOptions => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderModuleCompilationOptions(
+                                    ShaderModuleCompilationOptions::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUShaderModuleCompilationOptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderSourceSPIRV => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderSourceSPIRV(
+                                    ShaderSourceSPIRV::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUShaderSourceSPIRV>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderSourceWGSL => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderSourceWGSL(
+                                    ShaderSourceWGSL::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUShaderSourceWGSL>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnShaderModuleSPIRVOptionsDescriptor => {
+                            Some(
+                                ShaderModuleDescriptorExtension::DawnShaderModuleSPIRVOptionsDescriptor(
+                                    DawnShaderModuleSPIRVOptionsDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnShaderModuleSPIRVOptionsDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderModuleCompilationOptions => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderModuleCompilationOptions(
+                                    ShaderModuleCompilationOptions::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUShaderModuleCompilationOptions>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderSourceSPIRV => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderSourceSPIRV(
+                                    ShaderSourceSPIRV::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUShaderSourceSPIRV>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::ShaderSourceWGSL => {
+                            Some(
+                                ShaderModuleDescriptorExtension::ShaderSourceWGSL(
+                                    ShaderSourceWGSL::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUShaderSourceWGSL>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedBufferMemoryBeginAccessDescriptorExtension {}
@@ -16911,6 +21815,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -16950,6 +21864,65 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor => {
+                            Some(
+                                SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                                    SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor => {
+                            Some(
+                                SharedBufferMemoryDescriptorExtension::SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor(
+                                    SharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedBufferMemoryD3D12SharedMemoryFileMappingHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedBufferMemoryEndAccessStateExtension {}
@@ -16963,6 +21936,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum SharedBufferMemoryPropertiesExtension {}
@@ -16975,6 +21958,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -17096,6 +22089,161 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedFenceDXGISharedHandleDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceDXGISharedHandleDescriptor(
+                                    SharedFenceDXGISharedHandleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceDXGISharedHandleDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceEGLSyncDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceEGLSyncDescriptor(
+                                    SharedFenceEGLSyncDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceEGLSyncDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceMTLSharedEventDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceMTLSharedEventDescriptor(
+                                    SharedFenceMTLSharedEventDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceMTLSharedEventDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceSyncFDDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceSyncFDDescriptor(
+                                    SharedFenceSyncFDDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceSyncFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreOpaqueFDDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceVkSemaphoreOpaqueFDDescriptor(
+                                    SharedFenceVkSemaphoreOpaqueFDDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreZirconHandleDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceVkSemaphoreZirconHandleDescriptor(
+                                    SharedFenceVkSemaphoreZirconHandleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedFenceVkSemaphoreZirconHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedFenceDXGISharedHandleDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceDXGISharedHandleDescriptor(
+                                    SharedFenceDXGISharedHandleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceDXGISharedHandleDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceEGLSyncDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceEGLSyncDescriptor(
+                                    SharedFenceEGLSyncDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceEGLSyncDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceMTLSharedEventDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceMTLSharedEventDescriptor(
+                                    SharedFenceMTLSharedEventDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceMTLSharedEventDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceSyncFDDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceSyncFDDescriptor(
+                                    SharedFenceSyncFDDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceSyncFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreOpaqueFDDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceVkSemaphoreOpaqueFDDescriptor(
+                                    SharedFenceVkSemaphoreOpaqueFDDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceVkSemaphoreOpaqueFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreZirconHandleDescriptor => {
+                            Some(
+                                SharedFenceDescriptorExtension::SharedFenceVkSemaphoreZirconHandleDescriptor(
+                                    SharedFenceVkSemaphoreZirconHandleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedFenceVkSemaphoreZirconHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedFenceExportInfoExtension {
@@ -17216,6 +22364,161 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedFenceDXGISharedHandleExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceDXGISharedHandleExportInfo(
+                                    SharedFenceDXGISharedHandleExportInfo::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceDXGISharedHandleExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceEGLSyncExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceEGLSyncExportInfo(
+                                    SharedFenceEGLSyncExportInfo::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceEGLSyncExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceMTLSharedEventExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceMTLSharedEventExportInfo(
+                                    SharedFenceMTLSharedEventExportInfo::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceMTLSharedEventExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceSyncFDExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceSyncFDExportInfo(
+                                    SharedFenceSyncFDExportInfo::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceSyncFDExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreOpaqueFDExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceVkSemaphoreOpaqueFDExportInfo(
+                                    SharedFenceVkSemaphoreOpaqueFDExportInfo::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceVkSemaphoreOpaqueFDExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreZirconHandleExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceVkSemaphoreZirconHandleExportInfo(
+                                    SharedFenceVkSemaphoreZirconHandleExportInfo::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedFenceVkSemaphoreZirconHandleExportInfo,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedFenceDXGISharedHandleExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceDXGISharedHandleExportInfo(
+                                    SharedFenceDXGISharedHandleExportInfo::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceDXGISharedHandleExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceEGLSyncExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceEGLSyncExportInfo(
+                                    SharedFenceEGLSyncExportInfo::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceEGLSyncExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceMTLSharedEventExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceMTLSharedEventExportInfo(
+                                    SharedFenceMTLSharedEventExportInfo::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceMTLSharedEventExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceSyncFDExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceSyncFDExportInfo(
+                                    SharedFenceSyncFDExportInfo::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSharedFenceSyncFDExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreOpaqueFDExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceVkSemaphoreOpaqueFDExportInfo(
+                                    SharedFenceVkSemaphoreOpaqueFDExportInfo::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedFenceVkSemaphoreOpaqueFDExportInfo>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedFenceVkSemaphoreZirconHandleExportInfo => {
+                            Some(
+                                SharedFenceExportInfoExtension::SharedFenceVkSemaphoreZirconHandleExportInfo(
+                                    SharedFenceVkSemaphoreZirconHandleExportInfo::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedFenceVkSemaphoreZirconHandleExportInfo,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedTextureMemoryBeginAccessDescriptorExtension {
@@ -17291,6 +22594,109 @@ mod extensions {
                     raw_ptr.cast::<ffi::WGPUChainedStruct>()
                 }
             }
+        }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedTextureMemoryD3DSwapchainBeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryD3DSwapchainBeginState(
+                                    SharedTextureMemoryD3DSwapchainBeginState::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryD3DSwapchainBeginState,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryD3D11BeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryD3D11BeginState(
+                                    SharedTextureMemoryD3D11BeginState::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryD3D11BeginState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkImageLayoutBeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryVkImageLayoutBeginState(
+                                    SharedTextureMemoryVkImageLayoutBeginState::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryVkImageLayoutBeginState,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedTextureMemoryD3DSwapchainBeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryD3DSwapchainBeginState(
+                                    SharedTextureMemoryD3DSwapchainBeginState::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryD3DSwapchainBeginState,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryD3D11BeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryD3D11BeginState(
+                                    SharedTextureMemoryD3D11BeginState::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryD3D11BeginState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkImageLayoutBeginState => {
+                            Some(
+                                SharedTextureMemoryBeginAccessDescriptorExtension::SharedTextureMemoryVkImageLayoutBeginState(
+                                    SharedTextureMemoryVkImageLayoutBeginState::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryVkImageLayoutBeginState,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
         }
     }
     #[allow(dead_code)]
@@ -17472,6 +22878,217 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedTextureMemoryDXGISharedHandleDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryDXGISharedHandleDescriptor(
+                                    SharedTextureMemoryDXGISharedHandleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryDXGISharedHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryEGLImageDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryEGLImageDescriptor(
+                                    SharedTextureMemoryEGLImageDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryEGLImageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryIOSurfaceDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryIOSurfaceDescriptor(
+                                    SharedTextureMemoryIOSurfaceDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryIOSurfaceDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryAHardwareBufferDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryAHardwareBufferDescriptor(
+                                    SharedTextureMemoryAHardwareBufferDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryDmaBufDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryDmaBufDescriptor(
+                                    SharedTextureMemoryDmaBufDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryDmaBufDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryOpaqueFDDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryOpaqueFDDescriptor(
+                                    SharedTextureMemoryOpaqueFDDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkDedicatedAllocationDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryVkDedicatedAllocationDescriptor(
+                                    SharedTextureMemoryVkDedicatedAllocationDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryVkDedicatedAllocationDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryZirconHandleDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryZirconHandleDescriptor(
+                                    SharedTextureMemoryZirconHandleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryZirconHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedTextureMemoryDXGISharedHandleDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryDXGISharedHandleDescriptor(
+                                    SharedTextureMemoryDXGISharedHandleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryDXGISharedHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryEGLImageDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryEGLImageDescriptor(
+                                    SharedTextureMemoryEGLImageDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryEGLImageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryIOSurfaceDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryIOSurfaceDescriptor(
+                                    SharedTextureMemoryIOSurfaceDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryIOSurfaceDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryAHardwareBufferDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryAHardwareBufferDescriptor(
+                                    SharedTextureMemoryAHardwareBufferDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryAHardwareBufferDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryDmaBufDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryDmaBufDescriptor(
+                                    SharedTextureMemoryDmaBufDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryDmaBufDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryOpaqueFDDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryOpaqueFDDescriptor(
+                                    SharedTextureMemoryOpaqueFDDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryOpaqueFDDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkDedicatedAllocationDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryVkDedicatedAllocationDescriptor(
+                                    SharedTextureMemoryVkDedicatedAllocationDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryVkDedicatedAllocationDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryZirconHandleDescriptor => {
+                            Some(
+                                SharedTextureMemoryDescriptorExtension::SharedTextureMemoryZirconHandleDescriptor(
+                                    SharedTextureMemoryZirconHandleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryZirconHandleDescriptor,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedTextureMemoryEndAccessStateExtension {
@@ -17527,6 +23144,81 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedTextureMemoryMetalEndAccessState => {
+                            Some(
+                                SharedTextureMemoryEndAccessStateExtension::SharedTextureMemoryMetalEndAccessState(
+                                    SharedTextureMemoryMetalEndAccessState::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryMetalEndAccessState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkImageLayoutEndState => {
+                            Some(
+                                SharedTextureMemoryEndAccessStateExtension::SharedTextureMemoryVkImageLayoutEndState(
+                                    SharedTextureMemoryVkImageLayoutEndState::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryVkImageLayoutEndState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedTextureMemoryMetalEndAccessState => {
+                            Some(
+                                SharedTextureMemoryEndAccessStateExtension::SharedTextureMemoryMetalEndAccessState(
+                                    SharedTextureMemoryMetalEndAccessState::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryMetalEndAccessState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SharedTextureMemoryVkImageLayoutEndState => {
+                            Some(
+                                SharedTextureMemoryEndAccessStateExtension::SharedTextureMemoryVkImageLayoutEndState(
+                                    SharedTextureMemoryVkImageLayoutEndState::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSharedTextureMemoryVkImageLayoutEndState>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SharedTextureMemoryPropertiesExtension {
@@ -17562,6 +23254,65 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SharedTextureMemoryAHardwareBufferProperties => {
+                            Some(
+                                SharedTextureMemoryPropertiesExtension::SharedTextureMemoryAHardwareBufferProperties(
+                                    SharedTextureMemoryAHardwareBufferProperties::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryAHardwareBufferProperties,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SharedTextureMemoryAHardwareBufferProperties => {
+                            Some(
+                                SharedTextureMemoryPropertiesExtension::SharedTextureMemoryAHardwareBufferProperties(
+                                    SharedTextureMemoryAHardwareBufferProperties::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSharedTextureMemoryAHardwareBufferProperties,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum StorageTextureBindingLayoutExtension {}
@@ -17574,6 +23325,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -17588,6 +23349,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum SurfaceConfigurationExtension {}
@@ -17601,12 +23372,19 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum SurfaceDescriptorExtension {
-        EmscriptenSurfaceSourceCanvasHTMLSelector(
-            EmscriptenSurfaceSourceCanvasHTMLSelector,
-        ),
         SurfaceColorManagement(SurfaceColorManagement),
         SurfaceDescriptorFromWindowsUWPSwapChainPanel(
             SurfaceDescriptorFromWindowsUWPSwapChainPanel,
@@ -17621,12 +23399,6 @@ mod extensions {
         SurfaceSourceWaylandSurface(SurfaceSourceWaylandSurface),
         SurfaceSourceWindowsHWND(SurfaceSourceWindowsHWND),
         SurfaceSourceXlibWindow(SurfaceSourceXlibWindow),
-    }
-    impl std::convert::From<EmscriptenSurfaceSourceCanvasHTMLSelector>
-    for SurfaceDescriptorExtension {
-        fn from(ext: EmscriptenSurfaceSourceCanvasHTMLSelector) -> Self {
-            SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(ext)
-        }
     }
     impl std::convert::From<SurfaceColorManagement> for SurfaceDescriptorExtension {
         fn from(ext: SurfaceColorManagement) -> Self {
@@ -17693,17 +23465,6 @@ mod extensions {
             next: *mut ffi::WGPUChainedStruct,
         ) -> *mut ffi::WGPUChainedStruct {
             match self {
-                SurfaceDescriptorExtension::EmscriptenSurfaceSourceCanvasHTMLSelector(
-                    value,
-                ) => {
-                    let (mut raw, storage_value) = value.to_ffi();
-                    raw.chain.sType = SType::EmscriptenSurfaceSourceCanvasHTMLSelector
-                        .into();
-                    raw.chain.next = next;
-                    storage.push_storage(storage_value);
-                    let raw_ptr = storage.push_value_mut(raw);
-                    raw_ptr.cast::<ffi::WGPUChainedStruct>()
-                }
                 SurfaceDescriptorExtension::SurfaceColorManagement(value) => {
                     let (mut raw, storage_value) = value.to_ffi();
                     raw.chain.sType = SType::SurfaceColorManagement.into();
@@ -17795,6 +23556,235 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::SurfaceColorManagement => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceColorManagement(
+                                    SurfaceColorManagement::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceColorManagement>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsUWPSwapChainPanel(
+                                    SurfaceDescriptorFromWindowsUWPSwapChainPanel::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSurfaceDescriptorFromWindowsUWPSwapChainPanel,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsWinUISwapChainPanel => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsWinUISwapChainPanel(
+                                    SurfaceDescriptorFromWindowsWinUISwapChainPanel::from_ffi(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSurfaceDescriptorFromWindowsWinUISwapChainPanel,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsCoreWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsCoreWindow(
+                                    SurfaceDescriptorFromWindowsCoreWindow::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSurfaceDescriptorFromWindowsCoreWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceXCBWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceXCBWindow(
+                                    SurfaceSourceXCBWindow::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceXCBWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceAndroidNativeWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceAndroidNativeWindow(
+                                    SurfaceSourceAndroidNativeWindow::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceAndroidNativeWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceMetalLayer => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceMetalLayer(
+                                    SurfaceSourceMetalLayer::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceMetalLayer>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceWaylandSurface => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceWaylandSurface(
+                                    SurfaceSourceWaylandSurface::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceWaylandSurface>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceWindowsHWND => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceWindowsHWND(
+                                    SurfaceSourceWindowsHWND::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceWindowsHWND>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceXlibWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceXlibWindow(
+                                    SurfaceSourceXlibWindow::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceXlibWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::SurfaceColorManagement => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceColorManagement(
+                                    SurfaceColorManagement::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceColorManagement>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsUWPSwapChainPanel => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsUWPSwapChainPanel(
+                                    SurfaceDescriptorFromWindowsUWPSwapChainPanel::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSurfaceDescriptorFromWindowsUWPSwapChainPanel,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsWinUISwapChainPanel => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsWinUISwapChainPanel(
+                                    SurfaceDescriptorFromWindowsWinUISwapChainPanel::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<
+                                                ffi::WGPUSurfaceDescriptorFromWindowsWinUISwapChainPanel,
+                                            >()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceDescriptorFromWindowsCoreWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceDescriptorFromWindowsCoreWindow(
+                                    SurfaceDescriptorFromWindowsCoreWindow::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUSurfaceDescriptorFromWindowsCoreWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceXCBWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceXCBWindow(
+                                    SurfaceSourceXCBWindow::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceXCBWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceAndroidNativeWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceAndroidNativeWindow(
+                                    SurfaceSourceAndroidNativeWindow::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceAndroidNativeWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceMetalLayer => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceMetalLayer(
+                                    SurfaceSourceMetalLayer::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceMetalLayer>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceWaylandSurface => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceWaylandSurface(
+                                    SurfaceSourceWaylandSurface::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceWaylandSurface>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceWindowsHWND => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceWindowsHWND(
+                                    SurfaceSourceWindowsHWND::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceWindowsHWND>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::SurfaceSourceXlibWindow => {
+                            Some(
+                                SurfaceDescriptorExtension::SurfaceSourceXlibWindow(
+                                    SurfaceSourceXlibWindow::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUSurfaceSourceXlibWindow>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum SurfaceTextureExtension {}
@@ -17807,6 +23797,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -17821,6 +23821,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum TextureBindingLayoutExtension {}
@@ -17833,6 +23843,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -17878,6 +23898,79 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::DawnTextureInternalUsageDescriptor => {
+                            Some(
+                                TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(
+                                    DawnTextureInternalUsageDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnTextureInternalUsageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TextureBindingViewDimension => {
+                            Some(
+                                TextureDescriptorExtension::TextureBindingViewDimension(
+                                    TextureBindingViewDimension::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUTextureBindingViewDimension>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::DawnTextureInternalUsageDescriptor => {
+                            Some(
+                                TextureDescriptorExtension::DawnTextureInternalUsageDescriptor(
+                                    DawnTextureInternalUsageDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUDawnTextureInternalUsageDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::TextureBindingViewDimension => {
+                            Some(
+                                TextureDescriptorExtension::TextureBindingViewDimension(
+                                    TextureBindingViewDimension::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUTextureBindingViewDimension>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum TextureViewDescriptorExtension {
@@ -17922,6 +24015,79 @@ mod extensions {
                 }
             }
         }
+        pub(crate) unsafe fn from_chain(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, true) }
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            unsafe { Self::from_chain_with(current, false) }
+        }
+        unsafe fn from_chain_with(
+            mut current: *mut ffi::WGPUChainedStruct,
+            take_ownership: bool,
+        ) -> Vec<Self> {
+            let mut extensions = Vec::new();
+            while !current.is_null() {
+                let chain = unsafe { &*current };
+                let next = chain.next;
+                let s_type = SType::from(chain.sType);
+                let extension = if take_ownership {
+                    match s_type {
+                        SType::TextureComponentSwizzleDescriptor => {
+                            Some(
+                                TextureViewDescriptorExtension::TextureComponentSwizzleDescriptor(
+                                    TextureComponentSwizzleDescriptor::from_ffi(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUTextureComponentSwizzleDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::YCbCrVkDescriptor => {
+                            Some(
+                                TextureViewDescriptorExtension::YCbCrVkDescriptor(
+                                    YCbCrVkDescriptor::from_ffi(unsafe {
+                                        *current.cast::<ffi::WGPUYCbCrVkDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                } else {
+                    match s_type {
+                        SType::TextureComponentSwizzleDescriptor => {
+                            Some(
+                                TextureViewDescriptorExtension::TextureComponentSwizzleDescriptor(
+                                    TextureComponentSwizzleDescriptor::from_ffi_borrowed(unsafe {
+                                        *current
+                                            .cast::<ffi::WGPUTextureComponentSwizzleDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        SType::YCbCrVkDescriptor => {
+                            Some(
+                                TextureViewDescriptorExtension::YCbCrVkDescriptor(
+                                    YCbCrVkDescriptor::from_ffi_borrowed(unsafe {
+                                        *current.cast::<ffi::WGPUYCbCrVkDescriptor>()
+                                    }),
+                                ),
+                            )
+                        }
+                        _ => None,
+                    }
+                };
+                if let Some(extension) = extension {
+                    extensions.push(extension);
+                }
+                current = next;
+            }
+            extensions
+        }
     }
     #[allow(dead_code)]
     pub enum VertexAttributeExtension {}
@@ -17934,6 +24100,16 @@ mod extensions {
             let _ = self;
             let _ = storage;
             next
+        }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
         }
     }
     #[allow(dead_code)]
@@ -17948,6 +24124,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
     #[allow(dead_code)]
     pub enum VertexStateExtension {}
@@ -17961,6 +24147,16 @@ mod extensions {
             let _ = storage;
             next
         }
+        pub(crate) unsafe fn from_chain(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
+        pub(crate) unsafe fn from_chain_borrowed(
+            _current: *mut ffi::WGPUChainedStruct,
+        ) -> Vec<Self> {
+            Vec::new()
+        }
     }
 }
 mod objects {
@@ -17972,11 +24168,21 @@ mod objects {
         raw: ffi::WGPUAdapter,
     }
     impl Adapter {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUAdapter) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUAdapter) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Adapter handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUAdapter {
+        pub fn as_raw(&self) -> crate::sys::WGPUAdapter {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUAdapter {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn get_instance(&self) -> Instance {
             let result = unsafe { ffi::wgpuAdapterGetInstance(self.raw) };
@@ -18011,6 +24217,7 @@ mod objects {
         pub fn request_device(
             &self,
             descriptor: Option<&DeviceDescriptor>,
+            callback_mode: CallbackMode,
             callback: impl FnMut(
                 RequestDeviceStatus,
                 Option<Device>,
@@ -18033,13 +24240,30 @@ mod objects {
             } else {
                 std::ptr::null()
             };
-            let callback_box: RequestDeviceCallback = Box::new(callback);
+            let mut device_callback_userdata = Some(
+                descriptor_storage.take_callback_userdatas(),
+            );
+            let mut callback = callback;
+            let callback_box: RequestDeviceCallback = Box::new(move |
+                status,
+                device,
+                message|
+            {
+                let device = device
+                    .map(|device| {
+                        device
+                            .with_callback_userdata(
+                                device_callback_userdata.take().unwrap_or_default(),
+                            )
+                    });
+                callback(status, device, message);
+            });
             let callback_box = Box::new(Some(callback_box));
             let callback_userdata = Box::into_raw(callback_box)
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPURequestDeviceCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_mode.into(),
                 callback: Some(request_device_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -18073,7 +24297,8 @@ mod objects {
             let result = unsafe {
                 ffi::wgpuAdapterCreateDevice(self.raw, descriptor_ptr)
             };
-            unsafe { Device::from_raw(result) }
+            let callback_userdata = descriptor_storage.take_callback_userdatas();
+            unsafe { Device::from_raw_with_callback_userdata(result, callback_userdata) }
         }
         pub fn get_format_capabilities(
             &self,
@@ -18108,16 +24333,28 @@ mod objects {
             Self { raw: self.raw }
         }
     }
+    unsafe impl Send for Adapter {}
+    unsafe impl Sync for Adapter {}
     #[derive(Debug)]
     pub struct BindGroup {
         raw: ffi::WGPUBindGroup,
     }
     impl BindGroup {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUBindGroup) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUBindGroup) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null BindGroup handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUBindGroup {
+        pub fn as_raw(&self) -> crate::sys::WGPUBindGroup {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUBindGroup {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -18149,11 +24386,21 @@ mod objects {
         raw: ffi::WGPUBindGroupLayout,
     }
     impl BindGroupLayout {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUBindGroupLayout) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUBindGroupLayout) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null BindGroupLayout handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUBindGroupLayout {
+        pub fn as_raw(&self) -> crate::sys::WGPUBindGroupLayout {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUBindGroupLayout {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -18185,17 +24432,28 @@ mod objects {
         raw: ffi::WGPUBuffer,
     }
     impl Buffer {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUBuffer) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUBuffer) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Buffer handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUBuffer {
+        pub fn as_raw(&self) -> crate::sys::WGPUBuffer {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUBuffer {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn map_async(
             &self,
             mode: MapMode,
             offset: usize,
             size: usize,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(MapAsyncStatus, String) + Send + 'static,
         ) -> Future {
             let mode_ffi: ffi::WGPUMapMode = mode.into();
@@ -18205,7 +24463,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUBufferMapCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(buffer_map_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -18221,7 +24479,9 @@ mod objects {
             };
             Future::from_ffi(result)
         }
-        pub fn get_mapped_range(
+        /// # Safety
+        /// All raw pointers must remain valid for the duration required by Dawn.
+        pub unsafe fn get_mapped_range(
             &self,
             offset: usize,
             size: usize,
@@ -18231,7 +24491,9 @@ mod objects {
             };
             result
         }
-        pub fn get_const_mapped_range(
+        /// # Safety
+        /// All raw pointers must remain valid for the duration required by Dawn.
+        pub unsafe fn get_const_mapped_range(
             &self,
             offset: usize,
             size: usize,
@@ -18241,23 +24503,15 @@ mod objects {
             };
             result
         }
-        pub fn write_mapped_range(
-            &self,
-            offset: usize,
-            data: &[std::ffi::c_void],
-        ) -> Status {
-            let data_ptr = data.as_ptr();
+        pub fn write_mapped_range(&self, offset: usize, data: &[u8]) -> Status {
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             let result = unsafe {
                 ffi::wgpuBufferWriteMappedRange(self.raw, offset, data_ptr, data.len())
             };
             result.into()
         }
-        pub fn read_mapped_range(
-            &self,
-            offset: usize,
-            mut data: &mut [std::ffi::c_void],
-        ) -> Status {
-            let data_ptr = data.as_mut_ptr();
+        pub fn read_mapped_range(&self, offset: usize, mut data: &mut [u8]) -> Status {
+            let data_ptr = data.as_mut_ptr().cast::<std::ffi::c_void>();
             let result = unsafe {
                 ffi::wgpuBufferReadMappedRange(self.raw, offset, data_ptr, data.len())
             };
@@ -18324,11 +24578,21 @@ mod objects {
         raw: ffi::WGPUCommandBuffer,
     }
     impl CommandBuffer {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandBuffer) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUCommandBuffer) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null CommandBuffer handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUCommandBuffer {
+        pub fn as_raw(&self) -> crate::sys::WGPUCommandBuffer {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUCommandBuffer {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -18360,11 +24624,21 @@ mod objects {
         raw: ffi::WGPUCommandEncoder,
     }
     impl CommandEncoder {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUCommandEncoder) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUCommandEncoder) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null CommandEncoder handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUCommandEncoder {
+        pub fn as_raw(&self) -> crate::sys::WGPUCommandEncoder {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUCommandEncoder {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn finish(
             &self,
@@ -18627,18 +24901,26 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for CommandEncoder {}
-    unsafe impl Sync for CommandEncoder {}
     #[derive(Debug)]
     pub struct ComputePassEncoder {
         raw: ffi::WGPUComputePassEncoder,
     }
     impl ComputePassEncoder {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePassEncoder) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUComputePassEncoder) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null ComputePassEncoder handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUComputePassEncoder {
+        pub fn as_raw(&self) -> crate::sys::WGPUComputePassEncoder {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUComputePassEncoder {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn insert_debug_marker(&self, marker_label: String) -> () {
             let marker_label_ffi = ffi::WGPUStringView {
@@ -18744,8 +25026,8 @@ mod objects {
             unsafe { ffi::wgpuComputePassEncoderSetLabel(self.raw, label_ffi) };
             ()
         }
-        pub fn set_immediates(&self, offset: u32, data: &[std::ffi::c_void]) -> () {
-            let data_ptr = data.as_ptr();
+        pub fn set_immediates(&self, offset: u32, data: &[u8]) -> () {
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             unsafe {
                 ffi::wgpuComputePassEncoderSetImmediates(
                     self.raw,
@@ -18779,18 +25061,26 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for ComputePassEncoder {}
-    unsafe impl Sync for ComputePassEncoder {}
     #[derive(Debug)]
     pub struct ComputePipeline {
         raw: ffi::WGPUComputePipeline,
     }
     impl ComputePipeline {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUComputePipeline) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUComputePipeline) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null ComputePipeline handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUComputePipeline {
+        pub fn as_raw(&self) -> crate::sys::WGPUComputePipeline {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUComputePipeline {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn get_bind_group_layout(&self, group_index: u32) -> BindGroupLayout {
             let result = unsafe {
@@ -18826,13 +25116,44 @@ mod objects {
     #[derive(Debug)]
     pub struct Device {
         raw: ffi::WGPUDevice,
+        callback_userdata: std::sync::Arc<Vec<CallbackUserdata>>,
     }
     impl Device {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUDevice) -> Self {
-            Self { raw }
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUDevice) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Device handle");
+            Self {
+                raw,
+                callback_userdata: std::sync::Arc::new(Vec::new()),
+            }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUDevice {
+        pub(crate) unsafe fn from_raw_with_callback_userdata(
+            raw: ffi::WGPUDevice,
+            callback_userdata: Vec<CallbackUserdata>,
+        ) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Device handle");
+            Self {
+                raw,
+                callback_userdata: std::sync::Arc::new(callback_userdata),
+            }
+        }
+        pub(crate) fn with_callback_userdata(
+            mut self,
+            callback_userdata: Vec<CallbackUserdata>,
+        ) -> Self {
+            self.callback_userdata = std::sync::Arc::new(callback_userdata);
+            self
+        }
+        pub fn as_raw(&self) -> crate::sys::WGPUDevice {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUDevice {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn create_bind_group(&self, descriptor: &BindGroupDescriptor) -> BindGroup {
             let (descriptor_ffi, _descriptor_storage) = descriptor.to_ffi();
@@ -18912,6 +25233,7 @@ mod objects {
         pub fn create_compute_pipeline_async(
             &self,
             descriptor: &ComputePipelineDescriptor,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(
                 CreatePipelineAsyncStatus,
                 Option<ComputePipeline>,
@@ -18926,7 +25248,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUCreateComputePipelineAsyncCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(create_compute_pipeline_async_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -18985,6 +25307,7 @@ mod objects {
         pub fn create_render_pipeline_async(
             &self,
             descriptor: &RenderPipelineDescriptor,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(
                 CreatePipelineAsyncStatus,
                 Option<RenderPipeline>,
@@ -18999,7 +25322,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUCreateRenderPipelineAsyncCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(create_render_pipeline_async_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -19152,7 +25475,9 @@ mod objects {
             unsafe { ffi::wgpuDeviceDestroy(self.raw) };
             ()
         }
-        pub fn get_a_hardware_buffer_properties(
+        /// # Safety
+        /// All raw pointers must remain valid for the duration required by Dawn.
+        pub unsafe fn get_a_hardware_buffer_properties(
             &self,
             handle: *mut std::ffi::c_void,
             properties: &mut AHardwareBufferProperties,
@@ -19255,6 +25580,7 @@ mod objects {
         }
         pub fn pop_error_scope(
             &self,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(PopErrorScopeStatus, ErrorType, String) + Send + 'static,
         ) -> Future {
             let callback_box: PopErrorScopeCallback = Box::new(callback);
@@ -19263,7 +25589,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUPopErrorScopeCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(pop_error_scope_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -19301,7 +25627,10 @@ mod objects {
     impl Clone for Device {
         fn clone(&self) -> Self {
             unsafe { ffi::wgpuDeviceAddRef(self.raw) };
-            Self { raw: self.raw }
+            Self {
+                raw: self.raw,
+                callback_userdata: self.callback_userdata.clone(),
+            }
         }
     }
     unsafe impl Send for Device {}
@@ -19311,11 +25640,21 @@ mod objects {
         raw: ffi::WGPUExternalTexture,
     }
     impl ExternalTexture {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUExternalTexture) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUExternalTexture) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null ExternalTexture handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUExternalTexture {
+        pub fn as_raw(&self) -> crate::sys::WGPUExternalTexture {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUExternalTexture {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -19359,11 +25698,21 @@ mod objects {
         raw: ffi::WGPUInstance,
     }
     impl Instance {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUInstance) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUInstance) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Instance handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUInstance {
+        pub fn as_raw(&self) -> crate::sys::WGPUInstance {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUInstance {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn new(descriptor: Option<&InstanceDescriptor>) -> Self {
             let mut descriptor_storage = ChainedStructStorage::new();
@@ -19422,11 +25771,17 @@ mod objects {
                     timeout_ns,
                 )
             };
+            if let Some(values) = futures.as_deref_mut() {
+                for (value, raw) in values.iter_mut().zip(futures_raw.into_iter()) {
+                    *value = FutureWaitInfo::from_ffi(raw);
+                }
+            }
             result.into()
         }
         pub fn request_adapter(
             &self,
             options: Option<&RequestAdapterOptions>,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(
                 RequestAdapterStatus,
                 Option<Adapter>,
@@ -19453,7 +25808,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPURequestAdapterCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(request_adapter_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -19498,16 +25853,28 @@ mod objects {
             Self { raw: self.raw }
         }
     }
+    unsafe impl Send for Instance {}
+    unsafe impl Sync for Instance {}
     #[derive(Debug)]
     pub struct PipelineLayout {
         raw: ffi::WGPUPipelineLayout,
     }
     impl PipelineLayout {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUPipelineLayout) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUPipelineLayout) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null PipelineLayout handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUPipelineLayout {
+        pub fn as_raw(&self) -> crate::sys::WGPUPipelineLayout {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUPipelineLayout {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -19539,11 +25906,21 @@ mod objects {
         raw: ffi::WGPUQuerySet,
     }
     impl QuerySet {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUQuerySet) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUQuerySet) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null QuerySet handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUQuerySet {
+        pub fn as_raw(&self) -> crate::sys::WGPUQuerySet {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUQuerySet {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -19587,11 +25964,21 @@ mod objects {
         raw: ffi::WGPUQueue,
     }
     impl Queue {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUQueue) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUQueue) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Queue handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUQueue {
+        pub fn as_raw(&self) -> crate::sys::WGPUQueue {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUQueue {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn submit(&self, commands: &[CommandBuffer]) -> () {
             let mut commands_raw: Vec<ffi::WGPUCommandBuffer> = commands
@@ -19604,6 +25991,7 @@ mod objects {
         }
         pub fn on_submitted_work_done(
             &self,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(QueueWorkDoneStatus, String) + Send + 'static,
         ) -> Future {
             let callback_box: QueueWorkDoneCallback = Box::new(callback);
@@ -19612,7 +26000,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUQueueWorkDoneCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(queue_work_done_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -19626,9 +26014,9 @@ mod objects {
             &self,
             buffer: Buffer,
             buffer_offset: u64,
-            data: &[std::ffi::c_void],
+            data: &[u8],
         ) -> () {
-            let data_ptr = data.as_ptr();
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             unsafe {
                 ffi::wgpuQueueWriteBuffer(
                     self.raw,
@@ -19643,13 +26031,13 @@ mod objects {
         pub fn write_texture(
             &self,
             destination: &TexelCopyTextureInfo,
-            data: &[std::ffi::c_void],
+            data: &[u8],
             data_layout: &TexelCopyBufferLayout,
             write_size: &Extent3D,
         ) -> () {
             let (destination_ffi, _destination_storage) = destination.to_ffi();
             let destination_ptr = std::ptr::addr_of!(destination_ffi);
-            let data_ptr = data.as_ptr();
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             let (data_layout_ffi, _data_layout_storage) = data_layout.to_ffi();
             let data_layout_ptr = std::ptr::addr_of!(data_layout_ffi);
             let (write_size_ffi, _write_size_storage) = write_size.to_ffi();
@@ -19748,11 +26136,21 @@ mod objects {
         raw: ffi::WGPURenderBundle,
     }
     impl RenderBundle {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundle) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPURenderBundle) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null RenderBundle handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPURenderBundle {
+        pub fn as_raw(&self) -> crate::sys::WGPURenderBundle {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPURenderBundle {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -19784,11 +26182,21 @@ mod objects {
         raw: ffi::WGPURenderBundleEncoder,
     }
     impl RenderBundleEncoder {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderBundleEncoder) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPURenderBundleEncoder) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null RenderBundleEncoder handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPURenderBundleEncoder {
+        pub fn as_raw(&self) -> crate::sys::WGPURenderBundleEncoder {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPURenderBundleEncoder {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_pipeline(&self, pipeline: RenderPipeline) -> () {
             unsafe {
@@ -19982,8 +26390,8 @@ mod objects {
             unsafe { ffi::wgpuRenderBundleEncoderSetLabel(self.raw, label_ffi) };
             ()
         }
-        pub fn set_immediates(&self, offset: u32, data: &[std::ffi::c_void]) -> () {
-            let data_ptr = data.as_ptr();
+        pub fn set_immediates(&self, offset: u32, data: &[u8]) -> () {
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             unsafe {
                 ffi::wgpuRenderBundleEncoderSetImmediates(
                     self.raw,
@@ -20017,18 +26425,26 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for RenderBundleEncoder {}
-    unsafe impl Sync for RenderBundleEncoder {}
     #[derive(Debug)]
     pub struct RenderPassEncoder {
         raw: ffi::WGPURenderPassEncoder,
     }
     impl RenderPassEncoder {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPassEncoder) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPURenderPassEncoder) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null RenderPassEncoder handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPURenderPassEncoder {
+        pub fn as_raw(&self) -> crate::sys::WGPURenderPassEncoder {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPURenderPassEncoder {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_pipeline(&self, pipeline: RenderPipeline) -> () {
             unsafe {
@@ -20328,8 +26744,8 @@ mod objects {
             unsafe { ffi::wgpuRenderPassEncoderSetLabel(self.raw, label_ffi) };
             ()
         }
-        pub fn set_immediates(&self, offset: u32, data: &[std::ffi::c_void]) -> () {
-            let data_ptr = data.as_ptr();
+        pub fn set_immediates(&self, offset: u32, data: &[u8]) -> () {
+            let data_ptr = data.as_ptr().cast::<std::ffi::c_void>();
             unsafe {
                 ffi::wgpuRenderPassEncoderSetImmediates(
                     self.raw,
@@ -20363,18 +26779,26 @@ mod objects {
             Self { raw: self.raw }
         }
     }
-    unsafe impl Send for RenderPassEncoder {}
-    unsafe impl Sync for RenderPassEncoder {}
     #[derive(Debug)]
     pub struct RenderPipeline {
         raw: ffi::WGPURenderPipeline,
     }
     impl RenderPipeline {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPURenderPipeline) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPURenderPipeline) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null RenderPipeline handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPURenderPipeline {
+        pub fn as_raw(&self) -> crate::sys::WGPURenderPipeline {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPURenderPipeline {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn get_bind_group_layout(&self, group_index: u32) -> BindGroupLayout {
             let result = unsafe {
@@ -20412,11 +26836,21 @@ mod objects {
         raw: ffi::WGPUResourceTable,
     }
     impl ResourceTable {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUResourceTable) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUResourceTable) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null ResourceTable handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUResourceTable {
+        pub fn as_raw(&self) -> crate::sys::WGPUResourceTable {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUResourceTable {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn get_size(&self) -> u32 {
             let result = unsafe { ffi::wgpuResourceTableGetSize(self.raw) };
@@ -20468,11 +26902,21 @@ mod objects {
         raw: ffi::WGPUSampler,
     }
     impl Sampler {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUSampler) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUSampler) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Sampler handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUSampler {
+        pub fn as_raw(&self) -> crate::sys::WGPUSampler {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUSampler {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -20504,14 +26948,25 @@ mod objects {
         raw: ffi::WGPUShaderModule,
     }
     impl ShaderModule {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUShaderModule) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUShaderModule) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null ShaderModule handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUShaderModule {
+        pub fn as_raw(&self) -> crate::sys::WGPUShaderModule {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUShaderModule {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn get_compilation_info(
             &self,
+            callback_info_mode: CallbackMode,
             callback: impl FnMut(
                 CompilationInfoRequestStatus,
                 &CompilationInfo,
@@ -20523,7 +26978,7 @@ mod objects {
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPUCompilationInfoCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
-                mode: ffi::WGPUCallbackMode_WGPUCallbackMode_AllowSpontaneous,
+                mode: callback_info_mode.into(),
                 callback: Some(compilation_info_callback_trampoline),
                 userdata1: callback_userdata,
                 userdata2: std::ptr::null_mut(),
@@ -20563,11 +27018,21 @@ mod objects {
         raw: ffi::WGPUSharedBufferMemory,
     }
     impl SharedBufferMemory {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedBufferMemory) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUSharedBufferMemory) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null SharedBufferMemory handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedBufferMemory {
+        pub fn as_raw(&self) -> crate::sys::WGPUSharedBufferMemory {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUSharedBufferMemory {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -20670,11 +27135,29 @@ mod objects {
         raw: ffi::WGPUSharedFence,
     }
     impl SharedFence {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedFence) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUSharedFence) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null SharedFence handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedFence {
+        pub fn as_raw(&self) -> crate::sys::WGPUSharedFence {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUSharedFence {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
+        }
+        pub fn set_label(&self, label: String) -> () {
+            let label_ffi = ffi::WGPUStringView {
+                data: label.as_ptr().cast(),
+                length: label.len(),
+            };
+            unsafe { ffi::wgpuSharedFenceSetLabel(self.raw, label_ffi) };
+            ()
         }
         pub fn export_info(&self, info: &mut SharedFenceExportInfo) -> () {
             let (mut info_ffi, _info_storage) = info.to_ffi();
@@ -20705,11 +27188,21 @@ mod objects {
         raw: ffi::WGPUSharedTextureMemory,
     }
     impl SharedTextureMemory {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUSharedTextureMemory) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUSharedTextureMemory) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null SharedTextureMemory handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUSharedTextureMemory {
+        pub fn as_raw(&self) -> crate::sys::WGPUSharedTextureMemory {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUSharedTextureMemory {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -20812,11 +27305,21 @@ mod objects {
         raw: ffi::WGPUSurface,
     }
     impl Surface {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUSurface) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUSurface) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Surface handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUSurface {
+        pub fn as_raw(&self) -> crate::sys::WGPUSurface {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUSurface {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn configure(&self, config: &SurfaceConfiguration) -> () {
             let (config_ffi, _config_storage) = config.to_ffi();
@@ -20887,11 +27390,21 @@ mod objects {
         raw: ffi::WGPUTexelBufferView,
     }
     impl TexelBufferView {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUTexelBufferView) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUTexelBufferView) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null TexelBufferView handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUTexelBufferView {
+        pub fn as_raw(&self) -> crate::sys::WGPUTexelBufferView {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUTexelBufferView {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -20923,11 +27436,21 @@ mod objects {
         raw: ffi::WGPUTexture,
     }
     impl Texture {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUTexture) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUTexture) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null Texture handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUTexture {
+        pub fn as_raw(&self) -> crate::sys::WGPUTexture {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUTexture {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn create_view(
             &self,
@@ -21036,6 +27559,7 @@ mod objects {
             unsafe { ffi::wgpuTextureUnpin(self.raw) };
             ()
         }
+        /// Sets texture's ownership information for memory dump, resets if given owner guid is 0.
         pub fn set_ownership_for_memory_dump(&self, owner_guid: u64) -> () {
             unsafe { ffi::wgpuTextureSetOwnershipForMemoryDump(self.raw, owner_guid) };
             ()
@@ -21062,11 +27586,21 @@ mod objects {
         raw: ffi::WGPUTextureView,
     }
     impl TextureView {
-        pub(crate) unsafe fn from_raw(raw: ffi::WGPUTextureView) -> Self {
+        /// Takes ownership of one strong reference returned by the Dawn C API.
+        ///
+        /// # Safety
+        /// `raw` must be non-null and represent an owned reference of the matching object type.
+        pub unsafe fn from_raw(raw: crate::sys::WGPUTextureView) -> Self {
+            assert!(!raw.is_null(), "Dawn returned a null TextureView handle");
             Self { raw }
         }
-        pub(crate) fn as_raw(&self) -> ffi::WGPUTextureView {
+        pub fn as_raw(&self) -> crate::sys::WGPUTextureView {
             self.raw
+        }
+        /// Transfers this wrapper's strong reference to the caller.
+        pub fn into_raw(self) -> crate::sys::WGPUTextureView {
+            let this = std::mem::ManuallyDrop::new(self);
+            this.raw
         }
         pub fn set_label(&self, label: String) -> () {
             let label_ffi = ffi::WGPUStringView {
@@ -21098,6 +27632,15 @@ mod callbacks {
     #![allow(dead_code, unused_imports)]
     use crate::ffi;
     use crate::generated::*;
+    fn invoke_callback_safely<R: Default>(callback: impl FnOnce() -> R) -> R {
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(callback)) {
+            Ok(value) => value,
+            Err(_) => {
+                eprintln!("panic in Dawn callback was contained at the FFI boundary");
+                R::default()
+            }
+        }
+    }
     pub type Callback = Option<unsafe extern "C" fn(*mut std::ffi::c_void) -> ()>;
     pub type DawnLoadCacheDataFunction = Option<
         unsafe extern "C" fn(
@@ -21118,7 +27661,9 @@ mod callbacks {
         ) -> (),
     >;
     pub type Proc = Option<unsafe extern "C" fn() -> ()>;
-    pub type BufferMapCallback = Box<dyn FnMut(MapAsyncStatus, String) + Send + 'static>;
+    pub type BufferMapCallback = Box<
+        dyn FnMut(MapAsyncStatus, String) -> () + Send + 'static,
+    >;
     pub(crate) unsafe extern "C" fn buffer_map_callback_trampoline(
         status: ffi::WGPUMapAsyncStatus,
         message: ffi::WGPUStringView,
@@ -21132,11 +27677,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<BufferMapCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, message);
+            invoke_callback_safely(|| callback(status, message));
         }
     }
     pub type CompilationInfoCallback = Box<
-        dyn FnMut(CompilationInfoRequestStatus, &CompilationInfo) + Send + 'static,
+        dyn FnMut(CompilationInfoRequestStatus, &CompilationInfo) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn compilation_info_callback_trampoline(
         status: ffi::WGPUCompilationInfoRequestStatus,
@@ -21146,16 +27691,17 @@ mod callbacks {
     ) {
         let _ = userdata2;
         let status = status.into();
-        let compilation_info = if compilation_info.is_null() {
-            CompilationInfo::new()
-        } else {
-            CompilationInfo::new()
-        };
+        if compilation_info.is_null() {
+            return Default::default();
+        }
+        let mut compilation_info = CompilationInfo::from_ffi_borrowed(unsafe {
+            *compilation_info
+        });
         let mut callback = unsafe {
             Box::from_raw(userdata1.cast::<Option<CompilationInfoCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, &compilation_info);
+            invoke_callback_safely(|| callback(status, &compilation_info));
         }
     }
     pub type CreateComputePipelineAsyncCallback = Box<
@@ -21163,7 +27709,7 @@ mod callbacks {
             CreatePipelineAsyncStatus,
             Option<ComputePipeline>,
             String,
-        ) + Send + 'static,
+        ) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn create_compute_pipeline_async_callback_trampoline(
         status: ffi::WGPUCreatePipelineAsyncStatus,
@@ -21184,7 +27730,7 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<CreateComputePipelineAsyncCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, pipeline, message);
+            invoke_callback_safely(|| callback(status, pipeline, message));
         }
     }
     pub type CreateRenderPipelineAsyncCallback = Box<
@@ -21192,7 +27738,7 @@ mod callbacks {
             CreatePipelineAsyncStatus,
             Option<RenderPipeline>,
             String,
-        ) + Send + 'static,
+        ) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn create_render_pipeline_async_callback_trampoline(
         status: ffi::WGPUCreatePipelineAsyncStatus,
@@ -21213,11 +27759,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<CreateRenderPipelineAsyncCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, pipeline, message);
+            invoke_callback_safely(|| callback(status, pipeline, message));
         }
     }
     pub type DeviceLostCallback = Box<
-        dyn FnMut(Vec<Device>, DeviceLostReason, String) + Send + 'static,
+        dyn FnMut(Option<&Device>, DeviceLostReason, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn device_lost_callback_trampoline(
         device: *const ffi::WGPUDevice,
@@ -21227,24 +27773,41 @@ mod callbacks {
         userdata2: *mut std::ffi::c_void,
     ) {
         let _ = userdata2;
-        let device = if device.is_null() {
-            Vec::new()
+        let device_owner = if device.is_null() {
+            None
         } else {
             unsafe { std::slice::from_raw_parts(device, 1) }
-                .iter()
-                .map(|raw| unsafe { Device::from_raw(*raw) })
-                .collect()
+                .first()
+                .copied()
+                .filter(|raw| !raw.is_null())
+                .map(|raw| unsafe { Device::from_raw(raw) })
         };
+        let device = device_owner.as_ref();
         let reason = reason.into();
         let message = string_view_to_string(message);
-        let mut callback = unsafe {
-            Box::from_raw(userdata1.cast::<Option<DeviceLostCallback>>())
+        let callback_slot = unsafe {
+            &*userdata1.cast::<std::sync::Mutex<Option<DeviceLostCallback>>>()
         };
-        if let Some(mut callback) = callback.take() {
-            callback(device, reason, message);
+        let mut callback = {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            slot.take()
+        };
+        if let Some(callback) = callback.as_mut() {
+            invoke_callback_safely(|| callback(device, reason, message));
+        }
+        let mut slot = callback_slot
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *slot = callback;
+        if let Some(value) = device_owner {
+            std::mem::forget(value);
         }
     }
-    pub type LoggingCallback = Box<dyn FnMut(LoggingType, String) + Send + 'static>;
+    pub type LoggingCallback = Box<
+        dyn FnMut(LoggingType, String) -> () + Send + 'static,
+    >;
     pub(crate) unsafe extern "C" fn logging_callback_trampoline(
         r#type: ffi::WGPULoggingType,
         message: ffi::WGPUStringView,
@@ -21258,11 +27821,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<LoggingCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(r#type, message);
+            invoke_callback_safely(|| callback(r#type, message));
         }
     }
     pub type PopErrorScopeCallback = Box<
-        dyn FnMut(PopErrorScopeStatus, ErrorType, String) + Send + 'static,
+        dyn FnMut(PopErrorScopeStatus, ErrorType, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn pop_error_scope_callback_trampoline(
         status: ffi::WGPUPopErrorScopeStatus,
@@ -21279,11 +27842,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<PopErrorScopeCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, r#type, message);
+            invoke_callback_safely(|| callback(status, r#type, message));
         }
     }
     pub type QueueWorkDoneCallback = Box<
-        dyn FnMut(QueueWorkDoneStatus, String) + Send + 'static,
+        dyn FnMut(QueueWorkDoneStatus, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn queue_work_done_callback_trampoline(
         status: ffi::WGPUQueueWorkDoneStatus,
@@ -21298,11 +27861,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<QueueWorkDoneCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, message);
+            invoke_callback_safely(|| callback(status, message));
         }
     }
     pub type RequestAdapterCallback = Box<
-        dyn FnMut(RequestAdapterStatus, Option<Adapter>, String) + Send + 'static,
+        dyn FnMut(RequestAdapterStatus, Option<Adapter>, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn request_adapter_callback_trampoline(
         status: ffi::WGPURequestAdapterStatus,
@@ -21323,11 +27886,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<RequestAdapterCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, adapter, message);
+            invoke_callback_safely(|| callback(status, adapter, message));
         }
     }
     pub type RequestDeviceCallback = Box<
-        dyn FnMut(RequestDeviceStatus, Option<Device>, String) + Send + 'static,
+        dyn FnMut(RequestDeviceStatus, Option<Device>, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn request_device_callback_trampoline(
         status: ffi::WGPURequestDeviceStatus,
@@ -21348,11 +27911,11 @@ mod callbacks {
             Box::from_raw(userdata1.cast::<Option<RequestDeviceCallback>>())
         };
         if let Some(mut callback) = callback.take() {
-            callback(status, device, message);
+            invoke_callback_safely(|| callback(status, device, message));
         }
     }
     pub type UncapturedErrorCallback = Box<
-        dyn FnMut(Vec<Device>, ErrorType, String) + Send + 'static,
+        dyn FnMut(Option<&Device>, ErrorType, String) -> () + Send + 'static,
     >;
     pub(crate) unsafe extern "C" fn uncaptured_error_callback_trampoline(
         device: *const ffi::WGPUDevice,
@@ -21362,21 +27925,36 @@ mod callbacks {
         userdata2: *mut std::ffi::c_void,
     ) {
         let _ = userdata2;
-        let device = if device.is_null() {
-            Vec::new()
+        let device_owner = if device.is_null() {
+            None
         } else {
             unsafe { std::slice::from_raw_parts(device, 1) }
-                .iter()
-                .map(|raw| unsafe { Device::from_raw(*raw) })
-                .collect()
+                .first()
+                .copied()
+                .filter(|raw| !raw.is_null())
+                .map(|raw| unsafe { Device::from_raw(raw) })
         };
+        let device = device_owner.as_ref();
         let r#type = r#type.into();
         let message = string_view_to_string(message);
-        let mut callback = unsafe {
-            Box::from_raw(userdata1.cast::<Option<UncapturedErrorCallback>>())
+        let callback_slot = unsafe {
+            &*userdata1.cast::<std::sync::Mutex<Option<UncapturedErrorCallback>>>()
         };
-        if let Some(mut callback) = callback.take() {
-            callback(device, r#type, message);
+        let mut callback = {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            slot.take()
+        };
+        if let Some(callback) = callback.as_mut() {
+            invoke_callback_safely(|| callback(device, r#type, message));
+        }
+        let mut slot = callback_slot
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *slot = callback;
+        if let Some(value) = device_owner {
+            std::mem::forget(value);
         }
     }
     pub struct BufferMapCallbackInfo {
@@ -21567,6 +28145,7 @@ mod functions {
     #![allow(dead_code, unused_imports)]
     use crate::generated::*;
     use crate::ffi;
+    /// TODO(crbug.com/dawn/2048): The return type should be nullable; null is returned in error cases.
     pub fn create_instance(descriptor: Option<&InstanceDescriptor>) -> Instance {
         let mut descriptor_storage = ChainedStructStorage::new();
         let mut descriptor_ffi: Option<ffi::WGPUInstanceDescriptor> = None;

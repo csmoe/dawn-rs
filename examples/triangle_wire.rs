@@ -115,22 +115,24 @@ fn run_client() -> Result<(), Box<dyn Error>> {
         .spawn()?;
     let mut child = ChildGuard::new(child);
 
-    let wire_client = WireClient::connect(
-        &sock_name,
-        WireClientOptions {
-            reserve_surface: false,
-            connect_attempts: 300,
-            connect_delay: Duration::from_millis(10),
-            max_allocation_size: 0,
-            transport: dawn_rs::wire::TransportOptions::default(),
-        },
-    )?;
+    let wire_client = unsafe {
+        WireClient::connect(
+            &sock_name,
+            WireClientOptions {
+                reserve_surface: false,
+                connect_attempts: 300,
+                connect_delay: Duration::from_millis(10),
+                max_allocation_size: 0,
+                transport: dawn_rs::wire::TransportOptions::default(),
+            },
+        )
+    }?;
     let wire_instance = wire_client.instance();
     let mut flush_wire = || wire_client.pump();
 
-    client_wire_gpu_call_demo(&wire_instance, &mut flush_wire)?;
+    client_wire_gpu_call_demo(wire_instance, &mut flush_wire)?;
     let (checksum, nonzero_pixels) =
-        render_triangle_rgba_with_instance(&wire_instance, width, height, &mut flush_wire)?;
+        render_triangle_rgba_with_instance(wire_instance, width, height, &mut flush_wire)?;
     println!(
         "triangle rendered via wire+ipc: {width}x{height}, checksum={checksum}, nonzero_pixels={nonzero_pixels}"
     );
@@ -151,7 +153,7 @@ fn run_client() -> Result<(), Box<dyn Error>> {
 
 fn client_wire_gpu_call_demo(
     instance: &Instance,
-    mut flush_wire: impl FnMut(),
+    mut flush_wire: impl FnMut() -> Result<(), dawn_rs::wire::WireError>,
 ) -> Result<(), Box<dyn Error>> {
     println!("wire demo: client starts GPU calls (server executes them)");
     let adapter = request_adapter_sync(instance, &mut flush_wire)?;
@@ -160,16 +162,18 @@ fn client_wire_gpu_call_demo(
 
     let payload: [u8; 16] = [7, 9, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61];
 
-    let mut src_desc = BufferDescriptor::new();
-    src_desc.size = Some(payload.len() as u64);
-    src_desc.usage = Some(BufferUsage::COPY_SRC | BufferUsage::COPY_DST);
+    let src_desc = BufferDescriptor::new(
+        BufferUsage::COPY_SRC | BufferUsage::COPY_DST,
+        payload.len() as u64,
+    );
     let src = device
         .create_buffer(&src_desc)
         .ok_or("failed to create source buffer for wire demo")?;
 
-    let mut dst_desc = BufferDescriptor::new();
-    dst_desc.size = Some(payload.len() as u64);
-    dst_desc.usage = Some(BufferUsage::COPY_DST | BufferUsage::MAP_READ);
+    let dst_desc = BufferDescriptor::new(
+        BufferUsage::COPY_DST | BufferUsage::MAP_READ,
+        payload.len() as u64,
+    );
     let dst = device
         .create_buffer(&dst_desc)
         .ok_or("failed to create destination buffer for wire demo")?;
@@ -179,16 +183,22 @@ fn client_wire_gpu_call_demo(
     encoder.copy_buffer_to_buffer(src, 0, dst.clone(), 0, payload.len() as u64);
     let commands = encoder.finish(None);
     queue.submit(&[commands]);
-    flush_wire();
+    flush_wire()?;
 
     let (tx, rx) = std::sync::mpsc::channel::<Result<(), String>>();
-    let _future = dst.map_async(MapMode::READ, 0, payload.len(), move |status, message| {
-        if status == MapAsyncStatus::Success {
-            let _ = tx.send(Ok(()));
-        } else {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-        }
-    });
+    let _future = dst.map_async(
+        MapMode::READ,
+        0,
+        payload.len(),
+        dawn_rs::CallbackMode::AllowProcessEvents,
+        move |status, message| {
+            if status == MapAsyncStatus::Success {
+                let _ = tx.send(Ok(()));
+            } else {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
+            }
+        },
+    );
 
     let started = Instant::now();
     loop {
@@ -196,7 +206,7 @@ fn client_wire_gpu_call_demo(
             Ok(Ok(())) => break,
             Ok(Err(message)) => return Err(format!("wire demo map_async failed: {message}").into()),
             Err(std::sync::mpsc::TryRecvError::Empty) => {
-                flush_wire();
+                flush_wire()?;
                 instance.process_events();
                 if started.elapsed() > Duration::from_secs(10) {
                     return Err("wire demo map_async timed out".into());
@@ -209,7 +219,7 @@ fn client_wire_gpu_call_demo(
         }
     }
 
-    let mapped_ptr = dst.get_const_mapped_range(0, payload.len()).cast::<u8>();
+    let mapped_ptr = unsafe { dst.get_const_mapped_range(0, payload.len()) }.cast::<u8>();
     if mapped_ptr.is_null() {
         return Err("wire demo mapped pointer is null".into());
     }
@@ -243,29 +253,33 @@ fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Er
 
 fn request_adapter_sync(
     instance: &Instance,
-    mut flush_wire: impl FnMut(),
+    mut flush_wire: impl FnMut() -> Result<(), dawn_rs::wire::WireError>,
 ) -> Result<dawn_rs::Adapter, String> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Adapter, String>>();
-    let _future = instance.request_adapter(None, move |status, adapter, message| {
-        if status != RequestAdapterStatus::Success {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-            return;
-        }
-        match adapter {
-            Some(adapter) => {
-                let _ = tx.send(Ok(adapter));
+    let _future = instance.request_adapter(
+        None,
+        dawn_rs::CallbackMode::AllowProcessEvents,
+        move |status, adapter, message| {
+            if status != RequestAdapterStatus::Success {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
+                return;
             }
-            None => {
-                let _ = tx.send(Err("request_adapter returned None".to_string()));
+            match adapter {
+                Some(adapter) => {
+                    let _ = tx.send(Ok(adapter));
+                }
+                None => {
+                    let _ = tx.send(Err("request_adapter returned None".to_string()));
+                }
             }
-        }
-    });
+        },
+    );
 
     loop {
         match rx.try_recv() {
             Ok(result) => return result,
             Err(std::sync::mpsc::TryRecvError::Empty) => {
-                flush_wire();
+                flush_wire().map_err(|error| error.to_string())?;
                 instance.process_events();
             }
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
@@ -278,29 +292,33 @@ fn request_adapter_sync(
 fn request_device_sync(
     instance: &Instance,
     adapter: &dawn_rs::Adapter,
-    mut flush_wire: impl FnMut(),
+    mut flush_wire: impl FnMut() -> Result<(), dawn_rs::wire::WireError>,
 ) -> Result<dawn_rs::Device, String> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Device, String>>();
-    let _future = adapter.request_device(None, move |status, device, message| {
-        if status != dawn_rs::RequestDeviceStatus::Success {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-            return;
-        }
-        match device {
-            Some(device) => {
-                let _ = tx.send(Ok(device));
+    let _future = adapter.request_device(
+        None,
+        dawn_rs::CallbackMode::AllowProcessEvents,
+        move |status, device, message| {
+            if status != dawn_rs::RequestDeviceStatus::Success {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
+                return;
             }
-            None => {
-                let _ = tx.send(Err("request_device returned None".to_string()));
+            match device {
+                Some(device) => {
+                    let _ = tx.send(Ok(device));
+                }
+                None => {
+                    let _ = tx.send(Err("request_device returned None".to_string()));
+                }
             }
-        }
-    });
+        },
+    );
 
     loop {
         match rx.try_recv() {
             Ok(result) => return result,
             Err(std::sync::mpsc::TryRecvError::Empty) => {
-                flush_wire();
+                flush_wire().map_err(|error| error.to_string())?;
                 instance.process_events();
             }
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
@@ -314,7 +332,7 @@ fn render_triangle_rgba_with_instance(
     instance: &Instance,
     width: u32,
     height: u32,
-    mut flush_wire: impl FnMut(),
+    mut flush_wire: impl FnMut() -> Result<(), dawn_rs::wire::WireError>,
 ) -> Result<(u64, u32), Box<dyn Error>> {
     let adapter = request_adapter_sync(instance, &mut flush_wire)?;
     let device = request_device_sync(instance, &adapter, &mut flush_wire)?;
@@ -326,25 +344,21 @@ fn render_triangle_rgba_with_instance(
     let shader = create_shader(&device);
     let pipeline = create_pipeline(&device, shader, TextureFormat::Rgba8Unorm);
 
-    let mut color_attachment = RenderPassColorAttachment::new();
-    color_attachment.view = Some(texture_view);
-    color_attachment.load_op = Some(LoadOp::Clear);
-    color_attachment.store_op = Some(StoreOp::Store);
-    color_attachment.clear_value = Some(Color {
+    let clear_value = Color {
         r: Some(0.0),
         g: Some(0.0),
         b: Some(0.0),
         a: Some(1.0),
-    });
-
-    let mut render_pass = RenderPassDescriptor::new();
-    render_pass.color_attachments = Some(vec![color_attachment]);
+    };
+    let mut color_attachment =
+        RenderPassColorAttachment::new(LoadOp::Clear, StoreOp::Store, clear_value);
+    color_attachment.view = Some(texture_view);
+    let render_pass = RenderPassDescriptor::new(vec![color_attachment]);
 
     let bytes_per_row = align_up(width * 4, 256);
     let readback_size = u64::from(bytes_per_row) * u64::from(height);
-    let mut readback_desc = BufferDescriptor::new();
-    readback_desc.size = Some(readback_size);
-    readback_desc.usage = Some(BufferUsage::COPY_DST | BufferUsage::MAP_READ);
+    let readback_desc =
+        BufferDescriptor::new(BufferUsage::COPY_DST | BufferUsage::MAP_READ, readback_size);
     let readback = device
         .create_buffer(&readback_desc)
         .ok_or("failed to create readback buffer")?;
@@ -355,19 +369,16 @@ fn render_triangle_rgba_with_instance(
     pass.draw(3, 1, 0, 0);
     pass.end();
 
-    let mut src = TexelCopyTextureInfo::new();
-    src.texture = Some(texture);
+    let src = TexelCopyTextureInfo::new(texture);
 
     let mut layout = TexelCopyBufferLayout::new();
     layout.bytes_per_row = Some(bytes_per_row);
     layout.rows_per_image = Some(height);
 
-    let mut dst = TexelCopyBufferInfo::new();
+    let mut dst = TexelCopyBufferInfo::new(readback.clone());
     dst.layout = Some(layout);
-    dst.buffer = Some(readback.clone());
 
-    let mut copy_size = Extent3D::new();
-    copy_size.width = Some(width);
+    let mut copy_size = Extent3D::new(width);
     copy_size.height = Some(height);
     copy_size.depth_or_array_layers = Some(1);
 
@@ -375,13 +386,14 @@ fn render_triangle_rgba_with_instance(
 
     let commands = encoder.finish(None);
     queue.submit(&[commands]);
-    flush_wire();
+    flush_wire()?;
 
     let (tx, rx) = std::sync::mpsc::channel::<Result<(), String>>();
     let _future = readback.map_async(
         MapMode::READ,
         0,
         readback_size as usize,
+        dawn_rs::CallbackMode::AllowProcessEvents,
         move |status, message| {
             if status == MapAsyncStatus::Success {
                 let _ = tx.send(Ok(()));
@@ -397,7 +409,7 @@ fn render_triangle_rgba_with_instance(
             Ok(Ok(())) => break,
             Ok(Err(message)) => return Err(format!("map_async failed: {message}").into()),
             Err(std::sync::mpsc::TryRecvError::Empty) => {
-                flush_wire();
+                flush_wire()?;
                 instance.process_events();
                 if started.elapsed() > Duration::from_secs(30) {
                     return Err("map_async timed out".into());
@@ -410,9 +422,8 @@ fn render_triangle_rgba_with_instance(
         }
     }
 
-    let data_ptr = readback
-        .get_const_mapped_range(0, readback_size as usize)
-        .cast::<u8>();
+    let data_ptr =
+        unsafe { readback.get_const_mapped_range(0, readback_size as usize) }.cast::<u8>();
     if data_ptr.is_null() {
         return Err("readback buffer returned null mapping".into());
     }
@@ -501,8 +512,7 @@ impl IpcTriangleWindowApp {
                 RawWindowHandle::AppKit(handle) => unsafe { Layer::from_ns_view(handle.ns_view) },
                 _ => panic!("expected AppKit window handle"),
             };
-            let mut metal_layer = dawn_rs::SurfaceSourceMetalLayer::new();
-            metal_layer.layer = Some(layer.as_ptr().as_ptr().cast());
+            let metal_layer = dawn_rs::SurfaceSourceMetalLayer::new(layer.as_ptr().as_ptr().cast());
             surface_desc = surface_desc.with_extension(metal_layer.into());
             self.metal_layer = Some(layer);
         }
@@ -513,11 +523,14 @@ impl IpcTriangleWindowApp {
                 RawWindowHandle::Win32(handle) => handle,
                 _ => panic!("expected Win32 window handle"),
             };
-            let mut win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new();
-            win32_layer.hwnd = Some((win.hwnd.get() as *mut std::ffi::c_void).cast());
-            win32_layer.hinstance = win
+            let hinstance = win
                 .hinstance
-                .map(|h| (h.get() as *mut std::ffi::c_void).cast());
+                .map(|h| (h.get() as *mut std::ffi::c_void).cast())
+                .unwrap_or(std::ptr::null_mut());
+            let win32_layer = dawn_rs::SurfaceSourceWindowsHWND::new(
+                hinstance,
+                (win.hwnd.get() as *mut std::ffi::c_void).cast(),
+            );
             surface_desc = surface_desc.with_extension(win32_layer.into());
         }
 
@@ -525,21 +538,28 @@ impl IpcTriangleWindowApp {
         {
             match (display_handle.as_raw(), window_handle.as_raw()) {
                 (RawDisplayHandle::Wayland(disp), RawWindowHandle::Wayland(win)) => {
-                    let mut wayland = dawn_rs::SurfaceSourceWaylandSurface::new();
-                    wayland.display = Some(disp.display.as_ptr().cast());
-                    wayland.surface = Some(win.surface.as_ptr().cast());
+                    let wayland = dawn_rs::SurfaceSourceWaylandSurface::new(
+                        disp.display.as_ptr().cast(),
+                        win.surface.as_ptr().cast(),
+                    );
                     surface_desc = surface_desc.with_extension(wayland.into());
                 }
                 (RawDisplayHandle::Xlib(disp), RawWindowHandle::Xlib(win)) => {
-                    let mut xlib = dawn_rs::SurfaceSourceXlibWindow::new();
-                    xlib.display = disp.display.map(|p| p.as_ptr().cast());
-                    xlib.window = Some(win.window);
+                    let xlib = dawn_rs::SurfaceSourceXlibWindow::new(
+                        disp.display
+                            .map(|p| p.as_ptr().cast())
+                            .unwrap_or(std::ptr::null_mut()),
+                        win.window,
+                    );
                     surface_desc = surface_desc.with_extension(xlib.into());
                 }
                 (RawDisplayHandle::Xcb(disp), RawWindowHandle::Xcb(win)) => {
-                    let mut xcb = dawn_rs::SurfaceSourceXCBWindow::new();
-                    xcb.connection = disp.connection.map(|p| p.as_ptr().cast());
-                    xcb.window = Some(win.window.get());
+                    let xcb = dawn_rs::SurfaceSourceXCBWindow::new(
+                        disp.connection
+                            .map(|p| p.as_ptr().cast())
+                            .unwrap_or(std::ptr::null_mut()),
+                        win.window.get(),
+                    );
                     surface_desc = surface_desc.with_extension(xcb.into());
                 }
                 _ => panic!("unsupported Linux handle pair"),
@@ -547,7 +567,7 @@ impl IpcTriangleWindowApp {
         }
 
         let surface = instance.create_surface(&surface_desc);
-        let adapter = request_adapter_sync(&instance, || {}).expect("request adapter");
+        let adapter = request_adapter_sync(&instance, || Ok(())).expect("request adapter");
         let device = adapter.create_device(None);
         let queue = device.get_queue();
 
@@ -588,12 +608,8 @@ impl IpcTriangleWindowApp {
             })
             .unwrap_or(dawn_rs::CompositeAlphaMode::Auto);
 
-        let mut config = dawn_rs::SurfaceConfiguration::new();
-        config.device = Some(device.clone());
-        config.format = Some(format);
-        config.usage = Some(TextureUsage::RENDER_ATTACHMENT);
-        config.width = Some(self.width);
-        config.height = Some(self.height);
+        let mut config =
+            dawn_rs::SurfaceConfiguration::new(device.clone(), format, self.width, self.height);
         config.present_mode = Some(present_mode);
         config.alpha_mode = Some(alpha_mode);
         surface.configure(&config);
@@ -644,20 +660,18 @@ impl IpcTriangleWindowApp {
         };
         let view = texture.create_view(None);
 
-        let mut color_attachment = RenderPassColorAttachment::new();
-        color_attachment.view = Some(view);
-        color_attachment.load_op = Some(LoadOp::Clear);
-        color_attachment.store_op = Some(StoreOp::Store);
         let phase = self.anim_start.elapsed().as_secs_f32();
         let pulse = (phase * 2.0).sin() * 0.5 + 0.5;
-        color_attachment.clear_value = Some(Color {
+        let clear_value = Color {
             r: Some(0.05 + 0.25 * pulse as f64),
             g: Some(0.06 + 0.20 * (1.0 - pulse as f64)),
             b: Some(0.10 + 0.15 * pulse as f64),
             a: Some(1.0),
-        });
-        let mut pass_desc = RenderPassDescriptor::new();
-        pass_desc.color_attachments = Some(vec![color_attachment]);
+        };
+        let mut color_attachment =
+            RenderPassColorAttachment::new(LoadOp::Clear, StoreOp::Store, clear_value);
+        color_attachment.view = Some(view);
+        let pass_desc = RenderPassDescriptor::new(vec![color_attachment]);
 
         let encoder = device.create_command_encoder(None);
         let pass = encoder.begin_render_pass(&pass_desc);
@@ -709,18 +723,16 @@ impl ApplicationHandler for IpcTriangleWindowApp {
 }
 
 fn create_render_target(device: &Device, width: u32, height: u32) -> dawn_rs::Texture {
-    let mut extent = Extent3D::new();
-    extent.width = Some(width);
+    let mut extent = Extent3D::new(width);
     extent.height = Some(height);
     extent.depth_or_array_layers = Some(1);
 
-    let mut desc = TextureDescriptor::new();
+    let mut desc = TextureDescriptor::new(
+        TextureUsage::RENDER_ATTACHMENT | TextureUsage::COPY_SRC,
+        extent,
+        TextureFormat::Rgba8Unorm,
+    );
     desc.dimension = Some(TextureDimension::D2);
-    desc.format = Some(TextureFormat::Rgba8Unorm);
-    desc.mip_level_count = Some(1);
-    desc.sample_count = Some(1);
-    desc.size = Some(extent);
-    desc.usage = Some(TextureUsage::RENDER_ATTACHMENT | TextureUsage::COPY_SRC);
     device.create_texture(&desc)
 }
 
@@ -740,23 +752,17 @@ fn create_pipeline(
     shader: dawn_rs::ShaderModule,
     format: TextureFormat,
 ) -> dawn_rs::RenderPipeline {
-    let mut vertex = VertexState::new();
-    vertex.module = Some(shader.clone());
+    let mut vertex = VertexState::new(shader.clone());
     vertex.entry_point = Some("vs_main".to_string());
 
-    let mut fragment = FragmentState::new();
-    fragment.module = Some(shader);
+    let color_target = dawn_rs::ColorTargetState::new(format);
+    let mut fragment = FragmentState::new(shader, vec![color_target]);
     fragment.entry_point = Some("fs_main".to_string());
 
-    let mut color_target = dawn_rs::ColorTargetState::new();
-    color_target.format = Some(format);
-    fragment.targets = Some(vec![color_target]);
-
-    let mut desc = RenderPipelineDescriptor::new();
-    desc.layout = Some(device.create_pipeline_layout(&PipelineLayoutDescriptor::new()));
-    desc.vertex = Some(vertex);
+    let primitive = PrimitiveState::new(dawn_rs::IndexFormat::Undefined);
+    let mut desc = RenderPipelineDescriptor::new(vertex, primitive);
+    desc.layout = Some(device.create_pipeline_layout(&PipelineLayoutDescriptor::new(vec![])));
     desc.fragment = Some(fragment);
-    desc.primitive = Some(PrimitiveState::new());
     desc.multisample = Some(MultisampleState::new());
 
     device.create_render_pipeline(&desc)

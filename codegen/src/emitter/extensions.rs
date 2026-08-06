@@ -16,11 +16,67 @@ pub(crate) fn emit_extensions(model: &ApiModel, c_prefix: &str) -> String {
 use crate::ffi;
 use crate::generated::*;
 use std::any::Any;
+use std::fmt;
+
+pub(crate) struct CallbackUserdata {{
+    ptr: *mut std::ffi::c_void,
+    drop_fn: unsafe fn(*mut std::ffi::c_void),
+}}
+
+impl CallbackUserdata {{
+    pub(crate) fn new<T: Send + 'static>(ptr: *mut std::ffi::c_void) -> Self {{
+        unsafe fn drop_box<T>(ptr: *mut std::ffi::c_void) {{
+            if !ptr.is_null() {{
+                unsafe {{ drop(Box::from_raw(ptr.cast::<Option<T>>())); }}
+            }}
+        }}
+
+        Self {{
+            ptr,
+            drop_fn: drop_box::<T>,
+        }}
+    }}
+
+    pub(crate) fn new_mutex<T: Send + 'static>(ptr: *mut std::ffi::c_void) -> Self {{
+        unsafe fn drop_box<T>(ptr: *mut std::ffi::c_void) {{
+            if !ptr.is_null() {{
+                unsafe {{
+                    drop(Box::from_raw(
+                        ptr.cast::<std::sync::Mutex<Option<T>>>(),
+                    ));
+                }}
+            }}
+        }}
+
+        Self {{
+            ptr,
+            drop_fn: drop_box::<T>,
+        }}
+    }}
+}}
+
+impl Drop for CallbackUserdata {{
+    fn drop(&mut self) {{
+        unsafe {{ (self.drop_fn)(self.ptr) }};
+    }}
+}}
+
+impl fmt::Debug for CallbackUserdata {{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {{
+        f.debug_struct("CallbackUserdata")
+            .field("ptr", &self.ptr)
+            .finish_non_exhaustive()
+    }}
+}}
+
+unsafe impl Send for CallbackUserdata {{}}
+unsafe impl Sync for CallbackUserdata {{}}
 
 pub(crate) struct ChainedStructStorage {{
     entries: Vec<Box<ffi::{prefix}ChainedStruct>>,
     buffers: Vec<Box<dyn Any>>,
     nested: Vec<ChainedStructStorage>,
+    callback_userdata: Vec<CallbackUserdata>,
 }}
 
 impl ChainedStructStorage {{
@@ -29,6 +85,7 @@ impl ChainedStructStorage {{
             entries: Vec::new(),
             buffers: Vec::new(),
             nested: Vec::new(),
+            callback_userdata: Vec::new(),
         }}
     }}
 
@@ -77,6 +134,18 @@ impl ChainedStructStorage {{
     pub(crate) fn push_storage(&mut self, storage: ChainedStructStorage) {{
         self.nested.push(storage);
     }}
+
+    pub(crate) fn push_callback_userdata(&mut self, userdata: CallbackUserdata) {{
+        self.callback_userdata.push(userdata);
+    }}
+
+    pub(crate) fn take_callback_userdatas(&mut self) -> Vec<CallbackUserdata> {{
+        let mut userdatas = std::mem::take(&mut self.callback_userdata);
+        for nested in &mut self.nested {{
+            userdatas.extend(nested.take_callback_userdatas());
+        }}
+        userdatas
+    }}
 }}
 
 "#,
@@ -122,6 +191,46 @@ impl ChainedStructStorage {{
 
         let has_variants = !variants.is_empty();
         let impl_block = if has_variants {
+            let from_chain_arms = variants
+                .iter()
+                .map(|s| {
+                    let ty = type_name(&s.name);
+                    let stype_const = stype_map.get(&s.name).cloned().unwrap_or_else(|| {
+                        format!(
+                            r#"{}::{}"#,
+                            type_name("s type"),
+                            enum_variant_name_camel(&s.name)
+                        )
+                    });
+                    format!(
+                        r#"                {stype_const} => Some({enum_name}::{ty}(
+                    {ty}::from_ffi(unsafe {{ *current.cast::<ffi::{prefix}{ty}>() }}),
+                )),"#,
+                        prefix = c_prefix,
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            let from_chain_borrowed_arms = variants
+                .iter()
+                .map(|s| {
+                    let ty = type_name(&s.name);
+                    let stype_const = stype_map.get(&s.name).cloned().unwrap_or_else(|| {
+                        format!(
+                            r#"{}::{}"#,
+                            type_name("s type"),
+                            enum_variant_name_camel(&s.name)
+                        )
+                    });
+                    format!(
+                        r#"                {stype_const} => Some({enum_name}::{ty}(
+                    {ty}::from_ffi_borrowed(unsafe {{ *current.cast::<ffi::{prefix}{ty}>() }}),
+                )),"#,
+                        prefix = c_prefix,
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
             format!(
                 r#"impl {enum_name} {{
     pub(crate) fn push_chain(
@@ -133,11 +242,53 @@ impl ChainedStructStorage {{
 {push_arms}
         }}
     }}
+
+    pub(crate) unsafe fn from_chain(
+        current: *mut ffi::{prefix}ChainedStruct,
+    ) -> Vec<Self> {{
+        unsafe {{ Self::from_chain_with(current, true) }}
+    }}
+
+    pub(crate) unsafe fn from_chain_borrowed(
+        current: *mut ffi::{prefix}ChainedStruct,
+    ) -> Vec<Self> {{
+        unsafe {{ Self::from_chain_with(current, false) }}
+    }}
+
+    unsafe fn from_chain_with(
+        mut current: *mut ffi::{prefix}ChainedStruct,
+        take_ownership: bool,
+    ) -> Vec<Self> {{
+        let mut extensions = Vec::new();
+        while !current.is_null() {{
+            let chain = unsafe {{ &*current }};
+            let next = chain.next;
+            let s_type = SType::from(chain.sType);
+            let extension = if take_ownership {{
+                match s_type {{
+{from_chain_arms}
+                    _ => None,
+                }}
+            }} else {{
+                match s_type {{
+{from_chain_borrowed_arms}
+                    _ => None,
+                }}
+            }};
+            if let Some(extension) = extension {{
+                extensions.push(extension);
+            }}
+            current = next;
+        }}
+        extensions
+    }}
 }}
 
 "#,
                 enum_name = enum_name,
                 prefix = c_prefix,
+                from_chain_arms = from_chain_arms,
+                from_chain_borrowed_arms = from_chain_borrowed_arms,
                 push_arms = {
                     let mut arms = Vec::new();
                     for s in variants.iter() {
@@ -178,6 +329,18 @@ impl ChainedStructStorage {{
         let _ = self;
         let _ = storage;
         next
+    }}
+
+    pub(crate) unsafe fn from_chain(
+        _current: *mut ffi::{prefix}ChainedStruct,
+    ) -> Vec<Self> {{
+        Vec::new()
+    }}
+
+    pub(crate) unsafe fn from_chain_borrowed(
+        _current: *mut ffi::{prefix}ChainedStruct,
+    ) -> Vec<Self> {{
+        Vec::new()
     }}
 }}
 

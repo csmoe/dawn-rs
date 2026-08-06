@@ -25,11 +25,10 @@ pub(crate) fn ffi_enum_value_name(name: &str) -> String {
             if part.is_empty() {
                 continue;
             }
-            let value = if part.chars().all(|c| c.is_ascii_digit()) {
-                part.to_string()
-            } else if part
-                .chars()
-                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+            let value = if part.chars().all(|c| c.is_ascii_digit())
+                || part
+                    .chars()
+                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
             {
                 part.to_string()
             } else {
@@ -49,6 +48,8 @@ pub(crate) fn ffi_enum_value_name(name: &str) -> String {
         out = out.replace(from, to);
     }
     let extra_fixes = [
+        ("Smpte_170m", "SMPTE_170M"),
+        ("SrgbLinear", "SRGBLinear"),
         ("Opengles", "OpenGLES"),
         ("Opengl", "OpenGL"),
         ("Gpu", "GPU"),
@@ -62,10 +63,10 @@ pub(crate) fn ffi_enum_value_name(name: &str) -> String {
 }
 pub(crate) fn bitmask_variant_name(name: &str) -> String {
     let raw = shouty_snake_case_name(name);
-    if let Some(first) = raw.chars().next() {
-        if first.is_ascii_digit() {
-            return normalize_digit_prefix(&raw);
-        }
+    if let Some(first) = raw.chars().next()
+        && first.is_ascii_digit()
+    {
+        return normalize_digit_prefix(&raw);
     }
     raw
 }
@@ -198,10 +199,10 @@ pub(crate) fn snake_case_name(name: &str) -> String {
 
 pub(crate) fn shouty_snake_case_name(name: &str) -> String {
     let raw = name.to_shouty_snake_case();
-    if let Some(first) = raw.chars().next() {
-        if first.is_ascii_digit() {
-            return normalize_digit_prefix(&raw);
-        }
+    if let Some(first) = raw.chars().next()
+        && first.is_ascii_digit()
+    {
+        return normalize_digit_prefix(&raw);
     }
     raw
 }

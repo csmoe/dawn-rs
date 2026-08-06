@@ -29,7 +29,10 @@ impl DawnApi {
 
         for (name, def) in &self.definitions {
             if Self::should_include_definition(def, enabled_tags) {
-                filtered_definitions.insert(name.clone(), (*def).clone());
+                filtered_definitions.insert(
+                    name.clone(),
+                    Self::filter_definition_members(def, enabled_tags),
+                );
             }
         }
 
@@ -39,6 +42,34 @@ impl DawnApi {
             metadata: self.metadata.clone(),
             definitions: filtered_definitions,
         }
+    }
+
+    fn filter_definition_members(def: &Definition, enabled_tags: &[String]) -> Definition {
+        match def {
+            Definition::Enum(def) => {
+                let mut def = def.clone();
+                def.values
+                    .retain(|value| Self::tags_match(&value.tags, enabled_tags));
+                Definition::Enum(def)
+            }
+            Definition::Bitmask(def) => {
+                let mut def = def.clone();
+                def.values
+                    .retain(|value| Self::tags_match(&value.tags, enabled_tags));
+                Definition::Bitmask(def)
+            }
+            Definition::Object(def) => {
+                let mut def = def.clone();
+                def.methods
+                    .retain(|method| Self::tags_match(&method.tags, enabled_tags));
+                Definition::Object(def)
+            }
+            _ => def.clone(),
+        }
+    }
+
+    fn tags_match(tags: &[String], enabled_tags: &[String]) -> bool {
+        tags.is_empty() || tags.iter().any(|tag| enabled_tags.contains(tag))
     }
 
     /// Check if a definition should be included based on tags
@@ -58,13 +89,106 @@ impl DawnApi {
             Definition::CallbackInfo(d) => &d.tags,
         };
 
-        // If no tags specified, include by default
-        if def_tags.is_empty() {
-            return true;
+        Self::tags_match(def_tags, enabled_tags)
+    }
+
+    /// Validate relationships that the emitters rely on. Unknown schema constructs should fail
+    /// generation instead of being guessed into an ABI shape.
+    pub fn validate(&self) -> Result<(), String> {
+        let known_types: HashSet<&str> = self.definitions.keys().map(String::as_str).collect();
+
+        for (name, def) in &self.definitions {
+            match def {
+                Definition::Typedef(def) => {
+                    self.validate_type(name, &def.target_type, &known_types)?;
+                }
+                Definition::Structure(def) => {
+                    self.validate_members(name, &def.members, &known_types)?;
+                    for root in &def.chain_roots {
+                        if !known_types.contains(root.as_str()) {
+                            return Err(format!("{name}: unknown chain root type {root:?}"));
+                        }
+                    }
+                }
+                Definition::Object(def) => {
+                    for method in &def.methods {
+                        let context = format!("{name}.{}", method.name);
+                        self.validate_members(&context, &method.args, &known_types)?;
+                        if let Some(ret) = method.returns() {
+                            self.validate_type(&context, ret.get_type(), &known_types)?;
+                        }
+                    }
+                }
+                Definition::Function(def) => {
+                    self.validate_members(name, &def.args, &known_types)?;
+                    if let Some(ret) = def.returns() {
+                        self.validate_type(name, ret.get_type(), &known_types)?;
+                    }
+                }
+                Definition::Callback(def) => {
+                    self.validate_members(name, def.args(), &known_types)?;
+                    if let Some(ret) = def.returns() {
+                        self.validate_type(name, ret.get_type(), &known_types)?;
+                    }
+                }
+                Definition::CallbackFunction(def) => {
+                    self.validate_members(name, def.args(), &known_types)?;
+                    if let Some(ret) = def.returns() {
+                        self.validate_type(name, ret.get_type(), &known_types)?;
+                    }
+                }
+                Definition::CallbackInfo(def) => {
+                    self.validate_members(name, &def.members, &known_types)?;
+                }
+                Definition::FunctionPointer(def) => {
+                    self.validate_members(name, def.args(), &known_types)?;
+                    if let Some(ret) = def.returns() {
+                        self.validate_type(name, ret.get_type(), &known_types)?;
+                    }
+                }
+                Definition::Constant(def) => {
+                    self.validate_type(name, &def.const_type, &known_types)?;
+                }
+                Definition::Native(_) | Definition::Enum(_) | Definition::Bitmask(_) => {}
+            }
         }
 
-        // If any tag matches enabled tags, include
-        def_tags.iter().any(|tag| enabled_tags.contains(tag))
+        Ok(())
+    }
+
+    fn validate_members(
+        &self,
+        context: &str,
+        members: &[RecordMember],
+        known_types: &HashSet<&str>,
+    ) -> Result<(), String> {
+        let member_names: HashSet<&str> =
+            members.iter().map(|member| member.name.as_str()).collect();
+        for member in members {
+            self.validate_type(context, &member.member_type, known_types)?;
+            if let Some(LengthValue::String(length)) = &member.length
+                && !member_names.contains(length.as_str())
+            {
+                return Err(format!(
+                    "{context}.{}: unknown length field {length:?}",
+                    member.name
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_type(
+        &self,
+        context: &str,
+        ty: &str,
+        known_types: &HashSet<&str>,
+    ) -> Result<(), String> {
+        if known_types.contains(ty) {
+            Ok(())
+        } else {
+            Err(format!("{context}: unknown type {ty:?}"))
+        }
     }
 
     /// Get all definitions of a specific category
@@ -273,6 +397,9 @@ impl Eq for Extension<'_> {}
 /// Enum definition
 #[derive(Debug, Clone, Deserialize)]
 pub struct EnumDef {
+    #[serde(rename = "_comment")]
+    pub comment: Option<String>,
+
     #[serde(default)]
     pub tags: Vec<String>,
 
@@ -288,6 +415,9 @@ pub struct EnumDef {
 /// Bitmask definition - similar to enum but for bitflags
 #[derive(Debug, Clone, Deserialize)]
 pub struct BitmaskDef {
+    #[serde(rename = "_comment")]
+    pub comment: Option<String>,
+
     #[serde(default)]
     pub tags: Vec<String>,
 
@@ -345,6 +475,14 @@ pub struct StructureDef {
     pub comment: Option<String>,
 
     pub out: Option<bool>,
+}
+
+impl StructureDef {
+    pub fn is_output(&self) -> bool {
+        self.extensible.is_output()
+            || self.chained.as_deref() == Some("out")
+            || self.out == Some(true)
+    }
 }
 
 /// Extensible type for structures - can be boolean or directional string
@@ -500,6 +638,9 @@ impl FunctionPointerDef {
 /// Object definition (like WebGPU handles)
 #[derive(Debug, Clone, Deserialize)]
 pub struct ObjectDef {
+    #[serde(rename = "_comment")]
+    pub comment: Option<String>,
+
     #[serde(default)]
     pub tags: Vec<String>,
 
@@ -576,7 +717,20 @@ pub struct CallbackFunctionDef {
     #[serde(default)]
     pub tags: Vec<String>,
 
+    pub returns: Option<ReturnType>,
     pub args: Vec<RecordMember>,
+}
+
+impl CallbackFunctionDef {
+    /// Get the return type
+    pub fn returns(&self) -> Option<&ReturnType> {
+        self.returns.as_ref()
+    }
+
+    /// Get the arguments
+    pub fn args(&self) -> &[RecordMember] {
+        &self.args
+    }
 }
 
 /// Callback info definition
@@ -592,6 +746,9 @@ pub struct CallbackInfoDef {
 #[derive(Debug, Clone, Deserialize)]
 pub struct MethodDef {
     pub name: String,
+
+    #[serde(rename = "_comment")]
+    pub comment: Option<String>,
 
     #[serde(default)]
     pub tags: Vec<String>,
@@ -692,7 +849,10 @@ impl<'de> Deserialize<'de> for Annotation {
             "*" => Ok(Annotation::MutPtr),
             "const*" => Ok(Annotation::ConstPtr),
             "const*const*" => Ok(Annotation::ConstConstPtr),
-            _ => Ok(Annotation::Value),
+            "value" => Ok(Annotation::Value),
+            _ => Err(serde::de::Error::custom(format!(
+                "unsupported record annotation {annotation:?}"
+            ))),
         }
     }
 }

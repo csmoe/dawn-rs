@@ -32,8 +32,7 @@ pub fn generate_strings(model: &ApiModel) -> GeneratedFiles {
 }
 
 pub fn format_rust_source(source: &str) -> String {
-    match syn::parse_file(source) {
-        Ok(file) => prettyplease::unparse(&file),
-        Err(_) => source.to_string(),
-    }
+    let file = syn::parse_file(source)
+        .unwrap_or_else(|error| panic!("generated invalid Rust source: {error}\n\n{source}"));
+    prettyplease::unparse(&file)
 }

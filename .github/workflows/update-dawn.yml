@@ -9,71 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  update-platform:
-    name: Update (${{ matrix.name }})
-    runs-on: ${{ matrix.runs_on }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux-x86_64
-            runs_on: ubuntu-latest
-            target_file: linux_x86_64.rs
-          - name: windows-x86_64
-            runs_on: windows-latest
-            target_file: windows_x86_64.rs
-          - name: macos-x86_64
-            runs_on: macos-15-intel
-            target_file: macos_x86_64.rs
-          - name: macos-aarch64
-            runs_on: macos-14
-            target_file: macos_aarch64.rs
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      - name: Install Clang (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y clang
-
-      - name: Install LLVM (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install llvm -y
-          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Update generated code
-        run: python ./scripts/update_dawn_release.py --force
-
-      - name: Upload platform ffi
-        uses: actions/upload-artifact@v4
-        with:
-          name: ffi-${{ matrix.name }}
-          path: src/ffi/${{ matrix.target_file }}
-          if-no-files-found: error
-
-      - name: Upload platform generated
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-${{ matrix.name }}
-          path: src/generated/${{ matrix.target_file }}
-          if-no-files-found: error
-
   update-dawn:
-    name: Merge and Commit
-    needs: update-platform
+    name: Regenerate and Commit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,56 +29,19 @@ jobs:
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y clang
 
-      - name: Download Linux ffi
-        uses: actions/download-artifact@v4
-        with:
-          name: ffi-linux-x86_64
-          path: src/ffi
-
-      - name: Download Linux generated
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-linux-x86_64
-          path: src/generated
-
-      - name: Download Windows ffi
-        uses: actions/download-artifact@v4
-        with:
-          name: ffi-windows-x86_64
-          path: src/ffi
-
-      - name: Download Windows generated
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-windows-x86_64
-          path: src/generated
-
-      - name: Download macOS x86_64 ffi
-        uses: actions/download-artifact@v4
-        with:
-          name: ffi-macos-x86_64
-          path: src/ffi
-
-      - name: Download macOS x86_64 generated
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-macos-x86_64
-          path: src/generated
-
-      - name: Download macOS aarch64 ffi
-        uses: actions/download-artifact@v4
-        with:
-          name: ffi-macos-aarch64
-          path: src/ffi
-
-      - name: Download macOS aarch64 generated
-        uses: actions/download-artifact@v4
-        with:
-          name: generated-macos-aarch64
-          path: src/generated
-
-      - name: Regenerate wrappers and target modules
+      - name: Regenerate all supported targets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python ./scripts/update_dawn_release.py --force
+
+      - name: Test code generator
+        run: cargo test -p dawn-codegen
+
+      - name: Check generated bindings
+        run: cargo check -p dawn-rs --no-default-features
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
 
       - name: Commit changes
         run: |

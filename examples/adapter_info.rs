@@ -1,5 +1,6 @@
 use dawn_rs::{
-    AdapterInfo, FutureWaitInfo, Instance, InstanceDescriptor, RequestAdapterStatus, Status,
+    AdapterInfo, CallbackMode, FutureWaitInfo, Instance, InstanceDescriptor, RequestAdapterStatus,
+    Status,
 };
 use std::sync::mpsc;
 use std::time::Duration;
@@ -10,30 +11,34 @@ fn main() {
     let instance = Instance::new(Some(&instance_desc));
 
     let (tx, rx) = mpsc::channel::<Result<(), String>>();
-    let future = instance.request_adapter(None, move |status, adapter, message| {
-        if status != RequestAdapterStatus::Success {
-            let _ = tx.send(Err(format!("{status:?}: {message}")));
-            return;
-        }
-
-        let adapter = match adapter {
-            Some(adapter) => adapter,
-            None => {
-                let _ = tx.send(Err("Request adapter returned no adapter".to_string()));
+    let future = instance.request_adapter(
+        None,
+        CallbackMode::AllowProcessEvents,
+        move |status, adapter, message| {
+            if status != RequestAdapterStatus::Success {
+                let _ = tx.send(Err(format!("{status:?}: {message}")));
                 return;
             }
-        };
 
-        let mut info = AdapterInfo::new();
-        let status = adapter.get_info(&mut info);
-        if status != Status::Success {
-            let _ = tx.send(Err(format!("Adapter info failed: {status:?}")));
-            return;
-        }
+            let adapter = match adapter {
+                Some(adapter) => adapter,
+                None => {
+                    let _ = tx.send(Err("Request adapter returned no adapter".to_string()));
+                    return;
+                }
+            };
 
-        println!("Adapter: {}", format_adapter_info(&info));
-        let _ = tx.send(Ok(()));
-    });
+            let mut info = AdapterInfo::new();
+            let status = adapter.get_info(&mut info);
+            if status != Status::Success {
+                let _ = tx.send(Err(format!("Adapter info failed: {status:?}")));
+                return;
+            }
+
+            println!("Adapter: {}", format_adapter_info(&info));
+            let _ = tx.send(Ok(()));
+        },
+    );
     let status = instance.wait_any(
         Some(&mut [FutureWaitInfo {
             future: Some(future),

@@ -1,4 +1,3 @@
-use crate::DawnIntoWgpu;
 use dawn_rs::wire::{
     Client as DawnWireClient, ClientOptions, ReservedTexture as DawnReservedTexture, WireError,
     WireHandle, WireTextureReservation,
@@ -91,7 +90,12 @@ impl IpcWireBackend {
     }
 
     pub fn wgpu_instance(&self) -> wgpu::Instance {
-        DawnIntoWgpu::from(self.dawn_instance()).into()
+        let instance = self.dawn_instance();
+        wgpu::Instance::from_custom(crate::types::DawnInstance::from_factory(
+            wgpu::Backends::all(),
+            move || instance,
+            None,
+        ))
     }
 
     pub fn pump(&self) {
@@ -149,5 +153,3 @@ impl fmt::Debug for WireBackendHandle {
         f.debug_struct("WireBackendHandle").finish_non_exhaustive()
     }
 }
-
-

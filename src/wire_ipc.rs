@@ -16,6 +16,13 @@ pub enum OutboundPacket {
 
 #[derive(Debug)]
 pub enum IpcMessage {
+    Hello {
+        protocol_version: u32,
+        dawn_version: String,
+    },
+    HelloAck {
+        accepted: bool,
+    },
     ReserveInstance {
         id: u32,
         generation: u32,
@@ -108,9 +115,21 @@ const TAG_RESERVE_WIRE_TEXTURE: u8 = 12;
 const TAG_RESERVE_WIRE_TEXTURE_ACK: u8 = 13;
 const TAG_SET_DXGI_SHARED_TEXTURE: u8 = 14;
 const TAG_SET_DMABUF_SHARED_TEXTURE: u8 = 15;
+const TAG_HELLO: u8 = 16;
+const TAG_HELLO_ACK: u8 = 17;
+
+pub(crate) const PROTOCOL_VERSION: u32 = 1;
+pub(crate) const DAWN_VERSION: &str = include_str!("../DAWN_VERSION");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum ControlMessage {
+    Hello {
+        protocol_version: u32,
+        dawn_version: String,
+    },
+    HelloAck {
+        accepted: bool,
+    },
     ReserveInstance {
         id: u32,
         generation: u32,
@@ -181,6 +200,8 @@ enum ControlMessage {
 impl ControlMessage {
     fn tag(&self) -> u8 {
         match self {
+            Self::Hello { .. } => TAG_HELLO,
+            Self::HelloAck { .. } => TAG_HELLO_ACK,
             Self::ReserveInstance { .. } => TAG_RESERVE_INSTANCE,
             Self::ReserveSurface { .. } => TAG_RESERVE_SURFACE,
             Self::ReserveAck { .. } => TAG_RESERVE_ACK,
@@ -204,6 +225,16 @@ impl TryFrom<&IpcMessage> for ControlMessage {
 
     fn try_from(value: &IpcMessage) -> Result<Self, Self::Error> {
         Ok(match value {
+            IpcMessage::Hello {
+                protocol_version,
+                dawn_version,
+            } => Self::Hello {
+                protocol_version: *protocol_version,
+                dawn_version: dawn_version.clone(),
+            },
+            IpcMessage::HelloAck { accepted } => Self::HelloAck {
+                accepted: *accepted,
+            },
             IpcMessage::ReserveInstance { id, generation } => Self::ReserveInstance {
                 id: *id,
                 generation: *generation,
@@ -313,6 +344,14 @@ impl TryFrom<&IpcMessage> for ControlMessage {
 impl From<ControlMessage> for IpcMessage {
     fn from(value: ControlMessage) -> Self {
         match value {
+            ControlMessage::Hello {
+                protocol_version,
+                dawn_version,
+            } => IpcMessage::Hello {
+                protocol_version,
+                dawn_version,
+            },
+            ControlMessage::HelloAck { accepted } => IpcMessage::HelloAck { accepted },
             ControlMessage::ReserveInstance { id, generation } => {
                 IpcMessage::ReserveInstance { id, generation }
             }
@@ -419,6 +458,9 @@ impl From<ControlMessage> for IpcMessage {
     }
 }
 
+type WireThread = JoinHandle<Result<(), String>>;
+
+#[allow(clippy::too_many_arguments)]
 pub fn start_wire_threads(
     stop: Arc<AtomicBool>,
     mut reader_stream: Stream,
@@ -432,11 +474,7 @@ pub fn start_wire_threads(
     mut after_handle_commands: impl FnMut() + Send + 'static,
     mut on_animation_phase: impl FnMut(f32) + Send + 'static,
     mut recycle_packet: impl FnMut(Vec<u8>) + Send + 'static,
-) -> (
-    JoinHandle<Result<(), String>>,
-    JoinHandle<Result<(), String>>,
-) {
-    let writer_stop = stop.clone();
+) -> (WireThread, WireThread) {
     let writer_thread = thread::spawn(move || -> Result<(), String> {
         let mut batch: Vec<Vec<u8>> = Vec::new();
 
@@ -450,10 +488,6 @@ pub fn start_wire_threads(
             };
             match packet {
                 OutboundPacket::Wire(packet) => {
-                    if writer_stop.load(Ordering::Relaxed) {
-                        flush_batch(&mut writer_stream, &mut batch, &mut recycle_packet)?;
-                        break;
-                    }
                     batch.push(packet);
                     if batch.len() >= max_batch_packets.max(1) {
                         flush_batch(&mut writer_stream, &mut batch, &mut recycle_packet)?;
@@ -479,10 +513,6 @@ pub fn start_wire_threads(
                 }
                 match outbound_rx.recv_timeout(timeout) {
                     Ok(OutboundPacket::Wire(packet)) => {
-                        if writer_stop.load(Ordering::Relaxed) {
-                            flush_batch(&mut writer_stream, &mut batch, &mut recycle_packet)?;
-                            return Ok(());
-                        }
                         batch.push(packet);
                     }
                     Ok(OutboundPacket::Shutdown) => {
@@ -705,4 +735,66 @@ fn read_len_prefixed_bytes<R: Read>(reader: &mut R) -> std::io::Result<Vec<u8>> 
     let mut data = vec![0u8; len];
     reader.read_exact(&mut data)?;
     Ok(data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    fn round_trip(message: &IpcMessage) -> IpcMessage {
+        let mut bytes = Vec::new();
+        write_message(&mut bytes, message).expect("encode IPC message");
+        read_message(&mut Cursor::new(bytes)).expect("decode IPC message")
+    }
+
+    #[test]
+    fn hello_round_trips() {
+        let message = IpcMessage::Hello {
+            protocol_version: PROTOCOL_VERSION,
+            dawn_version: DAWN_VERSION.trim().to_string(),
+        };
+        match round_trip(&message) {
+            IpcMessage::Hello {
+                protocol_version,
+                dawn_version,
+            } => {
+                assert_eq!(protocol_version, PROTOCOL_VERSION);
+                assert_eq!(dawn_version, DAWN_VERSION.trim());
+            }
+            _ => panic!("unexpected IPC message"),
+        }
+    }
+
+    #[test]
+    fn wire_bytes_use_raw_framing() {
+        let payload = vec![0, 1, 2, 0xff];
+        let mut encoded = Vec::new();
+        write_message(&mut encoded, &IpcMessage::WireBytes(payload.clone()))
+            .expect("encode wire bytes");
+        assert_eq!(encoded[0], TAG_WIRE_BYTES);
+        assert_eq!(&encoded[1..5], &(payload.len() as u32).to_le_bytes());
+        match read_message(&mut Cursor::new(encoded)).expect("decode wire bytes") {
+            IpcMessage::WireBytes(decoded) => assert_eq!(decoded, payload),
+            _ => panic!("unexpected IPC message"),
+        }
+    }
+
+    #[test]
+    fn rejects_tag_payload_mismatch() {
+        let mut encoded = Vec::new();
+        write_message(&mut encoded, &IpcMessage::HelloAck { accepted: true })
+            .expect("encode hello ack");
+        encoded[0] = TAG_RESERVE_ACK;
+        let error = read_message(&mut Cursor::new(encoded)).expect_err("tag mismatch must fail");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    }
+
+    #[test]
+    fn rejects_oversized_payload_before_allocation() {
+        let mut encoded = vec![TAG_WIRE_BYTES];
+        encoded.extend_from_slice(&(64_u32 * 1024 * 1024 + 1).to_le_bytes());
+        let error = read_message(&mut Cursor::new(encoded)).expect_err("oversize must fail");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+    }
 }

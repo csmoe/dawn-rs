@@ -1,5 +1,16 @@
 use crate::emitter::core::type_name;
 
+pub(crate) fn doc_comment(comment: Option<&str>) -> String {
+    comment
+        .map(|comment| {
+            comment
+                .lines()
+                .map(|line| format!("/// {}\n", line.trim()))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 pub(crate) fn indent_block(text: &str, spaces: usize) -> String {
     if text.is_empty() {
         return String::new();

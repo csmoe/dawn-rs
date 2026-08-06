@@ -3,8 +3,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn main() {
+    println!("cargo:rustc-check-cfg=cfg(dawn_wire_linked)");
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=DAWN_ROOT");
+    println!("cargo:rerun-if-env-changed=DAWN_ROOT");
     println!("cargo:rerun-if-changed=src/wire_cpp_shim.cc");
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let Some(dawn_root) = resolve_dawn_root() else {
@@ -26,47 +27,56 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", lib_dir.display());
     }
     if wire_enabled {
-        // Link dawn_proc first so WebGPU C symbols resolve to proc-table dispatch stubs.
-        emit_link_lib(link_mode, "dawn_proc");
-        emit_link_lib(link_mode, "webgpu_dawn");
-        if has_lib_for_mode(&lib_dirs, "wire_client", link_mode) {
-            emit_link_lib(link_mode, "wire_client");
-        }
-        if has_lib_for_mode(&lib_dirs, "wire_server", link_mode) {
-            emit_link_lib(link_mode, "wire_server");
-        }
-        // Dawn's default GN/CMake static build usually emits libdawn_wire.a containing both
-        // client/server symbols.
-        if has_lib_for_mode(&lib_dirs, "dawn_wire", link_mode) {
-            emit_link_lib(link_mode, "dawn_wire");
-        } else if !has_lib_for_mode(&lib_dirs, "wire_server", link_mode) {
-            println!(
-                "cargo:warning=Missing Dawn wire runtime library (expected dawn_wire or wire_server)"
-            );
-        }
-        if let Some(gen_include) = resolve_dawn_gen_include_dir(&dawn_root) {
-            let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set");
-            let out_dir = PathBuf::from(out_dir);
-            if let Err(e) = generate_wire_client_proc_table_inc(&gen_include, &out_dir) {
-                println!(
-                    "cargo:warning=Failed to generate wire client proc table from C API: {}",
-                    e
-                );
-            }
-            if let Some(source_root) = dawn_source_root.as_ref() {
-                build_wire_cpp_shim(source_root, &gen_include, &out_dir);
-            } else {
-                println!(
-                    "cargo:warning=Failed to resolve Dawn source root from DAWN_ROOT={} (wire shim disabled)",
-                    dawn_root.display()
-                );
-            }
-        } else {
-            println!(
-                "cargo:warning=Missing Dawn generated headers for wire shim under {}",
+        let source_root = dawn_source_root.as_ref().unwrap_or_else(|| {
+            panic!(
+                "wire feature requires a Dawn source tree; DAWN_ROOT={} only contains build artifacts",
                 dawn_root.display()
-            );
+            )
+        });
+        let gen_include = resolve_dawn_gen_include_dir(&dawn_root).unwrap_or_else(|| {
+            panic!(
+                "wire feature requires generated Dawn headers under {}/gen/include or out/{{Release,Debug}}/gen/include",
+                dawn_root.display()
+            )
+        });
+        let proc_library = require_library(
+            &lib_dirs,
+            &["dawn_proc", "dawn_proc_static"],
+            link_mode,
+            &dawn_root,
+        );
+        let webgpu_library = require_library(&lib_dirs, &["webgpu_dawn"], link_mode, &dawn_root);
+        let wire_library = require_library(
+            &lib_dirs,
+            &["dawn_wire", "dawn_wire_static"],
+            link_mode,
+            &dawn_root,
+        );
+
+        let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set"));
+        generate_wire_client_proc_table_inc(&gen_include, &out_dir)
+            .unwrap_or_else(|error| panic!("failed to generate wire client proc table: {error}"));
+        // Emit the shim archive before its Dawn dependencies for static linkers.
+        build_wire_cpp_shim(source_root, &gen_include, &out_dir);
+
+        // WebGPU C symbols must resolve to proc-table dispatch stubs in wire clients.
+        emit_link_lib(link_mode, proc_library);
+        emit_link_lib(link_mode, webgpu_library);
+        emit_link_lib(link_mode, wire_library);
+        if has_static_lib(&lib_dirs, "dawn_native_static") {
+            emit_link_lib(LinkMode::Static, "dawn_native_static");
         }
+        if has_static_lib(&lib_dirs, "dawn_platform_static") {
+            emit_link_lib(LinkMode::Static, "dawn_platform_static");
+        }
+        // Standalone GN builds use Chromium's private libc++ ABI namespace. The CI builder
+        // materializes these optional archives; CMake/system-libc++ builds do not need them.
+        for runtime in ["dawn_libcxx", "dawn_libcxxabi"] {
+            if has_static_lib(&lib_dirs, runtime) {
+                emit_link_lib(LinkMode::Static, runtime);
+            }
+        }
+        println!("cargo:rustc-cfg=dawn_wire_linked");
     } else {
         emit_link_lib(link_mode, "webgpu_dawn");
     }
@@ -81,6 +91,9 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=IOKit");
         println!("cargo:rustc-link-lib=framework=Foundation");
         println!("cargo:rustc-link-lib=framework=Cocoa");
+        if wire_enabled {
+            println!("cargo:rustc-link-lib=framework=Security");
+        }
     } else if target_os == "windows" {
         println!("cargo:rustc-link-lib=onecore_apiset");
         println!("cargo:rustc-link-lib=dxguid");
@@ -129,11 +142,17 @@ fn resolve_dawn_lib_dirs(dawn_root: &Path) -> Vec<PathBuf> {
         dawn_root.join("out/Release/src/dawn"),
         dawn_root.join("out/Release/src/dawn/native"),
         dawn_root.join("out/Release/src/dawn/wire"),
+        dawn_root.join("out/Release/obj/src/dawn"),
+        dawn_root.join("out/Release/obj/src/dawn/native"),
+        dawn_root.join("out/Release/obj/src/dawn/wire"),
         dawn_root.join("out/Debug"),
         dawn_root.join("out/Debug/lib"),
         dawn_root.join("out/Debug/src/dawn"),
         dawn_root.join("out/Debug/src/dawn/native"),
         dawn_root.join("out/Debug/src/dawn/wire"),
+        dawn_root.join("out/Debug/obj/src/dawn"),
+        dawn_root.join("out/Debug/obj/src/dawn/native"),
+        dawn_root.join("out/Debug/obj/src/dawn/wire"),
     ] {
         if dir.exists() {
             dirs.push(dir);
@@ -165,12 +184,11 @@ fn resolve_dawn_source_root(dawn_root: &Path) -> Option<PathBuf> {
         }
     }
 
-    if dawn_root.ends_with("out/Release") || dawn_root.ends_with("out/Debug") {
-        if let Some(parent) = dawn_root.parent().and_then(|p| p.parent()) {
-            if has_dawn_public_headers(parent) {
-                return Some(parent.to_path_buf());
-            }
-        }
+    if (dawn_root.ends_with("out/Release") || dawn_root.ends_with("out/Debug"))
+        && let Some(parent) = dawn_root.parent().and_then(|p| p.parent())
+        && has_dawn_public_headers(parent)
+    {
+        return Some(parent.to_path_buf());
     }
 
     None
@@ -209,6 +227,25 @@ fn has_lib_for_mode(lib_dirs: &[PathBuf], name: &str, mode: LinkMode) -> bool {
         LinkMode::Static => has_static_lib(lib_dirs, name),
         LinkMode::Dynamic => has_dynamic_lib(lib_dirs, name) || has_static_lib(lib_dirs, name),
     }
+}
+
+fn require_library<'a>(
+    lib_dirs: &[PathBuf],
+    candidates: &'a [&'a str],
+    mode: LinkMode,
+    dawn_root: &Path,
+) -> &'a str {
+    candidates
+        .iter()
+        .copied()
+        .find(|name| has_lib_for_mode(lib_dirs, name, mode))
+        .unwrap_or_else(|| {
+            panic!(
+                "wire feature requires one of {} under {}",
+                candidates.join(", "),
+                dawn_root.display()
+            )
+        })
 }
 
 fn generate_wire_client_proc_table_inc(

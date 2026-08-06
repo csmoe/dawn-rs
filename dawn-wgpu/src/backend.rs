@@ -6,6 +6,7 @@ use crate::types::*;
 use dawn_rs::*;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::thread;
 use wgpu::custom::*;
 
 /// Reinterpret a `&[u8]` as `&[c_void]` for passing to Dawn C APIs.
@@ -42,10 +43,178 @@ fn ensure_native_procs() {
 #[cfg(not(feature = "wire"))]
 fn ensure_native_procs() {}
 
+fn build_request_adapter_options(
+    power_preference: PowerPreference,
+    compatible_surface: Option<Surface>,
+    backend_type: Option<BackendType>,
+    force_fallback_adapter: bool,
+) -> RequestAdapterOptions {
+    let mut options = RequestAdapterOptions::new();
+    options.power_preference = Some(power_preference);
+    options.compatible_surface = compatible_surface;
+    options.backend_type = backend_type;
+    options.force_fallback_adapter = Some(force_fallback_adapter);
+    options
+}
+
+pub(crate) fn request_adapter_sync(
+    instance: &Instance,
+    options: &RequestAdapterOptions,
+) -> Result<Adapter, String> {
+    let (tx, rx) = std::sync::mpsc::channel::<Result<usize, String>>();
+
+    let _future = instance.request_adapter(Some(options), move |status, adapter, message| {
+        if status != RequestAdapterStatus::Success {
+            let _ = tx.send(Err(format!("{status:?}: {message}")));
+            return;
+        }
+
+        match adapter {
+            Some(adapter) => {
+                let _ = tx.send(Ok(Box::into_raw(Box::new(adapter)) as usize));
+            }
+            None => {
+                let _ = tx.send(Err("request_adapter returned None".to_owned()));
+            }
+        }
+    });
+
+    loop {
+        match rx.try_recv() {
+            Ok(result) => {
+                return result.map(|adapter| unsafe { *Box::from_raw(adapter as *mut Adapter) });
+            }
+            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                instance.process_events();
+                thread::yield_now();
+            }
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                return Err("request_adapter callback disconnected".to_owned());
+            }
+        }
+    }
+}
+
+pub(crate) fn adapter_attempts(
+    backends: wgpu::Backends,
+    power_preference: PowerPreference,
+    compatible_surface: Option<Surface>,
+    force_fallback_adapter: bool,
+) -> Vec<RequestAdapterOptions> {
+    let mut attempts = Vec::new();
+
+    if !force_fallback_adapter {
+        #[cfg(target_os = "macos")]
+        if backends.contains(wgpu::Backends::METAL) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Metal),
+                false,
+            ));
+        }
+
+        // DX12
+        #[cfg(all(target_os = "windows", target_env = "pc"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D12),
+                false,
+            ));
+        }
+
+        // DX11
+        #[cfg(all(target_os = "windows", target_env = "win7"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D11),
+                false,
+            ));
+        }
+
+        if backends.contains(wgpu::Backends::VULKAN) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Vulkan),
+                false,
+            ));
+        }
+    } else {
+        // DX12 + WARP
+        #[cfg(all(target_os = "windows", target_env = "pc"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D12),
+                true,
+            ));
+        }
+
+        // DX11 + WARP
+        #[cfg(all(target_os = "windows", target_env = "win7"))]
+        if backends.contains(wgpu::Backends::DX12) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::D3D11),
+                true,
+            ));
+        }
+
+        // VULKAN + SWIFTSHADER
+        if backends.contains(wgpu::Backends::VULKAN) {
+            attempts.push(build_request_adapter_options(
+                power_preference,
+                compatible_surface.clone(),
+                Some(BackendType::Vulkan),
+                true,
+            ));
+        }
+    }
+
+    if attempts.is_empty() {
+        attempts.push(build_request_adapter_options(
+            power_preference,
+            compatible_surface,
+            None,
+            force_fallback_adapter,
+        ));
+    }
+
+    attempts
+}
+
+pub(crate) fn is_swiftshader_adapter(adapter: &Adapter) -> bool {
+    let mut info = AdapterInfo::new();
+    let _ = adapter.get_info(&mut info);
+
+    let contains_swiftshader = |value: Option<&str>| {
+        value.is_some_and(|value| value.to_ascii_lowercase().contains("swiftshader"))
+    };
+
+    matches!(
+        info.adapter_type.unwrap_or(AdapterType::Unknown),
+        AdapterType::Cpu
+    ) && matches!(
+        info.backend_type.unwrap_or(BackendType::Undefined),
+        BackendType::Vulkan
+    ) && (contains_swiftshader(info.vendor.as_deref())
+        || contains_swiftshader(info.architecture.as_deref())
+        || contains_swiftshader(info.device.as_deref())
+        || contains_swiftshader(info.description.as_deref()))
+}
+
 impl InstanceInterface for DawnInstance {
-    fn new(_desc: &wgpu::InstanceDescriptor) -> Self {
+    fn new(desc: &wgpu::InstanceDescriptor) -> Self {
         ensure_native_procs();
         Self::from_factory(
+            desc.backends,
             move || {
                 let mut desc = InstanceDescriptor::new();
                 desc.required_features = Some(vec![InstanceFeatureName::TimedWaitAny]);
@@ -67,14 +236,12 @@ impl InstanceInterface for DawnInstance {
             #[cfg(target_os = "macos")]
             wgpu::SurfaceTargetUnsafe::CoreAnimationLayer(layer) => {
                 let layer_addr = layer as usize;
-                let surface = self.with_instance(move |state| {
-                    let mut desc = SurfaceDescriptor::new();
-                    let source = SurfaceSourceMetalLayer {
-                        layer: Some(layer_addr as *mut std::ffi::c_void),
-                    };
-                    desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                    state.instance.clone().create_surface(&desc)
-                });
+                let mut desc = SurfaceDescriptor::new();
+                let source = SurfaceSourceMetalLayer {
+                    layer: Some(layer_addr as *mut std::ffi::c_void),
+                };
+                desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                let surface = self.inner.create_surface(&desc);
                 let dawn_surface = DawnSurface {
                     inner: surface,
                     metal_layer: None,
@@ -92,14 +259,12 @@ impl InstanceInterface for DawnInstance {
                             unsafe { raw_window_metal::Layer::from_ns_view(handle.ns_view) };
                         let layer_ptr = layer.into_raw();
                         let layer_addr = layer_ptr.as_ptr() as usize;
-                        let surface = self.with_instance(move |state| {
-                            let mut desc = SurfaceDescriptor::new();
-                            let source = SurfaceSourceMetalLayer {
-                                layer: Some(layer_addr as *mut std::ffi::c_void),
-                            };
-                            desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                            state.instance.clone().create_surface(&desc)
-                        });
+                        let mut desc = SurfaceDescriptor::new();
+                        let source = SurfaceSourceMetalLayer {
+                            layer: Some(layer_addr as *mut std::ffi::c_void),
+                        };
+                        desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                        let surface = self.inner.create_surface(&desc);
                         let handle = MetalLayerHandle {
                             ptr: layer_addr as *mut std::ffi::c_void,
                         };
@@ -121,15 +286,13 @@ impl InstanceInterface for DawnInstance {
                     RawWindowHandle::Win32(handle) => {
                         let hinstance = handle.hinstance.map(|h| h.get() as usize);
                         let hwnd = handle.hwnd.get() as usize;
-                        let surface = self.with_instance(move |state| {
-                            let mut desc = SurfaceDescriptor::new();
-                            let source = SurfaceSourceWindowsHWND {
-                                hinstance: hinstance.map(|h| h as _),
-                                hwnd: Some(hwnd as _),
-                            };
-                            desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                            state.instance.clone().create_surface(&desc)
-                        });
+                        let mut desc = SurfaceDescriptor::new();
+                        let source = SurfaceSourceWindowsHWND {
+                            hinstance: hinstance.map(|h| h as _),
+                            hwnd: Some(hwnd as _),
+                        };
+                        desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                        let surface = self.inner.create_surface(&desc);
                         let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
@@ -146,45 +309,39 @@ impl InstanceInterface for DawnInstance {
                     (RawDisplayHandle::Wayland(display), RawWindowHandle::Wayland(window)) => {
                         let display_ptr = display.display.as_ptr() as usize;
                         let surface_ptr = window.surface.as_ptr() as usize;
-                        let surface = self.with_instance(move |state| {
-                            let mut desc = SurfaceDescriptor::new();
-                            let source = SurfaceSourceWaylandSurface {
-                                display: Some(display_ptr as *mut std::ffi::c_void),
-                                surface: Some(surface_ptr as *mut std::ffi::c_void),
-                            };
-                            desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                            state.instance.clone().create_surface(&desc)
-                        });
+                        let mut desc = SurfaceDescriptor::new();
+                        let source = SurfaceSourceWaylandSurface {
+                            display: Some(display_ptr as *mut std::ffi::c_void),
+                            surface: Some(surface_ptr as *mut std::ffi::c_void),
+                        };
+                        desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                        let surface = self.inner.create_surface(&desc);
                         let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xlib(display), RawWindowHandle::Xlib(window)) => {
                         let display_ptr = display.display.unwrap().as_ptr() as usize;
                         let window_id = window.window as u64;
-                        let surface = self.with_instance(move |state| {
-                            let mut desc = SurfaceDescriptor::new();
-                            let source = SurfaceSourceXlibWindow {
-                                display: Some(display_ptr as *mut std::ffi::c_void),
-                                window: Some(window_id),
-                            };
-                            desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                            state.instance.clone().create_surface(&desc)
-                        });
+                        let mut desc = SurfaceDescriptor::new();
+                        let source = SurfaceSourceXlibWindow {
+                            display: Some(display_ptr as *mut std::ffi::c_void),
+                            window: Some(window_id),
+                        };
+                        desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                        let surface = self.inner.create_surface(&desc);
                         let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
                     (RawDisplayHandle::Xcb(display), RawWindowHandle::Xcb(window)) => {
                         let connection_ptr = display.connection.unwrap().as_ptr() as usize;
                         let window_id = window.window.get();
-                        let surface = self.with_instance(move |state| {
-                            let mut desc = SurfaceDescriptor::new();
-                            let source = SurfaceSourceXCBWindow {
-                                connection: Some(connection_ptr as *mut std::ffi::c_void),
-                                window: Some(window_id),
-                            };
-                            desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
-                            state.instance.clone().create_surface(&desc)
-                        });
+                        let mut desc = SurfaceDescriptor::new();
+                        let source = SurfaceSourceXCBWindow {
+                            connection: Some(connection_ptr as *mut std::ffi::c_void),
+                            window: Some(window_id),
+                        };
+                        desc = desc.with_extension(SurfaceDescriptorExtension::from(source));
+                        let surface = self.inner.create_surface(&desc);
                         let dawn_surface = DawnSurface { inner: surface };
                         Ok(dispatch_surface(dawn_surface))
                     }
@@ -206,38 +363,16 @@ impl InstanceInterface for DawnInstance {
         if let Some(surface) = options.compatible_surface {
             dawn_options.compatible_surface = Some(expect_surface_from_api(surface).inner.clone());
         }
-        #[cfg(feature = "shared_texture_memory")]
-        {
-            #[cfg(target_os = "windows")]
-            {
-                #[cfg(target_vendor = "win7")]
-                {
-                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D11)
-                }
-                #[cfg(not(target_vendor = "win7"))]
-                {
-                    dawn_options.backend_type = Some(dawn_rs::BackendType::D3D12)
-                }
-            }
 
-            #[cfg(target_os = "macos")]
-            {
-                dawn_options.backend_type = Some(dawn_rs::BackendType::Metal);
-            }
-        }
-        let worker = Arc::clone(&self.inner);
-        let future_handle = self.with_instance(move |state| {
-            state.instance.clone().request_adapter(
-                Some(&dawn_options),
-                move |status, adapter, _message| {
-                    if status == RequestAdapterStatus::Success {
-                        let adapter = adapter.expect("wgpu-compat: missing adapter");
+        let future_handle =
+            self.inner
+                .request_adapter(Some(&dawn_options), move |status, adapter, _message| {
+                    if status == RequestAdapterStatus::Success
+                        && let Some(adapter) = adapter
+                    {
                         complete_shared(
                             &shared,
-                            Ok(dispatch_adapter(DawnAdapter::from_adapter(
-                                Arc::clone(&worker),
-                                adapter,
-                            ))),
+                            Ok(dispatch_adapter(DawnAdapter::from_adapter(adapter))),
                         );
                     } else {
                         complete_shared(
@@ -252,35 +387,27 @@ impl InstanceInterface for DawnInstance {
                             }),
                         );
                     }
-                },
-            )
-        });
-        let _ = self.with_instance(move |state| {
-            state.instance.clone().wait_any(
-                Some(&mut [FutureWaitInfo {
-                    future: Some(future_handle),
-                    completed: None,
-                }]),
-                0,
-            )
-        });
+                });
+        let _ = self.inner.wait_any(
+            Some(&mut [FutureWaitInfo {
+                future: Some(future_handle),
+                completed: None,
+            }]),
+            0,
+        );
+
         Box::pin(future)
     }
 
     fn poll_all_devices(&self, _force_wait: bool) -> bool {
-        self.with_instance(move |state| state.instance.clone().process_events());
+        self.inner.process_events();
         true
     }
 
     fn wgsl_language_features(&self) -> wgpu::WgslLanguageFeatures {
-        let feature_list = self.with_instance(move |state| {
-            let mut features = SupportedWGSLLanguageFeatures::new();
-            state
-                .instance
-                .clone()
-                .get_wgsl_language_features(&mut features);
-            features.features.clone().unwrap_or_default()
-        });
+        let mut features = SupportedWGSLLanguageFeatures::new();
+        self.inner.get_wgsl_language_features(&mut features);
+        let feature_list = features.features.clone().unwrap_or_default();
         let mut out = wgpu::WgslLanguageFeatures::empty();
         for feature in feature_list {
             if feature == WGSLLanguageFeatureName::ReadonlyAndReadwriteStorageTextures {
@@ -292,9 +419,43 @@ impl InstanceInterface for DawnInstance {
 
     fn enumerate_adapters(
         &self,
-        _backends: wgpu::Backends,
+        backends: wgpu::Backends,
     ) -> Pin<Box<dyn wgpu::custom::EnumerateAdapterFuture>> {
-        Box::pin(std::future::ready(Vec::new()))
+        let instance = self.inner.clone();
+        let requested_backends = map_backends_to_dawn(backends);
+        let adapters = requested_backends
+            .into_iter()
+            .filter_map(|backend_type| {
+                let mut options = RequestAdapterOptions::new();
+                options.backend_type = Some(backend_type);
+
+                let (sender, receiver) = std::sync::mpsc::channel();
+                let future = instance.clone().request_adapter(
+                    Some(&options),
+                    move |status, adapter, _message| {
+                        let _ = sender.send(
+                            (status == RequestAdapterStatus::Success)
+                                .then_some(adapter.map(|adapter| {
+                                    dispatch_adapter(DawnAdapter::from_adapter(adapter))
+                                }))
+                                .flatten(),
+                        );
+                    },
+                );
+
+                instance.clone().wait_any(
+                    Some(&mut [FutureWaitInfo {
+                        future: Some(future),
+                        completed: None,
+                    }]),
+                    0,
+                );
+
+                receiver.recv().ok().flatten()
+            })
+            .collect::<Vec<_>>();
+
+        Box::pin(std::future::ready(adapters))
     }
 }
 
@@ -315,15 +476,23 @@ impl AdapterInterface for DawnAdapter {
 
         #[cfg(feature = "shared_texture_memory")]
         {
+            let info = self.get_info();
             #[cfg(target_os = "windows")]
             {
-                required_features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
-                required_features.push(FeatureName::SharedFenceDXGISharedHandle);
+                match info.backend_type {
+                    BackendType::D3D11 | BackendType::D3D12 => {
+                        required_features.push(FeatureName::SharedTextureMemoryDXGISharedHandle);
+                        required_features.push(FeatureName::SharedFenceDXGISharedHandle);
+                    }
+                    _ => {}
+                }
             }
             #[cfg(target_os = "macos")]
             {
-                required_features.push(FeatureName::SharedTextureMemoryIOSurface);
-                required_features.push(FeatureName::SharedFenceMTLSharedEvent);
+                if matches!(info.backend, wgpu::Backend::Metal) {
+                    required_features.push(FeatureName::SharedTextureMemoryIOSurface);
+                    required_features.push(FeatureName::SharedFenceMTLSharedEvent);
+                }
             }
 
             #[cfg(target_os = "linux")]
@@ -343,53 +512,59 @@ impl AdapterInterface for DawnAdapter {
 
         let error_handler_state = Arc::clone(&uncaptured_error_handler);
         let lost_callback_state = Arc::clone(&device_lost_callback);
-        let _future_handle = self.with_adapter(move |adapter| {
-            let mut desc = DeviceDescriptor::new();
-            desc.label = label;
-            desc.required_features = Some(required_features);
-            desc.required_limits = required_limits;
+        let mut desc = DeviceDescriptor::new();
+        desc.label = label;
+        desc.required_features = Some(required_features);
+        desc.required_limits = required_limits;
+        let mut toggles = DawnTogglesDescriptor::new();
+        toggles.enabled_toggles = Some(vec![
+            "skip_validation".into(),
+            "disable_robustness".into(),
+            "disable_lazy_clear_for_mapped_at_creation_buffer".into(),
+        ]);
+        desc = desc.with_extension(toggles.into());
 
-            let error_info = dawn_rs::UncapturedErrorCallbackInfo::new();
-            let error_handler_state = Arc::clone(&error_handler_state);
-            error_info
-                .callback
-                .replace(Some(Box::new(move |_devices, ty, message| {
-                    if ty == ErrorType::NoError {
-                        return;
-                    }
-                    let handler = error_handler_state
-                        .lock()
-                        .expect("wgpu-compat: uncaptured error handler mutex poisoned")
-                        .clone();
-                    if let Some(handler) = handler {
-                        handler(map_uncaptured_error(ty, message));
-                    }
-                })));
-            desc.uncaptured_error_callback_info = Some(error_info);
+        let error_info = dawn_rs::UncapturedErrorCallbackInfo::new();
+        let error_handler_state = Arc::clone(&error_handler_state);
+        error_info
+            .callback
+            .replace(Some(Box::new(move |_devices, ty, message| {
+                if ty == ErrorType::NoError {
+                    return;
+                }
+                let handler = error_handler_state
+                    .lock()
+                    .expect("wgpu-compat: uncaptured error handler mutex poisoned")
+                    .clone();
+                if let Some(handler) = handler {
+                    handler(map_uncaptured_error(ty, message));
+                }
+            })));
+        desc.uncaptured_error_callback_info = Some(error_info);
 
-            let lost_info = dawn_rs::DeviceLostCallbackInfo::new();
-            let lost_callback_state = Arc::clone(&lost_callback_state);
-            lost_info
-                .callback
-                .replace(Some(Box::new(move |_, reason, message| {
-                    let callback = lost_callback_state
-                        .lock()
-                        .expect("wgpu-compat: device lost callback mutex poisoned")
-                        .take();
-                    if let Some(callback) = callback {
-                        callback(
-                            match reason {
-                                DeviceLostReason::Destroyed => wgpu::DeviceLostReason::Destroyed,
-                                _ => wgpu::DeviceLostReason::Unknown,
-                            },
-                            message,
-                        );
-                    }
-                })));
-            desc.device_lost_callback_info = Some(lost_info);
+        let lost_info = dawn_rs::DeviceLostCallbackInfo::new();
+        let lost_callback_state = Arc::clone(&lost_callback_state);
+        lost_info
+            .callback
+            .replace(Some(Box::new(move |_, reason, message| {
+                let callback = lost_callback_state
+                    .lock()
+                    .expect("wgpu-compat: device lost callback mutex poisoned")
+                    .take();
+                if let Some(callback) = callback {
+                    callback(
+                        match reason {
+                            DeviceLostReason::Destroyed => wgpu::DeviceLostReason::Destroyed,
+                            _ => wgpu::DeviceLostReason::Unknown,
+                        },
+                        message,
+                    );
+                }
+            })));
+        desc.device_lost_callback_info = Some(lost_info);
 
-            adapter
-                .clone()
+        let _future_handle =
+            self.inner
                 .request_device(Some(&desc), move |status, device, message| {
                     if status == RequestDeviceStatus::Success {
                         let device = device.expect("wgpu-compat: missing device");
@@ -408,8 +583,7 @@ impl AdapterInterface for DawnAdapter {
                     } else {
                         panic!("wgpu-compat: request_device failed {}", message);
                     }
-                })
-        });
+                });
         Box::pin(future)
     }
 
@@ -418,22 +592,17 @@ impl AdapterInterface for DawnAdapter {
     }
 
     fn features(&self) -> wgpu::Features {
-        let feature_list = self.with_adapter(move |adapter| {
-            let mut features = SupportedFeatures::new();
-            adapter.get_features(&mut features);
-            features.features.clone().unwrap_or_default()
-        });
+        let mut features = SupportedFeatures::new();
+        self.inner.get_features(&mut features);
+        let feature_list = features.features.clone().unwrap_or_default();
         let mut features = SupportedFeatures::new();
         features.features = Some(feature_list);
         map_features_to_wgpu(&features)
     }
 
     fn limits(&self) -> wgpu::Limits {
-        let limits = self.with_adapter(move |adapter| {
-            let mut limits = Limits::new();
-            let _ = adapter.get_limits(&mut limits);
-            limits
-        });
+        let mut limits = Limits::new();
+        let _ = self.inner.get_limits(&mut limits);
         map_limits_to_wgpu(&limits)
     }
 
@@ -442,19 +611,17 @@ impl AdapterInterface for DawnAdapter {
     }
 
     fn get_info(&self) -> wgpu::AdapterInfo {
-        let info_tuple = self.with_adapter(move |adapter| {
-            let mut info = AdapterInfo::new();
-            let _ = adapter.get_info(&mut info);
-            (
-                info.description.clone().unwrap_or_default(),
-                info.vendor_id.unwrap_or(0),
-                info.device_id.unwrap_or(0),
-                info.adapter_type.unwrap_or(AdapterType::Unknown),
-                info.backend_type.unwrap_or(BackendType::Undefined),
-                info.architecture.clone().unwrap_or_default(),
-                info.device.clone().unwrap_or_default(),
-            )
-        });
+        let mut info = AdapterInfo::new();
+        let _ = self.inner.get_info(&mut info);
+        let info_tuple = (
+            info.description.clone().unwrap_or_default(),
+            info.vendor_id.unwrap_or(0),
+            info.device_id.unwrap_or(0),
+            info.adapter_type.unwrap_or(AdapterType::Unknown),
+            info.backend_type.unwrap_or(BackendType::Undefined),
+            info.architecture.clone().unwrap_or_default(),
+            info.device.clone().unwrap_or_default(),
+        );
         let (name, vendor, device, adapter_type, backend_type, driver, driver_info) = info_tuple;
         wgpu::AdapterInfo {
             name,
@@ -1561,12 +1728,9 @@ impl SurfaceInterface for DawnSurface {
             .as_custom::<DawnAdapter>()
             .expect("wgpu-compat: adapter not dawn")
             .clone();
-        let surface = self.inner.clone();
-        adapter.with_adapter(move |adapter| {
-            let mut caps = SurfaceCapabilities::new();
-            let _ = surface.get_capabilities(adapter.clone(), &mut caps);
-            map_surface_capabilities(caps)
-        })
+        let mut caps = SurfaceCapabilities::new();
+        let _ = self.inner.get_capabilities(adapter.inner, &mut caps);
+        map_surface_capabilities(caps)
     }
 
     fn configure(&self, device: &DispatchDevice, config: &wgpu::SurfaceConfiguration) {

@@ -11,6 +11,7 @@ fn main() {
     let mut target_arch: Option<String> = None;
     let mut tags: Vec<String> = Vec::new();
     let mut clang_args: Vec<String> = Vec::new();
+    let mut skip_ffi = false;
 
     let mut args = env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -47,6 +48,9 @@ fn main() {
                     clang_args.push(value);
                 }
             }
+            "--skip-ffi" => {
+                skip_ffi = true;
+            }
             _ => {
                 eprintln!("Unknown argument: {}", arg);
                 std::process::exit(2);
@@ -55,7 +59,6 @@ fn main() {
     }
 
     let dawn_json = dawn_json.expect("--dawn-json is required");
-    let api_header = api_header.expect("--api-header is required");
     let out_dir = out_dir.expect("--out-dir is required");
     let target_os = target_os.unwrap_or_else(|| env::consts::OS.to_string());
     let target_arch = target_arch.unwrap_or_else(|| env::consts::ARCH.to_string());
@@ -76,26 +79,29 @@ fn main() {
     } else {
         api.filter_by_tags(&tags)
     };
+    filtered.validate().expect("validate filtered dawn.json");
     let model = dawn_codegen::ApiModel::from_api(&filtered);
     let files = dawn_codegen::generate_strings(&model);
 
     std::fs::create_dir_all(&out_dir).expect("create output dir");
     cleanup_old_layout(&out_dir).expect("cleanup old generated layout");
 
-    fs::create_dir_all(&ffi_dir).expect("create ffi module dir");
-    let ffi_out = ffi_dir.join(format!("{target_os}_{target_arch}.rs"));
+    if !skip_ffi {
+        let api_header = api_header.expect("--api-header is required unless --skip-ffi is used");
+        fs::create_dir_all(&ffi_dir).expect("create ffi module dir");
+        let ffi_out = ffi_dir.join(format!("{target_os}_{target_arch}.rs"));
 
-    let mut combined_clang_args = clang_args;
-    combined_clang_args.extend(default_clang_args(&api_header));
+        let mut combined_clang_args = clang_args;
+        combined_clang_args.extend(default_clang_args(&api_header, &target_os, &target_arch));
 
-    let ffi_rs = dawn_codegen::generate_ffi_string(&api_header, &combined_clang_args)
-        .expect("generate ffi.rs");
-    std::fs::write(&ffi_out, ffi_rs).expect("write ffi bindings");
+        let ffi_rs = dawn_codegen::generate_ffi_string(&api_header, &combined_clang_args)
+            .expect("generate ffi.rs");
+        std::fs::write(&ffi_out, ffi_rs).expect("write ffi bindings");
+        write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
+    }
 
-    write_generated_single_file(&out_dir, &target_os, &target_arch, &files)
-        .expect("write generated single file");
+    write_generated_single_file(&out_dir, &files).expect("write generated single file");
     write_generated_wrapper(&out_dir).expect("write generated wrapper");
-    write_ffi_wrapper(&ffi_dir).expect("write ffi wrapper");
 }
 
 fn validate_target(target_os: &str, target_arch: &str) {
@@ -109,12 +115,24 @@ fn validate_target(target_os: &str, target_arch: &str) {
     }
 }
 
-fn default_clang_args(api_header: &Path) -> Vec<String> {
-    let mut args = Vec::new();
+fn default_clang_args(api_header: &Path, target_os: &str, target_arch: &str) -> Vec<String> {
+    let mut args = vec![format!("--target={}", clang_target(target_os, target_arch))];
     if let Some(include_dir) = api_header.parent().and_then(|p| p.parent()) {
         args.push(format!("-I{}", include_dir.display()));
     }
     args
+}
+
+fn clang_target(target_os: &str, target_arch: &str) -> &'static str {
+    match (target_os, target_arch) {
+        ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
+        ("linux", "aarch64") => "aarch64-unknown-linux-gnu",
+        ("macos", "x86_64") => "x86_64-apple-darwin",
+        ("macos", "aarch64") => "arm64-apple-darwin",
+        ("windows", "x86_64") => "x86_64-pc-windows-msvc",
+        ("windows", "aarch64") => "aarch64-pc-windows-msvc",
+        _ => unreachable!("target pair was validated"),
+    }
 }
 
 fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
@@ -146,10 +164,10 @@ fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
         if path.extension().and_then(|s| s.to_str()) != Some("rs") {
             continue;
         }
-        if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-            if name.starts_with("ffi_") {
-                fs::remove_file(path)?;
-            }
+        if let Some(name) = path.file_name().and_then(|s| s.to_str())
+            && name.starts_with("ffi_")
+        {
+            fs::remove_file(path)?;
         }
     }
     for entry in fs::read_dir(out_dir)? {
@@ -158,10 +176,10 @@ fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
         if path.extension().and_then(|s| s.to_str()) != Some("rs") {
             continue;
         }
-        if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-            if name.starts_with("generated_") || name.starts_with("ffi_") {
-                fs::remove_file(path)?;
-            }
+        if let Some(name) = path.file_name().and_then(|s| s.to_str())
+            && (name.starts_with("generated_") || name.starts_with("ffi_"))
+        {
+            fs::remove_file(path)?;
         }
     }
     let ffi_dir = src_dir.join("ffi");
@@ -172,10 +190,10 @@ fn cleanup_old_layout(out_dir: &Path) -> std::io::Result<()> {
             if path.extension().and_then(|s| s.to_str()) != Some("rs") {
                 continue;
             }
-            if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-                if name.starts_with("ffi_") {
-                    fs::remove_file(path)?;
-                }
+            if let Some(name) = path.file_name().and_then(|s| s.to_str())
+                && name.starts_with("ffi_")
+            {
+                fs::remove_file(path)?;
             }
         }
     }
@@ -235,19 +253,16 @@ pub use {module_name}::*;
 
 fn write_generated_single_file(
     out_dir: &Path,
-    target_os: &str,
-    target_arch: &str,
     files: &dawn_codegen::GeneratedFiles,
 ) -> std::io::Result<()> {
     let combined = build_combined_generated_source(files);
-    let target_file = out_dir.join(format!("{target_os}_{target_arch}.rs"));
-    fs::write(target_file, &combined)?;
+    fs::write(out_dir.join("api.rs"), &combined)?;
 
     Ok(())
 }
 
 fn write_generated_wrapper(out_dir: &Path) -> std::io::Result<()> {
-    let mut targets: Vec<(String, String)> = Vec::new();
+    let mut obsolete_targets = Vec::new();
     for entry in fs::read_dir(out_dir)? {
         let entry = entry?;
         let path = entry.path();
@@ -263,6 +278,7 @@ fn write_generated_wrapper(out_dir: &Path) -> std::io::Result<()> {
             None => continue,
         };
         if stem == "mod"
+            || stem == "api"
             || stem.starts_with("ffi_")
             || stem.starts_with("generated_")
             || stem.starts_with("wire_")
@@ -275,34 +291,22 @@ fn write_generated_wrapper(out_dir: &Path) -> std::io::Result<()> {
             }
             _ => continue,
         };
-        targets.push((os, arch));
+        if matches!(os.as_str(), "linux" | "macos" | "windows")
+            && matches!(arch.as_str(), "x86_64" | "aarch64")
+        {
+            obsolete_targets.push(path);
+        }
     }
-    targets.sort();
-    targets.dedup();
-
-    let mut out = String::new();
-    for (os, arch) in targets {
-        let module_name = format!("{}_{}", os.replace('-', "_"), arch.replace('-', "_"));
-        out.push_str(&format!(
-            r#"#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
-mod {module_name};
-
-#[cfg(all(target_os = "{os}", target_arch = "{arch}"))]
-pub use {module_name}::*;
-
-"#,
-            os = os,
-            arch = arch,
-            module_name = module_name,
-        ));
+    for path in obsolete_targets {
+        fs::remove_file(path)?;
     }
 
-    let out = dawn_codegen::emitter::format_rust_source(&out);
+    let out = dawn_codegen::emitter::format_rust_source("mod api;\npub use api::*;\n");
     fs::write(out_dir.join("mod.rs"), out)
 }
 
 fn build_combined_generated_source(files: &dawn_codegen::GeneratedFiles) -> String {
-    let mut out = String::new();
+    let mut out = "#![allow(clippy::all)]\n".to_string();
 
     out.push_str(&emit_inline_module("enums", &files.enums));
     out.push_str(&emit_inline_module("structs", &files.structs));

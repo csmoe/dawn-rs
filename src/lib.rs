@@ -2,6 +2,11 @@
 #[rustfmt::skip]
 mod ffi;
 
+/// Raw, unsafe Dawn C API generated from the matching release header.
+pub mod sys {
+    pub use crate::ffi::*;
+}
+
 #[allow(unused)]
 #[rustfmt::skip]
 mod generated;

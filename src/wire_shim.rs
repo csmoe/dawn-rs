@@ -38,7 +38,7 @@ pub(crate) struct ReservedWireTexture {
 #[repr(C)]
 struct DawnRsWireSerializerCallbacks {
     userdata: *mut c_void,
-    on_flush: Option<extern "C" fn(*mut c_void, *const u8, usize)>,
+    on_flush: Option<extern "C" fn(*mut c_void, *const u8, usize) -> bool>,
     on_error: Option<extern "C" fn(*mut c_void, *const u8, usize)>,
     max_allocation_size: usize,
 }
@@ -170,10 +170,13 @@ unsafe extern "C" {
     fn dawn_rs_wire_clear_procs();
 }
 
+type FlushCallback = Box<dyn FnMut(&[u8]) -> bool + Send + 'static>;
+type ErrorCallback = Box<dyn FnMut(&str) + Send + 'static>;
+
 struct CallbackState {
     closed: AtomicBool,
-    on_flush: Mutex<Box<dyn FnMut(&[u8]) + Send + 'static>>,
-    on_error: Mutex<Box<dyn FnMut(&str) + Send + 'static>>,
+    on_flush: Mutex<FlushCallback>,
+    on_error: Mutex<ErrorCallback>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -264,21 +267,25 @@ impl NativeProcGuard {
     }
 }
 
-extern "C" fn on_flush_trampoline(userdata: *mut c_void, data: *const u8, size: usize) {
+extern "C" fn on_flush_trampoline(userdata: *mut c_void, data: *const u8, size: usize) -> bool {
     if userdata.is_null() {
-        return;
+        return false;
     }
-    if size == 0 || data.is_null() || size > (64 * 1024 * 1024) {
-        return;
+    if size == 0 {
+        return true;
+    }
+    if data.is_null() || size > (64 * 1024 * 1024) {
+        return false;
     }
     let state = unsafe { &*(userdata as *const CallbackState) };
     if state.closed.load(Ordering::Relaxed) {
-        return;
+        return false;
     }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
     if let Ok(mut cb) = state.on_flush.lock() {
-        (cb)(bytes);
+        return (cb)(bytes);
     }
+    false
 }
 
 extern "C" fn on_error_trampoline(userdata: *mut c_void, data: *const u8, size: usize) {
@@ -293,10 +300,10 @@ extern "C" fn on_error_trampoline(userdata: *mut c_void, data: *const u8, size: 
         return;
     }
     let bytes = unsafe { std::slice::from_raw_parts(data, size) };
-    if let Ok(msg) = std::str::from_utf8(bytes) {
-        if let Ok(mut cb) = state.on_error.lock() {
-            (cb)(msg);
-        }
+    if let Ok(msg) = std::str::from_utf8(bytes)
+        && let Ok(mut cb) = state.on_error.lock()
+    {
+        (cb)(msg);
     }
 }
 
@@ -315,7 +322,7 @@ impl WireHelperClient {
         on_error: E,
     ) -> Result<Self, String>
     where
-        F: FnMut(&[u8]) + Send + 'static,
+        F: FnMut(&[u8]) -> bool + Send + 'static,
         E: FnMut(&str) + Send + 'static,
     {
         let proc_table = ProcTableLease::acquire(ProcTableMode::WireClient)?;
@@ -422,7 +429,7 @@ impl WireHelperServer {
         on_error: E,
     ) -> Result<Self, String>
     where
-        F: FnMut(&[u8]) + Send + 'static,
+        F: FnMut(&[u8]) -> bool + Send + 'static,
         E: FnMut(&str) + Send + 'static,
     {
         let proc_table = ProcTableLease::acquire(ProcTableMode::Native)?;
@@ -504,6 +511,7 @@ impl WireHelperServer {
     }
 
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn inject_iosurface_texture(
         &mut self,
         io_surface: *mut c_void,
@@ -529,6 +537,7 @@ impl WireHelperServer {
     }
 
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn inject_dxgi_texture(
         &mut self,
         shared_handle: *mut c_void,
@@ -556,6 +565,7 @@ impl WireHelperServer {
     }
 
     #[allow(dead_code)]
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn inject_dmabuf_texture(
         &mut self,
         fd: i32,
@@ -596,5 +606,37 @@ impl Drop for WireHelperServer {
             dawn_rs_wire_server_destroy(self.raw);
             drop(Box::from_raw(self.state));
         }
+    }
+}
+
+#[cfg(all(test, dawn_wire_linked))]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn client_runtime_serializes_and_disconnects() {
+        let packets = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+        let packet_sink = packets.clone();
+        let mut client = WireHelperClient::new(
+            0,
+            move |bytes| {
+                packet_sink
+                    .lock()
+                    .expect("packet sink")
+                    .push(bytes.to_vec());
+                true
+            },
+            |message| panic!("wire serialization failed: {message}"),
+        )
+        .expect("create wire client");
+
+        let reserved = client.reserve_instance();
+        assert!(!reserved.instance.is_null());
+        let instance = unsafe { WireHelperClient::reserved_instance_to_instance(reserved) };
+        drop(instance);
+        assert!(client.flush());
+        assert!(!packets.lock().expect("packet sink").is_empty());
+        client.disconnect();
     }
 }

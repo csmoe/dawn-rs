@@ -141,6 +141,17 @@ def select_prebuilt_asset(release_json: dict, platform_hint: str) -> dict:
     )
 
 
+def select_headers_asset(release_json: dict) -> dict:
+    for asset in release_json.get("assets", []):
+        name = asset.get("name", "").lower()
+        if name.startswith("dawn-headers-") and (
+            name.endswith(".tar.gz") or name.endswith(".tgz") or name.endswith(".zip")
+        ):
+            return asset
+    release_tag = release_json.get("tag_name", "<unknown>")
+    raise RuntimeError(f"Failed to find dawn-headers asset in release {release_tag}")
+
+
 def extract_prebuilt_asset(asset: dict, output: str) -> str:
     url = asset.get("browser_download_url", "")
     name = asset.get("name", "")
