@@ -100,7 +100,7 @@ pub(crate) fn emit_callback_function(
             .first()
             .copied()
             .filter(|raw| !raw.is_null())
-            .map(|raw| unsafe {{ {obj}::from_raw(raw) }})
+            .map(|raw| unsafe {{ {obj}::borrow_for_callback(raw, userdata2) }})
     }};
     let {arg_name} = {arg_name}_owner.as_ref();"#,
                         arg_name = arg_name,
@@ -112,7 +112,7 @@ pub(crate) fn emit_callback_function(
                         r#"    let {arg_name}_owner = if {arg_name}.is_null() {{
         None
     }} else {{
-        Some(unsafe {{ {obj}::from_raw({arg_name}) }})
+        Some(unsafe {{ {obj}::borrow_for_callback({arg_name}, userdata2) }})
     }};
     let {arg_name} = {arg_name}_owner.as_ref();"#,
                         arg_name = arg_name,
@@ -120,7 +120,7 @@ pub(crate) fn emit_callback_function(
                     ));
                 } else {
                     conversions.push(format!(
-                        r#"    let {arg_name}_owner = Some(unsafe {{ {obj}::from_raw({arg_name}) }});
+                        r#"    let {arg_name}_owner = Some(unsafe {{ {obj}::borrow_for_callback({arg_name}, userdata2) }});
     let {arg_name} = {arg_name}_owner.as_ref().expect("required callback object must not be null");"#,
                         arg_name = arg_name,
                         obj = obj
@@ -232,14 +232,14 @@ pub(crate) fn emit_callback_function(
         .map(|arg_name| {
             format!(
                 r#"    if let Some(value) = {arg_name}_owner {{
-        std::mem::forget(value);
+        value.forget_borrowed();
     }}"#,
                 arg_name = arg_name
             )
         })
         .collect::<Vec<_>>()
         .join("\n");
-    let callback_dispatch = if callback_is_repeating(&c.name) && return_ty == "()" {
+    let callback_dispatch = if index.callback_uses_persistent_slot(&c.name) && return_ty == "()" {
         format!(
             r#"    let callback_slot = unsafe {{ &*userdata1.cast::<std::sync::Mutex<Option<{name}>>>() }};
     let mut callback = {{
@@ -249,12 +249,14 @@ pub(crate) fn emit_callback_function(
     if let Some(callback) = callback.as_mut() {{
         invoke_callback_safely(|| callback({call_args}));
     }}
-    let mut slot = callback_slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    *slot = callback;"#,
+    if callback.is_some() {{
+        let mut slot = callback_slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        *slot = callback;
+    }}"#,
             name = name,
             call_args = call_args_block
         )
-    } else if callback_is_repeating(&c.name) {
+    } else if index.callback_uses_persistent_slot(&c.name) {
         format!(
             r#"    let callback_slot = unsafe {{ &*userdata1.cast::<std::sync::Mutex<Option<{name}>>>() }};
     let mut callback = {{
@@ -265,8 +267,10 @@ pub(crate) fn emit_callback_function(
         .as_mut()
         .map(|callback| invoke_callback_safely(|| callback({call_args})))
         .unwrap_or_default();
-    let mut slot = callback_slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    *slot = callback;
+    if callback.is_some() {{
+        let mut slot = callback_slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+        *slot = callback;
+    }}
     return result;"#,
             name = name,
             call_args = call_args_block
@@ -554,20 +558,6 @@ fn callback_object_is_borrowed(callback_name: &str, arg: &RecordMember) -> bool 
         callback_name,
         "device lost" | "device lost callback" | "uncaptured error" | "uncaptured error callback"
     ) && arg.member_type == "device"
-}
-
-fn callback_is_repeating(callback_name: &str) -> bool {
-    matches!(
-        callback_name,
-        "device lost"
-            | "device lost callback"
-            | "uncaptured error"
-            | "uncaptured error callback"
-            | "dawn load cache data"
-            | "dawn load cache data callback"
-            | "dawn store cache data"
-            | "dawn store cache data callback"
-    )
 }
 
 fn borrowed_object_owner_names(callback_name: &str, args: &[RecordMember]) -> Vec<String> {

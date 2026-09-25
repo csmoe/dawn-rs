@@ -7530,6 +7530,11 @@ mod structs {
                 raw.srcAlphaMode = 0 as ffi::WGPUAlphaMode;
             }
             if let Some(values) = &self.src_transfer_function_parameters {
+                assert_eq!(
+                    values.len(),
+                    7usize,
+                    "CopyTextureForBrowserOptions.src_transfer_function_parameters requires exactly 7 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -7539,6 +7544,11 @@ mod structs {
                 let _ = 0;
             }
             if let Some(values) = &self.conversion_matrix {
+                assert_eq!(
+                    values.len(),
+                    9usize,
+                    "CopyTextureForBrowserOptions.conversion_matrix requires exactly 9 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -7548,6 +7558,11 @@ mod structs {
                 let _ = 0;
             }
             if let Some(values) = &self.dst_transfer_function_parameters {
+                assert_eq!(
+                    values.len(),
+                    7usize,
+                    "CopyTextureForBrowserOptions.dst_transfer_function_parameters requires exactly 7 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -9529,6 +9544,11 @@ mod structs {
                 0
             };
             if let Some(values) = &self.yuv_to_rgb_conversion_matrix {
+                assert_eq!(
+                    values.len(),
+                    12usize,
+                    "ExternalTextureDescriptor.yuv_to_rgb_conversion_matrix requires exactly 12 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -9538,6 +9558,11 @@ mod structs {
                 let _ = 0;
             }
             if let Some(values) = &self.src_transfer_function_parameters {
+                assert_eq!(
+                    values.len(),
+                    7usize,
+                    "ExternalTextureDescriptor.src_transfer_function_parameters requires exactly 7 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -9547,6 +9572,11 @@ mod structs {
                 let _ = 0;
             }
             if let Some(values) = &self.dst_transfer_function_parameters {
+                assert_eq!(
+                    values.len(),
+                    7usize,
+                    "ExternalTextureDescriptor.dst_transfer_function_parameters requires exactly 7 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -9556,6 +9586,11 @@ mod structs {
                 let _ = 0;
             }
             if let Some(values) = &self.gamut_conversion_matrix {
+                assert_eq!(
+                    values.len(),
+                    9usize,
+                    "ExternalTextureDescriptor.gamut_conversion_matrix requires exactly 9 elements",
+                );
                 let len_value = values.len();
                 let raw_vec = values.to_vec();
                 let ptr = storage.push_vec(raw_vec);
@@ -24214,7 +24249,9 @@ mod objects {
             *features = SupportedFeatures::from_ffi(features_ffi);
             ()
         }
-        pub fn request_device(
+        /// # Safety
+        /// External pointers and handles in descriptor extensions must remain valid for all Dawn use.
+        pub unsafe fn request_device(
             &self,
             descriptor: Option<&DeviceDescriptor>,
             callback_mode: CallbackMode,
@@ -24224,24 +24261,13 @@ mod objects {
                 String,
             ) + Send + 'static,
         ) -> Future {
-            let mut descriptor_storage = ChainedStructStorage::new();
-            let mut descriptor_ffi: Option<ffi::WGPUDeviceDescriptor> = None;
-            let descriptor_ptr = if let Some(value) = &descriptor {
-                let (raw, storage) = value.to_ffi();
-                descriptor_storage = storage;
-                descriptor_ffi = Some(raw);
-                if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::from_ref(raw_ref)
-                } else {
-                    unreachable!(
-                        "internal error: descriptor_ffi missing after assignment",
-                    )
-                }
-            } else {
-                std::ptr::null()
-            };
-            let mut device_callback_userdata = Some(
-                descriptor_storage.take_callback_userdatas(),
+            let default_descriptor = DeviceDescriptor::new();
+            let (mut descriptor_ffi, mut storage) = descriptor
+                .unwrap_or(&default_descriptor)
+                .to_ffi();
+            let state = crate::device_callbacks::prepare(
+                &mut descriptor_ffi,
+                storage.take_callback_userdatas(),
             );
             let mut callback = callback;
             let callback_box: RequestDeviceCallback = Box::new(move |
@@ -24250,16 +24276,10 @@ mod objects {
                 message|
             {
                 let device = device
-                    .map(|device| {
-                        device
-                            .with_callback_userdata(
-                                device_callback_userdata.take().unwrap_or_default(),
-                            )
-                    });
+                    .map(|device| device.with_callback_state(state.clone()));
                 callback(status, device, message);
             });
-            let callback_box = Box::new(Some(callback_box));
-            let callback_userdata = Box::into_raw(callback_box)
+            let callback_userdata = Box::into_raw(Box::new(Some(callback_box)))
                 .cast::<std::ffi::c_void>();
             let callback_info_ffi = ffi::WGPURequestDeviceCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
@@ -24271,34 +24291,30 @@ mod objects {
             let result = unsafe {
                 ffi::wgpuAdapterRequestDevice(
                     self.raw,
-                    descriptor_ptr,
+                    &descriptor_ffi,
                     callback_info_ffi,
                 )
             };
             Future::from_ffi(result)
         }
-        pub fn create_device(&self, descriptor: Option<&DeviceDescriptor>) -> Device {
-            let mut descriptor_storage = ChainedStructStorage::new();
-            let mut descriptor_ffi: Option<ffi::WGPUDeviceDescriptor> = None;
-            let descriptor_ptr = if let Some(value) = &descriptor {
-                let (raw, storage) = value.to_ffi();
-                descriptor_storage = storage;
-                descriptor_ffi = Some(raw);
-                if let Some(raw_ref) = descriptor_ffi.as_ref() {
-                    std::ptr::from_ref(raw_ref)
-                } else {
-                    unreachable!(
-                        "internal error: descriptor_ffi missing after assignment",
-                    )
-                }
-            } else {
-                std::ptr::null()
-            };
+        /// # Safety
+        /// External pointers and handles in descriptor extensions must remain valid for all Dawn use.
+        pub unsafe fn create_device(
+            &self,
+            descriptor: Option<&DeviceDescriptor>,
+        ) -> Device {
+            let default_descriptor = DeviceDescriptor::new();
+            let (mut descriptor_ffi, mut storage) = descriptor
+                .unwrap_or(&default_descriptor)
+                .to_ffi();
+            let state = crate::device_callbacks::prepare(
+                &mut descriptor_ffi,
+                storage.take_callback_userdatas(),
+            );
             let result = unsafe {
-                ffi::wgpuAdapterCreateDevice(self.raw, descriptor_ptr)
+                ffi::wgpuAdapterCreateDevice(self.raw, &descriptor_ffi)
             };
-            let callback_userdata = descriptor_storage.take_callback_userdatas();
-            unsafe { Device::from_raw_with_callback_userdata(result, callback_userdata) }
+            unsafe { Device::from_raw(result) }.with_callback_state(state)
         }
         pub fn get_format_capabilities(
             &self,
@@ -24480,7 +24496,7 @@ mod objects {
             Future::from_ffi(result)
         }
         /// # Safety
-        /// All raw pointers must remain valid for the duration required by Dawn.
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
         pub unsafe fn get_mapped_range(
             &self,
             offset: usize,
@@ -24492,7 +24508,7 @@ mod objects {
             result
         }
         /// # Safety
-        /// All raw pointers must remain valid for the duration required by Dawn.
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
         pub unsafe fn get_const_mapped_range(
             &self,
             offset: usize,
@@ -25116,7 +25132,9 @@ mod objects {
     #[derive(Debug)]
     pub struct Device {
         raw: ffi::WGPUDevice,
-        callback_userdata: std::sync::Arc<Vec<CallbackUserdata>>,
+        callback_state: Option<
+            std::sync::Arc<crate::device_callbacks::DeviceCallbackState>,
+        >,
     }
     impl Device {
         /// Takes ownership of one strong reference returned by the Dawn C API.
@@ -25125,27 +25143,27 @@ mod objects {
         /// `raw` must be non-null and represent an owned reference of the matching object type.
         pub unsafe fn from_raw(raw: crate::sys::WGPUDevice) -> Self {
             assert!(!raw.is_null(), "Dawn returned a null Device handle");
-            Self {
-                raw,
-                callback_userdata: std::sync::Arc::new(Vec::new()),
-            }
+            Self { raw, callback_state: None }
         }
-        pub(crate) unsafe fn from_raw_with_callback_userdata(
-            raw: ffi::WGPUDevice,
-            callback_userdata: Vec<CallbackUserdata>,
-        ) -> Self {
-            assert!(!raw.is_null(), "Dawn returned a null Device handle");
-            Self {
-                raw,
-                callback_userdata: std::sync::Arc::new(callback_userdata),
-            }
-        }
-        pub(crate) fn with_callback_userdata(
+        pub(crate) fn with_callback_state(
             mut self,
-            callback_userdata: Vec<CallbackUserdata>,
+            state: std::sync::Arc<crate::device_callbacks::DeviceCallbackState>,
         ) -> Self {
-            self.callback_userdata = std::sync::Arc::new(callback_userdata);
+            self.callback_state = Some(state);
             self
+        }
+        pub(crate) unsafe fn borrow_for_callback(
+            raw: ffi::WGPUDevice,
+            userdata2: *mut std::ffi::c_void,
+        ) -> Self {
+            let state = unsafe { crate::device_callbacks::clone_state(userdata2) };
+            unsafe { Self::from_raw(raw) }.with_callback_state(state)
+        }
+        pub(crate) fn forget_borrowed(self) {
+            let this = std::mem::ManuallyDrop::new(self);
+            unsafe {
+                drop(std::ptr::read(&this.callback_state));
+            }
         }
         pub fn as_raw(&self) -> crate::sys::WGPUDevice {
             self.raw
@@ -25153,6 +25171,9 @@ mod objects {
         /// Transfers this wrapper's strong reference to the caller.
         pub fn into_raw(self) -> crate::sys::WGPUDevice {
             let this = std::mem::ManuallyDrop::new(self);
+            unsafe {
+                drop(std::ptr::read(&this.callback_state));
+            }
             this.raw
         }
         pub fn create_bind_group(&self, descriptor: &BindGroupDescriptor) -> BindGroup {
@@ -25174,7 +25195,12 @@ mod objects {
             };
             unsafe { BindGroupLayout::from_raw(result) }
         }
-        pub fn create_buffer(&self, descriptor: &BufferDescriptor) -> Option<Buffer> {
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn create_buffer(
+            &self,
+            descriptor: &BufferDescriptor,
+        ) -> Option<Buffer> {
             let (descriptor_ffi, _descriptor_storage) = descriptor.to_ffi();
             let descriptor_ptr = std::ptr::addr_of!(descriptor_ffi);
             let result = unsafe {
@@ -25186,7 +25212,12 @@ mod objects {
                 Some(unsafe { Buffer::from_raw(result) })
             }
         }
-        pub fn create_error_buffer(&self, descriptor: &BufferDescriptor) -> Buffer {
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn create_error_buffer(
+            &self,
+            descriptor: &BufferDescriptor,
+        ) -> Buffer {
             let (descriptor_ffi, _descriptor_storage) = descriptor.to_ffi();
             let descriptor_ptr = std::ptr::addr_of!(descriptor_ffi);
             let result = unsafe {
@@ -25430,7 +25461,9 @@ mod objects {
             };
             unsafe { ResourceTable::from_raw(result) }
         }
-        pub fn import_shared_buffer_memory(
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn import_shared_buffer_memory(
             &self,
             descriptor: &SharedBufferMemoryDescriptor,
         ) -> SharedBufferMemory {
@@ -25441,7 +25474,9 @@ mod objects {
             };
             unsafe { SharedBufferMemory::from_raw(result) }
         }
-        pub fn import_shared_texture_memory(
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn import_shared_texture_memory(
             &self,
             descriptor: &SharedTextureMemoryDescriptor,
         ) -> SharedTextureMemory {
@@ -25452,7 +25487,9 @@ mod objects {
             };
             unsafe { SharedTextureMemory::from_raw(result) }
         }
-        pub fn import_shared_fence(
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn import_shared_fence(
             &self,
             descriptor: &SharedFenceDescriptor,
         ) -> SharedFence {
@@ -25476,7 +25513,7 @@ mod objects {
             ()
         }
         /// # Safety
-        /// All raw pointers must remain valid for the duration required by Dawn.
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
         pub unsafe fn get_a_hardware_buffer_properties(
             &self,
             handle: *mut std::ffi::c_void,
@@ -25556,22 +25593,27 @@ mod objects {
             unsafe { ffi::wgpuDeviceTick(self.raw) };
             ()
         }
+        /// Installs a repeating logging callback, retained through device loss.
+        /// Panics for devices adopted from raw handles without callback ownership.
         pub fn set_logging_callback(
             &self,
             callback: impl FnMut(LoggingType, String) + Send + 'static,
-        ) -> () {
-            let callback_box: LoggingCallback = Box::new(callback);
-            let callback_box = Box::new(Some(callback_box));
-            let callback_userdata = Box::into_raw(callback_box)
+        ) {
+            let state = self
+                .callback_state
+                .as_ref()
+                .expect("logging callbacks require a Device created by dawn-rs");
+            let callback: LoggingCallback = Box::new(callback);
+            let userdata = Box::into_raw(Box::new(std::sync::Mutex::new(Some(callback))))
                 .cast::<std::ffi::c_void>();
-            let callback_info_ffi = ffi::WGPULoggingCallbackInfo {
+            state.retain(CallbackUserdata::new_mutex::<LoggingCallback>(userdata));
+            let info = ffi::WGPULoggingCallbackInfo {
                 nextInChain: std::ptr::null_mut(),
                 callback: Some(logging_callback_trampoline),
-                userdata1: callback_userdata,
+                userdata1: userdata,
                 userdata2: std::ptr::null_mut(),
             };
-            unsafe { ffi::wgpuDeviceSetLoggingCallback(self.raw, callback_info_ffi) };
-            ()
+            unsafe { ffi::wgpuDeviceSetLoggingCallback(self.raw, info) };
         }
         pub fn push_error_scope(&self, filter: ErrorFilter) -> () {
             let filter_ffi: ffi::WGPUErrorFilter = filter.into();
@@ -25629,7 +25671,7 @@ mod objects {
             unsafe { ffi::wgpuDeviceAddRef(self.raw) };
             Self {
                 raw: self.raw,
-                callback_userdata: self.callback_userdata.clone(),
+                callback_state: self.callback_state.clone(),
             }
         }
     }
@@ -25734,7 +25776,9 @@ mod objects {
             let result = unsafe { ffi::wgpuCreateInstance(descriptor_ptr) };
             unsafe { Instance::from_raw(result) }
         }
-        pub fn create_surface(&self, descriptor: &SurfaceDescriptor) -> Surface {
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn create_surface(&self, descriptor: &SurfaceDescriptor) -> Surface {
             let (descriptor_ffi, _descriptor_storage) = descriptor.to_ffi();
             let descriptor_ptr = std::ptr::addr_of!(descriptor_ffi);
             let result = unsafe {
@@ -27054,7 +27098,12 @@ mod objects {
             *properties = SharedBufferMemoryProperties::from_ffi(properties_ffi);
             result.into()
         }
-        pub fn create_buffer(&self, descriptor: Option<&BufferDescriptor>) -> Buffer {
+        /// # Safety
+        /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.
+        pub unsafe fn create_buffer(
+            &self,
+            descriptor: Option<&BufferDescriptor>,
+        ) -> Buffer {
             let mut descriptor_storage = ChainedStructStorage::new();
             let mut descriptor_ffi: Option<ffi::WGPUBufferDescriptor> = None;
             let descriptor_ptr = if let Some(value) = &descriptor {
@@ -27780,7 +27829,7 @@ mod callbacks {
                 .first()
                 .copied()
                 .filter(|raw| !raw.is_null())
-                .map(|raw| unsafe { Device::from_raw(raw) })
+                .map(|raw| unsafe { Device::borrow_for_callback(raw, userdata2) })
         };
         let device = device_owner.as_ref();
         let reason = reason.into();
@@ -27797,12 +27846,14 @@ mod callbacks {
         if let Some(callback) = callback.as_mut() {
             invoke_callback_safely(|| callback(device, reason, message));
         }
-        let mut slot = callback_slot
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        *slot = callback;
+        if callback.is_some() {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            *slot = callback;
+        }
         if let Some(value) = device_owner {
-            std::mem::forget(value);
+            value.forget_borrowed();
         }
     }
     pub type LoggingCallback = Box<
@@ -27817,11 +27868,23 @@ mod callbacks {
         let _ = userdata2;
         let r#type = r#type.into();
         let message = string_view_to_string(message);
-        let mut callback = unsafe {
-            Box::from_raw(userdata1.cast::<Option<LoggingCallback>>())
+        let callback_slot = unsafe {
+            &*userdata1.cast::<std::sync::Mutex<Option<LoggingCallback>>>()
         };
-        if let Some(mut callback) = callback.take() {
+        let mut callback = {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            slot.take()
+        };
+        if let Some(callback) = callback.as_mut() {
             invoke_callback_safely(|| callback(r#type, message));
+        }
+        if callback.is_some() {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            *slot = callback;
         }
     }
     pub type PopErrorScopeCallback = Box<
@@ -27932,7 +27995,7 @@ mod callbacks {
                 .first()
                 .copied()
                 .filter(|raw| !raw.is_null())
-                .map(|raw| unsafe { Device::from_raw(raw) })
+                .map(|raw| unsafe { Device::borrow_for_callback(raw, userdata2) })
         };
         let device = device_owner.as_ref();
         let r#type = r#type.into();
@@ -27949,12 +28012,14 @@ mod callbacks {
         if let Some(callback) = callback.as_mut() {
             invoke_callback_safely(|| callback(device, r#type, message));
         }
-        let mut slot = callback_slot
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        *slot = callback;
+        if callback.is_some() {
+            let mut slot = callback_slot
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            *slot = callback;
+        }
         if let Some(value) = device_owner {
-            std::mem::forget(value);
+            value.forget_borrowed();
         }
     }
     pub struct BufferMapCallbackInfo {

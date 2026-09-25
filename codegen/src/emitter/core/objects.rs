@@ -43,8 +43,23 @@ unsafe impl Sync for {name} {{}}
         } else {
             format!("{}\n{}\n{}", ffi_call, postlude, ret)
         };
+        let safety = if func
+            .def
+            .args
+            .iter()
+            .any(|a| index.input_requires_unsafe(&a.member_type))
+        {
+            "unsafe "
+        } else {
+            ""
+        };
+        let safety_docs = if safety.is_empty() {
+            ""
+        } else {
+            "    /// # Safety\n    /// External pointers and handles in the descriptor must remain valid for all Dawn use.\n"
+        };
         methods.push(format!(
-            r#"    pub fn new({signature}) -> Self {{
+            r#"{safety_docs}    pub {safety}fn new({signature}) -> Self {{
 {arg_prelude}
 {body}
     }}"#,
@@ -70,6 +85,33 @@ unsafe impl Sync for {name} {{}}
             continue;
         }
 
+        if name == "Device" && method_name == "set_logging_callback" {
+            methods.push(
+                r#"    /// Installs a repeating logging callback, retained through device loss.
+    /// Panics for devices adopted from raw handles without callback ownership.
+    pub fn set_logging_callback(
+        &self,
+        callback: impl FnMut(LoggingType, String) + Send + 'static,
+    ) {
+        let state = self.callback_state.as_ref()
+            .expect("logging callbacks require a Device created by dawn-rs");
+        let callback: LoggingCallback = Box::new(callback);
+        let userdata = Box::into_raw(Box::new(std::sync::Mutex::new(Some(callback))))
+            .cast::<std::ffi::c_void>();
+        state.retain(CallbackUserdata::new_mutex::<LoggingCallback>(userdata));
+        let info = ffi::WGPULoggingCallbackInfo {
+            nextInChain: std::ptr::null_mut(),
+            callback: Some(logging_callback_trampoline),
+            userdata1: userdata,
+            userdata2: std::ptr::null_mut(),
+        };
+        unsafe { ffi::wgpuDeviceSetLoggingCallback(self.raw, info) };
+    }"#
+                .to_string(),
+            );
+            continue;
+        }
+
         let return_ty = method
             .returns()
             .map(rust_return_type)
@@ -80,13 +122,12 @@ unsafe impl Sync for {name} {{}}
             emit_ffi_arg_prelude(&method.args, model, index, c_prefix);
         let postlude = emit_out_struct_postlude(&method.args, index);
 
-        let uses_raw_pointer = method
-            .args
-            .iter()
-            .any(|arg| arg.length.is_none() && arg.member_type.contains('*'))
-            || method
-                .returns()
-                .is_some_and(|ret| ret.get_type().contains('*'));
+        let uses_raw_pointer = method.args.iter().any(|arg| {
+            index.input_requires_unsafe(&arg.member_type)
+                || (arg.member_type == "void" && arg.length.is_none() && !arg.annotation.is_value())
+        }) || method
+            .returns()
+            .is_some_and(|ret| ret.get_type().contains('*'));
         let safety = if uses_raw_pointer
             || (name == "Buffer"
                 && matches!(
@@ -100,7 +141,7 @@ unsafe impl Sync for {name} {{}}
         let safety_docs = if safety.is_empty() {
             String::new()
         } else {
-            "    /// # Safety\n    /// All raw pointers must remain valid for the duration required by Dawn.\n"
+            "    /// # Safety\n    /// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.\n"
                 .to_string()
         };
 
@@ -168,7 +209,7 @@ unsafe impl Sync for {name} {{}}
     let object_fields = if name == "Device" {
         format!(
             r#"    raw: ffi::{prefix}{name},
-    callback_userdata: std::sync::Arc<Vec<CallbackUserdata>>,"#,
+    callback_state: Option<std::sync::Arc<crate::device_callbacks::DeviceCallbackState>>,"#,
             prefix = c_prefix,
             name = name
         )
@@ -182,7 +223,7 @@ unsafe impl Sync for {name} {{}}
     let from_raw_body = if name == "Device" {
         r#"Self {
             raw,
-            callback_userdata: std::sync::Arc::new(Vec::new()),
+            callback_state: None,
         }"#
         .to_string()
     } else {
@@ -190,21 +231,28 @@ unsafe impl Sync for {name} {{}}
     };
     let device_extra_methods = if name == "Device" {
         r#"
-    pub(crate) unsafe fn from_raw_with_callback_userdata(
-        raw: ffi::WGPUDevice,
-        callback_userdata: Vec<CallbackUserdata>,
+    pub(crate) fn with_callback_state(
+        mut self,
+        state: std::sync::Arc<crate::device_callbacks::DeviceCallbackState>,
     ) -> Self {
-        assert!(!raw.is_null(), "Dawn returned a null Device handle");
-        Self {
-            raw,
-            callback_userdata: std::sync::Arc::new(callback_userdata),
-        }
-    }
-
-    pub(crate) fn with_callback_userdata(mut self, callback_userdata: Vec<CallbackUserdata>) -> Self {
-        self.callback_userdata = std::sync::Arc::new(callback_userdata);
+        self.callback_state = Some(state);
         self
     }
+
+    pub(crate) unsafe fn borrow_for_callback(
+        raw: ffi::WGPUDevice,
+        userdata2: *mut std::ffi::c_void,
+    ) -> Self {
+        let state = unsafe { crate::device_callbacks::clone_state(userdata2) };
+        unsafe { Self::from_raw(raw) }.with_callback_state(state)
+    }
+
+    pub(crate) fn forget_borrowed(self) {
+        let this = std::mem::ManuallyDrop::new(self);
+        // Only the native handle is borrowed; the callback-state Arc is owned.
+        unsafe { drop(std::ptr::read(&this.callback_state)); }
+    }
+
 "#
         .to_string()
     } else {
@@ -213,11 +261,17 @@ unsafe impl Sync for {name} {{}}
     let clone_body = if name == "Device" {
         r#"Self {
             raw: self.raw,
-            callback_userdata: self.callback_userdata.clone(),
+            callback_state: self.callback_state.clone(),
         }"#
         .to_string()
     } else {
         "Self { raw: self.raw }".to_string()
+    };
+
+    let into_raw_cleanup = if name == "Device" {
+        "        // The lost-event context retains callback state after ownership transfer.\n        unsafe { drop(std::ptr::read(&this.callback_state)); }\n"
+    } else {
+        ""
     };
 
     format!(
@@ -244,7 +298,7 @@ impl {name} {{
     /// Transfers this wrapper's strong reference to the caller.
     pub fn into_raw(self) -> crate::sys::{prefix}{name} {{
         let this = std::mem::ManuallyDrop::new(self);
-        this.raw
+{into_raw_cleanup}        this.raw
     }}
 
 {methods}
@@ -288,61 +342,38 @@ fn requires_external_synchronization(name: &str) -> bool {
 
 fn emit_adapter_create_device_method(c_prefix: &str) -> String {
     format!(
-        r#"    pub fn create_device(&self, descriptor: Option<&DeviceDescriptor>) -> Device {{
-        let mut descriptor_storage = ChainedStructStorage::new();
-        let mut descriptor_ffi: Option<ffi::{prefix}DeviceDescriptor> = None;
-        let descriptor_ptr = if let Some(value) = &descriptor {{
-            let (raw, storage) = value.to_ffi();
-            descriptor_storage = storage;
-            descriptor_ffi = Some(raw);
-            if let Some(raw_ref) = descriptor_ffi.as_ref() {{
-                std::ptr::from_ref(raw_ref)
-            }} else {{
-                unreachable!("internal error: descriptor_ffi missing after assignment")
-            }}
-        }} else {{
-            std::ptr::null()
-        }};
-        let result = unsafe {{ ffi::wgpuAdapterCreateDevice(self.raw, descriptor_ptr) }};
-        let callback_userdata = descriptor_storage.take_callback_userdatas();
-        unsafe {{ Device::from_raw_with_callback_userdata(result, callback_userdata) }}
+        r#"    /// # Safety
+    /// External pointers and handles in descriptor extensions must remain valid for all Dawn use.
+    pub unsafe fn create_device(&self, descriptor: Option<&DeviceDescriptor>) -> Device {{
+        let default_descriptor = DeviceDescriptor::new();
+        let (mut descriptor_ffi, mut storage) = descriptor.unwrap_or(&default_descriptor).to_ffi();
+        let state = crate::device_callbacks::prepare(&mut descriptor_ffi, storage.take_callback_userdatas());
+        let result = unsafe {{ ffi::{prefix_lower}AdapterCreateDevice(self.raw, &descriptor_ffi) }};
+        unsafe {{ Device::from_raw(result) }}.with_callback_state(state)
     }}"#,
-        prefix = c_prefix
+        prefix_lower = c_prefix.to_lowercase(),
     )
 }
 
 fn emit_adapter_request_device_method(c_prefix: &str) -> String {
     format!(
-        r#"    pub fn request_device(
+        r#"    /// # Safety
+    /// External pointers and handles in descriptor extensions must remain valid for all Dawn use.
+    pub unsafe fn request_device(
         &self,
         descriptor: Option<&DeviceDescriptor>,
         callback_mode: CallbackMode,
         callback: impl FnMut(RequestDeviceStatus, Option<Device>, String) + Send + 'static,
     ) -> Future {{
-        let mut descriptor_storage = ChainedStructStorage::new();
-        let mut descriptor_ffi: Option<ffi::{prefix}DeviceDescriptor> = None;
-        let descriptor_ptr = if let Some(value) = &descriptor {{
-            let (raw, storage) = value.to_ffi();
-            descriptor_storage = storage;
-            descriptor_ffi = Some(raw);
-            if let Some(raw_ref) = descriptor_ffi.as_ref() {{
-                std::ptr::from_ref(raw_ref)
-            }} else {{
-                unreachable!("internal error: descriptor_ffi missing after assignment")
-            }}
-        }} else {{
-            std::ptr::null()
-        }};
-        let mut device_callback_userdata = Some(descriptor_storage.take_callback_userdatas());
+        let default_descriptor = DeviceDescriptor::new();
+        let (mut descriptor_ffi, mut storage) = descriptor.unwrap_or(&default_descriptor).to_ffi();
+        let state = crate::device_callbacks::prepare(&mut descriptor_ffi, storage.take_callback_userdatas());
         let mut callback = callback;
         let callback_box: RequestDeviceCallback = Box::new(move |status, device, message| {{
-            let device = device.map(|device| {{
-                device.with_callback_userdata(device_callback_userdata.take().unwrap_or_default())
-            }});
+            let device = device.map(|device| device.with_callback_state(state.clone()));
             callback(status, device, message);
         }});
-        let callback_box = Box::new(Some(callback_box));
-        let callback_userdata = Box::into_raw(callback_box).cast::<std::ffi::c_void>();
+        let callback_userdata = Box::into_raw(Box::new(Some(callback_box))).cast::<std::ffi::c_void>();
         let callback_info_ffi = ffi::{prefix}RequestDeviceCallbackInfo {{
             nextInChain: std::ptr::null_mut(),
             mode: callback_mode.into(),
@@ -351,10 +382,11 @@ fn emit_adapter_request_device_method(c_prefix: &str) -> String {
             userdata2: std::ptr::null_mut(),
         }};
         let result = unsafe {{
-            ffi::wgpuAdapterRequestDevice(self.raw, descriptor_ptr, callback_info_ffi)
+            ffi::{prefix_lower}AdapterRequestDevice(self.raw, &descriptor_ffi, callback_info_ffi)
         }};
         Future::from_ffi(result)
     }}"#,
-        prefix = c_prefix
+        prefix = c_prefix,
+        prefix_lower = c_prefix.to_lowercase(),
     )
 }

@@ -10,17 +10,16 @@ pub(crate) fn emit_function(
 ) -> String {
     let name = safe_ident(&snake_case_name(&f.name));
     let docs = doc_comment(f.def.comment.as_deref());
-    let uses_raw_pointer = f
+    let uses_raw_pointer = f.def.args.iter().any(|arg| {
+        index.input_requires_unsafe(&arg.member_type)
+            || (arg.member_type == "void" && arg.length.is_none() && !arg.annotation.is_value())
+    }) || f
         .def
-        .args
-        .iter()
-        .any(|arg| arg.length.is_none() && arg.member_type.contains('*'))
-        || f.def
-            .returns()
-            .is_some_and(|ret| ret.get_type().contains('*'));
+        .returns()
+        .is_some_and(|ret| ret.get_type().contains('*'));
     let safety = if uses_raw_pointer { "unsafe " } else { "" };
     let safety_docs = if uses_raw_pointer {
-        "/// # Safety\n/// All raw pointers must remain valid for the duration required by Dawn.\n"
+        "/// # Safety\n/// All external pointers and handles, including those in nested descriptors and extensions, must be valid and correctly synchronized for every use by Dawn. Host allocations must remain alive until GPU use ends.\n"
     } else {
         ""
     };

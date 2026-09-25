@@ -89,6 +89,18 @@ pub(crate) fn emit_ffi_arg_prelude(
         }
 
         let name = safe_ident(&snake_case_name(&arg.name));
+        if let Some(LengthValue::Number(length)) = &arg.length {
+            let condition = if arg.optional {
+                format!(
+                    "if let Some(values) = {name}.as_deref() {{ assert_eq!(values.len(), {length}usize, \"{name} requires exactly {length} elements\"); }}"
+                )
+            } else {
+                format!(
+                    "assert_eq!({name}.len(), {length}usize, \"{name} requires exactly {length} elements\");"
+                )
+            };
+            prelude.push(condition);
+        }
         if arg.length.is_some() {
             if index.struct_extensible(&arg.member_type).is_some() {
                 let ffi_ty = ffi_type_name(&arg.member_type, c_prefix);

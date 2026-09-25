@@ -21,6 +21,10 @@ pub fn generate_ffi_string(
     );
     let mut builder = bindgen::Builder::default()
         .header_contents("dawn_rs_bindgen_wrapper.h", &wrapper)
+        // Recent DawnProcTable headers use C++ member initializers. The WebGPU
+        // entry points still have C linkage when included as C++.
+        .clang_arg("-xc++")
+        .clang_arg("-std=c++20")
         .clang_arg(format!("-I{}/include", env!("CARGO_MANIFEST_DIR")))
         .allowlist_item("WGPU.*")
         .allowlist_item("wgpu.*")

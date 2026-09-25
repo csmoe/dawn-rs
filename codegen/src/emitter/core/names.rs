@@ -28,7 +28,7 @@ pub(crate) fn ffi_enum_value_name(name: &str) -> String {
             let value = if part.chars().all(|c| c.is_ascii_digit())
                 || part
                     .chars()
-                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
             {
                 part.to_string()
             } else {

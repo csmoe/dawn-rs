@@ -473,7 +473,10 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn accept_and_inject_native(
+    /// # Safety
+    /// External pointers and handles in the surface descriptor must remain valid
+    /// for the lifetime of the injected surface and all its use by Dawn.
+    pub unsafe fn accept_and_inject_native(
         socket_name: &str,
         native_surface_desc: Option<&crate::SurfaceDescriptor>,
         opts: ServerOptions,
@@ -482,7 +485,7 @@ impl Server {
         let (native_instance, native_surface) = {
             let native_instance = Instance::new(None);
             let native_surface =
-                native_surface_desc.map(|desc| native_instance.create_surface(desc));
+                native_surface_desc.map(|desc| unsafe { native_instance.create_surface(desc) });
             (native_instance, native_surface)
         };
         let mut server =
@@ -771,7 +774,10 @@ pub fn request_adapter_blocking(
 }
 
 /// Requests a device and blocks by repeatedly pumping wire work.
-pub fn request_device_blocking(
+/// # Safety
+/// External pointers and handles in descriptor extensions must remain valid for
+/// all Dawn use, including asynchronous work after a timeout.
+pub unsafe fn request_device_blocking(
     instance: &Instance,
     adapter: &Adapter,
     desc: Option<&crate::DeviceDescriptor>,
@@ -780,24 +786,26 @@ pub fn request_device_blocking(
     mut pump: impl FnMut() -> Result<(), WireError>,
 ) -> Result<Device, WireError> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<Device, String>>();
-    let _future = adapter.request_device(
-        desc,
-        crate::CallbackMode::AllowProcessEvents,
-        move |status, device, message| {
-            if status != crate::RequestDeviceStatus::Success {
-                let _ = tx.send(Err(format!("{status:?}: {message}")));
-                return;
-            }
-            match device {
-                Some(device) => {
-                    let _ = tx.send(Ok(device));
+    let _future = unsafe {
+        adapter.request_device(
+            desc,
+            crate::CallbackMode::AllowProcessEvents,
+            move |status, device, message| {
+                if status != crate::RequestDeviceStatus::Success {
+                    let _ = tx.send(Err(format!("{status:?}: {message}")));
+                    return;
                 }
-                None => {
-                    let _ = tx.send(Err("request_device returned None".to_string()));
+                match device {
+                    Some(device) => {
+                        let _ = tx.send(Ok(device));
+                    }
+                    None => {
+                        let _ = tx.send(Err("request_device returned None".to_string()));
+                    }
                 }
-            }
-        },
-    );
+            },
+        )
+    };
 
     let started = Instant::now();
     loop {

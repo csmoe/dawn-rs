@@ -637,6 +637,13 @@ pub(crate) fn emit_struct_to_ffi_body(
             });
 
             let mut body = Vec::new();
+            if let Some(LengthValue::Number(length)) = &member.length {
+                body.push(format!(
+                    "assert_eq!(values.len(), {length}usize, \"{}.{} requires exactly {length} elements\");",
+                    type_name(&s.name), field_name,
+                ));
+            }
+
             body.push("let len_value = values.len();".to_string());
 
             if is_char_string_list(member) {
@@ -810,7 +817,9 @@ pub(crate) fn emit_struct_to_ffi_body(
                 } else {
                     ""
                 };
-                let callback_userdata_storage = if callback_info_is_persistent(callback_fn_name) {
+                let callback_userdata_storage = if index
+                    .callback_uses_persistent_slot(callback_fn_name)
+                {
                     format!(
                         "        storage.push_callback_userdata(CallbackUserdata::new_mutex::<{callback_ty}>(userdata));\n",
                         callback_ty = callback_ty
@@ -818,7 +827,8 @@ pub(crate) fn emit_struct_to_ffi_body(
                 } else {
                     String::new()
                 };
-                let callback_box_wrapper = if callback_info_is_persistent(callback_fn_name) {
+                let callback_box_wrapper = if index.callback_uses_persistent_slot(callback_fn_name)
+                {
                     "        let callback_box = Box::new(std::sync::Mutex::new(Some(callback_box)));\n"
                 } else {
                     "        let callback_box = Box::new(Some(callback_box));\n"
@@ -1079,14 +1089,4 @@ pub(crate) fn is_char_string_list(member: &RecordMember) -> bool {
     member.member_type == "char"
         && member.length.is_some()
         && member.annotation.is_const_const_ptr()
-}
-
-fn callback_info_is_persistent(callback_name: &str) -> bool {
-    matches!(
-        callback_name,
-        "device lost callback"
-            | "uncaptured error callback"
-            | "dawn load cache data callback"
-            | "dawn store cache data callback"
-    )
 }

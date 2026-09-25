@@ -12,6 +12,8 @@ pub(crate) struct TypeIndex {
     structs_defaultable: HashMap<String, ()>,
     callback_infos: HashMap<String, ()>,
     structs_need_free: HashMap<String, ()>,
+    unsafe_inputs: HashSet<String>,
+    persistent_callbacks: HashSet<String>,
 }
 
 impl TypeIndex {
@@ -88,6 +90,54 @@ impl TypeIndex {
             }
         }
 
+        // Callback infos without a mode are repeatable. Device-lost is one-shot,
+        // but its slot is retained with the other descriptor callbacks until the
+        // owning lost-event context is destroyed.
+        let persistent_callbacks = model
+            .callback_infos
+            .iter()
+            .filter(|info| {
+                !info.def.members.iter().any(|m| m.name == "mode")
+                    || info.name == "device lost callback info"
+            })
+            .filter_map(|info| info.def.members.iter().find(|m| m.name == "callback"))
+            .map(|m| m.member_type.clone())
+            .collect();
+
+        // Follow nested input structures and extension chains. Pointer types hidden
+        // inside descriptors need the same unsafe boundary as direct arguments.
+        let mut unsafe_inputs = model
+            .function_pointers
+            .iter()
+            .map(|f| f.name.clone())
+            .collect::<HashSet<_>>();
+        unsafe_inputs.insert("callback".into());
+        loop {
+            let mut changed = false;
+            for s in &model.structures {
+                if s.def.is_output() {
+                    continue;
+                }
+                let has_pointer = unsafe_inputs.contains(&s.name)
+                    || s.def.members.iter().any(|m| {
+                        m.member_type.contains('*')
+                            || (m.member_type == "void"
+                                && m.length.is_none()
+                                && !m.annotation.is_value())
+                            || unsafe_inputs.contains(&m.member_type)
+                    });
+                if has_pointer {
+                    changed |= unsafe_inputs.insert(s.name.clone());
+                    for root in &s.def.chain_roots {
+                        changed |= unsafe_inputs.insert(root.clone());
+                    }
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+
         Self {
             objects,
             enums,
@@ -96,11 +146,21 @@ impl TypeIndex {
             structs_defaultable,
             callback_infos,
             structs_need_free,
+            unsafe_inputs,
+            persistent_callbacks,
         }
     }
 
     pub(crate) fn is_object(&self, name: &str) -> bool {
         self.objects.contains_key(name)
+    }
+
+    pub(crate) fn input_requires_unsafe(&self, name: &str) -> bool {
+        self.unsafe_inputs.contains(name) || name.contains('*')
+    }
+
+    pub(crate) fn callback_uses_persistent_slot(&self, name: &str) -> bool {
+        self.persistent_callbacks.contains(name)
     }
 
     pub(crate) fn is_enum(&self, name: &str) -> bool {

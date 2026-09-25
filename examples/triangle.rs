@@ -177,7 +177,8 @@ impl TriangleApp {
             }
         }
 
-        let surface = instance.create_surface(&surface_desc);
+        // SAFETY: the window and its native layer outlive this surface.
+        let surface = unsafe { instance.create_surface(&surface_desc) };
 
         let adapter = instance.create_adapter_for_rendering();
         let mut device_desc = dawn_rs::DeviceDescriptor::new();
@@ -188,7 +189,8 @@ impl TriangleApp {
                 eprintln!("Uncaptured error {:?}: {}", ty, message);
             })));
         device_desc.uncaptured_error_callback_info = Some(error_info);
-        let device = adapter.create_device(Some(&device_desc));
+        // SAFETY: this descriptor contains no external pointers or handles.
+        let device = unsafe { adapter.create_device(Some(&device_desc)) };
         let queue = device.get_queue();
 
         let vertex_data: [f32; 15] = [
@@ -206,9 +208,9 @@ impl TriangleApp {
             dawn_rs::BufferUsage::VERTEX | dawn_rs::BufferUsage::COPY_DST,
             vertex_bytes.len() as u64,
         );
-        let vertex_buffer = device
-            .create_buffer(&vertex_buffer_desc)
-            .expect("create vertex buffer");
+        // SAFETY: this buffer descriptor has no host-memory extension.
+        let vertex_buffer =
+            unsafe { device.create_buffer(&vertex_buffer_desc) }.expect("create vertex buffer");
         let upload_encoder = device.create_command_encoder(None);
         upload_encoder.write_buffer(vertex_buffer.clone(), 0, vertex_bytes);
         let upload_commands = upload_encoder.finish(None);

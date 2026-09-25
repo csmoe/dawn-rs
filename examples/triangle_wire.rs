@@ -166,16 +166,16 @@ fn client_wire_gpu_call_demo(
         BufferUsage::COPY_SRC | BufferUsage::COPY_DST,
         payload.len() as u64,
     );
-    let src = device
-        .create_buffer(&src_desc)
+    // SAFETY: this buffer descriptor has no host-memory extension.
+    let src = unsafe { device.create_buffer(&src_desc) }
         .ok_or("failed to create source buffer for wire demo")?;
 
     let dst_desc = BufferDescriptor::new(
         BufferUsage::COPY_DST | BufferUsage::MAP_READ,
         payload.len() as u64,
     );
-    let dst = device
-        .create_buffer(&dst_desc)
+    // SAFETY: this buffer descriptor has no host-memory extension.
+    let dst = unsafe { device.create_buffer(&dst_desc) }
         .ok_or("failed to create destination buffer for wire demo")?;
 
     let encoder = device.create_command_encoder(None);
@@ -237,16 +237,19 @@ fn client_wire_gpu_call_demo(
 }
 
 fn run_server(sock_name: &str, width: u32, height: u32) -> Result<(), Box<dyn Error>> {
-    let _wire_server = WireServer::accept_and_inject_native(
-        sock_name,
-        None,
-        WireServerOptions {
-            expect_surface: false,
-            use_spontaneous_callbacks: true,
-            max_allocation_size: 0,
-            transport: dawn_rs::wire::TransportOptions::default(),
-        },
-    )?;
+    // SAFETY: no native surface descriptor is supplied.
+    let _wire_server = unsafe {
+        WireServer::accept_and_inject_native(
+            sock_name,
+            None,
+            WireServerOptions {
+                expect_surface: false,
+                use_spontaneous_callbacks: true,
+                max_allocation_size: 0,
+                transport: dawn_rs::wire::TransportOptions::default(),
+            },
+        )
+    }?;
     render_triangle_window(width, height)?;
     Ok(())
 }
@@ -295,24 +298,27 @@ fn request_device_sync(
     mut flush_wire: impl FnMut() -> Result<(), dawn_rs::wire::WireError>,
 ) -> Result<dawn_rs::Device, String> {
     let (tx, rx) = std::sync::mpsc::channel::<Result<dawn_rs::Device, String>>();
-    let _future = adapter.request_device(
-        None,
-        dawn_rs::CallbackMode::AllowProcessEvents,
-        move |status, device, message| {
-            if status != dawn_rs::RequestDeviceStatus::Success {
-                let _ = tx.send(Err(format!("{status:?}: {message}")));
-                return;
-            }
-            match device {
-                Some(device) => {
-                    let _ = tx.send(Ok(device));
+    // SAFETY: the default descriptor contains no external resources.
+    let _future = unsafe {
+        adapter.request_device(
+            None,
+            dawn_rs::CallbackMode::AllowProcessEvents,
+            move |status, device, message| {
+                if status != dawn_rs::RequestDeviceStatus::Success {
+                    let _ = tx.send(Err(format!("{status:?}: {message}")));
+                    return;
                 }
-                None => {
-                    let _ = tx.send(Err("request_device returned None".to_string()));
+                match device {
+                    Some(device) => {
+                        let _ = tx.send(Ok(device));
+                    }
+                    None => {
+                        let _ = tx.send(Err("request_device returned None".to_string()));
+                    }
                 }
-            }
-        },
-    );
+            },
+        )
+    };
 
     loop {
         match rx.try_recv() {
@@ -359,8 +365,8 @@ fn render_triangle_rgba_with_instance(
     let readback_size = u64::from(bytes_per_row) * u64::from(height);
     let readback_desc =
         BufferDescriptor::new(BufferUsage::COPY_DST | BufferUsage::MAP_READ, readback_size);
-    let readback = device
-        .create_buffer(&readback_desc)
+    // SAFETY: this buffer descriptor has no host-memory extension.
+    let readback = unsafe { device.create_buffer(&readback_desc) }
         .ok_or("failed to create readback buffer")?;
 
     let encoder = device.create_command_encoder(None);
@@ -566,9 +572,11 @@ impl IpcTriangleWindowApp {
             }
         }
 
-        let surface = instance.create_surface(&surface_desc);
+        // SAFETY: the window and its native layer outlive this surface.
+        let surface = unsafe { instance.create_surface(&surface_desc) };
         let adapter = request_adapter_sync(&instance, || Ok(())).expect("request adapter");
-        let device = adapter.create_device(None);
+        // SAFETY: the default descriptor contains no external resources.
+        let device = unsafe { adapter.create_device(None) };
         let queue = device.get_queue();
 
         let mut capabilities = dawn_rs::SurfaceCapabilities::new();

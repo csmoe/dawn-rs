@@ -1,11 +1,12 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
+#include <span>
 #include <vector>
 
 #include "dawn/dawn_proc.h"
 #include "dawn/native/DawnNative.h"
-#include "dawn/wire/client/webgpu.h"
 #include "dawn/wire/WireClient.h"
 #include "dawn/wire/WireServer.h"
 
@@ -63,11 +64,20 @@ class SerializerBridge final : public dawn::wire::CommandSerializer {
         return callbacks_.max_allocation_size;
     }
 
+#if defined(DAWN_RS_WIRE_SPAN_API)
+    std::optional<std::span<volatile std::byte>> GetCommandSpace(size_t size) override {
+        const size_t old_size = buffer_.size();
+        buffer_.resize(old_size + size);
+        return std::span<volatile std::byte>(
+            reinterpret_cast<volatile std::byte*>(buffer_.data() + old_size), size);
+    }
+#else
     void* GetCmdSpace(size_t size) override {
         const size_t old_size = buffer_.size();
         buffer_.resize(old_size + size);
         return buffer_.data() + old_size;
     }
+#endif
 
     bool Flush() override {
         if (!callbacks_.on_flush) {
@@ -110,12 +120,6 @@ struct DawnRsWireServer {
 // The wire server lifecycle (construction + Inject* + HandleCommands) is currently exposed
 // through C++ dawn::wire APIs, so we keep this control plane in C++.
 
-// dawnProcSetProcs stores a pointer, so the table must outlive the call site.
-static DawnProcTable gWireClientProcs = {};
-static bool gWireClientProcsInitialized = false;
-
-#include "wire_client_proc_table_autogen.inc"
-
 }  // namespace
 
 extern "C" {
@@ -142,8 +146,13 @@ bool dawn_rs_wire_client_handle_commands(DawnRsWireClient* client,
     if (!client || (size > 0 && !data)) {
         return false;
     }
+#if defined(DAWN_RS_WIRE_SPAN_API)
+    return client->wire->HandleCommands(
+        std::span<const volatile std::byte>(reinterpret_cast<const volatile std::byte*>(data), size));
+#else
     return client->wire->HandleCommands(reinterpret_cast<const volatile char*>(data), size) !=
            nullptr;
+#endif
 }
 
 bool dawn_rs_wire_client_flush(DawnRsWireClient* client) {
@@ -266,8 +275,13 @@ bool dawn_rs_wire_server_handle_commands(DawnRsWireServer* server,
     if (!server || (size > 0 && !data)) {
         return false;
     }
+#if defined(DAWN_RS_WIRE_SPAN_API)
+    return server->wire->HandleCommands(
+        std::span<const volatile std::byte>(reinterpret_cast<const volatile std::byte*>(data), size));
+#else
     return server->wire->HandleCommands(reinterpret_cast<const volatile char*>(data), size) !=
            nullptr;
+#endif
 }
 
 bool dawn_rs_wire_server_flush(DawnRsWireServer* server) {
@@ -546,11 +560,9 @@ bool dawn_rs_wire_server_inject_dmabuf_texture(DawnRsWireServer* server,
 }
 
 void dawn_rs_wire_set_client_procs() {
-    if (!gWireClientProcsInitialized) {
-        gWireClientProcs = DawnRsBuildWireClientProcTableFromCAPI();
-        gWireClientProcsInitialized = true;
-    }
-    dawnProcSetProcs(&gWireClientProcs);
+    // Use Dawn's own table, including the revision stamp required by newer
+    // dawnProcSetProcs implementations.
+    dawnProcSetProcs(&dawn::wire::client::GetProcs());
 }
 
 void dawn_rs_wire_set_native_procs() {
