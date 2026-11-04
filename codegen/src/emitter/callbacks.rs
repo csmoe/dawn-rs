@@ -26,7 +26,7 @@ fn invoke_callback_safely<R: Default>(callback: impl FnOnce() -> R) -> R {
 
     let index = TypeIndex::new(model);
     for f in &model.function_pointers {
-        out.push_str(&emit_function_pointer(f));
+        out.push_str(&emit_function_pointer(f, &index, c_prefix));
     }
     for c in &model.callback_functions {
         out.push_str(&emit_callback_function(c, &index, c_prefix));

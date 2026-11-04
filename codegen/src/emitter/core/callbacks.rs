@@ -413,9 +413,19 @@ impl {name} {{
     )
 }
 
-pub(crate) fn emit_function_pointer(fp: &crate::api_model::FunctionPointerModel) -> String {
+pub(crate) fn emit_function_pointer(
+    fp: &crate::api_model::FunctionPointerModel,
+    index: &TypeIndex,
+    c_prefix: &str,
+) -> String {
     let name = type_name(&fp.name);
-    let args = callback_arg_list(fp.def.args());
+    let args = fp
+        .def
+        .args()
+        .iter()
+        .map(|arg| callback_ffi_arg_type(arg, index, c_prefix))
+        .collect::<Vec<_>>()
+        .join(", ");
     let ret = fp
         .def
         .returns()
