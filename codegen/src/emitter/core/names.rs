@@ -55,6 +55,7 @@ pub(crate) fn ffi_enum_value_name(name: &str) -> String {
         ("Gpu", "GPU"),
         ("Cpu", "CPU"),
         ("Winui", "WinUI"),
+        ("Uuid", "UUID"),
     ];
     for (from, to) in extra_fixes {
         out = out.replace(from, to);
@@ -213,4 +214,21 @@ pub(crate) fn camel_case_with_acronyms(name: &str) -> String {
         out = out.replace(from, to);
     }
     uppercase_after_digits(&out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ffi_enum_value_name;
+
+    #[test]
+    fn ffi_enum_value_name_preserves_uuid_acronym() {
+        assert_eq!(
+            ffi_enum_value_name("request adapter options vulkan UUIDs"),
+            "RequestAdapterOptionsVulkanUUIDs"
+        );
+        assert_eq!(
+            ffi_enum_value_name("adapter properties vulkan UUIDs"),
+            "AdapterPropertiesVulkanUUIDs"
+        );
+    }
 }
